@@ -1,0 +1,173 @@
+// Compare groups: sets of lessons that solve the same or a closely similar problem and
+// accept the same inputs, so they can be run side by side on identical data.
+// A lesson joins a group by setting meta.compareGroup; this file says what the group's
+// shared problem is and how to generate inputs for a measured run.
+//
+// A group with `sizes` generates inputs with make(size, variantId, seed). A group whose
+// variants carry an `input` uses that input as is (merged with make, if present).
+// preview(variantId, seed) gives a small input for the synchronized visualizations.
+//
+// Only lessons that are published (present in the generated catalog) appear on the site.
+// Groups are deliberately narrow. Unrelated algorithms are never ranked against each other.
+
+export const compareGroups = [
+  {
+    id: 'sorting',
+    title: 'Sorting a list',
+    problem: 'Put a list of numbers into increasing order.',
+    members: ['bubble-sort', 'selection-sort', 'insertion-sort', 'merge-sort', 'quick-sort', 'heap-sort', 'counting-sort'],
+    sizeLabel: 'Number of items',
+    sizes: [16, 64, 256, 1024],
+    defaultSize: 256,
+    variants: [
+      { id: 'random', label: 'Random order' },
+      { id: 'nearly', label: 'Nearly sorted' },
+      { id: 'sorted', label: 'Already sorted' },
+      { id: 'reversed', label: 'Reversed' },
+      { id: 'few', label: 'Few distinct values' },
+    ],
+    make: (n, variant, seed) => ({ size: n, order: variant, seed, custom: [] }),
+    preview: (variant, seed) => ({ size: 20, order: variant, seed, custom: [] }),
+    counters: ['comparisons', 'writes'],
+    note: 'Comparisons are counted the same way in every lesson. Writes are not: each lesson states what it counts as a write, and merge sort and counting sort include writes to their extra arrays. Counting sort compares keys only to find the smallest and largest value, and it applies only to whole numbers in a small range.',
+  },
+  {
+    id: 'searching',
+    title: 'Finding a value in a sorted list',
+    problem: 'Report where a target value sits in a sorted list, or that it is absent.',
+    members: ['linear-search', 'binary-search'],
+    sizeLabel: 'Number of items',
+    sizes: [16, 256, 4096, 65536],
+    defaultSize: 4096,
+    variants: [
+      { id: 'missing', label: 'Target is not in the list' },
+      { id: 'random', label: 'Target is somewhere in the list' },
+      { id: 'first', label: 'Target is the first value' },
+      { id: 'last', label: 'Target is the last value' },
+    ],
+    make: (n, variant, seed) => ({ size: n, where: variant, seed, custom: [] }),
+    preview: (variant, seed) => ({ size: 24, where: variant, seed, custom: [] }),
+    counters: ['comparisons'],
+    note: 'Binary search needs the list to be sorted. Linear search does not, which is the reason it still has a place.',
+  },
+  {
+    id: 'traversal',
+    title: 'Visiting every node of a graph',
+    problem: 'Starting from one node, visit every node that can be reached.',
+    members: ['bfs', 'dfs'],
+    sizeLabel: 'Number of nodes',
+    sizes: [8, 32, 128, 256],
+    defaultSize: 32,
+    variants: [{ id: 'sparse', label: 'Sparse graph' }, { id: 'dense', label: 'Dense graph' }],
+    make: (n, variant, seed) => ({ nodes: n, density: variant === 'dense' ? 0.9 : 0.25, seed, edges: '' }),
+    preview: (variant, seed) => ({ nodes: 10, density: variant === 'dense' ? 0.9 : 0.25, seed, edges: '' }),
+    counters: ['edges examined'],
+    note: 'Both do the same amount of work. They differ in the order of the visit, and so in what each is good for.',
+  },
+  {
+    id: 'shortest-path',
+    title: 'Shortest paths from one source',
+    problem: 'Find the cheapest route from a start node to every other node of a weighted graph.',
+    members: ['dijkstra', 'bellman-ford'],
+    sizeLabel: 'Number of nodes',
+    sizes: [8, 32, 128, 256],
+    defaultSize: 64,
+    variants: [{ id: 'sparse', label: 'Sparse graph' }, { id: 'dense', label: 'Dense graph' }],
+    make: (n, variant, seed) => ({ nodes: n, density: variant === 'dense' ? 0.9 : 0.3, seed, edges: '' }),
+    preview: (variant, seed) => ({ nodes: 9, density: variant === 'dense' ? 0.9 : 0.3, seed, edges: '' }),
+    counters: ['relaxations'],
+    note: 'These graphs have no negative weights, so both give the same distances. Bellman-Ford does more work in exchange for also handling negative weights, which Dijkstra cannot.',
+  },
+  {
+    id: 'sequence-comparison',
+    title: 'Comparing two sequences',
+    problem: 'Measure how two strings relate. These lessons answer related but different questions with the same table-filling method.',
+    members: ['lcs', 'edit-distance', 'needleman-wunsch'],
+    variants: [
+      { id: 'words', label: 'Two English words', input: { a: 'kitten', b: 'sitting' } },
+      { id: 'dna', label: 'Two short DNA strings', input: { a: 'GATTACA', b: 'GCATGCT' } },
+      { id: 'same', label: 'Identical strings', input: { a: 'algorithm', b: 'algorithm' } },
+    ],
+    counters: ['cells filled'],
+    note: 'The three fill tables of the same size. Their results are not comparable numbers: each measures something different about the pair.',
+  },
+  {
+    id: 'lossless-compression',
+    title: 'Compressing text without loss',
+    problem: 'Describe the same text in fewer bits, in a way that can be reversed exactly.',
+    members: ['run-length-encoding', 'huffman-coding', 'lz77'],
+    variants: [
+      { id: 'runs', label: 'Long runs', input: { text: 'aaaaaaaabbbbbbbbccccccccdddd' } },
+      { id: 'english', label: 'English text', input: { text: 'the rain in spain stays mainly in the plain' } },
+      { id: 'repeats', label: 'Repeated phrase', input: { text: 'abcabcabcabcabcabcabcabcabc' } },
+      { id: 'varied', label: 'No repetition', input: { text: 'the quick brown fox jumps' } },
+    ],
+    counters: [],
+    resultFields: [{ key: 'inputBits', label: 'Input bits' }, { key: 'outputBits', label: 'Output bits' }],
+    note: 'Each lesson states its own bit-cost model, and none counts the cost of headers or code tables. Treat the numbers as a guide to which kind of redundancy each method exploits, not as file sizes.',
+  },
+  {
+    id: 'root-finding',
+    title: 'Finding where a function crosses zero',
+    problem: 'Find an input x for which f(x) = 0, to a chosen tolerance.',
+    members: ['bisection-method', 'newtons-method'],
+    variants: [
+      { id: 'sqrt2', label: 'x² − 2 (the square root of 2)', input: { fn: 'sqrt2', tolerance: 1e-9 } },
+      { id: 'cosx', label: 'cos(x) − x', input: { fn: 'cosx', tolerance: 1e-9 } },
+      { id: 'cubic', label: 'x³ − 2x − 5', input: { fn: 'cubic', tolerance: 1e-9 } },
+      { id: 'cycle', label: 'x³ − 2x + 2, where Newton cycles from 0', input: { fn: 'cycle', tolerance: 1e-9 } },
+      { id: 'triple', label: '(x − 2)³, a triple root', input: { fn: 'triple', tolerance: 1e-9 } },
+    ],
+    // Newton's method needs a starting guess; each function's catalogue entry supplies the standard one.
+    perVariant: { 'newtons-method': { sqrt2: { x0: 1 }, cosx: { x0: 1 }, cubic: { x0: 2 }, cycle: { x0: 0 }, triple: { x0: 3.5 } } },
+    counters: ['function evaluations', 'derivative evaluations'],
+    resultFields: [{ key: 'root', label: 'Root found' }, { key: 'iterations', label: 'Iterations' }],
+    note: 'Bisection is given each function\'s standard bracket and always converges. Newton\'s method is given the standard starting guess and needs the derivative as well. On the fourth function it never settles, and on the fifth it slows to a crawl. Both are in the lesson.',
+  },
+  {
+    id: 'ode-integration',
+    title: 'Stepping a differential equation forward',
+    problem: 'Approximate the solution of an initial value problem by taking small steps in time.',
+    members: ['euler-method', 'runge-kutta-4'],
+    variants: [
+      { id: 'decay', label: 'Exponential decay', input: { system: 'decay', dt: 0.25, duration: 5 } },
+      { id: 'oscillator', label: 'Harmonic oscillator', input: { system: 'oscillator', dt: 0.25, duration: 12 } },
+      { id: 'logistic', label: 'Logistic growth', input: { system: 'logistic', dt: 0.5, duration: 10 } },
+      { id: 'driven', label: 'Driven relaxation', input: { system: 'driven', dt: 0.25, duration: 12 } },
+    ],
+    counters: ['derivative evaluations'],
+    resultFields: [{ key: 'maxError', label: 'Largest error against the exact solution' }, { key: 'steps', label: 'Steps' }],
+    note: 'Both methods are run with the same step size here, so RK4 makes four times as many derivative evaluations. A fair comparison looks at the error for the same number of evaluations, which the Runge-Kutta lesson does.',
+  },
+  {
+    id: 'landscape-minimization',
+    title: 'Finding the lowest point of a surface',
+    problem: 'Minimize a function of two variables.',
+    members: ['gradient-descent', 'simulated-annealing', 'genetic-algorithm'],
+    variants: [
+      { id: 'bowl', label: 'Round bowl (one minimum)', input: { landscape: 'bowl' } },
+      { id: 'rastrigin', label: 'Many local minima', input: { landscape: 'rastrigin' } },
+      { id: 'himmelblau', label: 'Four equal minima', input: { landscape: 'himmelblau' } },
+    ],
+    make: (n, variant, seed) => ({ seed }),
+    perVariant: { 'gradient-descent': { bowl: { rate: 0.1 }, rastrigin: { rate: 0.002, steps: 120 }, himmelblau: { rate: 0.005, steps: 120 } } },
+    counters: ['gradient evaluations', 'function evaluations'],
+    resultFields: [{ key: 'bestValue', label: 'Lowest value found (0 is the true minimum)' }],
+    note: 'These methods use different information. Gradient descent needs slopes and stops at the nearest low point. The other two need only function values and many more of them, and their results change with the random seed.',
+  },
+  {
+    id: 'classification',
+    title: 'Separating two classes of points',
+    problem: 'Learn a rule that assigns one of two labels to a point in the plane.',
+    members: ['knn', 'logistic-regression', 'perceptron'],
+    variants: [
+      { id: 'separable', label: 'Cleanly separable', input: { dataset: 'separable' } },
+      { id: 'overlap', label: 'Overlapping classes', input: { dataset: 'overlap' } },
+      { id: 'xor', label: 'XOR pattern (not separable by a line)', input: { dataset: 'xor' } },
+    ],
+    make: (n, variant, seed) => ({ seed }),
+    counters: [],
+    resultFields: [{ key: 'accuracy', label: 'Accuracy', percent: true }],
+    note: 'Each lesson says exactly how its accuracy is measured, and the measurements differ. On data this small, accuracy also varies with the seed. Use it to see which shapes each method can and cannot represent.',
+  },
+];

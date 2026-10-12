@@ -1,0 +1,19 @@
+{
+  "name": "algorithm-atlas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An interactive field guide to algorithms. Static site, no build step.",
+  "type": "module",
+  "scripts": {
+    "start": "serve . -l ${PORT:-3000} --no-clipboard",
+    "dev": "python3 -m http.server 8975",
+    "check": "python3 tools/build.py --check",
+    "build": "python3 tools/build.py"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

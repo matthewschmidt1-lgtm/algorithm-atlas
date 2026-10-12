@@ -1,0 +1,68 @@
+/* The laboratory. Same materials as the rest of the atlas, arranged as a workbench:
+   graph-paper ground, numbered benches, instruments in labelled trays. */
+
+.lab { background-color: var(--bg-2); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 28px 28px; background-position: -1px -1px; margin-bottom: calc(-1 * clamp(64px, 10vw, 128px)); padding-bottom: clamp(64px, 10vw, 128px); }
+.lab .wrap { max-width: calc(1480px + 2 * var(--gutter)); }
+.lab-head { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s-7); align-items: end; margin-bottom: var(--s-6); }
+.lab-head > div:first-child { display: grid; gap: var(--s-3); }
+.lab-head h1 { font-size: clamp(2rem, 3.6vw, 2.9rem); }
+.lab-head-side { display: grid; gap: 6px; font-size: 0.95rem; color: var(--text-2); border-left: 2px solid var(--viz-terracotta); padding-left: var(--s-4); }
+@media (max-width: 860px) { .lab-head { grid-template-columns: 1fr; gap: var(--s-4); } }
+
+.lab-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+.lab-benches { position: sticky; top: calc(var(--nav-h) + 16px); background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r-3); padding: var(--s-3); max-height: calc(100vh - var(--nav-h) - 32px); overflow-y: auto; }
+.lab-benches .panel-cap { padding: 4px 8px 8px; }
+.bench { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 7px 8px; border-radius: var(--r-1); font-size: 0.86rem; color: var(--text-2); line-height: 1.3; }
+a.bench:hover { background: var(--surface-2); color: var(--text); }
+.bench[aria-current='true'] { background: var(--forest-ink); color: var(--on-accent); }
+.bench[aria-current='true'] .bench-no, .bench[aria-current='true'] .bench-count { color: color-mix(in srgb, var(--on-accent) 70%, transparent); }
+.bench-no { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-3); }
+.bench-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-3); }
+.bench.is-empty { color: var(--text-3); }
+.bench.is-empty .bench-count { font-family: var(--font-sans); font-style: italic; }
+@media (max-width: 1080px) {
+  .lab-layout { grid-template-columns: 1fr; }
+  .lab-benches { position: static; max-height: none; }
+  .lab-benches ul { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+  .bench { white-space: nowrap; grid-template-columns: auto auto auto; }
+}
+
+.lab-bench { display: grid; grid-template-columns: minmax(230px, 280px) minmax(0, 1fr) minmax(280px, 380px); gap: var(--s-4); align-items: start; min-width: 0; }
+.lab-bench:focus { outline: none; }
+.lab-col { display: grid; gap: var(--s-4); min-width: 0; align-content: start; }
+.lab-card { background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r-3); padding: var(--s-4); display: grid; gap: var(--s-3); min-width: 0; align-content: start; }
+.lab-card > * { min-width: 0; }
+.lab-card > .panel-cap { display: flex; align-items: center; gap: 8px; }
+.lab-card > .panel-cap::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--viz-terracotta); }
+.lab-stage { padding-bottom: 0; }
+.lab-stage .player-stage { padding: 0; }
+.lab-stage .transport, .lab-stage .player-note, .lab-stage .player-state { margin-inline: calc(-1 * var(--s-4)); }
+.lab-stage .player-state { padding-bottom: var(--s-3); }
+.lab-describe { padding-bottom: var(--s-4); }
+.lab-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.lab-select { font-family: var(--font-serif); font-size: 1.06rem; font-weight: 600; }
+.lab-siblings { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab-sib { font-size: 0.8rem; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--r-1); color: var(--text-2); }
+.lab-sib:hover { border-color: var(--text-3); color: var(--text); }
+.lab-sib[aria-current='true'] { border-color: var(--forest-ink); color: var(--forest-ink); font-weight: 600; }
+.lab-summary { font-size: 0.92rem; color: var(--text-2); }
+.lab-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.84rem; color: var(--text-2); }
+.lab-left .inputs { grid-template-columns: 1fr; }
+.lab-left .field-list, .lab-left .field-text { grid-column: auto; }
+.lab-right .tabs { gap: var(--s-4); }
+.lab-panel-body { display: grid; gap: var(--s-3); min-width: 0; font-size: 0.94rem; color: var(--text-2); }
+.lab-panel-body .code-panel { border: 0; border-radius: 0; margin-inline: calc(-1 * var(--s-4)); background: transparent; }
+.lab-panel-body .experiment { margin: 0; padding: 0; border: 0; background: none; }
+.lab-panel-body .pseudo { max-height: 520px; }
+.lab-log { max-height: 300px; overflow-y: auto; border-top: 1px solid var(--line); position: relative; }
+.lab-log li { border-bottom: 1px solid var(--line); }
+.lab-log button { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 8px; width: 100%; text-align: left; padding: 6px 4px; font-size: 0.82rem; color: var(--text-2); line-height: 1.4; }
+.lab-log button:hover { background: var(--surface-2); color: var(--text); }
+.log-no { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-3); text-align: right; }
+.lab-log li.is-future button { color: var(--text-3); opacity: 0.55; }
+.lab-log li.is-current button { color: var(--text); background: color-mix(in srgb, var(--sand) 50%, transparent); box-shadow: inset 2px 0 0 var(--viz-terracotta); }
+:root[data-theme='dark'] .lab-log li.is-current button { background: color-mix(in srgb, var(--viz-terracotta) 18%, transparent); }
+.lab-output { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); max-height: 240px; overflow: auto; }
+.lab-counters { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 1380px) { .lab-bench { grid-template-columns: minmax(220px, 270px) minmax(0, 1fr); } .lab-right { grid-column: 1 / -1; } }
+@media (max-width: 820px) { .lab-bench { grid-template-columns: 1fr; } .lab-row { grid-template-columns: 1fr; } .lab-centre { order: -1; } }

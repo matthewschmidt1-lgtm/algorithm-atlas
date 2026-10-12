@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loading</title>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/viz.css">
+<style>
+  body { padding: 20px; }
+  h1 { font: 600 15px var(--font-sans); margin-bottom: 12px; color: var(--text-2); }
+  .inputs { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+</style>
+</head>
+<body>
+<!-- Standalone player used by tools/shot.py to screenshot one frame of one lesson.
+     ?id=<algorithm id>&step=<number | mid | end>&theme=light&input=<json> -->
+<h1 id="title"></h1>
+<div id="mount"></div>
+<script type="module">
+import { createPlayer, assemblePlayer } from '../js/viz/player.js';
+const q = new URLSearchParams(location.search);
+if (q.get('theme') === 'light' || q.get('theme') === 'dark') document.documentElement.dataset.theme = q.get('theme');
+try {
+  const mod = (await import(`../content/algorithms/${q.get('id')}.js?v=${Date.now()}`)).default;
+  const player = createPlayer(mod, { input: q.get('input') ? JSON.parse(q.get('input')) : {} });
+  document.getElementById('mount').append(assemblePlayer(player), player.parts.inputs);
+  const n = player.run.frames.length;
+  const step = q.get('step') || 'mid';
+  player.seek(step === 'end' ? n - 1 : step === 'mid' ? Math.floor(n / 2) : Number(step));
+  document.getElementById('title').textContent = `${mod.meta.name} · frame ${player.index + 1} of ${n}`;
+  if (q.get('play')) {
+    // smoke check for the play loop: start at the first frame, play briefly, report how far it got
+    player.seek(0); player.play();
+    await new Promise((r) => setTimeout(r, 1500));
+    document.body.dataset.played = String(player.index);
+    try { await fetch('/__report', { method: 'POST', body: JSON.stringify({ played: player.index, hidden: document.hidden }) }); } catch { /* opened by hand */ }
+  }
+} catch (e) {
+  document.getElementById('mount').textContent = 'Failed: ' + e.message;
+}
+document.title = 'ready';
+</script>
+</body>
+</html>

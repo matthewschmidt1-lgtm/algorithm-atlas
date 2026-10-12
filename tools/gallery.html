@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View gallery</title>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/viz.css">
+<style>
+  body { padding: 20px; max-width: 1100px; margin: 0 auto; }
+  h1 { font: 600 18px var(--font-sans); margin-bottom: 4px; }
+  section { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  h2 { font: 600 13px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+</style>
+</head>
+<body>
+<!-- One sample of every view kind, as a visual reference for lesson authors.
+     Open through any static server: /tools/gallery.html (add ?theme=light for the light theme). -->
+<h1>View gallery</h1>
+<p class="muted">Sample data for each renderer in js/viz. Formats are documented in docs/AUTHORING.md.</p>
+<div id="mount"></div>
+<script type="module">
+import { createStage } from '../js/viz/stage.js';
+if (new URLSearchParams(location.search).get('theme') === 'light') document.documentElement.dataset.theme = 'light';
+
+const samples = {
+  grid: { kind: 'grid', rows: 8, cols: 16, editable: 'toggles', cells: Array.from({ length: 128 }, (_, i) => {
+    if (i === 49) return 'start'; if (i === 62) return 'goal';
+    if ([20, 36, 52, 68, 84, 27, 43, 59, 75].includes(i)) return 'wall';
+    if ([50, 51, 35, 34, 33, 66, 67].includes(i)) return 'visited';
+    if ([19, 53, 69, 82, 83].includes(i)) return 'frontier';
+    if (i === 37) return 'current';
+    if ([98, 99, 100, 101, 102].includes(i)) return 'path';
+    return 'empty';
+  }), legend: [{ label: 'start', role: 'start' }, { label: 'goal', role: 'goal' }, { label: 'frontier', role: 'frontier' }, { label: 'visited', role: 'visited' }, { label: 'path', role: 'path' }, { label: 'wall', role: 'wall' }] },
+  'grid (values + labels)': { kind: 'grid', rows: 4, cols: 10, values: Array.from({ length: 40 }, (_, i) => (Math.sin(i * 0.7) + 1) / 2), labels: Array.from({ length: 40 }, (_, i) => i + 2) },
+  table: { kind: 'table', title: 'Edit distance table', corner: '', colLabels: ['', 'k', 'i', 't', 't', 'e', 'n'], rowLabels: ['', 's', 'i', 't'],
+    cells: [[0, 1, 2, 3, 4, 5, 6], [1, 1, 2, 3, 4, 5, 6], [2, 2, 1, 2, 3, '', ''], [3, '', '', '', '', '', '']],
+    roles: { '2,4': 'current', '1,3': 'compare', '1,4': 'compare', '2,3': 'compare', '0,0': 'path', '1,1': 'path', '2,2': 'path' } },
+  rows: { kind: 'rows', rows: [
+    { label: 'Input', cells: 'AAABBC'.split('').map((t, i) => ({ t, role: i < 3 ? 'active' : 'default', sub: i })) },
+    { label: 'Output', cells: [{ t: '3A', role: 'done' }, { t: '2B', role: 'done' }] },
+    { label: 'Queue', cells: [] },
+  ] },
+  board: { kind: 'board', columns: [
+    { title: 'Alice', role: 'forest', items: [{ label: 'secret a', value: 6, role: 'forest', note: 'never sent' }, { label: 'A = g^a mod p', value: 8 }] },
+    { title: 'Public channel', role: 'ochre', items: [{ label: 'p', value: 23 }, { label: 'g', value: 5 }, { label: 'A →', value: 8, role: 'ochre' }] },
+    { title: 'Bob', role: 'moss', items: [{ label: 'secret b', value: 15, role: 'moss' }] },
+  ] },
+  bars: { kind: 'bars', values: [5, 9, 3, 7, 2, 8, 6, 1], roles: { 0: 'sorted', 1: 'sorted', 3: 'compare', 4: 'swap', 7: 'pivot' }, markers: [{ index: 3, label: 'i' }, { index: 4, label: 'j' }], range: [2, 7],
+    aux: { label: 'merge buffer', values: [1, 2, 3, null, null, null, null, null], roles: { 2: 'active' } } },
+  graph: { kind: 'graph', directed: true, nodes: [
+    { id: 'A', x: 0.1, y: 0.5, role: 'source', sub: 0 }, { id: 'B', x: 0.4, y: 0.15, role: 'done', sub: 4 }, { id: 'C', x: 0.4, y: 0.85, role: 'frontier', sub: 7 },
+    { id: 'D', x: 0.75, y: 0.5, role: 'current', sub: 9 }, { id: 'E', x: 0.95, y: 0.2, label: 'e:12', sub: '∞' } ],
+    edges: [{ u: 'A', v: 'B', w: 4, role: 'tree' }, { u: 'A', v: 'C', w: 7, role: 'active' }, { u: 'B', v: 'D', w: 5, role: 'tree' }, { u: 'C', v: 'D', w: 3, role: 'rejected' }, { u: 'D', v: 'E', w: 2 }] },
+  scene: { kind: 'scene', x: [0, 10], y: [-2, 6], axes: { xLabel: 'x', yLabel: 'f(x)' }, layers: [
+    { type: 'band', upper: Array.from({ length: 41 }, (_, i) => [i / 4, Math.sin(i / 4) * 1.5 + 2.6]), lower: Array.from({ length: 41 }, (_, i) => [i / 4, Math.sin(i / 4) * 1.5 + 1.4]), role: 'terracotta' },
+    { type: 'line', points: Array.from({ length: 41 }, (_, i) => [i / 4, Math.sin(i / 4) * 1.5 + 2]), role: 'terracotta' },
+    { type: 'bars', xs: [1, 2, 3, 4], heights: [1, 3, 2, -1], role: 'forest', alpha: 0.6 },
+    { type: 'rect', x: 6, y: 3.5, w: 1.5, h: 1.5, role: 'wall' },
+    { type: 'circle', c: [8, 0], r: 0.8, role: 'brick', fill: true },
+    { type: 'segments', segments: [[5, 0, 6.5, 1.5]], role: 'ochre', arrow: true, width: 2 },
+    { type: 'polygon', points: [[1, 4.5], [2.5, 5.5], [3.5, 4.2]], role: 'moss', fill: true },
+    { type: 'points', points: [{ x: 9, y: 5, role: 'brick', label: 'goal' }, { x: 5, y: 0, role: 'ochre', r: 5 }] },
+    { type: 'text', at: [0.3, -1.5], text: 'text layer', role: 'muted' },
+  ], legend: [{ label: 'estimate', role: 'terracotta' }, { label: 'obstacle', role: 'wall' }] },
+};
+
+const mount = document.getElementById('mount');
+for (const [name, view] of Object.entries(samples)) {
+  const sec = document.createElement('section');
+  sec.innerHTML = `<h2>${name}</h2><div class="host"></div>`;
+  mount.append(sec);
+  createStage(sec.querySelector('.host')).update([view]);
+}
+document.title = 'ready';
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone-width preview</title>
+<style>
+  body { margin: 0; background: #d9d4c7; display: flex; gap: 24px; padding: 24px; align-items: flex-start; font: 13px system-ui; }
+  figure { margin: 0; }
+  iframe { width: 390px; height: 2400px; border: 0; background: #fff; display: block; }
+  figcaption { padding: 6px 0; color: #444; }
+</style>
+</head>
+<body>
+<!-- Shows site routes in 390px-wide frames, because desktop Chrome will not open a window that narrow.
+     ?r=<route>,<route>   e.g. tools/phone.html?r=/,/algorithm/dijkstra,/lab/quick-sort
+     ?h=<frame height>  ?theme=dark -->
+<script>
+  const q = new URLSearchParams(location.search);
+  const routes = (q.get('r') || '/').split(',');
+  for (const r of routes) {
+    const f = document.createElement('figure');
+    const i = document.createElement('iframe');
+    i.src = '../index.html' + (q.get('theme') ? '?theme=' + q.get('theme') : '') + '#' + r;
+    if (q.get('h')) i.style.height = q.get('h') + 'px';
+    const c = document.createElement('figcaption'); c.textContent = r;
+    f.append(c, i); document.body.append(f);
+  }
+</script>
+</body>
+</html>
