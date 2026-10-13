@@ -300,6 +300,9 @@ export default async function render({ params, query }) {
   return {
     el: root, title: m.name,
     afterMount() {
+      // ?predict=1 opens the lesson with the prediction experiment switched on, for trying it with learners
+      const box = player.parts.predict.querySelector('input');
+      if (query.predict === '1' && !player.parts.predict.hidden && !box.checked) box.click();
       const target = query.at && body.querySelector(`#${CSS.escape(query.at)}`);
       if (target) {
         // a link to a deeper section opens the lesson at that depth, whatever level was saved

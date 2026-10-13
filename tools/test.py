@@ -2,7 +2,7 @@
 """Algorithm Atlas site tests.
 
     python3 tools/test.py                  run every suite
-    python3 tools/test.py --suite search   run one suite (search, defects, index, links, learning, player)
+    python3 tools/test.py --suite search   run one suite (search, defects, index, links, learning, player, followups)
     python3 tools/test.py --bench          also print the search benchmark, query by query
     python3 tools/test.py --json out.json  also save the full report
 

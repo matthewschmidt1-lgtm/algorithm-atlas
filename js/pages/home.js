@@ -23,6 +23,16 @@ export default async function render() {
   const info = C.buildInfo;
 
   /* ---- hero ---- */
+  // The main button leads to a first success: the gentlest lesson of the beginners' path,
+  // which keeps offering the next one. A returning reader is taken to where they left off.
+  const beginners = C.pathById['absolute-beginners'] || C.paths.find((p) => p.level === 'beginner');
+  const modules = beginners ? beginners.stages.flatMap((s) => s.modules).filter((m) => C.algoById[m.algo]) : [];
+  const seen = store.explored();
+  const resume = modules.find((m) => !seen.has(m.algo));
+  const first = !modules.length ? null
+    : seen.size && resume ? { href: `#/algorithm/${resume.algo}?path=${beginners.id}`, label: `Continue with ${C.algoById[resume.algo].name}` }
+      : seen.size ? { href: '#/profile', label: 'Pick up where you left off' }
+        : { href: `#/algorithm/${modules[0].algo}?path=${beginners.id}`, label: 'Start with a first lesson' };
   const netHost = h('div.hero-net', { 'aria-hidden': 'true' });
   const search = createSearchBox({ large: true });
   const hero = h('section.hero',
@@ -33,11 +43,13 @@ export default async function render() {
         h('h1', 'Every Algorithm Has a ', h('em', 'Universe'), ' Behind It.'),
         h('p.lede', 'Explore the algorithms that power intelligence, mathematics, science, technology, and the world around us. Understand how they work. Experiment with their logic. Discover how everything connects.'),
         h('div.hero-actions',
-          h('a.btn.btn-accent.btn-lg', { href: '#/explore' }, 'Explore the Atlas'),
-          h('a.btn.btn-lg', { href: '#/lab' }, 'Enter the Interactive Lab')),
+          first ? h('a.btn.btn-accent.btn-lg', { href: first.href }, first.label) : null,
+          h('a.btn.btn-lg', { href: '#/explore' }, 'Explore the Atlas')),
         h('div.hero-search', search.el,
           h('p.hero-try', 'Try ',
-            ['shortest route', 'compress files', 'make a neural network learn'].map((q, i) => [i ? ', ' : '', h('a', { href: `#/search?q=${encodeURIComponent(q)}` }, q)]), '. Or ', h('a', { href: '#/problems' }, 'browse by what you want to do'), '.')))));
+            ['shortest route', 'compress files', 'make a neural network learn'].map((q, i) => [i ? ', ' : '', h('a', { href: `#/search?q=${encodeURIComponent(q)}` }, q)]), '. Or ', h('a', { href: '#/problems' }, 'browse by what you want to do'), '.'),
+          h('p.hero-try.hero-suggest', 'Not sure where to begin? ',
+            h('button.hero-suggest-btn', { type: 'button', onclick: () => openOnboarding({ onDone: (answered) => { if (answered) navigate('#/profile'); } }) }, 'Answer four questions and get a suggestion'), '.')))));
   queueMicrotask(() => requestAnimationFrame(() => cleanups.push(mountHeroNetwork(netHost))));
 
   /* ---- start from a problem ---- */
@@ -113,9 +125,10 @@ export default async function render() {
   const paintYou = () => {
     clear(you);
     if (!store.state.profile) {
-      you.append(h('p', h('strong', 'Not sure where to start? '), 'Answer four short questions and the atlas will suggest a first lesson. No account is needed.'),
-        h('button.btn', { type: 'button', onclick: () => openOnboarding({ onDone: paintYou }) }, 'Suggest a starting point'));
+      // the invitation to answer four questions now sits in the hero, beside the search
+      you.hidden = true;
     } else {
+      you.hidden = false;
       const rec = recommendLessons(1)[0];
       you.append(rec ? h('p', h('strong', 'Suggested next for you: '), h('a.link', { href: `#/algorithm/${rec.a.id}` }, rec.a.name), `. ${rec.reason}`) : h('p', 'You have opened every published lesson.'),
         h('a.btn', { href: '#/profile' }, 'Open your atlas'));

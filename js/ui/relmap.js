@@ -76,7 +76,7 @@ export function createRelMap(centerRef, items, { onSelect = null, map = true } =
       const title = onSelect
         ? h('button.link.rel-name', { type: 'button', onclick: () => onSelect(s.ref) }, r.name)
         : h('a.link.rel-name', { href: r.href }, r.name);
-      return h('li', title, r.kind === 'concept' || r.kind === 'discipline' ? h('span.ref-kind', r.kind) : null, h('p', s.why));
+      return h('li', title, r.kind === 'concept' || r.kind === 'discipline' ? h('span.ref-kind', r.kind) : null, s.why ? h('p', s.why) : null);
     }))));
   if (waiting.length) groups.push(h('div.rel-group.is-planned', { dataset: { type: 'planned' } },
     h('h4', h('i.dot.is-hollow'), 'Planned, not yet written'),

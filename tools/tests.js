@@ -978,6 +978,123 @@ if (on('player')) {
   });
 }
 
+/* ------------------------------------------------------------------ follow-ups */
+if (on('followups')) {
+  suite('Follow-ups');
+  const { execute } = await import('../js/core/tracer.js');
+  const N2 = await import('../js/core/next.js');
+
+  await test('Home: a new visitor\'s main button opens a first lesson on the beginners\' path', async () => {
+    // start as someone who has never been here: nothing saved in this browser
+    localStorage.clear();
+    const p = await open('/', '.hero-actions .btn-accent');
+    try {
+      const doc = p.doc;
+      const main = doc.querySelector('.hero-actions .btn-accent');
+      const path = C.pathById['absolute-beginners'];
+      const firstModule = path.stages.flatMap((st) => st.modules).find((m) => C.algoById[m.algo]).algo;
+      assert(main.textContent === 'Start with a first lesson', `the main button reads "${main.textContent}"`);
+      assert(main.getAttribute('href') === `#/algorithm/${firstModule}?path=${path.id}`, `it leads to ${main.getAttribute('href')}`);
+      assert([...doc.querySelectorAll('.hero-actions .btn')].some((b) => b.textContent === 'Explore the Atlas'), 'the way to the map is gone from the hero');
+      assert(doc.querySelector('.hero .hero-suggest-btn'), 'the four questions are not offered beside the search');
+      assert(doc.querySelector('nav.primary a[href="#/lab"]'), 'the lab is no longer in the navigation');
+      main.click();
+      await until(() => doc.querySelector('.lesson .pager-link.is-next'), 10000, 'the first lesson did not open with a next step');
+      assert(/^Next in /.test(doc.querySelector('.pager-link.is-next .pager-dir').textContent), 'the first lesson does not lead on along the path');
+      assert(doc.querySelector('.lesson').dataset.depth === '1', 'a new visitor\'s first lesson does not open at the simplest level');
+      return `${C.algoById[firstModule].name}, then ${doc.querySelector('.pager-link.is-next .pager-name').textContent}`;
+    } finally { p.close(); }
+  });
+  await test('Home: answering the four questions goes straight to the suggestions', async () => {
+    const p = await open('/', '.hero .hero-suggest-btn');
+    try {
+      p.$('.hero .hero-suggest-btn').click();
+      await until(() => p.$('dialog.onboard[open]'), 3000, 'the questions did not open');
+      p.$('dialog.onboard button[type="submit"]').click();
+      await until(() => /#\/profile/.test(p.win.location.hash) && p.$('.lesson-row, .lesson-list a'), 6000, `after answering, the address is ${p.win.location.hash}`);
+    } finally { p.win.localStorage.clear(); p.close(); }
+  });
+  await test('The fonts cannot hold the page back', async () => {
+    const html = await (await fetch('/index.html', { cache: 'no-store' })).text();
+    const links = html.match(/<link[^>]+fonts\.googleapis\.com\/css2[^>]*>/g) || [];
+    assert(links.length >= 1, 'the font stylesheet is missing');
+    const blocking = links.filter((l) => /rel="stylesheet"/.test(l) && !/media="print"/.test(l) && !html.includes(`<noscript>${l}</noscript>`));
+    assert(!blocking.length, 'the font stylesheet is loaded in a way that blocks the page');
+  });
+  await test('An address for a demonstration or comparison that does not exist says so', async () => {
+    for (const [hash, expect] of [['/lab/nope', /no demonstration at this address/i], ['/compare/nope', /no comparison at this address/i], [`/lab/${C.planned[0].id}`, /not written yet/i]]) {
+      const p = await open(hash, '#main h1');
+      try { assert(expect.test(p.$('#main h1').textContent), `${hash} shows "${p.$('#main h1').textContent}"`); assert(!p.$('.player-stage'), `${hash} runs a demonstration`); } finally { p.close(); }
+    }
+  });
+  await test('Related concepts: a reason is given only where lessons involve both, and it names them', async () => {
+    const uses = (id) => new Set(C.algos.filter((a) => ((C.conceptById[id].see || []).includes(a.id)) || (a.prerequisites || []).includes(`concept:${id}`) || (a.connections || []).some((c) => c.to === `concept:${id}`)).map((a) => a.name));
+    let withReason = 0, without = 0; const bad = [];
+    for (const c of C.concepts) for (const r of c.related || []) {
+      if (!C.conceptById[r]) continue;
+      const why = C.sharedGround(c.id, r);
+      const a = uses(c.id), b = uses(r); const both = [...a].filter((x) => b.has(x));
+      if (!both.length) { without++; if (why) bad.push(`${c.id} and ${r}: a reason is given but no lesson involves both`); continue; }
+      withReason++;
+      if (!why.startsWith('Both come up in ')) bad.push(`${c.id} and ${r}: "${why}"`);
+      for (const name of both.slice(0, 3)) if (!why.includes(name)) bad.push(`${c.id} and ${r}: the reason leaves out ${name}`);
+      if (/usually learned together/.test(why)) bad.push(`${c.id} and ${r}: still the generic reason`);
+    }
+    assert(!bad.length, bad.slice(0, 3).join(' | '));
+    const p = await open('/concept/greedy', '.concept-related-list li');
+    try { assert(p.$$('.concept-related-list li').length === (C.conceptById.greedy.related || []).filter((r) => C.conceptById[r]).length, 'the page does not list every related concept'); } finally { p.close(); }
+    return `${withReason} pairs with a reason from the lessons, ${without} listed without one`;
+  });
+  await test('Next steps: a lesson that puts this one to use comes before a sideways alternative', () => {
+    const tally = {};
+    for (const a of C.algos) { const st = N2.nextStep(a.id); const k = st ? st.kind : 'none'; tally[k] = (tally[k] || 0) + 1; }
+    const hs = N2.nextStep('heap-sort');
+    assert(hs && hs.kind === 'application' && hs.label === 'Where this is put to use', `Heap Sort leads to ${hs && hs.ref} as "${hs && hs.label}"`);
+    assert(!tally.none, `${tally.none} lessons have no next step`);
+    return Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(', ');
+  });
+  await test('Step notes: a step that calls something final says why', async () => {
+    const FINAL = /final (position|place|distance)|not move again|never moves again|for good/i;
+    const REASON = /because|since|, so | so it| so no|nothing|every |already|at least as|only one|single value/i;
+    const bad = []; let seen = 0;
+    for (const a of C.algos) {
+      const L = await C.loadLesson(a.id);
+      const run = execute(L, {});
+      const told = new Set();
+      for (const f of run.frames) {
+        const note = String(f.note || '').replace(/\*\*/g, '');
+        if (!FINAL.test(note)) continue;
+        const shape = note.replace(/-?\d+(\.\d+)?/g, '#').slice(0, 50);
+        if (told.has(shape)) continue; told.add(shape); seen++;
+        if (!REASON.test(note)) bad.push(`${a.id}: "${note.slice(0, 90)}"`);
+      }
+    }
+    assert(!bad.length, `${bad.length}: ${bad.slice(0, 3).join(' | ')}`);
+    return `${seen} kinds of step across ${C.algos.length} lessons`;
+  });
+  await test('Comparison page: the arrow keys step every panel', async () => {
+    const p = await open(`/compare/${C.compareGroups[0].id}`, '.cmp-transport');
+    try {
+      p.$('.cmp-transport').scrollIntoView({ block: 'center', behavior: 'instant' });
+      await sleep(300);
+      if (p.doc.activeElement && p.doc.activeElement !== p.doc.body) p.doc.activeElement.blur();
+      const label = () => p.$('.cmp-transport .step-label, .cmp-transport span:last-child').textContent;
+      const before = label();
+      p.doc.body.dispatchEvent(new p.win.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+      p.doc.body.dispatchEvent(new p.win.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+      assert(/Shared step 3 /.test(label()), `after two presses the label reads "${label()}" (it was "${before}")`);
+      p.doc.body.dispatchEvent(new p.win.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }));
+      assert(/Shared step 2 /.test(label()), `after the left arrow the label reads "${label()}"`);
+    } finally { p.close(); }
+  });
+  await test('A link can open a lesson with the prediction experiment switched on', async () => {
+    const p = await open('/algorithm/binary-search?predict=1', '.player-note');
+    try { await sleep(150); assert(p.$('.player-predict input').checked, 'the experiment is not on'); } finally { p.close(); }
+    const q = await open('/algorithm/quick-sort?predict=1', '.player-note .note-text');
+    try { assert(q.$('.player-predict').hidden, 'a lesson without questions shows the experiment'); } finally { q.close(); }
+  });
+}
+
 /* ------------------------------------------------------------------ report */
 const payload = { results, bench };
 document.getElementById('out').textContent = results.map((r) => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.suite}: ${r.name}${r.ok ? '' : '\n      ' + r.detail}`).join('\n');

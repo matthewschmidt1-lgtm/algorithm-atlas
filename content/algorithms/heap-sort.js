@@ -92,7 +92,7 @@ function run(input, t) {
   for (let end = n - 1; end >= 1; end--) {
     swap(0, end);
     heapSize = end;
-    t.frame(() => ({ line: [4, 5], note: `The root, ${a[end]}, is the largest value in the heap. Swap it with ${a[0]}, the last value in the heap. ${a[end]} is now in its final position, and the heap shrinks to ${end} ${end === 1 ? 'value' : 'values'}.${end > 1 ? ` The new root, ${a[0]}, may be too small for its place and is sifted down next.` : ''}`,
+    t.frame(() => ({ line: [4, 5], note: `The root, ${a[end]}, is the largest value in the heap. Swap it with ${a[0]}, the last value in the heap. Nothing left in the heap is larger, so ${a[end]} is now in its final position, and the heap shrinks to ${end} ${end === 1 ? 'value' : 'values'}.${end > 1 ? ` The new root, ${a[0]}, may be too small for its place and is sifted down next.` : ''}`,
       views: views({ 0: 'swap', [end]: 'swap' }, [{ index: 0, label: 'root' }, { index: end, label: 'end' }]), vars: { end, 'heap size': end } }));
     siftDown(0, end);
   }

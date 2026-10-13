@@ -69,9 +69,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
 
 
+class QuietServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        # the browser is closed as soon as it has reported, often in the middle of a request
+        pass
+
+
 def serve():
     handler = functools.partial(Handler, directory=str(ROOT))
-    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    httpd = QuietServer(("127.0.0.1", 0), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 

@@ -54,7 +54,7 @@ function run(input, t) {
     }
     sortedFrom = end;
     t.frame(() => ({ line: 9,
-      note: `Pass ${passes} is finished. The largest value in the unsorted part, ${a[end]}, has been carried to position ${end} and will not move again.${swapped ? '' : ' The pass made no swaps, but stopping early is switched off, so the passes continue.'}`,
+      note: `Pass ${passes} is finished. The largest value in the unsorted part, ${a[end]}, has been carried to position ${end}. Nothing to its left is larger, so it will not move again.${swapped ? '' : ' The pass made no swaps, but stopping early is switched off, so the passes continue.'}`,
       views: view(), vars: { pass: passes, end, swapped } }));
     end--;
   }

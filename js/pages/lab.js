@@ -17,6 +17,14 @@ import { levelGlyph, plural } from '../ui/parts.js';
 export default async function render({ params }) {
   const byCat = (id) => C.algos.filter((a) => a.lab === id).sort((a, b) => a.order - b.order);
   const firstCat = C.labCategories.find((c) => byCat(c.id).length);
+  if (params.id && !C.algoById[params.id]) {
+    // an address that names something else must say so, not quietly show a different demonstration
+    const planned = C.plannedById[params.id];
+    return { title: 'Demonstration not found', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Interactive Lab'),
+      h('h1', planned ? `${planned.name} is not written yet.` : 'There is no demonstration at this address.'),
+      h('p.lede', planned ? 'It is a planned lesson, so there is nothing to run. Every demonstration in the lab belongs to a published lesson.' : 'The link may be out of date, or the name may be misspelt.')),
+      h('p', h('a.btn.btn-primary', { href: '#/lab' }, 'Open the lab'), ' ', h('a.btn', { href: '#/library' }, 'Browse the library'))) };
+  }
   const meta = (params.id && C.algoById[params.id]) || (firstCat ? byCat(firstCat.id)[0] : null);
   if (!meta) {
     return { title: 'Interactive Lab', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Interactive Lab'), h('h1', 'The laboratory is empty.'), h('p.lede', 'No lessons with demonstrations are published yet.'))) };

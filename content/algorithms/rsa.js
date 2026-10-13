@@ -194,7 +194,7 @@ function run(input, t) {
   const fixed = c === m;
   t.frame(() => ({
     line: 15,
-    note: `The ciphertext is **c = ${fmt(c)}**. The sender transmits it, and anyone may see it.${fixed ? ` Notice that c equals m. The messages 0, 1 and n − 1 always encrypt to themselves, one of several reasons real systems never encrypt a raw message.` : ''}${plainPower ? ` Notice that ${m}^${e} = ${fmt(m ** e)} is smaller than n, so no remainder was ever taken. The ciphertext is an ordinary power, and anyone can undo it with an ordinary root. Small messages are one reason padding is essential.` : ''}`,
+    note: `The ciphertext is **c = ${fmt(c)}**. The sender transmits it, and anyone may see it.${fixed ? ` Notice that c equals m. The messages 0, 1 and n − 1 always encrypt to themselves, because 0, 1 and −1 are unchanged by an odd power and e is always odd. That is one of several reasons real systems never encrypt a raw message.` : ''}${plainPower ? ` Notice that ${m}^${e} = ${fmt(m ** e)} is smaller than n, so no remainder was ever taken. The ciphertext is an ordinary power, and anyone can undo it with an ordinary root. Small messages are one reason padding is essential.` : ''}`,
     views: picture(['c', 'gotc'], { m: 'done' }),
     vars: { m, c },
   }));

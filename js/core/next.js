@@ -12,11 +12,12 @@ const published = (ref) => !!C.algoById[ref];
 //   before        this lesson says it assumes them
 //   deeper        this lesson says they go further, or they say they build on this lesson
 //   alternatives  this lesson says they solve the same problem, or are a variant
-//   nearby        this lesson says it is put to use in them, or that they are related
+//   uses          this lesson says it is put to use in them
+//   nearby        this lesson says they are related
 //   planned       named as going further, but not written yet
 export function around(id) {
   const a = C.algoById[id];
-  const out = { before: [], deeper: [], alternatives: [], nearby: [], planned: [] };
+  const out = { before: [], deeper: [], alternatives: [], uses: [], nearby: [], planned: [] };
   if (!a) return out;
   const own = a.connections || [];
   const seen = new Set();
@@ -36,10 +37,11 @@ export function around(id) {
     const assumes = (link && link.type === 'prerequisite') || (b.prerequisites || []).includes(id);
     if (assumes) push(out.deeper, b.id, 'builds-on', link ? link.why : `${b.name} lists this lesson among the things it assumes.`);
   }
-  // Last, lessons this one puts to use or calls related. They are not deeper, and are not offered as such.
+  // Lessons this one says it is put to use in, and lessons it calls related. Neither is
+  // deeper, and neither is offered as such.
   for (const c of own) {
     if (c.to.includes(':') || !published(c.to)) continue;
-    if (c.type === 'application') push(out.nearby, c.to, 'application', c.why);
+    if (c.type === 'application') push(out.uses, c.to, 'application', c.why);
     else if (c.type === 'related') push(out.nearby, c.to, 'related', c.why);
   }
   return out;
@@ -52,8 +54,9 @@ export const STEP_LABELS = {
 };
 
 // One step forward from a lesson, or null. In order: the next lesson of the path the reader
-// arrived by, then something deeper, then another method for the same problem, then a
-// lesson it is put to use in or calls related. Each is labelled as what it is. Lessons the
+// arrived by, then something deeper, then a lesson that puts this one to use (which moves
+// the reader on), then another method for the same problem (which moves them sideways),
+// then a lesson it calls related. Each is labelled as what it is. Lessons the
 // reader has not opened are preferred.
 export function nextStep(id, { pathId = null } = {}) {
   const path = pathId && C.pathById[pathId];
@@ -65,7 +68,7 @@ export function nextStep(id, { pathId = null } = {}) {
   const explored = store.explored();
   const pick = (list) => list.find((x) => !explored.has(x.ref)) || list[0];
   const r = around(id);
-  const step = pick(r.deeper) || pick(r.alternatives) || pick(r.nearby);
+  const step = pick(r.deeper) || pick(r.uses) || pick(r.alternatives) || pick(r.nearby);
   return step ? { ...step, label: STEP_LABELS[step.kind] } : null;
 }
 

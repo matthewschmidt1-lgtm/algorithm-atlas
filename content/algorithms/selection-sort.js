@@ -49,7 +49,7 @@ function run(input, t) {
       t.count('writes', 2);
       swaps++;
       done = i + 1;
-      t.frame(() => ({ line: [7, 8], note: `The search is over: ${a[i]} is the smallest value left. Swap it with ${a[min]}, so that ${a[i]} lands at position ${i}. It will not move again.`,
+      t.frame(() => ({ line: [7, 8], note: `The search is over: ${a[i]} is the smallest value left. Swap it with ${a[min]}, so that ${a[i]} lands at position ${i}. Every value still to its right is at least as large, so it will not move again.`,
         views: view({ [i]: 'swap', [min]: 'swap' }, [{ index: i, label: 'i' }, { index: min, label: 'min' }]), vars: { i, min } }));
     } else {
       done = i + 1;

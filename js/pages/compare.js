@@ -21,6 +21,10 @@ export default async function render({ params, query }) {
     return { title: 'Compare', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Compare'), h('h1', 'Nothing to compare yet.'), h('p.lede', 'Comparison needs at least two published lessons that solve the same problem.'))) };
   }
   const group = groups.find((g) => g.id === params.group);
+  if (params.group && !group) {
+    return { title: 'Comparison not found', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Compare'), h('h1', 'There is no comparison at this address.'), h('p.lede', 'The link may be out of date. Comparisons exist only for problems that two or more published lessons solve.')),
+      h('p', h('a.btn.btn-primary', { href: '#/compare' }, 'See all comparisons'))) };
+  }
   if (!group) {
     const el = h('div.page.wrap',
       pageHead({ eyebrow: 'Compare', title: 'Compare algorithms side by side',
@@ -164,9 +168,22 @@ export default async function render({ params, query }) {
           playBtn,
           h('button.icon-btn', { type: 'button', 'aria-label': 'Step all forward', html: icon('stepFwd'), onclick: () => { stop(); seekAll(at + 1); } })),
         stepLabel),
+      h('p.player-keys.cmp-keys', h('kbd', '←'), ' ', h('kbd', '→'), ' step every panel back and forward.'),
       h('div.cmp-cards', { style: { '--n': ids.length } }, cards),
       h('p.fig-cap', h('b', 'Read this carefully'), 'All panels advance one recorded step at a time, on a small version of the same input. A "step" is whatever each lesson chose to show, so the panels are aligned by step number, not by time or by work done. Use the table above for cost.'));
     seekAll(0);
+    // The arrow keys step all panels together while they are on screen, as on a lesson.
+    if (syncHost.onKey) document.removeEventListener('keydown', syncHost.onKey);
+    syncHost.onKey = (e) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, [role="radiogroup"], [role="tablist"], [role="listbox"], [role="combobox"], dialog[open], .settings-panel')) return;
+      const r = syncHost.getBoundingClientRect();
+      if (!syncHost.isConnected || r.bottom < 120 || r.top > window.innerHeight - 120) return;
+      e.preventDefault();
+      stop(); seekAll(at + (e.key === 'ArrowRight' ? 1 : -1));
+    };
+    document.addEventListener('keydown', syncHost.onKey);
+    cleanups.push(() => document.removeEventListener('keydown', syncHost.onKey));
   }
 
   /* ---- controls ---- */

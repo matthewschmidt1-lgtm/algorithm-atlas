@@ -218,17 +218,27 @@ export function createUniverse(host, { onSelect = () => {}, height } = {}) {
     }
     if (showLabels || (hover && hover.type === 'algorithm') || (sel && sel.type === 'algorithm')) {
       g.font = `500 11px ${pal.sans}`;
+      // A lesson's name is left out where it would print over a field's name or over another
+      // lesson's. Zooming in makes room for it. The lesson pointed at or selected is always named.
+      const wanted = [];
       for (const hl of model.hills) for (const m of hl.markers) {
         const forced = (hover && hover.type === 'algorithm' && hover.id === m.a.id) || (sel && sel.type === 'algorithm' && sel.id === m.a.id);
-        if (!showLabels && !forced) continue;
+        if (showLabels || forced) wanted.push({ hl, m, forced });
+      }
+      wanted.sort((a, b) => Number(b.forced) - Number(a.forced));
+      for (const { hl, m, forced } of wanted) {
         const [sx, sy] = toScreen(m.x, m.y);
         if (sx < -60 || sx > w + 60 || sy < -20 || sy > h + 20) continue;
         const right = m.x >= hl.d.pos[0];
-        g.textAlign = right ? 'left' : 'right';
         const tx = sx + (right ? 8 : -8);
         const tw = g.measureText(m.a.name).width;
+        const x0 = right ? tx - 2 : tx - tw - 2;
+        const box = [x0, sy - 8, x0 + tw + 4, sy + 7];
+        if (!forced && placed.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+        placed.push(box);
+        g.textAlign = right ? 'left' : 'right';
         g.fillStyle = alpha(pal.bg, 0.85);
-        g.fillRect(right ? tx - 2 : tx - tw - 2, sy - 8, tw + 4, 15);
+        g.fillRect(x0, sy - 8, tw + 4, 15);
         g.fillStyle = forced ? pal.terracotta : pal.text2;
         g.fillText(m.a.name, tx, sy + 3.5);
       }

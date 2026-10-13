@@ -67,7 +67,7 @@ function run(input, t) {
 
   sorted = sortEdges(sorted);
   isSorted = true;
-  t.frame(() => ({ line: 2, note: `Sort the ${graph.edges.length} edges from lightest to heaviest. They will be examined in exactly this order, and each one is either accepted or rejected for good.`, views: views(), vars: { edges: graph.edges.length } }));
+  t.frame(() => ({ line: 2, note: `Sort the ${graph.edges.length} edges from lightest to heaviest. They will be examined in exactly this order, and each one is either accepted or rejected for good. A rejected edge joins two nodes that are already connected, and they stay connected, so it can never be needed later.`, views: views(), vars: { edges: graph.edges.length } }));
 
   let examined = 0;
   for (const e of sorted) {
@@ -91,7 +91,7 @@ function run(input, t) {
     tree.push({ u, v, w });
     weight += w;
     const count = tree.length, total = weight;
-    t.frame(() => ({ line: [6, 7, 8], note: `The two ends are in different groups, so no chosen edge connects them yet. **Accept** ${u}-${v} and merge the two groups. The tree now has ${count} ${count === 1 ? 'edge' : 'edges'} with total weight ${total}.`, views: views({ edge: e }), vars: { edge: `${u}-${v}`, weight: w, 'tree weight': total, 'tree edges': count } }));
+    t.frame(() => ({ line: [6, 7, 8], note: `The two ends are in different groups, so no chosen edge connects them yet. **Accept** ${u}-${v} and merge the two groups. Every edge still to come is at least as heavy, so nothing cheaper could join these groups later. The tree now has ${count} ${count === 1 ? 'edge' : 'edges'} with total weight ${total}.`, views: views({ edge: e }), vars: { edge: `${u}-${v}`, weight: w, 'tree weight': total, 'tree edges': count } }));
   }
 
   const groupCount = new Set(ids.map(rootOf)).size;

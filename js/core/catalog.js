@@ -100,6 +100,23 @@ export function taxonomy(list = algos) {
   }));
 }
 
+// Lessons that involve a concept: it teaches them (concept.see), or they assume or connect to it.
+export function lessonsUsing(conceptId) {
+  const ref = `concept:${conceptId}`;
+  const see = new Set((conceptById[conceptId] || {}).see || []);
+  return algos.filter((a) => see.has(a.id) || (a.prerequisites || []).includes(ref) || (a.connections || []).some((c) => c.to === ref));
+}
+// Why two concepts are listed together, stated only from what the lessons show: the lessons
+// in which both come up. An empty string when no published lesson involves both.
+export function sharedGround(conceptA, conceptB) {
+  const b = new Set(lessonsUsing(conceptB).map((a) => a.id));
+  const both = lessonsUsing(conceptA).filter((a) => b.has(a.id));
+  if (!both.length) return '';
+  const names = both.slice(0, 3).map((a) => a.name);
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `Both come up in ${list}${both.length > 3 ? `, and ${both.length - 3} more ${both.length - 3 === 1 ? 'lesson' : 'lessons'}` : ''}.`;
+}
+
 // All edges of the knowledge graph, each with the reason it exists.
 let edgeCache = null;
 export function graphEdges() {
@@ -114,7 +131,7 @@ export function graphEdges() {
     }
   }
   for (const d of disciplines) for (const r of d.related) edges.push({ from: `discipline:${d.id}`, to: `discipline:${r.id}`, type: 'related', why: r.why });
-  for (const c of concepts) for (const r of c.related || []) edges.push({ from: `concept:${c.id}`, to: `concept:${r}`, type: 'related', why: `${c.name} and ${(conceptById[r] || {}).name || r} are usually learned together.` });
+  for (const c of concepts) for (const r of c.related || []) edges.push({ from: `concept:${c.id}`, to: `concept:${r}`, type: 'related', why: sharedGround(c.id, r) });
   edgeCache = edges;
   return edges;
 }

@@ -20,7 +20,7 @@ export default async function render({ params }) {
     c.example ? h('section.concept-sec', h('p.lsec-kicker', 'For example'), h('div.prose', { html: `<p>${rich(c.example)}</p>` })) : null,
     c.caution ? h('section.concept-sec', h('ul.myths', h('li', { html: rich(c.caution) }))) : null,
     direct.length || mentions.length ? h('section.concept-sec', h('h2', 'Where you can see it'), h('div.lesson-list', [...direct, ...mentions].map((a) => lessonRow(a)))) : null,
-    (c.related || []).length ? h('section.concept-sec', h('h2', 'Related concepts'), h('p.concept-related', c.related.map((r, i) => [i ? ' · ' : '', refLink(`concept:${r}`)]))) : null);
+    (c.related || []).length ? h('section.concept-sec', h('h2', 'Related concepts'), h('ul.concept-related-list', c.related.filter((r) => C.conceptById[r]).map((r) => { const why = C.sharedGround(c.id, r); return h('li', refLink(`concept:${r}`), why ? h('span.concept-why', why) : null); }))) : null);
   renderMath(el);
   return { el, title: c.name };
 }

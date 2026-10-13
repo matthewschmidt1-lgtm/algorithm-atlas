@@ -138,7 +138,7 @@ function run(input, t) {
   const g = a;
   const total = steps.length;
   t.frame(() => ({ line: extended ? [5, 15] : 5,
-    note: `The last remainder that was not zero is **${g}**, so gcd(${a0}, ${b0}) = ${g}. Square tiles of side ${g} cover the whole ${W} by ${H} rectangle exactly, and no larger square can. It took ${plural(total, 'division')}.${extended ? ` The extended algorithm also gives ${combination(g, x0, a0, y0, b0)}.` : ''}${g === 1 ? ` A gcd of 1 means ${a0} and ${b0} share no factor: they are **coprime**.` : ''}`,
+    note: `The last remainder that was not zero is **${g}**, so gcd(${a0}, ${b0}) = ${g}. Square tiles of side ${g} cover the whole ${W} by ${H} rectangle exactly. No larger square can, because anything that divides both ${a0} and ${b0} must also divide every remainder along the way, and so must divide ${g}. It took ${plural(total, 'division')}.${extended ? ` The extended algorithm also gives ${combination(g, x0, a0, y0, b0)}.` : ''}${g === 1 ? ` A gcd of 1 means ${a0} and ${b0} share no factor: they are **coprime**.` : ''}`,
     views: views({ done: true }), vars: extended ? { gcd: g, x: x0, y: y0 } : { gcd: g } }));
 
   return { gcd: g, a: a0, b: b0, steps, divisions: total, x: x0, y: y0 };
