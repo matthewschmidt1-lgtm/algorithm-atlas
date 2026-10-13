@@ -101,7 +101,7 @@ export default {
     analogy: {
       title: 'The higher-or-lower guessing game',
       text: 'A friend picks a whole number from 1 to 100 and answers each guess with "higher", "lower" or "correct". Guess 50. If the answer is "higher", the number is somewhere from 51 to 100, so guess the middle of that range. Keep guessing the middle of whatever range is left. Each answer removes half of the remaining numbers, and seven guesses are always enough, whatever number was picked.',
-      limits: 'In the game the number is always there. A list might not contain the target, so the search must also notice when the range has shrunk to nothing. The game also uses every number from 1 to 100 with no gaps. A real list has gaps, so binary search halves the range of positions, not the range of values, and looks at whatever value sits in the middle position. Last, your friend can answer about any guess at once. A computer needs to be able to jump straight to any position, which an array allows and a chain of linked items does not.',
+      limits: "In the game the number is always there. A list might not contain the target, so the search must also notice when the range has shrunk to nothing. The game also uses every number from 1 to 100 with no gaps. A real list has gaps, so binary search halves the range of positions, not the range of values, and looks at whatever value sits in the middle position. Last, your friend can answer about any guess at once. A computer can do that only if it is able to jump straight to any position in the list.",
     },
   },
 

@@ -173,7 +173,7 @@ export default {
     where: 'It appears on its own in budgeting, loading and selection problems, and more often as a piece of something larger: the method used to solve industrial cutting-stock problems calls a knapsack solver repeatedly, and integer programming solvers reason about each constraint as a knapsack.',
     analogy: {
       title: 'A packing notebook for every bag size',
-      text: 'Suppose you kept a notebook that says, for every bag size up to yours, the best load you could make from the items looked at so far. A new item arrives. For each bag size you now have an easy question. Leave the item, and the notebook\'s old answer stands. Take it, and you get its value plus the notebook\'s answer for the smaller bag that has room for everything else. Write down the better of the two. After the last item, the entry for your real bag is the answer.',
+      text: "Suppose you kept a notebook that says, for every bag size up to yours, the best load you could make from the items looked at so far. A new item arrives. For each bag size you now have an easy question. Leave the item, and the notebook's old answer stands. Take it, and you get its value plus the notebook's old answer for a bag that is smaller by the item's weight, which is the room left for everything else. Write down the better of the two. After the last item, the entry for your real bag is the answer.",
       limits: 'The notebook has one line per bag size, so it only works when weights are whole numbers and the capacity is not enormous. Real packing also involves shape and volume, and real items interact: a tent is worth little without its poles. The knapsack problem assumes one number for weight, one for value, and values that simply add up.',
     },
   },

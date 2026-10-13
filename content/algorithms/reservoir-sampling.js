@@ -129,8 +129,8 @@ export default {
     where: 'Database systems use it to gather the row samples from which they estimate statistics, monitoring systems use it to keep a bounded sample of events, and it is the standard way to pick a random line from a file in a single pass.',
     analogy: {
       title: 'Choosing one song from the radio',
-      text: 'You decide to remember one song from tonight\'s radio show, chosen fairly, without knowing how many songs will play. Remember the first song. When the second plays, flip a coin to decide whether to switch to it. When the third plays, switch with a chance of one in three. For the tenth song, one in ten. At whatever moment the show ends, each song that played has had the same chance of being the one you remember.',
-      limits: "This is the case of a sample of one. Keeping several items needs the extra step of choosing which held item to replace. A person also cannot produce honest one-in-ten chances in their head, while a program uses a random number generator. And a fair chance is not the same as a representative result: a sample of one song says little about the whole show.",
+      text: "You decide to remember one song from tonight's radio show, chosen fairly, without knowing how many songs will play. Remember the first song. When the second plays, flip a coin to decide whether to switch to it. When the third plays, switch with a chance of one in three. Stop there and check. The third song is the one you hold one time in three. Each of the first two won the coin flip half the time and then survived the third song two times in three, which also comes to one in three. The same balance holds at the tenth song, with a chance of one in ten, and at whatever moment the show ends.",
+      limits: "This is the case of a sample of one. Keeping several items needs the extra step of choosing which held item to replace. And a fair chance is not the same as a representative result: a sample of one song says little about the whole show.",
     },
   },
 

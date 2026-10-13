@@ -198,7 +198,7 @@ export default {
     analogy: {
       title: 'A knitting pattern',
       text: 'A knitting pattern does not list every stitch. It says "knit 6, purl 2, knit 6". The knitter reads a count and a kind of stitch, and produces exactly the row the designer meant. Run-length encoding writes data the same way: a count, then the thing to repeat.',
-      limits: 'A designer chooses rows with long repeats. Data does not cooperate like that. A row that switched between knit and purl on every stitch would be longer as a pattern than as a plain list, and that is exactly what happens to ordinary text. The picture also hides a cost. A person reads "6" without thinking about the room it takes, but in a file the count occupies space of its own: 8 bits for every run in this lesson.',
+      limits: "A designer chooses rows with long repeats. Data does not cooperate like that. The picture also hides a cost. A person reads \"6\" without thinking about the room it takes, but in a file the count occupies space of its own: 8 bits for every run in this lesson.",
     },
   },
 

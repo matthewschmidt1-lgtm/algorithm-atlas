@@ -191,7 +191,7 @@ export default {
     analogy: {
       title: 'Stacking blocks beside a ramp',
       text: 'Picture a long, gentle ramp, and a supply of square blocks that you stack beside it so the block tops follow the ramp as closely as blocks can. Walk along the ramp one block-width at a time. At each stop, look at the gap between the ramp and the top of your stack. If the ramp has climbed more than half a block above the stack, add one block. Otherwise leave the stack alone. You never measure the ramp from the ground again. You only keep track of the gap, and the gap changes by the same amount at every stop.',
-      limits: 'A person would measure the gap with a ruler and get fractions. The algorithm avoids that: it scales everything by a fixed whole number first, so the quantity it tracks is always a whole number, and it compares against zero instead of against half a block. The ramp also only climbs gently to the right. Real lines can head in any direction, including steeper than 45 degrees, where the algorithm must walk row by row instead of column by column. And a pixel is a small square of light, so a drawn line still looks like a staircase when you look closely.',
+      limits: "A person would measure the gap with a ruler and get fractions. The algorithm avoids that: it scales everything by a fixed whole number first, so the quantity it tracks is always a whole number, and it compares against zero instead of against half a block. The ramp also only climbs gently to the right. Real lines can head in any direction, including steeper than 45 degrees, where the algorithm must walk row by row instead of column by column.",
     },
   },
 

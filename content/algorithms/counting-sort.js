@@ -181,8 +181,8 @@ export default {
     where: 'As the inner step of radix sort, which sorts large integers and fixed-length strings one digit or character at a time. The same counting pass, without the sorting, is how a histogram of an image or a table of letter frequencies is built.',
     analogy: {
       title: 'Pigeonholes in a sorting office',
-      text: 'A sorting office has a wall of pigeonholes, one for each delivery district, arranged in order. A clerk picks up each letter, reads its district number, and drops it into that pigeonhole. No letter is ever held up against another letter. When the sack is empty, walking along the wall from the first hole to the last collects the letters in district order.',
-      limits: 'A pigeonhole can hold any number of letters, but a block of computer memory cannot stretch. That is why counting sort makes a counting pass first: it has to know how much room each key needs before it writes anything. The picture also depends on the wall being a sensible size. A hole for each of a hundred districts is fine. A hole for every possible phone number would fill the building with empty holes, and walking past them all would take longer than sorting the letters any other way.',
+      text: "A sorting office has a wall of pigeonholes, one for each delivery district, arranged in order. A clerk picks up each letter, reads its district number, and drops it into that pigeonhole. No letter is ever held up against another letter. When the sack is empty, walking along the wall from the first hole to the last collects the letters in district order. The wall works because the districts are few. A hole for every possible phone number would fill the building with empty holes, and walking past them all would take longer than sorting the letters any other way.",
+      limits: "A pigeonhole can hold any number of letters, but a block of computer memory cannot stretch. That is why counting sort makes a counting pass first: it has to know how much room each value needs before it writes anything.",
     },
   },
 
