@@ -1293,11 +1293,22 @@ if (on('tracks')) {
       const sections = [...p.$('.home').children];
       assert(sections.indexOf(p.$('.home-tracks')) === 1, 'the tracks are not the first thing after the hero');
       assert(p.$('#universe'), 'the map is gone from the home page');
-      const nav = p.$$('nav.primary a').map((a) => a.getAttribute('href'));
-      assert(nav[0] === '#/track/ai' && nav[1] === '#/track/business', `the navigation starts ${nav.slice(0, 2).join(', ')}`);
-      for (const need of ['#/library', '#/lab', '#/paths', '#/connections', '#/explore', '#/about']) assert(nav.includes(need), `${need} is missing from the navigation`);
+      const nav = p.$$('nav.primary a').map((a) => a.textContent.trim());
+      assert(nav.join(' | ') === 'Business | AI and ML | Library | Lab | Paths | About | Atlas', `the navigation reads ${nav.join(' | ')}`);
+      assert(p.$$('nav.primary a').map((a) => a.getAttribute('href')).join() === '#/track/business,#/track/ai,#/library,#/lab,#/paths,#/about,#/explore', 'a navigation link goes to the wrong page');
+      assert(p.$('.site-foot a[href="#/connections"]'), 'Connections can no longer be reached from the footer');
       assert(p.doc.documentElement.scrollWidth <= 1201, 'the navigation overflows the page');
     } finally { p.close(); }
+    // on a wide screen and on a narrow one, the links must stop short of the search button
+    for (const width of [1900, 1440, 1024]) {
+      const w = await open('/', 'nav.primary a', { width, height: 700 });
+      try {
+        const last = w.$$('nav.primary a').pop().getBoundingClientRect(), tools = w.$('.head-tools').getBoundingClientRect();
+        const sameRow = Math.abs(last.top - tools.top) < 30;
+        assert(!sameRow || last.right + 8 <= tools.left, `at ${width}px wide the links end at ${Math.round(last.right)}px and the search button starts at ${Math.round(tools.left)}px`);
+        assert(w.doc.documentElement.scrollWidth <= width + 1, `at ${width}px wide the page scrolls sideways`);
+      } finally { w.close(); }
+    }
     assert(S.search('quick sort')[0].ref === 'quick-sort' && C.algos.length >= 57, 'a lesson outside the tracks can no longer be found');
   });
   await test('the three "Should you use it?" statements are in plain words on every lesson', async () => {

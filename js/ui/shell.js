@@ -7,15 +7,16 @@ import { store } from '../core/store.js';
 import { algos } from '../core/catalog.js';
 import { createSearchBox } from './searchbox.js';
 
+// One short label each, at every width, so the row never runs into the search button.
+// Connections is reached from the Atlas page and the footer.
 const NAV = [
-  { path: '/track/ai', label: 'AI and Machine Learning', short: 'AI & ML', match: ['/track/ai'] },
   { path: '/track/business', label: 'Business', match: ['/track/business', '/case'] },
-  { path: '/library', label: 'Algorithm Library', short: 'Library', match: ['/library', '/algorithm', '/concept', '/problems'] },
-  { path: '/lab', label: 'Interactive Lab', short: 'Lab', match: ['/lab', '/compare'] },
-  { path: '/paths', label: 'Learning Paths', short: 'Paths', match: ['/paths', '/path'] },
-  { path: '/connections', label: 'Connections', match: ['/connections'] },
-  { path: '/explore', label: 'The Whole Atlas', short: 'Atlas', match: ['/explore', '/disciplines', '/discipline'] },
+  { path: '/track/ai', label: 'AI and ML', match: ['/track/ai'] },
+  { path: '/library', label: 'Library', match: ['/library', '/algorithm', '/concept', '/problems'] },
+  { path: '/lab', label: 'Lab', match: ['/lab', '/compare'] },
+  { path: '/paths', label: 'Paths', match: ['/paths', '/path'] },
   { path: '/about', label: 'About', match: ['/about', '/verification'] },
+  { path: '/explore', label: 'Atlas', match: ['/explore', '/disciplines', '/discipline', '/connections'] },
 ];
 
 const MARK = `<svg class="mark" viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M16 3.5c6.6 0 12.5 5 12.5 12.300S22.800 28.500 16 28.500 3.500 22.900 3.500 16 9.400 3.500 16 3.500z" opacity=".45"/><path d="M16.300 9c3.900 0 7.100 3 7.100 6.900s-3.100 7.100-7.300 7.100-7.100-3.200-7.100-7 3.400-7 7.300-7z" opacity=".75"/></g><circle cx="16" cy="16" r="2.600" fill="var(--terracotta)"/></svg>`;
@@ -86,7 +87,7 @@ export function mountShell(headHost, footHost) {
   progressEl = h('a.progress-link', { href: '#/profile', title: 'Your atlas: progress, favourites and recommendations', html: progressRing() });
   store.subscribe(() => { progressEl.innerHTML = progressRing(); });
 
-  links = NAV.map((n) => ({ ...n, el: h('a.nav-link', { href: '#' + n.path }, h('span.nav-full', n.label), h('span.nav-short', n.short || n.label)) }));
+  links = NAV.map((n) => ({ ...n, el: h('a.nav-link', { href: '#' + n.path }, n.label) }));
 
   headHost.replaceWith(h('header.site-head',
     h('div.head-row.wrap',
