@@ -309,7 +309,14 @@ a.ref:hover { color: var(--accent); border-color: var(--accent); }
 .lesson-after { border-top: 1px solid var(--line-2); padding-top: var(--s-5); display: grid; gap: var(--s-4); }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4); }
 .pager-link { display: grid; gap: 2px; padding: var(--s-3) 0; }
-.pager-link.is-next { text-align: right; }
+.pager-link.is-next { text-align: right; justify-items: end; }
+.pager-why { font-size: 0.9rem; color: var(--text-2); max-width: 46ch; line-height: 1.5; }
+.planned-from { margin-top: var(--s-6); }
+.planned-from h2 { font-size: 1.4rem; }
+.planned-from-list { border-top: 1px solid var(--line-2); margin-top: var(--s-4); }
+.planned-from-list li { padding: var(--s-4) 0; border-bottom: 1px solid var(--line); }
+.planned-from-list p { color: var(--text-2); margin-top: 4px; }
+@media (max-width: 640px) { .pager { grid-template-columns: 1fr; } .pager-link.is-next { text-align: left; justify-items: start; } }
 .pager-dir { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
 .pager-name { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; }
 .pager-link:hover .pager-name { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
@@ -390,6 +397,8 @@ a.ref:hover { color: var(--accent); border-color: var(--accent); }
 .relmap-key i { width: 14px; height: 2px; display: inline-block; }
 .relmap-key-shapes { margin-left: auto; gap: 10px !important; }
 .rel-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--s-7); margin-top: var(--s-3); }
+.rel-group .dot.is-hollow { background: none; border: 1.5px solid var(--text-3); }
+.rel-group.is-planned .rel-name { color: var(--text-2); }
 .rel-group h4 { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-2); padding-bottom: 6px; border-bottom: 1px solid var(--line-2); }
 .rel-group ul { display: grid; }
 .rel-group li { padding: 10px 0; border-bottom: 1px solid var(--line); }

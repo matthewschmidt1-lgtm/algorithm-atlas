@@ -4,7 +4,7 @@
 //   connections traversed, leaving a trail of where you have been.
 // Only one of the two is on the page at a time, so each can be read without the other.
 
-import { h, clear } from '../core/dom.js';
+import { h, clear, holdInView } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { replaceQuery } from '../core/router.js';
@@ -58,7 +58,7 @@ export default async function render({ query }) {
     mapHost);
 
   const threadsView = h('section.conn-view',
-    h('nav.thread-index', { 'aria-label': 'Threads' }, C.threads.map((t) => h('a', { href: `#thread-${t.id}`, onclick: (e) => { e.preventDefault(); document.getElementById(`thread-${t.id}`).scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, t.title))),
+    h('nav.thread-index', { 'aria-label': 'Threads' }, C.threads.map((t) => h('a', { href: `#/connections?thread=${t.id}`, onclick: (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); history.replaceState(null, '', `#/connections?thread=${t.id}`); document.getElementById(`thread-${t.id}`).scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, t.title))),
     h('div.threads', threadEls));
   const threadsBtn = h('button', { type: 'button', 'aria-pressed': 'true', onclick: () => setView('threads') }, `${C.threads.length} threads to read`);
   const graphBtn = h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => setView('graph') }, 'The graph to explore');
@@ -82,6 +82,6 @@ export default async function render({ query }) {
   if (start) centre(start, false);
   setView(query.view === 'graph' || (query.at && !query.thread) ? 'graph' : 'threads');
   return { el, title: 'Connections', afterMount() {
-    if (query.thread) { const t = document.getElementById(`thread-${query.thread}`); if (t) t.scrollIntoView({ block: 'start' }); }
+    if (query.thread) { const t = document.getElementById(`thread-${query.thread}`); if (t) holdInView(t); }
   } };
 }

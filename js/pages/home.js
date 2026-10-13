@@ -117,7 +117,7 @@ export default async function render() {
         h('button.btn', { type: 'button', onclick: () => openOnboarding({ onDone: paintYou }) }, 'Suggest a starting point'));
     } else {
       const rec = recommendLessons(1)[0];
-      you.append(rec ? h('p', h('strong', 'Suggested next for you: '), h('a.link', { href: `#/algorithm/${rec.a.id}` }, rec.a.name), `. ${rec.reason}.`) : h('p', 'You have opened every published lesson.'),
+      you.append(rec ? h('p', h('strong', 'Suggested next for you: '), h('a.link', { href: `#/algorithm/${rec.a.id}` }, rec.a.name), `. ${rec.reason}`) : h('p', 'You have opened every published lesson.'),
         h('a.btn', { href: '#/profile' }, 'Open your atlas'));
     }
   };

@@ -433,6 +433,289 @@ if (on('index')) {
   });
 }
 
+/* ------------------------------------------------------------------ links and relationships */
+const SECTIONS = ['simple', 'example', 'see', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
+const STATIC = ['/', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
+// Does an internal address lead to something that exists? Written from the content, not from the router.
+function resolves(hrefAttr) {
+  const raw = hrefAttr.replace(/^#/, '');
+  const [path, qs = ''] = raw.split('?');
+  const q = Object.fromEntries(new URLSearchParams(qs));
+  const seg = path.split('/').filter(Boolean);
+  const okRef = (ref) => { const r = C.resolveRef(ref); return r.kind === 'algorithm' || (r.kind === 'concept' && C.conceptById[r.id]) || (r.kind === 'discipline' && C.disciplineById[r.id]); };
+  if (STATIC.includes(path || '/')) {
+    if (path === '/connections' && q.at && !okRef(q.at)) return `connections at "${q.at}"`;
+    if (path === '/connections' && q.thread && !C.threads.some((t) => t.id === q.thread)) return `no thread "${q.thread}"`;
+    if (path === '/explore' && q.d && !C.disciplineById[q.d]) return `no discipline "${q.d}"`;
+    if (path === '/explore' && q.a && !C.algoById[q.a]) return `no lesson "${q.a}"`;
+    if (path === '/library' && q.discipline && !C.disciplineById[q.discipline]) return `no discipline "${q.discipline}"`;
+    if (path === '/about' && q.at && !['accessibility', 'checks', 'content', 'method', 'privacy', 'how', 'principles', 'schema', 'limits'].includes(q.at)) return null; // sections of About are checked on the page itself
+    return null;
+  }
+  if (seg.length !== 2) return 'no such route';
+  const [kind, id] = [seg[0], decodeURIComponent(seg[1])];
+  if (kind === 'algorithm') {
+    if (!C.algoById[id] && !C.plannedById[id]) return `no lesson "${id}"`;
+    if (q.at && !SECTIONS.includes(q.at)) return `no section "${q.at}"`;
+    if (q.path && !(C.pathById[q.path] && C.pathById[q.path].stages.some((st) => st.modules.some((m) => m.algo === id)))) return `path "${q.path}" does not contain "${id}"`;
+    if (q.level && !['1', '2', '3'].includes(q.level)) return `no level "${q.level}"`;
+    return null;
+  }
+  if (kind === 'lab') return C.algoById[id] ? null : `no demonstration "${id}"`;
+  if (kind === 'concept') return C.conceptById[id] ? null : `no concept "${id}"`;
+  if (kind === 'discipline') return C.disciplineById[id] ? null : `no discipline "${id}"`;
+  if (kind === 'path') return C.pathById[id] ? null : `no path "${id}"`;
+  if (kind === 'compare') {
+    const g = C.compareGroups.find((x) => x.id === id);
+    if (!g) return `no comparison "${id}"`;
+    for (const m of (q.ids || '').split(',').filter(Boolean)) if (!g.members.includes(m)) return `"${m}" is not in comparison "${id}"`;
+    return null;
+  }
+  return 'no such route';
+}
+
+if (on('links')) {
+  suite('Links and relationships');
+  await test('every stated connection points at something that exists, and none points at itself', () => {
+    const bad = []; let n = 0;
+    for (const a of C.algos) {
+      for (const c of a.connections || []) {
+        n++;
+        const r = C.resolveRef(c.to);
+        if (c.to === a.id) bad.push(`${a.id} is connected to itself`);
+        if (r.kind === 'planned' && !C.plannedById[c.to]) bad.push(`${a.id} -> ${c.to}: no such lesson, published or planned`);
+        if (r.kind === 'concept' && !C.conceptById[r.id]) bad.push(`${a.id} -> ${c.to}: no such concept`);
+        if (r.kind === 'discipline' && !C.disciplineById[r.id]) bad.push(`${a.id} -> ${c.to}: no such discipline`);
+        if (!c.why || c.why.length < 30) bad.push(`${a.id} -> ${c.to}: no reason given`);
+      }
+      for (const pre of a.prerequisites || []) if (C.resolveRef(pre).kind === 'planned' && !C.plannedById[pre]) bad.push(`${a.id} assumes unknown "${pre}"`);
+    }
+    assert(!bad.length, `${bad.length}: ${bad.slice(0, 4).join(' | ')}`);
+    return `${n} connections`;
+  });
+  await test('no two lessons contradict each other about which comes first', () => {
+    const bad = [];
+    const typeOf = (from, to) => ((C.algoById[from].connections || []).find((c) => c.to === to) || {}).type;
+    for (const a of C.algos) for (const c of a.connections || []) {
+      if (!C.algoById[c.to] || a.id > c.to) continue;
+      const back = typeOf(c.to, a.id);
+      if (!back) continue;
+      // each says the other must come first, or each says the other goes further
+      if (c.type === 'prerequisite' && back === 'prerequisite') bad.push(`${a.id} and ${c.to} each call the other a prerequisite`);
+      if (c.type === 'advanced' && back === 'advanced') bad.push(`${a.id} and ${c.to} each call the other "go further"`);
+    }
+    assert(!bad.length, bad.join(' | '));
+  });
+  await test('no chain of prerequisites leads back to where it started', () => {
+    const pre = (id) => (C.algoById[id].connections || []).filter((c) => c.type === 'prerequisite' && C.algoById[c.to]).map((c) => c.to);
+    const state = {}; const loops = [];
+    const walk = (id, trail) => { if (state[id] === 2) return; if (state[id] === 1) { loops.push([...trail.slice(trail.indexOf(id)), id].join(' -> ')); return; } state[id] = 1; for (const p of pre(id)) walk(p, [...trail, id]); state[id] = 2; };
+    for (const a of C.algos) walk(a.id, []);
+    assert(!loops.length, loops.slice(0, 3).join(' | '));
+  });
+
+  await test('the skip link moves to the content and does not leave the page', async () => {
+    const p = await open('/library', '.lib-results');
+    try {
+      const title = p.$('#main h1').textContent;
+      p.$('.skip-link').click();
+      await sleep(250);
+      assert(p.$('#main h1') && p.$('#main h1').textContent === title, `after the skip link the page shows "${p.$('#main h1') ? p.$('#main h1').textContent : 'nothing'}"`);
+      assert(p.win.location.hash === '#/library', `the address became ${p.win.location.hash}`);
+      assert(p.doc.activeElement && p.doc.activeElement.id === 'main', 'focus did not move to the content');
+    } finally { p.close(); }
+  });
+  await test('a link to a thread opens the Connections page at that thread', async () => {
+    const t = C.threads[2];
+    const p = await open(`/connections?thread=${t.id}`, `#thread-${t.id}`);
+    try {
+      assert(!p.$('#graph') || p.$('#graph').hidden, 'the graph is showing instead of the threads');
+      const at = () => p.$(`#thread-${t.id}`).getBoundingClientRect().top;
+      await until(() => at() > -20 && at() < 400, 2500, `the thread is ${Math.round(at())}px from the top`);
+      assert(p.$$('.thread-index a').every((a) => /^#\/connections\?thread=/.test(a.getAttribute('href'))), 'a thread link is not a real address');
+    } finally { p.close(); }
+  });
+  await test('every internal link on every page leads somewhere that exists', async () => {
+    const routes = [
+      ...STATIC.filter((r) => r !== '/search'), '/search?q=shortest%20route', '/connections?view=graph&at=dijkstra',
+      ...C.algos.map((a) => `/algorithm/${a.id}?level=3`), ...C.planned.map((r) => `/algorithm/${r.id}`),
+      ...C.disciplines.map((d) => `/discipline/${d.id}`), ...C.paths.map((p) => `/path/${p.id}`),
+      ...C.concepts.map((c) => `/concept/${c.id}`), ...C.compareGroups.map((g) => `/compare/${g.id}`), '/lab/dijkstra', '/lab/quick-sort',
+    ];
+    const p = await open('/about', '#main h1');
+    const errors = [];
+    p.win.addEventListener('error', (e) => errors.push(e.message));
+    p.win.addEventListener('unhandledrejection', (e) => errors.push(String(e.reason && e.reason.message ? e.reason.message : e.reason)));
+    const bad = []; let links = 0; const pages = new Set();
+    try {
+      const main = p.$('#main');
+      for (const r of routes) {
+        const was = main.firstElementChild;
+        const before = errors.length;
+        p.win.location.hash = r;
+        await until(() => main.firstElementChild && main.firstElementChild !== was && !main.hasAttribute('aria-busy'), 12000, `"${r}" never rendered`);
+        await sleep(20);
+        if (/There is no (page|lesson) at this address/.test(main.textContent)) bad.push(`${r} shows the not-found page`);
+        if (errors.length > before) bad.push(`${r} raised: ${errors.slice(before).join('; ').slice(0, 120)}`);
+        pages.add(r);
+        for (const a of p.doc.querySelectorAll('a[href]')) {
+          const hrefAttr = a.getAttribute('href');
+          if (!hrefAttr.startsWith('#')) continue;
+          links++;
+          if (!hrefAttr.startsWith('#/')) {
+            // an in-page link is fine only if its target is on the page; the router then treats it as a jump, not a route
+            if (!p.doc.getElementById(hrefAttr.slice(1))) bad.push(`"${a.textContent.trim().slice(0, 30)}" links to "${hrefAttr}", which is neither a page nor a place on this page`);
+            continue;
+          }
+          const why = resolves(hrefAttr);
+          if (why) bad.push(`${r}: "${a.textContent.trim().slice(0, 30)}" -> ${hrefAttr} (${why})`);
+        }
+      }
+    } finally { p.close(); }
+    const unique = [...new Set(bad)];
+    assert(!unique.length, `${unique.length} problems: ${unique.slice(0, 5).join(' | ')}`);
+    return `${pages.size} pages, ${links} links`;
+  });
+}
+
+/* ------------------------------------------------------------------ what to read next */
+if (on('learning')) {
+  suite('Recommendations and next steps');
+  const N = await import('../js/core/next.js');
+  const R = await import('../js/core/recommend.js');
+  const { store } = await import('../js/core/store.js');
+  const conn = (from, to) => (C.algoById[from].connections || []).find((c) => c.to === to);
+  const pathWhys = new Set(C.paths.flatMap((p) => p.stages.flatMap((st) => st.modules.map((m) => m.why))));
+
+  await test('every suggested next step is a stated connection, labelled as what it is', () => {
+    const bad = []; const tally = { advanced: 0, 'builds-on': 0, 'same-problem': 0, variant: 0, application: 0, related: 0, none: 0 }; const without = [];
+    for (const a of C.algos) {
+      const s = N.nextStep(a.id);
+      if (!s) { tally.none++; without.push(a.id); continue; }
+      tally[s.kind]++;
+      if (!C.algoById[s.ref]) bad.push(`${a.id}: next step "${s.ref}" is not a published lesson`);
+      const mine = conn(a.id, s.ref), theirs = conn(s.ref, a.id);
+      if (s.kind === 'advanced' && !(mine && mine.type === 'advanced' && mine.why === s.why)) bad.push(`${a.id} -> ${s.ref}: called "go further" but the lesson does not say so`);
+      if (s.kind === 'builds-on') {
+        const says = (theirs && theirs.type === 'prerequisite') || (C.algoById[s.ref].prerequisites || []).includes(a.id);
+        if (!says) bad.push(`${a.id} -> ${s.ref}: said to build on this lesson, but ${s.ref} does not list it as a prerequisite`);
+        if (theirs && theirs.why !== s.why) bad.push(`${a.id} -> ${s.ref}: the reason is not the sentence ${s.ref} wrote`);
+      }
+      if ((s.kind === 'application' || s.kind === 'related') && !(mine && mine.type === s.kind && mine.why === s.why)) bad.push(`${a.id} -> ${s.ref}: called "${s.kind}" without a stated connection`);
+      if ((s.kind === 'same-problem' || s.kind === 'variant') && !(mine && mine.type === s.kind && mine.why === s.why)) bad.push(`${a.id} -> ${s.ref}: called "${s.kind}" without a stated connection`);
+      const b = N.stepBefore(a.id);
+      if (b && !(conn(a.id, b.ref) && conn(a.id, b.ref).type === 'prerequisite')) bad.push(`${a.id}: "${b.ref}" is offered as worth reading first, but the lesson does not call it a prerequisite`);
+    }
+    assert(!bad.length, bad.slice(0, 4).join(' | '));
+    return `go further ${tally.advanced}, builds on this ${tally['builds-on']}, another method ${tally['same-problem'] + tally.variant}, put to use in ${tally.application}, related ${tally.related}, no suggestion ${tally.none}${without.length ? ` (${without.join(', ')})` : ''}`;
+  });
+
+  await test('following a path: each lesson offers the next module of that path, with the path\'s own reason', async () => {
+    const path = C.paths.find((x) => x.id === 'absolute-beginners') || C.paths[0];
+    const modules = path.stages.flatMap((st) => st.modules).filter((m) => C.algoById[m.algo]);
+    assert(modules.length >= 3, 'the path has too few published modules to test');
+    const p = await open(`/path/${path.id}`, '.module-name');
+    try {
+      const first = p.$$('a.module-name')[0];
+      assert(first.getAttribute('href') === `#/algorithm/${modules[0].algo}?path=${path.id}`, `the first module links to ${first.getAttribute('href')}`);
+      first.click();
+      await until(() => p.$('.lesson .pager-link.is-next'), 8000, 'the lesson shows no next step');
+      const next = p.$('.pager-link.is-next');
+      assert(next.getAttribute('href') === `#/algorithm/${modules[1].algo}?path=${path.id}`, `next is ${next.getAttribute('href')}, the path's second module is ${modules[1].algo}`);
+      assert(next.querySelector('.pager-dir').textContent === `Next in ${path.title}`, `the label is "${next.querySelector('.pager-dir').textContent}"`);
+      assert(next.querySelector('.pager-why').textContent.trim() === modules[1].why, 'the reason is not the one the path gives');
+      // changing level must not lose the path
+      p.$$('.level-btn')[1].click();
+      await sleep(60);
+      assert(/path=/.test(p.win.location.hash), `after changing level the address is ${p.win.location.hash}`);
+      next.click();
+      await until(() => p.$('.lesson h1') && p.$('.lesson h1').textContent === C.algoById[modules[1].algo].name, 8000, 'the second module did not open');
+      const back = p.$('.pager-link:not(.is-next)');
+      assert(back && back.getAttribute('href') === `#/algorithm/${modules[0].algo}?path=${path.id}`, 'the second module does not offer the first as the step before');
+      return `${path.title}: ${modules[0].algo} -> ${modules[1].algo}`;
+    } finally { p.close(); }
+  });
+
+  await test('on every lesson page, a "go further" or "builds on this" heading has a working lesson under it', async () => {
+    const p = await open('/about', '#main h1');
+    const bad = []; const state = { deeper: 0, alternativeOnly: 0, neither: [] };
+    // the lessons the audit reported: no "go further" entry at all, or only planned ones
+    const reported = C.algos.filter((a) => { const adv = (a.connections || []).filter((c) => c.type === 'advanced'); return !adv.length || adv.every((c) => C.resolveRef(c.to).kind === 'planned'); }).map((a) => a.id);
+    const repaired = [];
+    try {
+      const main = p.$('#main');
+      for (const a of C.algos) {
+        const was = main.firstElementChild;
+        p.win.location.hash = `/algorithm/${a.id}`;
+        await until(() => main.firstElementChild !== was && p.$('#connections .rel-group'), 12000, `"${a.id}" never rendered`);
+        const groups = p.$$('#connections .rel-group').map((g) => ({ type: g.dataset.type, links: [...g.querySelectorAll('a.rel-name')].map((x) => x.getAttribute('href')), plain: g.querySelectorAll('.rel-name:not(a)').length }));
+        for (const g of groups) {
+          if (g.type === 'planned') { if (g.links.length) bad.push(`${a.id}: a planned lesson is a link`); continue; }
+          if (g.plain) bad.push(`${a.id}: "${g.type}" lists something that cannot be opened`);
+          for (const l of g.links) { const why = resolves(l); if (why) bad.push(`${a.id}: ${l} (${why})`); }
+        }
+        const deeperLessons = groups.filter((g) => g.type === 'advanced' || g.type === 'builds-on').flatMap((g) => g.links).filter((l) => /^#\/algorithm\//.test(l));
+        const other = groups.filter((g) => g.type === 'same-problem' || g.type === 'variant').flatMap((g) => g.links).filter((l) => /^#\/algorithm\//.test(l));
+        if (deeperLessons.length) { state.deeper++; if (reported.includes(a.id)) repaired.push(a.id); } else if (other.length) state.alternativeOnly++; else state.neither.push(a.id);
+        // the footer's step on, if there is one, opens a published lesson and says why
+        const next = p.$('.pager-link.is-next');
+        if (next) { if (resolves(next.getAttribute('href'))) bad.push(`${a.id}: the next step is a broken link`); if (next.querySelector('.pager-why').textContent.trim().length < 30) bad.push(`${a.id}: the next step gives no reason`); }
+        if (p.$('.pager-dir') && /^(Previous|Next)$/.test(p.$('.pager-dir').textContent)) bad.push(`${a.id}: still shows the old Previous / Next`);
+      }
+    } finally { p.close(); }
+    assert(!bad.length, `${bad.length}: ${[...new Set(bad)].slice(0, 4).join(' | ')}`);
+    // what each of the reported lessons offers now, by the kind of step it leads to
+    const now = {};
+    for (const id of reported) { const st = N.nextStep(id); const k = !st ? 'nothing' : st.kind === 'advanced' || st.kind === 'builds-on' ? 'a deeper lesson' : st.kind === 'same-problem' || st.kind === 'variant' ? 'another method' : 'a related lesson'; (now[k] = now[k] || []).push(id); }
+    assert(!(now.nothing || []).length, `reported lessons that still lead nowhere: ${(now.nothing || []).join(', ')}`);
+    return `${state.deeper} lessons list a deeper lesson, ${state.alternativeOnly} list another method only, ${state.neither.length} list neither. The ${reported.length} lessons the audit reported now lead to: ${Object.entries(now).map(([k, v]) => `${k} (${v.length}: ${v.join(', ')})`).join('; ')}`;
+  });
+
+  await test('a planned lesson\'s page points to the published lessons that mention it', async () => {
+    const planned = C.planned.find((r) => N.pointingTo(r.id).length >= 2);
+    const p = await open(`/algorithm/${planned.id}`, '.planned-from-list a');
+    try {
+      const links = p.$$('.planned-from-list a').map((x) => x.getAttribute('href'));
+      assert(links.length === N.pointingTo(planned.id).length, `${links.length} links, ${N.pointingTo(planned.id).length} lessons mention it`);
+      for (const l of links) assert(!resolves(l), `${l} is broken`);
+      return `${planned.name}: ${links.length} lessons`;
+    } finally { p.close(); }
+  });
+
+  await test('recommendations give a specific, grounded reason, and never the same one twice', () => {
+    const keep = JSON.stringify(store.state);
+    const bad = []; let checked = 0;
+    try {
+      const generic = /Connected to .*which you explored|^A good place to start\.?$|^A sound next step at your level\.?$/;
+      const scenarios = [null, ...C.algos.filter((_, i) => i % 4 === 0).map((a) => a.id)];
+      for (const opened of scenarios) {
+        store.reset();
+        if (opened) store.visit(opened);
+        const recs = R.recommendLessons(4);
+        const reasons = recs.map((r) => r.reason);
+        if (new Set(reasons).size !== reasons.length) bad.push(`after ${opened || 'nothing'}: two suggestions share the reason "${reasons.find((x, i) => reasons.indexOf(x) !== i).slice(0, 50)}"`);
+        for (const r of recs) {
+          checked++;
+          if (!r.reason || r.reason.length < 25) bad.push(`after ${opened}: ${r.a.id} has no real reason ("${r.reason}")`);
+          if (generic.test(r.reason)) bad.push(`after ${opened}: ${r.a.id} gets the generic "${r.reason}"`);
+          if (!/[.!?"]$/.test(r.reason)) bad.push(`${r.a.id}: the reason does not end as a sentence`);
+          if (opened && r.reason.includes(C.algoById[opened].name)) {
+            const theirs = conn(opened, r.a.id), mine = conn(r.a.id, opened);
+            const link = theirs || mine;
+            const viaPrereq = (r.a.prerequisites || []).includes(opened);
+            if (!link && !viaPrereq) bad.push(`after ${opened}: ${r.a.id} names it, but the two lessons state no connection`);
+            if (link && !viaPrereq && !r.reason.includes(link.why.replace(/[.!?]$/, ''))) bad.push(`after ${opened}: ${r.a.id} does not give the stated reason`);
+            if (/^Builds on /.test(r.reason) && !(mine && mine.type === 'prerequisite')) bad.push(`after ${opened}: ${r.a.id} is said to build on it, but does not list it as a prerequisite`);
+            if (/assumes this/.test(r.reason) && !(theirs && theirs.type === 'prerequisite')) bad.push(`after ${opened}: ${r.a.id} is said to be assumed by it, but ${opened} does not list it as a prerequisite`);
+          }
+        }
+      }
+    } finally { store.update((st) => { Object.assign(st, JSON.parse(keep)); }); }
+    assert(!bad.length, `${bad.length}: ${bad.slice(0, 4).join(' | ')}`);
+    return `${checked} suggestions across ${1 + Math.ceil(C.algos.length / 4)} histories`;
+  });
+}
+
 /* ------------------------------------------------------------------ report */
 const payload = { results, bench };
 document.getElementById('out').textContent = results.map((r) => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.suite}: ${r.name}${r.ok ? '' : '\n      ' + r.detail}`).join('\n');

@@ -37,7 +37,7 @@ export default async function render() {
     // What to do next comes first. Records and settings are kept below, closed until wanted.
     const recs = recommendLessons(4);
     body.append(h('section.profile-sec', h('h2', 'Recommended next'),
-      recs.length ? h('div.lesson-list', recs.map((r) => lessonRow(r.a, { note: `${r.reason}. ${r.a.summary}` }))) : h('p.muted', 'You have opened every published lesson.')));
+      recs.length ? h('div.lesson-list', recs.map((r) => lessonRow(r.a, { note: r.reason }))) : h('p.muted', 'You have opened every published lesson.')));
     const rp = recommendPaths(2);
     if (rp.length) body.append(h('section.profile-sec', h('h2', 'Paths that fit'), h('div.path-list', rp.map((r) => pathCard(r.path, r.reason)))));
 

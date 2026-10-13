@@ -11,7 +11,7 @@
 //   - Nothing is explained twice. Where another page does a job better (the lab, the comparison
 //     tool, the connection graph), the lesson links to it instead of repeating it.
 
-import { h, clear, rich, richBlock, renderMath, prose, prefersReducedMotion } from '../core/dom.js';
+import { h, clear, rich, richBlock, renderMath, prose, prefersReducedMotion, holdInView } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
@@ -24,6 +24,7 @@ import { createExperimentChart } from '../ui/chart.js';
 import { createQuiz } from '../ui/quiz.js';
 import { createRelMap } from '../ui/relmap.js';
 import { checkLine, checkPanel } from '../ui/checks.js';
+import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
 
 const LEVELS = [
   { n: 1, name: 'Explain it simply', about: 'Plain language and a small example.' },
@@ -36,18 +37,21 @@ const para = (text) => prose(text);
 const sub = (title, ...body) => h('div.subsec', h('h3', title), body);
 const fold = (title, ...body) => { const el = h('details.fold', h('summary', title), h('div.fold-body', body)); renderMath(el); return el; };
 
-// Where an element's top rests after scrollIntoView, given its scroll margin.
-const restingTop = (el) => parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
-
 export default async function render({ params, query }) {
   const meta = C.algoById[params.id];
   if (!meta) {
     const p = C.plannedById[params.id];
+    // A planned lesson is not a dead end: the published lessons that mention it say why it matters.
+    const from = p ? pointingTo(p.id) : [];
     return { title: p ? p.name : 'Lesson not found', el: h('div.page.wrap.narrow', h('header.page-head',
       h('p.eyebrow', p ? 'Planned lesson' : 'Not found'),
       h('h1', p ? p.name : 'There is no lesson at this address.'),
       h('p.lede', p ? `This lesson is planned for ${C.disciplineById[p.discipline].name} but has not been written yet. Nothing is published in the atlas until it has been checked.` : 'It may have been renamed.')),
-      h('p', h('a.btn.btn-primary', { href: '#/library' }, 'Browse the library'))) };
+      from.length ? h('section.planned-from',
+        h('h2', 'Until it is written'),
+        h('p.muted', `${from.length === 1 ? 'One published lesson mentions' : `${from.length} published lessons mention`} ${p.name}. ${from.length === 1 ? 'It is' : 'They are'} the nearest thing to read now.`),
+        h('ul.planned-from-list', from.map((x) => h('li', h('a.link.rel-name', { href: `#/algorithm/${x.ref}` }, C.algoById[x.ref].name), h('p', x.why))))) : null,
+      h('p', { style: { marginTop: '28px' } }, h('a.btn.btn-primary', { href: p ? `#/discipline/${p.discipline}` : '#/library' }, p ? `See what is published in ${C.disciplineById[p.discipline].name}` : 'Browse the library'), ' ', p ? h('a.btn', { href: '#/library' }, 'Browse the library') : null)) };
   }
   const L = await C.loadLesson(params.id);
   const m = L.meta;
@@ -203,6 +207,8 @@ export default async function render({ params, query }) {
   const links = [
     ...L.connections.map((c) => ({ ref: c.to, type: c.type, why: c.why })),
     ...(m.alsoIn || []).filter((o) => !L.connections.some((c) => c.to === `discipline:${o.id}`)).map((o) => ({ ref: `discipline:${o.id}`, type: 'application', why: o.why })),
+    // published lessons that name this one as something they assume: the other half of "go further"
+    ...around(m.id).deeper.filter((x) => x.kind === 'builds-on').map((x) => ({ ref: x.ref, type: 'builds-on', why: x.why })),
   ];
   const connections = h('section.lsec.lv1', { id: 'connections', 'aria-labelledby': 'connections-h', dataset: { level: 1, title: 'Connections' } },
     h('p.lsec-kicker', 'Where this leads'), h('h2', { id: 'connections-h' }, 'Connections'),
@@ -231,20 +237,25 @@ export default async function render({ params, query }) {
   };
   const collectBtn = h('button.btn.btn-sm', { type: 'button', html: `${icon('folder', { size: 15 })}<span>Add to a collection</span>`, onclick: () => { collectBox.hidden = !collectBox.hidden; if (!collectBox.hidden) paintCollect(); } });
 
-  const ordered = C.algos.slice().sort((a, b) => a.order - b.order);
-  const sameDisc = ordered.filter((a) => a.discipline === m.discipline);
-  const atD = sameDisc.findIndex((a) => a.id === m.id), at = ordered.findIndex((a) => a.id === m.id);
-  const prev = sameDisc[atD - 1] || ordered[at - 1], next = sameDisc[atD + 1] || ordered[at + 1];
+  // One step back and one step on, each a stated connection with its reason (core/next.js).
+  // A reader who came from a learning path is kept on that path. Where the lesson states no
+  // connection to another published lesson, nothing is suggested.
+  const viaPath = query.path && C.pathById[query.path] && C.pathById[query.path].stages.some((s) => s.modules.some((x) => x.algo === m.id)) ? C.pathById[query.path] : null;
+  const back = stepBefore(m.id, { pathId: viaPath && viaPath.id });
+  const onward = nextStep(m.id, { pathId: viaPath && viaPath.id });
+  const stepCard = (s, cls) => h(`a.pager-link${cls}`, { href: `#/algorithm/${s.ref}${s.path ? `?path=${s.path}` : ''}`, dataset: { kind: s.kind } },
+    h('span.pager-dir', s.label), h('span.pager-name', C.algoById[s.ref].name), h('span.pager-why', { html: rich(s.why) }));
   const inPaths = C.paths.filter((p) => p.stages.some((s) => s.modules.some((x) => x.algo === m.id)));
   const after = h('footer.lesson-after',
     h('div.lesson-actions', favBtn, collectBtn,
       h('a.btn.btn-sm', { href: `#/lab/${m.id}`, html: `${icon('flask', { size: 15 })}<span>Experiment in the lab</span>` }),
       group ? h('a.btn.btn-sm', { href: `#/compare/${group.id}?ids=${m.id}`, html: `${icon('columns', { size: 15 })}<span>Compare with similar algorithms</span>` }) : null),
     collectBox,
-    h('div.pager',
-      prev ? h('a.pager-link', { href: `#/algorithm/${prev.id}` }, h('span.pager-dir', 'Previous'), h('span.pager-name', prev.name)) : h('span'),
-      next ? h('a.pager-link.is-next', { href: `#/algorithm/${next.id}` }, h('span.pager-dir', 'Next'), h('span.pager-name', next.name)) : h('span')),
-    inPaths.length ? h('p.in-paths', 'This lesson is part of: ', inPaths.map((p, i) => [i ? ', ' : '', h('a.link', { href: `#/path/${p.id}` }, p.title)]), '.') : null);
+    back || onward ? h('nav.pager', { 'aria-label': 'Where to go from here' },
+      back ? stepCard(back, '') : h('span'),
+      onward ? stepCard(onward, '.is-next') : h('span')) : null,
+    viaPath ? h('p.in-paths', 'You are following ', h('a.link', { href: `#/path/${viaPath.id}` }, viaPath.title), '. ', h('a.link', { href: `#/path/${viaPath.id}` }, 'Back to the path'), '.')
+      : inPaths.length ? h('p.in-paths', 'This lesson is part of: ', inPaths.map((p, i) => [i ? ', ' : '', h('a.link', { href: `#/path/${p.id}` }, p.title)]), '.') : null);
 
   /* ---------- table of contents ---------- */
   const body = h('article.lesson-article', simple, example, see, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
@@ -252,7 +263,7 @@ export default async function render({ params, query }) {
   const toc = h('nav.lesson-toc', { 'aria-label': 'In this lesson' });
   // Each link is a real address (so it can be copied, bookmarked or opened in a new tab).
   // Clicking it scrolls in place and puts that address in the address bar.
-  const sectionHref = (s) => href(`/algorithm/${m.id}`, { level: Math.max(depth, Number(s.dataset.level)), at: s.id });
+  const sectionHref = (s) => href(`/algorithm/${m.id}`, { level: Math.max(depth, Number(s.dataset.level)), at: s.id, path: query.path });
   const tocLinks = sections.map((s) => h(`a.toc-link.lv${s.dataset.level}`, { href: `#/algorithm/${m.id}?at=${s.id}`, onclick: (e) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     e.preventDefault();
@@ -272,7 +283,7 @@ export default async function render({ params, query }) {
     depth = n;
     root.dataset.depth = n;
     levelBtns.forEach((b, i) => b.setAttribute('aria-pressed', i + 1 === n ? 'true' : 'false'));
-    if (save) { store.setDepth(n); replaceQuery({ level: n }); }
+    if (save) { store.setDepth(n); replaceQuery({ level: n, path: query.path }); }
     if (scroll) { const first = body.querySelector(`.lsec.lv${n}`); if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'start' }); first.querySelector('h2').focus({ preventScroll: true }); } }
   }
   setDepth(depth, false);
@@ -291,15 +302,7 @@ export default async function render({ params, query }) {
         // a link to a deeper section opens the lesson at that depth, whatever level was saved
         const lv = Number((target.closest('.lsec') || target).dataset.level) || 1;
         if (lv > depth) setDepth(lv, false);
-        // The figure, the code and the mathematics above the target finish laying out a moment
-        // after the page appears, which moves it. Keep the target in place until they settle,
-        // and stop the moment the reader scrolls for themselves.
-        let mine = true;
-        const stop = () => { mine = false; };
-        for (const ev of ['wheel', 'touchstart', 'keydown', 'mousedown']) window.addEventListener(ev, stop, { once: true, passive: true });
-        const place = () => { if (mine && target.isConnected && Math.abs(target.getBoundingClientRect().top - restingTop(target)) > 6) target.scrollIntoView({ block: 'start' }); };
-        requestAnimationFrame(place);
-        for (const ms of [120, 400, 900, 1600]) setTimeout(place, ms);
+        holdInView(target);
       }
     },
     destroy() { cleanups.forEach((fn) => fn()); },

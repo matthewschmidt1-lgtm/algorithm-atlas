@@ -115,3 +115,17 @@ export const prefersReducedMotion = () =>
 
 let uid = 0;
 export const nextId = (p = 'id') => `${p}-${++uid}`;
+
+// Scroll an element to the top of the window and keep it there while the page finishes
+// laying out. Figures, code and mathematics above it settle a moment after a page appears,
+// which would otherwise leave a linked section off screen. Stops as soon as the reader
+// scrolls, clicks or types.
+export function holdInView(el) {
+  let mine = true;
+  const stop = () => { mine = false; };
+  for (const ev of ['wheel', 'touchstart', 'keydown', 'mousedown']) window.addEventListener(ev, stop, { once: true, passive: true });
+  const rest = () => parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+  const place = () => { if (mine && el.isConnected && Math.abs(el.getBoundingClientRect().top - rest()) > 6) el.scrollIntoView({ block: 'start' }); };
+  requestAnimationFrame(place);
+  for (const ms of [120, 400, 900, 1600]) setTimeout(place, ms);
+}

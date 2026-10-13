@@ -23,7 +23,7 @@ export default async function render({ params }) {
     clear(status).append(
       h('div.path-progress.is-large', h('span.bar', h('i', { style: { width: `${pr.total ? Math.round((pr.done / pr.total) * 100) : 0}%` } })),
         h('span', pr.total ? `${pr.done} of ${pr.total} lessons explored` : 'No published lessons in this path yet')),
-      pr.next ? h('a.btn.btn-primary', { href: `#/algorithm/${pr.next.module.algo}` }, pr.started ? 'Continue: ' : 'Start: ', C.algoById[pr.next.module.algo].name, h('span', { html: icon('arrow', { size: 15 }) }))
+      pr.next ? h('a.btn.btn-primary', { href: `#/algorithm/${pr.next.module.algo}?path=${p.id}` }, pr.started ? 'Continue: ' : 'Start: ', C.algoById[pr.next.module.algo].name, h('span', { html: icon('arrow', { size: 15 }) }))
         : pr.complete ? h('p.path-complete', { html: `${icon('check', { size: 16 })} You have explored every published lesson on this path.` }) : null,
       h('p.small.faint', store.persistent ? 'A lesson counts as explored once you open it. Progress is kept in this browser.' : 'Progress is not being saved: this browser is blocking storage.'));
     clear(timeline);
@@ -45,7 +45,7 @@ export default async function render({ params }) {
             if (!a) return h('li.is-planned', h('div', h('span.module-name', C.resolveRef(m.algo).name), ' ', h('span.planned-tag', 'Planned')), h('p', m.why));
             const seen = explored.has(a.id);
             return h(`li${seen ? '.is-seen' : ''}`,
-              h('div', h('a.module-name', { href: `#/algorithm/${a.id}` }, a.name), levelGlyph(a.difficulty), seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Explored` }) : null),
+              h('div', h('a.module-name', { href: `#/algorithm/${a.id}?path=${p.id}` }, a.name), levelGlyph(a.difficulty), seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Explored` }) : null),
               h('p', m.why));
           })),
           (s.concepts || []).length ? h('p.stage-concepts', 'Ideas introduced: ', s.concepts.map((c, k) => [k ? ', ' : '', refLink(`concept:${c}`)])) : null,

@@ -31,11 +31,28 @@ export function href(path, query) {
 export function replaceQuery(query) {
   const { path } = parseHash();
   history.replaceState(null, '', href(path, query));
+  shown = location.hash || '#/';
 }
 
 export function navigate(to) { location.hash = to.replace(/^#/, ''); }
 
-async function go() {
+// The address of the page on screen. An in-page link such as the skip link ("#main") is
+// not a page: the router moves to that element and puts this address back.
+let shown = '#/';
+
+async function go(event) {
+  if (location.hash && !location.hash.startsWith('#/')) {
+    let target = null;
+    try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch { target = null; }
+    if (target && current) {
+      // the address before the jump, including any query a page has written since it opened
+      history.replaceState(null, '', event && event.oldURL ? new URL(event.oldURL).hash || shown : shown);
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: 'start' });
+      return;
+    }
+  }
   const my = ++token;
   const { path, query } = parseHash();
   let match = null, params = {};
@@ -58,6 +75,7 @@ async function go() {
   if (my !== token) { if (page && page.destroy) page.destroy(); return; }
   if (current && current.destroy) { try { current.destroy(); } catch (e) { console.error(e); } }
   current = page;
+  shown = location.hash || '#/';
   outlet.removeAttribute('aria-busy');
   clear(outlet).append(page.el);
   document.title = page.title ? `${page.title} · Algorithm Atlas` : 'Algorithm Atlas';

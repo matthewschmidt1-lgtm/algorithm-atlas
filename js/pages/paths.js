@@ -16,7 +16,7 @@ export function pathCard(p, reason) {
     h('div.path-row-main',
       h('p.path-row-level', LEVEL_NAMES[p.level] || p.level),
       h('h3', h('a', { href: `#/path/${p.id}` }, p.title)),
-      h('p', reason ? `${reason}. ${p.blurb}` : p.blurb)),
+      h('p', reason ? `${reason} ${p.blurb}` : p.blurb)),
     h('div.path-row-meta',
       h('span', plural(p.stages.length, 'stage')),
       h('span', `${plural(published, 'lesson')}${plannedN ? `, ${plannedN} planned` : ''}`),

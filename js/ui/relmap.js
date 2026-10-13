@@ -64,15 +64,23 @@ export function createRelMap(centerRef, items, { onSelect = null, map = true } =
   const key = h('div.relmap-key', used.map((t) => h('span', h('i', { style: { background: `var(--viz-${TYPE_COLOR[t]})` } }), TYPE_LABEL[t])),
     h('span.relmap-key-shapes', '● lesson', ' ', '■ concept', ' ', '◎ discipline', ' ', '○ planned'));
 
-  const groups = used.map((t) => h('div.rel-group',
+  // A heading such as "Go further" is a promise that there is something to go to. Lessons
+  // that are planned but not written are therefore listed under their own heading, last.
+  const isPlanned = (s) => C.resolveRef(s.ref).kind === 'planned';
+  const ready = sorted.filter((s) => !isPlanned(s));
+  const waiting = sorted.filter(isPlanned);
+  const groups = TYPE_ORDER.filter((t) => ready.some((s) => s.type === t)).map((t) => h('div.rel-group', { dataset: { type: t } },
     h('h4', h('i.dot', { style: { background: `var(--viz-${TYPE_COLOR[t]})` } }), TYPE_LABEL[t]),
-    h('ul', sorted.filter((s) => s.type === t).map((s) => {
+    h('ul', ready.filter((s) => s.type === t).map((s) => {
       const r = C.resolveRef(s.ref);
-      const title = onSelect && r.kind !== 'planned'
+      const title = onSelect
         ? h('button.link.rel-name', { type: 'button', onclick: () => onSelect(s.ref) }, r.name)
-        : r.href ? h('a.link.rel-name', { href: r.href }, r.name) : h('span.rel-name.is-planned', r.name, ' ', h('span.planned-tag', 'Planned'));
+        : h('a.link.rel-name', { href: r.href }, r.name);
       return h('li', title, r.kind === 'concept' || r.kind === 'discipline' ? h('span.ref-kind', r.kind) : null, h('p', s.why));
     }))));
+  if (waiting.length) groups.push(h('div.rel-group.is-planned', { dataset: { type: 'planned' } },
+    h('h4', h('i.dot.is-hollow'), 'Planned, not yet written'),
+    h('ul', waiting.map((s) => h('li', h('span.rel-name.is-planned', C.resolveRef(s.ref).name), h('span.ref-kind', (TYPE_LABEL[s.type] || s.type).toLowerCase()), h('p', s.why))))));
   // map: false gives the reasons alone, for pages where the drawing would compete with the lesson.
   return h('div.relmap-wrap', map ? figure : null, map ? key : null, h('div.rel-list', groups));
 }
