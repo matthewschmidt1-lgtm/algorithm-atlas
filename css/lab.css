@@ -38,6 +38,7 @@ a.bench:hover { background: var(--surface-2); color: var(--text); }
 .lab-stage .player-stage { padding: 0; }
 .lab-stage .transport, .lab-stage .player-note, .lab-stage .player-state { margin-inline: calc(-1 * var(--s-4)); }
 .lab-stage .player-state { padding-bottom: var(--s-3); }
+.lab-stage .player-foot { margin-inline: calc(-1 * var(--s-4)); }
 .lab-describe { padding-bottom: var(--s-4); }
 .lab-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
 .lab-select { font-family: var(--font-serif); font-size: 1.06rem; font-weight: 600; }

@@ -25,6 +25,7 @@ import { createQuiz } from '../ui/quiz.js';
 import { createRelMap } from '../ui/relmap.js';
 import { checkLine, checkPanel } from '../ui/checks.js';
 import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
+import { createRunCompare } from '../ui/runcompare.js';
 
 const LEVELS = [
   { n: 1, name: 'Explain it simply', about: 'Plain language and a small example.' },
@@ -62,7 +63,9 @@ export default async function render({ params, query }) {
   /* ---------- the player ---------- */
   const player = createPlayer(L);
   cleanups.push(() => player.destroy());
-  const playerEl = assemblePlayer(player);
+  const playerEl = assemblePlayer(player, { pageKeys: true });
+  const runCompare = createRunCompare(player, L);
+  cleanups.push(() => runCompare.destroy());
   const toPlayer = (input) => { player.setInput(input); playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); playerEl.focus({ preventScroll: true }); };
   const report = h('pre.run-report.lv2', { 'aria-live': 'polite' });
   const paintReport = (res) => {
@@ -122,7 +125,7 @@ export default async function render({ params, query }) {
     h('p.example-result', h('strong', 'Result. '), h('span', { html: rich(E.result) })),
     E.tryInput ? h('p', h('button.btn.btn-sm', { type: 'button', onclick: () => toPlayer(E.tryInput), html: `${icon('play', { size: 13 })}<span>Watch this exact example run</span>` })) : null);
 
-  const inputsFold = h('details.fold.inputs-fold', h('summary', 'Change the input'), h('div.fold-body', player.parts.inputs));
+  const inputsFold = h('details.fold.inputs-fold', h('summary', 'Change the input'), h('div.fold-body', player.parts.inputs, runCompare.el));
   const see = sec('see', 1, 'See it work', 'Step by step',
     h('p.muted', 'The real algorithm, running here one step at a time. Press play, or step through it yourself.'),
     playerEl,

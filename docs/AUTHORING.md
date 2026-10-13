@@ -207,6 +207,22 @@ alternatives, something more advanced, and at least one application in another
 discipline (`discipline:<id>`). The `why` must state the shared principle in one or two
 sentences ("Both relax edges until ...") and never just "related to X".
 
+These sentences are shown in more places than the lesson's own Connections section. The
+step offered at the foot of a lesson, the reasons given for recommendations, and the
+connection graph all quote them. So write each one to make sense on its own, naming both
+things. Use `prerequisite` and `advanced` only when you mean an order of learning: a
+lesson that names another as a prerequisite is shown on that other lesson as "Builds on
+this". `tools/test.py` fails if two lessons each call the other a prerequisite.
+
+### Problem phrases (`meta.tags.problems`)
+
+Each phrase is something a person might say they want to do, in everyday words: "find an
+item in a list", "pack the most value into a limited bag". They are the single source
+for two things: search, and the "I want to" page (`#/problems`), which lists every phrase
+and links it to the lessons that declare it. There is no second list to keep in step.
+Prefer a sentence with a verb to a term of art, give each lesson at least one phrase no
+other lesson uses, and do not name the algorithm in it.
+
 ### Quiz
 
 ```js
@@ -216,7 +232,9 @@ sentences ("Both relax edges until ...") and never just "related to X".
 { type: 'challenge', title, prompt, hints: [] }
 ```
 
-`explain` gives feedback for every option, right and wrong, saying why. `tryInput` loads
+`explain` gives feedback for every option, right and wrong, saying why. The page adds
+"Correct." or "Not quite." itself, so an explanation need not begin with a verdict (one
+that does has it removed). `tryInput` loads
 that input into the lesson's visualization so the learner can check the prediction; the
 stated answer must be what the visualization actually shows (add a test that proves it).
 
@@ -245,6 +263,7 @@ t.frame(() => ({                   // record a step. The function is not called 
   note: 'Plain-language explanation of this step, with **the actual values**.',
   views: [ ... ],                  //   one or more views (first is the main picture)
   vars: { i: 2, pivot: 7 },        //   optional small key/value state readout
+  ask: { q, options: [..], answer: index },   // optional, see "Prediction" below
 }));
 ```
 
@@ -259,6 +278,22 @@ t.frame(() => ({                   // record a step. The function is not called 
 - `run` must be deterministic: use `makeRng(input.seed)`, never `Math.random()`.
 - It is also called in count-only mode with large inputs for the experiment, so do not
   do expensive work outside the thunks that only the picture needs.
+- A note for a step that makes a claim must give the reason, and name any rule the claim
+  depends on. "Its distance is final" is not enough; "no edge has a negative cost, so a
+  detour could only add to it" is. Do not let a counter move without a step that says what
+  was done.
+- Where an input breaks a rule the algorithm depends on, prefer showing what goes wrong to
+  refusing to run, provided the demonstration does exactly what the code on the page would
+  do and the last step compares the answer with the truth. Refuse only where there is no
+  answer to compare with, and say why.
+
+#### Prediction (an experiment, in two lessons so far)
+
+A frame may carry `ask: { q, options, answer }`. When the reader turns on "Ask me to
+predict each step first", the player stops before that frame, shows the question, and
+reveals the frame once they answer. Compute the answer in `run` from the same values the
+step uses, never by hand, and list the options in an order that gives nothing away. It is
+in Binary Search and Dijkstra only, until it has been tried with real learners.
 
 ### Inputs
 

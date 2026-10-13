@@ -37,25 +37,56 @@ function makeHeap(t) {
   };
 }
 
+// True shortest distances by Bellman-Ford, which shares no code with the implementation
+// below. It is the reference answer for the tests. It is also what the demonstration
+// compares against when a graph has a negative edge, to show where the standard algorithm
+// goes wrong. `cycle` is true when costs can be lowered forever, so no shortest route exists.
+function referenceDistances(graph, source) {
+  const d = Object.fromEntries(graph.nodes.map((n) => [n.id, Infinity]));
+  const via = {};
+  d[source] = 0;
+  const sweep = () => {
+    let changed = false;
+    for (const e of graph.edges) {
+      if (d[e.u] + e.w < d[e.v]) { d[e.v] = d[e.u] + e.w; via[e.v] = e.u; changed = true; }
+      if (!graph.directed && d[e.v] + e.w < d[e.u]) { d[e.u] = d[e.v] + e.w; via[e.u] = e.v; changed = true; }
+    }
+    return changed;
+  };
+  for (let k = 0; k < graph.nodes.length - 1; k++) if (!sweep()) break;
+  const cycle = sweep();
+  return { d, via, cycle };
+}
+
 function run(input, t) {
   const graph = resolveGraph(input, { weighted: true });
-  if (graph.edges.some((e) => e.w < 0)) throw new Error('Dijkstra\'s algorithm requires non-negative edge weights. Remove the negative weight, or use Bellman-Ford.');
   const ids = graph.nodes.map((n) => n.id);
   const source = ids[0], target = ids[ids.length - 1];
+  // The algorithm is only correct when no edge has a negative cost. A graph that breaks the
+  // rule is still run, as the standard algorithm would run it, so that the failure can be
+  // seen. The one case that cannot be shown is a graph with no shortest route at all.
+  const negative = graph.edges.some((e) => e.w < 0);
+  const truth = negative ? referenceDistances(graph, source) : null;
+  if (negative && !graph.directed) throw new Error('An edge written with a dash can be travelled both ways. With a negative cost you could walk it back and forth forever, lowering the total each time, so no shortest route exists. To see what one negative edge does, make the edges one-way: write A>B:2 in place of A-B:2.');
+  if (negative && truth.cycle) throw new Error('These edges contain a loop whose total cost is negative. Going round it again always lowers the total, so no shortest route exists. Bellman-Ford can detect a loop like this. Dijkstra\'s algorithm cannot.');
   const adj = adjacency(graph);
   const dist = new Map(ids.map((id) => [id, Infinity]));
   const prev = new Map();
   const prevEdge = new Map();
   const settled = new Set();
   const order = [];
+  const late = [];
   const Q = makeHeap(t);
-  const show = (d) => (d === Infinity ? '∞' : String(d));
+  const show = (d) => (d === Infinity ? '∞' : d < 0 ? `−${-d}` : String(d));
+  const sum = (d, w) => (w < 0 ? `${show(d)} − ${-w}` : `${show(d)} + ${w}`);
+  const names = (list) => (list.length <= 1 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`);
   const legend = [{ label: 'current', role: 'current' }, { label: 'in the queue', role: 'frontier' }, { label: 'settled (final)', role: 'done' }, { label: 'shortest-path tree', role: 'tree' }];
+  if (negative) legend.push({ label: 'settled too early', role: 'alert' });
 
-  const views = ({ current, edge, edgeRole, pathNodes, pathEdges } = {}) => {
+  const views = ({ current, edge, edgeRole, pathNodes, pathEdges, wrong } = {}) => {
     const g = graphView(graph, {
-      nodeRole: (id) => (pathNodes && pathNodes.has(id) ? 'path' : id === current ? 'current' : settled.has(id) ? 'done' : dist.get(id) < Infinity ? 'frontier' : 'default'),
-      nodeSub: (id) => show(dist.get(id)),
+      nodeRole: (id) => (wrong && wrong.has(id) ? 'alert' : pathNodes && pathNodes.has(id) ? 'path' : id === current ? 'current' : settled.has(id) ? 'done' : dist.get(id) < Infinity ? 'frontier' : 'default'),
+      nodeSub: (id) => (wrong && wrong.has(id) ? `${show(dist.get(id))}, should be ${show(truth.d[id])}` : show(dist.get(id))),
       edgeRole: (e) => {
         if (pathEdges) return pathEdges.has(e) ? 'path' : 'dim';
         if (e === edge) return edgeRole || 'active';
@@ -65,8 +96,8 @@ function run(input, t) {
     });
     g.legend = legend;
     const queue = { kind: 'rows', title: 'Priority queue and settled order', rows: [
-      { label: 'Queue', cells: Q.items().map(([d, id]) => ({ t: id, sub: d, role: settled.has(id) ? 'dim' : 'frontier' })) },
-      { label: 'Settled', cells: order.map((id) => ({ t: id, sub: dist.get(id), role: 'done' })) },
+      { label: 'Queue', cells: Q.items().map(([d, id]) => ({ t: id, sub: show(d), role: settled.has(id) ? 'dim' : 'frontier' })) },
+      { label: 'Settled', cells: order.map((id) => ({ t: id, sub: show(dist.get(id)), role: wrong && wrong.has(id) ? 'alert' : 'done' })) },
     ] };
     return [g, queue];
   };
@@ -74,21 +105,62 @@ function run(input, t) {
   dist.set(source, 0);
   Q.push([0, source]);
   t.count('heap operations');
-  t.frame(() => ({ line: [1, 2, 3], note: `Every node starts at distance ∞ except the source **${source}**, which is at distance 0. The queue holds the nodes we know how to reach, closest first.`, views: views(), vars: { source, target } }));
+  t.frame(() => ({ line: [1, 2, 3], note: `Every node starts at distance ∞ except the source **${source}**, which is at distance 0. The queue holds the nodes we know how to reach, closest first.${negative ? ' This graph has an edge with a negative cost, which the algorithm does not allow for. Watch what that does.' : ''}`, views: views(), vars: { source, target } }));
 
   while (Q.size) {
+    // the nodes someone could reasonably expect to be settled next, in alphabetical order so the list gives nothing away
+    const waiting = [...new Set(Q.items().filter(([, id]) => !settled.has(id)).map(([, id]) => id))].sort();
     const [d, u] = Q.pop();
     t.count('heap operations');
     if (settled.has(u)) {
-      t.frame(() => ({ line: [5, 6], note: `Took (${d}, ${u}) from the queue, but ${u} was already settled at distance ${dist.get(u)}. This is a stale entry, so skip it.`, views: views({ current: u }), vars: { u, d } }));
+      const reopened = late.find((x) => x.to === u && x.offered === d);
+      t.frame(() => ({ line: [5, 6], note: reopened
+        ? `Took (${show(d)}, ${u}) from the queue. This is the cheaper route to ${u} that turned up late. But ${u} is already marked settled, so the entry is skipped and ${u}'s edges are not followed again. Everything that was worked out from ${u}'s old distance, ${show(reopened.was)}, stays as it was.`
+        : `Took (${show(d)}, ${u}) from the queue, but ${u} was already settled at distance ${show(dist.get(u))}. This is a stale entry, so skip it.`,
+        views: views({ current: u, wrong: reopened ? new Set([u]) : undefined }), vars: { u, d: show(d) } }));
       continue;
     }
     settled.add(u);
     order.push(u);
-    t.frame(() => ({ line: [5, 7], note: `**${u}** is the closest unsettled node, at distance ${d}. No shorter route to it can exist, so its distance is now final.`, views: views({ current: u }), vars: { u, 'dist[u]': d } }));
-    for (const { to: v, w, e } of adj.get(u)) {
-      t.count('relaxations');
+    // Why the distance can be called final. This is the step the whole algorithm rests on.
+    const why = u === source
+      ? `**${u}** is where we start, at distance 0. No edge has a negative cost, so no route can total less than 0. Its distance is final.`
+      : `**${u}** is the closest node not yet settled, at distance ${show(d)}. Every other waiting node is at least ${show(d)} away, and no edge has a negative cost, so a detour through any of them could only add to that. No shorter route to ${u} can exist. Its distance is final.`;
+    const whyNot = u === source
+      ? `**${u}** is where we start, at distance 0. The algorithm calls that final.`
+      : `**${u}** is the closest node not yet settled, at distance ${show(d)}, so the algorithm calls that final. It is relying on a rule this graph breaks: that a detour through a farther node can only add cost.`;
+    const ask = !negative && waiting.length >= 2 ? { q: 'Which node will be settled next?', options: waiting, answer: waiting.indexOf(u) } : undefined;
+    t.frame(() => ({ line: [5, 7], note: negative ? whyNot : why, views: views({ current: u }), vars: { u, 'dist[u]': show(d) }, ...(ask ? { ask } : {}) }));
+
+    // Edges that lead back to settled nodes are looked at first. While no edge is negative
+    // they can never offer anything better, so one step covers them all.
+    const edges = adj.get(u);
+    const back = edges.filter((x) => settled.has(x.to));
+    for (const x of back) t.count('relaxations');
+    const cheaper = back.filter((x) => d + x.w < dist.get(x.to));
+    const same = back.filter((x) => !cheaper.includes(x));
+    if (same.length) {
+      const list = same.map((x) => x.to);
+      t.frame(() => ({ line: [8, 9], note: `${same.length === 1 ? `The edge from ${u} back to ${list[0]} leads to a node that is` : `The edges from ${u} back to ${names(list)} lead to nodes that are`} already settled. Going back through ${u} cannot beat ${same.length === 1 ? 'that distance' : 'those distances'}, so nothing changes.`,
+        views: views({ current: u }), vars: { u, 'already settled': list.join(', ') } }));
+    }
+    // Only a negative edge can do this: offer a cheaper route to a node that was called final.
+    for (const { to: v, w, e } of cheaper) {
+      const was = dist.get(v);
+      const cand = d + w;
+      late.push({ from: u, to: v, offered: cand, was });
+      dist.set(v, cand);
+      prev.set(v, u);
+      prevEdge.set(v, e);
+      Q.push([cand, v]);
+      t.count('heap operations');
+      t.frame(() => ({ line: [9, 10, 11, 12], note: `Edge ${u} to ${v} costs ${show(w)}. Reaching ${v} through ${u} costs ${sum(d, w)} = **${show(cand)}**, which beats the ${show(was)} that ${v} was settled at. So ${v}'s distance was not final after all. The code lowers it to ${show(cand)} and puts ${v} back in the queue.`,
+        views: views({ current: u, edge: e, edgeRole: 'active', wrong: new Set([v]) }), vars: { u, v, 'dist[u] + w': show(cand), 'dist[v]': show(cand) } }));
+    }
+
+    for (const { to: v, w, e } of edges) {
       if (settled.has(v)) continue;
+      t.count('relaxations');
       const cand = d + w;
       const better = cand < dist.get(v);
       const old = dist.get(v);
@@ -101,9 +173,9 @@ function run(input, t) {
       }
       t.frame(() => ({ line: better ? [9, 10, 11, 12] : [8, 9],
         note: better
-          ? `Edge ${u} to ${v} costs ${w}. Reaching ${v} through ${u} costs ${d} + ${w} = **${cand}**, better than ${show(old)}. Update ${v} and add it to the queue.`
-          : `Edge ${u} to ${v} costs ${w}. Going through ${u} would cost ${d} + ${w} = ${cand}, which is no better than ${show(old)}. Leave ${v} alone.`,
-        views: views({ current: u, edge: e, edgeRole: better ? 'active' : 'rejected' }), vars: { u, v, 'dist[u] + w': cand, 'dist[v]': show(dist.get(v)) } }));
+          ? `Edge ${u} to ${v} costs ${show(w)}. Reaching ${v} through ${u} costs ${sum(d, w)} = **${show(cand)}**, better than ${show(old)}. Update ${v} and add it to the queue.`
+          : `Edge ${u} to ${v} costs ${show(w)}. Going through ${u} would cost ${sum(d, w)} = ${show(cand)}, which is no better than ${show(old)}. Leave ${v} alone.`,
+        views: views({ current: u, edge: e, edgeRole: better ? 'active' : 'rejected' }), vars: { u, v, 'dist[u] + w': show(cand), 'dist[v]': show(dist.get(v)) } }));
     }
   }
 
@@ -113,27 +185,27 @@ function run(input, t) {
     for (let v = target; v !== undefined; v = prev.get(v)) { path.unshift(v); if (prevEdge.has(v)) pathEdges.add(prevEdge.get(v)); }
   }
   t.frame(() => ({ line: 13, note: path.length
-    ? `The queue is empty, so every reachable node is settled. Following the "came from" links back from ${target} gives the shortest route ${path.join(' → ')} with total cost **${dist.get(target)}**.`
+    ? `The queue is empty, so every reachable node is settled. Following the "came from" links back from ${target} gives the ${negative ? 'route the algorithm reports' : 'shortest route'}, ${path.join(' → ')}, with total cost **${show(dist.get(target))}**.`
     : `The queue is empty. ${target} was never reached, so there is no route to it from ${source}.`,
     views: views({ pathNodes: new Set(path), pathEdges }), vars: { source, target, cost: show(dist.get(target)) } }));
 
-  return { dist: Object.fromEntries(dist), path, source, target, order, graph };
+  // With a negative edge, check the reported distances against the true ones and say plainly what happened.
+  const wrong = negative ? ids.filter((id) => dist.get(id) !== truth.d[id]) : [];
+  if (negative) {
+    const trueRoute = (id) => { const r = []; for (let v = id; v !== undefined && r.length <= ids.length; v = truth.via[v]) r.unshift(v); return r.join(' → '); };
+    const first = wrong[0];
+    const early = [...new Set(late.map((x) => x.to))];
+    t.frame(() => ({ line: null, note: wrong.length
+      ? `**The answer is wrong.** The algorithm reports ${show(dist.get(first))} for ${first}, but the route ${trueRoute(first)} costs ${show(truth.d[first])}.${wrong.length > 1 ? ` It is also wrong for ${names(wrong.slice(1))}.` : ''} Nothing warned us. ${early.length ? `${names(early)} ${early.length === 1 ? 'was' : 'were'} called final too early, and what had been worked out from ${early.length === 1 ? 'it' : 'them'} was never redone.` : ''} For a graph like this one, use Bellman-Ford, which keeps checking every edge.`
+      : `**This time the answers happen to be right**, but only by luck. ${early.length ? `${names(early)} ${early.length === 1 ? 'was' : 'were'} called final too early, and nothing further had been worked out from ${early.length === 1 ? 'it' : 'them'} yet.` : 'The negative edge never led back into a node that had already been settled.'} The algorithm promises nothing on a graph like this one. Bellman-Ford does.`,
+      views: views({ wrong: new Set(wrong) }), vars: { 'wrong distances': wrong.length } }));
+  }
+
+  return { dist: Object.fromEntries(dist), path, source, target, order, graph, negative, wrong, late, truth: truth ? truth.d : null };
 }
 
-// Reference answer for the tests: Bellman-Ford, which shares no code with the implementation above.
-function referenceDistances(graph, source) {
-  const d = Object.fromEntries(graph.nodes.map((n) => [n.id, Infinity]));
-  d[source] = 0;
-  for (let k = 0; k < graph.nodes.length; k++) {
-    for (const e of graph.edges) {
-      if (d[e.u] + e.w < d[e.v]) d[e.v] = d[e.u] + e.w;
-      if (!graph.directed && d[e.v] + e.w < d[e.u]) d[e.u] = d[e.v] + e.w;
-    }
-  }
-  return d;
-}
 const matchesReference = (r) => {
-  const ref = referenceDistances(r.graph, r.source);
+  const ref = referenceDistances(r.graph, r.source).d;
   const bad = Object.keys(ref).find((k) => ref[k] !== r.dist[k]);
   if (bad) return `distance to ${bad} is ${r.dist[bad]}, reference says ${ref[bad]}`;
   let cost = 0;
@@ -226,14 +298,15 @@ export default {
       { label: 'Small graph', values: { nodes: 6, density: 0.35, seed: 3, edges: '' } },
       { label: 'Dense graph', values: { nodes: 10, density: 0.9, seed: 8, edges: '' } },
       { label: 'A tempting wrong turn', values: { edges: 'A-B:1, B-C:1, C-F:9, A-D:4, D-E:1, E-F:1' } },
+      { label: 'A negative edge (where it fails)', values: { edges: 'A>B:2, A>C:1, B>C:-3, C>D:2' } },
     ],
     tryThis: [
       'Load "A tempting wrong turn". The first edges out of A are cheap toward B and C, but the best route to F goes through D. Watch the algorithm settle B and C first and still find the right answer.',
-      'Type your own edges with one negative weight, for example `A-B:2, B-C:-3, A-C:1`. The algorithm refuses to run, because its central guarantee no longer holds.',
+      'Load "A negative edge (where it fails)". Before you step through it, work out the cheapest cost from A to C by hand. Then watch C get settled at 1, and watch what happens when the edge from B offers a cheaper route. The last step compares the answer with the truth, and D is the node to keep an eye on.',
       'Raise "Extra edges" to 1 and watch the queue. More edges mean more distance updates, and stale queue entries start to appear.',
     ],
     run,
-    report: (r, c) => `Distances from ${r.source}: ${Object.entries(r.dist).map(([k, v]) => `${k}=${v === Infinity ? '∞' : v}`).join(', ')}\nShortest route to ${r.target}: ${r.path.length ? r.path.join(' → ') + ` (cost ${r.dist[r.target]})` : 'unreachable'}\n${c.relaxations || 0} edge relaxations, ${c['heap operations'] || 0} priority-queue operations.`,
+    report: (r, c) => `Distances from ${r.source}: ${Object.entries(r.dist).map(([k, v]) => `${k}=${v === Infinity ? '∞' : v}`).join(', ')}\n${r.negative ? 'Route reported' : 'Shortest route'} to ${r.target}: ${r.path.length ? r.path.join(' → ') + ` (cost ${r.dist[r.target]})` : 'unreachable'}\n${c.relaxations || 0} edge relaxations, ${c['heap operations'] || 0} priority-queue operations.${r.negative ? (r.wrong.length ? `\nThis graph has a negative edge, and the answer above is wrong for ${r.wrong.join(', ')}. True ${r.wrong.length === 1 ? 'distance' : 'distances'}: ${r.wrong.map((k) => `${k}=${r.truth[k]}`).join(', ')}.` : '\nThis graph has a negative edge. The answer above happens to be right, but the algorithm does not guarantee it.') : ''}`,
     experiment: {
       title: 'Priority-queue work as the graph grows',
       note: 'Each point is a real run on a random connected graph with roughly 1.5 edges per node. The curve is n log₂ n scaled to pass through the last measured point, to compare shapes.',
@@ -668,5 +741,28 @@ int main() {
       check: (r) => (r.dist.B === 3 && r.dist.C === 1 && r.dist.D === 8 && r.path.join('') === 'ACBD') || `got B=${r.dist.B} D=${r.dist.D} via ${r.path.join('')}` },
     { name: 'reports unreachable nodes', input: { edges: 'A-B:2, C-D:1' },
       check: (r) => (r.dist.D === Infinity && r.path.length === 0) || 'D should be unreachable' },
+    { name: 'with a negative edge, it reports the wrong answer the standard algorithm gives, and flags it', input: { edges: 'A>B:2, A>C:1, B>C:-3, C>D:2' },
+      check: (r) => (r.dist.C === -1 && r.dist.D === 3 && r.truth.C === -1 && r.truth.D === 1 && r.wrong.join('') === 'D' && r.late.length === 1 && r.late[0].to === 'C' && r.late[0].offered === -1 && r.late[0].was === 1)
+        || `reported C=${r.dist.C} D=${r.dist.D}, truth C=${r.truth && r.truth.C} D=${r.truth && r.truth.D}, flagged ${r.wrong}` },
+    { name: 'with a harmless negative edge, it says the answer is right and does not flag anything', input: { edges: 'A>B:-1, B>C:2, A>C:5' },
+      check: (r) => (r.negative && r.wrong.length === 0 && r.dist.C === 1 && r.truth.C === 1) || `flagged ${r.wrong}, C=${r.dist.C}` },
+    { name: 'every step that calls a distance final says why, and names the rule it depends on', input: { nodes: 8, density: 0.4, seed: 3, edges: '' },
+      check: (r, c, run) => {
+        const settles = run.frames.filter((f) => /Its distance is final\./.test(f.note));
+        if (settles.length !== r.order.length) return `${settles.length} steps explain a final distance, ${r.order.length} nodes were settled`;
+        const silent = settles.find((f) => !/no edge has a negative cost/i.test(f.note));
+        return silent ? `a step calls a distance final without the rule: "${silent.note.slice(0, 80)}"` : true;
+      } },
+    { name: 'the count of edges examined never moves without a step that says which edges', input: { nodes: 8, density: 0.4, seed: 3, edges: '' },
+      check: (r, c, run) => {
+        let last = 0;
+        for (const [k, f] of run.frames.entries()) {
+          const now = (f.counters && f.counters.relaxations) || 0;
+          const named = (f.note.match(/Edge \w+ to \w+/g) || []).length + ((f.vars && f.vars['already settled']) ? String(f.vars['already settled']).split(',').length : 0);
+          if (now - last > named) return `step ${k + 1} examines ${now - last} edges but names ${named}`;
+          last = now;
+        }
+        return true;
+      } },
   ],
 };

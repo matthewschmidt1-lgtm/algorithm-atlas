@@ -34,14 +34,25 @@ async function until(fn, ms, msg) {
 }
 
 // Open a page of the real site in a frame and wait for something on it.
+// The site's fonts come from another server, and a slow answer there holds the page back.
+// That is not what these tests are about, so a page that does not appear is opened once more.
 async function open(hash, ready, { width = 1200, height = 900 } = {}) {
-  const f = document.createElement('iframe');
-  f.style.cssText = `width:${width}px;height:${height}px;border:0;display:block`;
-  f.src = `/index.html?motion=off#${hash}`;
-  document.body.append(f);
-  await until(() => f.contentDocument && f.contentDocument.querySelector(ready), 10000, `"${hash}" never showed ${ready}`);
-  await sleep(60);
-  return { doc: f.contentDocument, win: f.contentWindow, frame: f, close: () => f.remove(), $: (sel) => f.contentDocument.querySelector(sel), $$: (sel) => [...f.contentDocument.querySelectorAll(sel)] };
+  for (let attempt = 0; ; attempt++) {
+    const f = document.createElement('iframe');
+    // fixed at the top left so that the page inside is really on screen: the site pauses and ignores what is out of view
+    f.style.cssText = `width:${width}px;height:${height}px;border:0;display:block;position:fixed;top:0;left:0;background:#fff;z-index:5`;
+    f.src = `/index.html?try=${attempt}#${hash}`;
+    document.body.append(f);
+    try {
+      await until(() => f.contentDocument && f.contentDocument.querySelector(ready), 10000, `"${hash}" never showed ${ready}`);
+    } catch (e) {
+      f.remove();
+      if (attempt >= 1) throw e;
+      continue;
+    }
+    await sleep(60);
+    return { doc: f.contentDocument, win: f.contentWindow, frame: f, close: () => f.remove(), $: (sel) => f.contentDocument.querySelector(sel), $$: (sel) => [...f.contentDocument.querySelectorAll(sel)] };
+  }
 }
 
 await C.loadContent();
@@ -713,6 +724,257 @@ if (on('learning')) {
     } finally { store.update((st) => { Object.assign(st, JSON.parse(keep)); }); }
     assert(!bad.length, `${bad.length}: ${bad.slice(0, 4).join(' | ')}`);
     return `${checked} suggestions across ${1 + Math.ceil(C.algos.length / 4)} histories`;
+  });
+}
+
+/* ------------------------------------------------------------------ the demonstrations */
+if (on('player')) {
+  suite('Demonstrations');
+  const { execute } = await import('../js/core/tracer.js');
+  const stepNo = (p) => Number((p.$('.step-label').textContent.match(/Step (\d+)/) || [])[1]);
+  const press = (p, key, target) => (target || p.doc.body).dispatchEvent(new p.win.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+  const fwd = (p) => p.$('.transport-buttons button[aria-label="Step forward"]');
+
+  /* ---- Dijkstra: why a distance is final, and what a negative edge does ---- */
+  const dj = await C.loadLesson('dijkstra');
+  await test('Dijkstra: on a graph with a negative edge the demonstration does exactly what the code on the page does', () => {
+    // the page's own program, transcribed line for line from its Python version
+    const pageCode = (edges, ids, source) => {
+      const graph = Object.fromEntries(ids.map((id) => [id, []]));
+      for (const e of edges) graph[e.u].push([e.v, e.w]);
+      const dist = Object.fromEntries(ids.map((id) => [id, Infinity]));
+      dist[source] = 0;
+      const queue = [[0, source]]; const settled = new Set();
+      while (queue.length) {
+        queue.sort((x, y) => x[0] - y[0] || (x[1] < y[1] ? -1 : 1));
+        const [d, u] = queue.shift();
+        if (settled.has(u)) continue;
+        settled.add(u);
+        for (const [v, w] of graph[u]) if (d + w < dist[v]) { dist[v] = d + w; queue.push([dist[v], v]); }
+      }
+      return dist;
+    };
+    const bellmanFord = (edges, ids, source) => { const d = Object.fromEntries(ids.map((id) => [id, Infinity])); d[source] = 0; let again = false; for (let k = 0; k <= ids.length; k++) { again = false; for (const e of edges) if (d[e.u] + e.w < d[e.v]) { d[e.v] = d[e.u] + e.w; again = true; } } return again ? null : d; };
+    let seed = 12345; const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+    const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+    let tried = 0, wrongSeen = 0, luckySeen = 0;
+    for (let trial = 0; trial < 3000 && tried < 300; trial++) {
+      const n = 4 + Math.floor(rnd() * 3); const ids = names.slice(0, n); const edges = [];
+      // one-way edges in a random direction, a few of them negative; graphs with a negative loop are set aside
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (rnd() < 0.6) { const flip = rnd() < 0.35; edges.push({ u: ids[flip ? j : i], v: ids[flip ? i : j], w: rnd() < 0.3 ? -(1 + Math.floor(rnd() * 4)) : 1 + Math.floor(rnd() * 6) }); }
+      if (!edges.some((e) => e.w < 0) || !ids.every((id) => edges.some((e) => e.u === id || e.v === id))) continue;
+      if (!bellmanFord(edges, ids, 'A')) { assert(!execute(dj, { edges: edges.map((e) => `${e.u}>${e.v}:${e.w}`).join(', ') }).ok, 'a graph with a negative loop was run as if it had shortest routes'); continue; }
+      const text = edges.map((e) => `${e.u}>${e.v}:${e.w}`).join(', ');
+      const run = execute(dj, { edges: text });
+      assert(run.ok, `"${text}" would not run: ${run.error}`);
+      const code = pageCode(edges, ids, 'A'), truth = bellmanFord(edges, ids, 'A');
+      for (const id of ids) assert(run.result.dist[id] === code[id], `"${text}": the demonstration reports ${run.result.dist[id]} for ${id}, the page's code gives ${code[id]}`);
+      const reallyWrong = ids.filter((id) => code[id] !== truth[id]);
+      assert(run.result.wrong.join() === reallyWrong.join(), `"${text}": flagged ${run.result.wrong.join() || 'nothing'} as wrong, but the wrong nodes are ${reallyWrong.join() || 'none'}`);
+      const last = run.frames[run.frames.length - 1].note;
+      assert(reallyWrong.length ? /The answer is wrong/.test(last) : /happen to be right/.test(last), `"${text}": the last step says "${last.slice(0, 40)}"`);
+      tried++; if (reallyWrong.length) wrongSeen++; else luckySeen++;
+    }
+    assert(tried >= 200 && wrongSeen >= 5 && luckySeen >= 5, `only ${tried} graphs (${wrongSeen} wrong, ${luckySeen} right by luck)`);
+    return `${tried} random graphs with negative edges: ${wrongSeen} where the algorithm is wrong, ${luckySeen} where it is right by luck`;
+  });
+  await test('Dijkstra: the page shows the failure, and explains why an edge travelled both ways cannot be shown', async () => {
+    const p = await open('/algorithm/dijkstra', '.player-note .note-text');
+    try {
+      const btn = p.$$('.preset-row .btn').find((b) => /negative edge/i.test(b.textContent));
+      assert(btn, 'there is no preset for a negative edge');
+      btn.click(); await sleep(80);
+      const marked = p.$$('.preset-row .btn').filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.textContent);
+      assert(marked.length === 1 && /negative edge/i.test(marked[0]), `the preset marked as in use is "${marked.join(', ') || 'none'}"`);
+      const scrub = p.$('.scrub'); scrub.value = scrub.max; scrub.dispatchEvent(new p.win.Event('input', { bubbles: true }));
+      await sleep(60);
+      const note = p.$('.player-note').textContent;
+      assert(/The answer is wrong/.test(note) && /Bellman-Ford/.test(note), `the last step reads "${note.slice(0, 80)}"`);
+      assert(/should be/.test(JSON.stringify(execute(dj, { edges: 'A>B:2, A>C:1, B>C:-3, C>D:2' }).frames.slice(-1)[0].views[0])), 'the wrong node is not labelled with the true distance');
+      const field = p.$$('.inputs input[type="text"], .inputs textarea').find((i) => /A>B/.test(i.value));
+      field.value = 'A-B:2, B-C:-3, A-C:1'; field.dispatchEvent(new p.win.Event('change', { bubbles: true }));
+      await sleep(80);
+      const err = p.$('.player-error');
+      assert(!err.hidden && /both ways/.test(err.textContent) && /A>B/.test(err.textContent), `the error reads "${err.textContent.slice(0, 80)}"`);
+    } finally { p.close(); }
+  });
+
+  /* ---- comparing a run with the one before ---- */
+  await test('Changing the input shows the counts before and now, and they are the real counts', async () => {
+    const L = await C.loadLesson('quick-sort');
+    const preset = L.viz.presets.find((x) => /worst/i.test(x.label)) || L.viz.presets[1];
+    const before = execute(L, {}), after = execute(L, preset.values);
+    const p = await open('/algorithm/quick-sort', '.player-note .note-text');
+    try {
+      const box = p.$('.run-compare');
+      assert(box && box.hidden, 'a comparison is shown before anything has been changed');
+      p.$$('.preset-row .btn').find((b) => b.textContent === preset.label).click();
+      await sleep(120);
+      assert(!box.hidden, 'no comparison appeared after choosing a preset');
+      const rows = Object.fromEntries([...box.querySelectorAll('tbody tr')].map((tr) => [tr.children[0].textContent, [...tr.children].slice(1).map((td) => td.textContent.replace(/,/g, ''))]));
+      const shared = Object.keys(after.counters).filter((k) => k in before.counters);
+      assert(shared.length && shared.every((k) => rows[k]), `the table lists ${Object.keys(rows).join(', ')}, the runs share ${shared.join(', ')}`);
+      for (const k of shared) {
+        const [was, now, diff] = rows[k];
+        assert(Number(was) === before.counters[k] && Number(now) === after.counters[k], `${k}: the page says ${was} then ${now}, the runs gave ${before.counters[k]} then ${after.counters[k]}`);
+        const d = after.counters[k] - before.counters[k];
+        assert(d === 0 ? diff === 'no change' : diff === `${d > 0 ? '+' : '−'}${Math.abs(d)}`, `${k}: the difference reads "${diff}", it is ${d}`);
+      }
+      assert(box.textContent.includes(preset.label), 'the comparison does not say which preset is now running');
+      assert(!/null|undefined|NaN/.test(box.textContent), `the comparison prints a stray value: "${box.textContent.slice(-40)}"`);
+      // a run that fails must not replace the last good one
+      const custom = p.$$('.inputs input[type="text"]')[0];
+      if (custom) {
+        custom.value = 'not, numbers, at all'; custom.dispatchEvent(new p.win.Event('change', { bubbles: true }));
+        await sleep(120);
+        const kept = Object.fromEntries([...box.querySelectorAll('tbody tr')].map((tr) => [tr.children[0].textContent, tr.children[2].textContent.replace(/,/g, '')]));
+        if (!p.$('.player-error').hidden) for (const k of shared) assert(Number(kept[k]) === after.counters[k], `after a failed run the table shows ${kept[k]} for ${k}`);
+      }
+      return shared.map((k) => `${k} ${before.counters[k]} to ${after.counters[k]}`).join(', ');
+    } finally { p.close(); }
+  });
+  await test('A change that does not alter the counts says so, and never invents a number', async () => {
+    const L = await C.loadLesson('dijkstra');
+    const p = await open('/algorithm/dijkstra', '.player-note .note-text');
+    try {
+      const box = p.$('.run-compare');
+      p.$$('.preset-row .btn')[0].click(); await sleep(100);
+      p.$$('.preset-row .btn')[1].click(); await sleep(100);
+      const first = execute(L, L.viz.presets[0].values), second = execute(L, L.viz.presets[1].values);
+      for (const tr of box.querySelectorAll('tbody tr')) {
+        const k = tr.children[0].textContent;
+        assert(k in first.counters && k in second.counters, `the table compares "${k}", which one of the runs does not report`);
+        assert(Number(tr.children[1].textContent.replace(/,/g, '')) === first.counters[k] && Number(tr.children[2].textContent.replace(/,/g, '')) === second.counters[k], `${k}: wrong numbers`);
+      }
+      assert(/Before \(/.test(box.querySelector('thead').textContent), 'the earlier run is not named');
+    } finally { p.close(); }
+  });
+
+  /* ---- keyboard ---- */
+  await test('The arrow keys step the demonstration without a click first', async () => {
+    const p = await open('/algorithm/merge-sort', '.player-note .note-text');
+    try {
+      p.$('.player-stage').scrollIntoView({ block: 'center', behavior: 'instant' });
+      await until(() => { const r = p.$('.player-stage').getBoundingClientRect(); return r.top >= 0 && r.bottom <= 900; }, 4000, 'the figure never came into view');
+      await sleep(250);
+      if (p.doc.activeElement && p.doc.activeElement !== p.doc.body) p.doc.activeElement.blur();
+      assert(stepNo(p) === 1, 'the demonstration did not start on step 1');
+      press(p, 'ArrowRight'); press(p, 'ArrowRight');
+      assert(stepNo(p) === 3, `after two presses of the right arrow, with nothing focused, the step is ${stepNo(p)}`);
+      press(p, 'ArrowLeft');
+      assert(stepNo(p) === 2, `the left arrow left the step at ${stepNo(p)}`);
+      // keys typed into a field belong to the field
+      const field = p.$('.searchbox input, .inputs input[type="text"], .inputs input[type="number"]');
+      if (field) { press(p, 'ArrowRight', field); assert(stepNo(p) === 2, 'an arrow key typed into a field moved the demonstration'); }
+      const option = p.$('.quiz-option'); if (option) { press(p, 'ArrowRight', option); assert(stepNo(p) === 2, 'an arrow key in the quiz moved the demonstration'); }
+      // and when the figure is off screen the keys are left alone
+      p.win.scrollTo({ top: p.doc.documentElement.scrollHeight, behavior: 'instant' });
+      await sleep(400);
+      press(p, 'ArrowRight');
+      assert(stepNo(p) === 2, 'the right arrow moved a demonstration that was off screen');
+      assert(/step back and forward/.test(p.$('.player-keys').textContent), 'there is no hint about the keys');
+    } finally { p.close(); }
+  });
+  await test('The arrow keys work in the lab too, and Space still plays once the figure has focus', async () => {
+    const p = await open('/lab/dijkstra', '.player-note .note-text');
+    try {
+      await sleep(350);
+      if (p.doc.activeElement && p.doc.activeElement !== p.doc.body) p.doc.activeElement.blur();
+      press(p, 'ArrowRight');
+      assert(stepNo(p) === 2, `in the lab the right arrow left the step at ${stepNo(p)}`);
+      fwd(p).focus(); press(p, 'ArrowRight', fwd(p));
+      assert(stepNo(p) === 3, `with focus inside the figure the right arrow moved to step ${stepNo(p)}, not 3`);
+    } finally { p.close(); }
+  });
+
+  /* ---- phones ---- */
+  await test('On a phone the picture and its note sit together, fit on screen, and the controls do not move', async () => {
+    const p = await open('/algorithm/dijkstra', '.player-note .note-text', { width: 375, height: 812 });
+    try {
+      await sleep(400);
+      const rect = (sel) => p.$(sel).getBoundingClientRect();
+      const stage = rect('.player-stage'), note = rect('.player-note'), bar = rect('.transport');
+      assert(note.top >= stage.bottom - 1 && note.top - stage.bottom < 12, `the note starts ${Math.round(note.top - stage.bottom)}px below the picture`);
+      assert(bar.top >= note.bottom - 1, 'the controls are not below the note');
+      const room = 812 - rect('.site-head').height - rect('.level-bar').height;
+      const span = note.bottom - stage.top;
+      assert(span <= room, `at the first step, picture and note together are ${Math.round(span)}px tall, and ${Math.round(room)}px are free under the fixed bars`);
+      // Step through the whole run. The note's space is reserved, so its length never moves the
+      // controls. The picture may grow when a row wraps, but must never shrink back, and must
+      // always leave room on screen for the start of its note.
+      const tops = []; let tallest = stage.height;
+      while (!fwd(p).disabled) {
+        fwd(p).click();
+        tops.push(Math.round(fwd(p).getBoundingClientRect().top + p.win.scrollY));
+        tallest = Math.max(tallest, rect('.player-stage').height);
+        const gap = rect('.player-note').top - rect('.player-stage').bottom;
+        assert(gap >= -1 && gap < 12, `at step ${stepNo(p)} the note is ${Math.round(gap)}px from the picture`);
+      }
+      assert(tops.every((t, i) => i === 0 || t >= tops[i - 1]), `the forward button moved back up during the run: ${[...new Set(tops)].join(', ')}`);
+      assert(new Set(tops).size <= 3, `the forward button sat at ${new Set(tops).size} different heights during the run`);
+      assert(tallest + 72 <= room, `the picture grows to ${Math.round(tallest)}px, which leaves less than three lines for its note in ${Math.round(room)}px`);
+      assert(p.doc.documentElement.scrollWidth <= 376, `the page is ${p.doc.documentElement.scrollWidth}px wide`);
+      return `first step: picture and note ${Math.round(span)}px in ${Math.round(room)}px of room. Over ${tops.length} steps the forward button moved down ${new Set(tops).size - 1} time(s) and never up; the picture's tallest was ${Math.round(tallest)}px`;
+    } finally { p.close(); }
+  });
+
+  /* ---- the prediction experiment ---- */
+  await test('Prediction is off unless asked for, and is offered only where a lesson has questions', async () => {
+    const p = await open('/algorithm/dijkstra', '.player-note .note-text');
+    try {
+      assert(!p.$('.player-predict').hidden && !p.$('.player-predict input').checked, 'the experiment is not offered, or is on by default');
+      const n = stepNo(p); fwd(p).click(); fwd(p).click(); fwd(p).click(); fwd(p).click();
+      assert(stepNo(p) === n + 4 && !p.$('.predict'), 'with the experiment off, stepping was interrupted');
+    } finally { p.close(); }
+    const q = await open('/algorithm/quick-sort', '.player-note .note-text');
+    try { assert(q.$('.player-predict').hidden, 'a lesson with no questions offers the experiment'); } finally { q.close(); }
+  });
+  await test('With prediction on, a step is held back until answered, then shown with a verdict', async () => {
+    const run = execute(dj, {});
+    const asks = run.frames.map((f, i) => (f.ask ? i : -1)).filter((i) => i >= 0);
+    assert(asks.length >= 3, `the default Dijkstra run has only ${asks.length} questions`);
+    for (const i of asks) { const f = run.frames[i]; assert(f.ask.options[f.ask.answer] === f.vars.u, `step ${i + 1}: the stored answer is ${f.ask.options[f.ask.answer]}, the node settled is ${f.vars.u}`); }
+    const p = await open('/algorithm/dijkstra', '.player-note .note-text');
+    try {
+      p.$('.player-predict input').click();
+      let guard = 0;
+      while (!p.$('.predict') && guard++ < 40) fwd(p).click();
+      assert(p.$('.predict'), 'no question appeared');
+      assert(stepNo(p) === asks[0], `the question for step ${asks[0] + 1} appeared while showing step ${stepNo(p)}`);
+      const held = stepNo(p);
+      press(p, 'ArrowRight'); fwd(p).click();
+      assert(stepNo(p) === held && p.$('.predict'), 'the step could be passed without answering');
+      const right = run.frames[asks[0]].ask;
+      p.$$('.predict-options .btn').find((b) => b.textContent === String(right.options[right.answer])).click();
+      assert(stepNo(p) === asks[0] + 1, `after answering, the step is ${stepNo(p)}`);
+      assert(/As you predicted\./.test(p.$('.player-note').textContent), `a right answer reads "${p.$('.player-note').textContent.slice(0, 50)}"`);
+      guard = 0; while (!p.$('.predict') && guard++ < 40) fwd(p).click();
+      const next = run.frames[asks[1]].ask;
+      const wrongOption = next.options.find((o, k) => k !== next.answer);
+      p.$$('.predict-options .btn').find((b) => b.textContent === String(wrongOption)).click();
+      const text = p.$('.player-note').textContent;
+      assert(new RegExp(`You said ${wrongOption}\\.`).test(text) && text.includes(run.frames[asks[1]].note.replace(/\*\*/g, '').slice(0, 30)), `a wrong answer reads "${text.slice(0, 70)}"`);
+      guard = 0; while (!p.$('.predict') && guard++ < 40) fwd(p).click();
+      p.$$('.predict-options .btn').find((b) => b.textContent === 'Just show me').click();
+      assert(!p.$('.predict') && !/As you predicted|You said/.test(p.$('.player-note').textContent), '"Just show me" did not simply show the step');
+    } finally { p.close(); }
+  });
+  await test('Binary Search: each stored answer is the one the search actually takes', async () => {
+    const L = await C.loadLesson('binary-search');
+    let n = 0;
+    for (const input of [{}, ...L.viz.presets.map((x) => x.values)]) {
+      const run = execute(L, input);
+      for (const f of run.frames) {
+        if (!f.ask) continue; n++;
+        const said = f.ask.options[f.ask.answer];
+        const truth = /That is the target/.test(f.note) ? 'It is the target' : /smaller than/.test(f.note) ? 'Everything to its left is ruled out' : 'Everything to its right is ruled out';
+        assert(said === truth, `"${f.note.slice(0, 50)}" is answered "${said}"`);
+        const [, v, target] = f.ask.q.match(/holds (-?\d+), and we are looking for (-?\d+)/).map(Number);
+        assert((v === target && f.ask.answer === 0) || (v < target && f.ask.answer === 1) || (v > target && f.ask.answer === 2), `${v} against ${target} is answered with option ${f.ask.answer + 1}`);
+      }
+    }
+    assert(n >= 6, `only ${n} questions were checked`);
+    return `${n} questions`;
   });
 }
 

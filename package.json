@@ -8,7 +8,8 @@
     "start": "sh scripts/serve-site.sh",
     "dev": "python3 -m http.server 8975",
     "content:check": "python3 tools/build.py --check",
-    "content:build": "python3 tools/build.py"
+    "content:build": "python3 tools/build.py",
+    "site:test": "python3 tools/test.py"
   },
   "dependencies": {
     "serve": "^14.2.1"

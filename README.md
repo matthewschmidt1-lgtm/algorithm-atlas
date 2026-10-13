@@ -59,6 +59,25 @@ python3 tools/build.py --check        # validate only
 python3 tools/build.py --only a,b     # validate specific lessons
 ```
 
+## The site tests
+
+```bash
+python3 tools/test.py                 # every suite, about 30 seconds
+python3 tools/test.py --suite search  # one suite: search, defects, index, links, learning, player
+python3 tools/test.py --bench         # also print the search benchmark, query by query
+```
+
+`tools/build.py` checks the lessons. `tools/test.py` checks the site around them. It
+opens the real pages in headless Chrome and looks at what a reader would see: that search
+finds the right lesson for a plain question, that every internal link on every page leads
+somewhere, that each suggested next step is a connection a lesson actually states, that
+the demonstrations behave as their notes say. It needs only Python and Chrome.
+
+The search is measured against `tools/search-benchmark.js`: 182 queries with a judgement
+of which results would be right, 40 of them held out and never tuned against. It reports
+how many questions were answered and how much of what was shown was right. Change the
+search only with that benchmark open.
+
 For each lesson the pipeline:
 
 1. validates the record against the schema in `js/core/schema.js`, including the parts that make

@@ -37,16 +37,16 @@ function run(input, t) {
     const v = array[mid];
     if (v === target) {
       index = mid;
-      t.frame(() => ({ line: [4, 5], note: `Position ${mid} holds ${v}. That is the target, so stop. It took ${probes.length} ${probes.length === 1 ? 'check' : 'checks'}.`, views: views({ mid, verdict: 'done' }), vars: { target, lo, mid, hi, 'A[mid]': v } }));
+      t.frame(() => ({ line: [4, 5], note: `Position ${mid} holds ${v}. That is the target, so stop. It took ${probes.length} ${probes.length === 1 ? 'check' : 'checks'}.`, views: views({ mid, verdict: 'done' }), vars: { target, lo, mid, hi, 'A[mid]': v } , ask: { q: `Position ${mid} holds ${v}, and we are looking for ${target}. What does that tell us?`, options: ['It is the target', 'Everything to its left is ruled out', 'Everything to its right is ruled out'], answer: 0 } }));
       break;
     }
     if (v < target) {
       const from = lo, gone = mid - lo + 1;
-      t.frame(() => ({ line: [6, 7], note: `Position ${mid} holds ${v}, which is smaller than ${target}. The list is sorted, so everything to the left of ${v} is smaller still. Positions ${from} to ${mid} are ruled out: ${gone} ${gone === 1 ? 'value' : 'values'} at once.`, views: views({ mid, verdict: 'rejected', discard: [from, mid] }), vars: { target, lo, mid, hi, 'A[mid]': v } }));
+      t.frame(() => ({ line: [6, 7], note: `Position ${mid} holds ${v}, which is smaller than ${target}. The list is sorted, so everything to the left of ${v} is smaller still. Positions ${from} to ${mid} are ruled out: ${gone} ${gone === 1 ? 'value' : 'values'} at once.`, views: views({ mid, verdict: 'rejected', discard: [from, mid] }), vars: { target, lo, mid, hi, 'A[mid]': v } , ask: { q: `Position ${mid} holds ${v}, and we are looking for ${target}. What does that tell us?`, options: ['It is the target', 'Everything to its left is ruled out', 'Everything to its right is ruled out'], answer: 1 } }));
       lo = mid + 1;
     } else {
       const to = hi, gone = hi - mid + 1;
-      t.frame(() => ({ line: [8, 9], note: `Position ${mid} holds ${v}, which is larger than ${target}. The list is sorted, so everything to the right of ${v} is larger still. Positions ${mid} to ${to} are ruled out: ${gone} ${gone === 1 ? 'value' : 'values'} at once.`, views: views({ mid, verdict: 'rejected', discard: [mid, to] }), vars: { target, lo, mid, hi, 'A[mid]': v } }));
+      t.frame(() => ({ line: [8, 9], note: `Position ${mid} holds ${v}, which is larger than ${target}. The list is sorted, so everything to the right of ${v} is larger still. Positions ${mid} to ${to} are ruled out: ${gone} ${gone === 1 ? 'value' : 'values'} at once.`, views: views({ mid, verdict: 'rejected', discard: [mid, to] }), vars: { target, lo, mid, hi, 'A[mid]': v } , ask: { q: `Position ${mid} holds ${v}, and we are looking for ${target}. What does that tell us?`, options: ['It is the target', 'Everything to its left is ruled out', 'Everything to its right is ruled out'], answer: 2 } }));
       hi = mid - 1;
     }
   }

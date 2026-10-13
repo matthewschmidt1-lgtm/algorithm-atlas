@@ -88,7 +88,7 @@
 .viz-cell[class*='role-'] { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 24%, transparent); }
 .viz-cell.role-text3 { border-color: var(--line); background: transparent; color: var(--text-3); }
 .viz-cell-sub { font-size: 0.7em; color: var(--text-3); line-height: 1.2; }
-@media (max-width: 520px) { .viz-row { grid-template-columns: 1fr; gap: 4px; } .viz-row-label { padding-top: 0; } }
+@media (max-width: 520px) { .viz-row { grid-template-columns: 4.6em minmax(0, 1fr); gap: 8px; padding-block: 5px; } .viz-row-label { font-size: 0.68rem; } }
 
 /* board view */
 .viz-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s-3); }
@@ -100,3 +100,38 @@
 .viz-item-value { font-family: var(--font-mono); text-align: right; color: var(--text); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .viz-item-note { grid-column: 1 / -1; font-size: 0.78rem; color: var(--text-3); }
 .viz-item.is-empty { color: var(--text-3); font-style: italic; background: transparent; border-style: dashed; }
+
+/* ---------- keyboard hint, prediction experiment, run comparison ---------- */
+.player-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px var(--s-4); padding: 8px var(--s-4) 10px; border-top: 1px solid var(--line); }
+.player-keys { font-size: 0.8rem; color: var(--text-3); margin: 0; }
+.player-keys kbd { font-family: var(--font-sans); font-size: 0.74rem; padding: 1px 5px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--bg); color: var(--text-2); }
+@media (hover: none) { .player-keys { display: none; } }
+.player-predict { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--text-2); cursor: pointer; }
+.player-predict input { width: 16px; height: 16px; accent-color: var(--forest); }
+.player-predict-tag { font-size: 0.66rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--terracotta-ink); }
+.predict { display: grid; gap: 8px; min-width: 0; }
+.predict-q { font-weight: 600; margin: 0; }
+.predict-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.predict-verdict { font-weight: 600; }
+.predict-verdict.is-right { color: var(--forest-ink); }
+.predict-verdict.is-wrong { color: var(--terracotta-ink); }
+.predict-tally { color: var(--text-2); }
+.run-compare { margin-top: var(--s-4); padding: var(--s-3) var(--s-4); border: 1px solid var(--line-2); border-left: 3px solid var(--terracotta); border-radius: var(--r-2); background: var(--surface); }
+.run-compare-head { margin: 0 0 8px; font-size: 0.95rem; }
+.run-compare-table { font-size: 0.9rem; }
+.run-compare-table td.is-same { color: var(--text-3); }
+.preset-row .btn[aria-pressed='true'] { border-color: var(--forest); color: var(--forest-ink); background: color-mix(in srgb, var(--forest) 9%, transparent); }
+
+/* On a phone the note follows the picture directly, with the controls beneath both. */
+@media (max-width: 720px) {
+  .player-main > .player-stage, .lab-stage > .player-stage { order: 1; }
+  .player-main > .player-stage { padding: var(--s-3) var(--s-3) 0; }
+  .player-main > .player-error, .lab-stage > .player-error { order: 2; }
+  .player-main > .player-note, .lab-stage > .player-note { order: 3; border-top: 0; padding-top: 2px; font-size: 0.92rem; line-height: 1.5; }
+  .player-main > .transport, .lab-stage > .transport { order: 4; }
+  .player-main > .player-state, .lab-stage > .player-state { order: 5; }
+  .player-main > .player-foot, .lab-stage > .player-foot { order: 6; }
+  .lab-stage > .lab-describe { order: 7; }
+  .lab-stage { display: flex; flex-direction: column; }
+  .lab-stage > .panel-cap { order: 0; }
+}

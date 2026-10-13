@@ -719,3 +719,10 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .want-foot { margin-top: var(--s-8); padding-top: var(--s-5); border-top: 1px solid var(--line); color: var(--text-2); }
 .lib-elsewhere { color: var(--text-2); font-size: 0.95rem; margin: var(--s-2) 0 var(--s-4); }
 @media (max-width: 820px) { .want-out { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); } }
+
+/* On a phone the level bar stays within reach but gives the lesson its room back. */
+@media (max-width: 640px) {
+  .level-bar .level-about, .level-bar .level-n { display: none; }
+  .level-bar .level-btn { padding: 9px 8px; text-align: center; }
+  .level-bar .level-name { font-size: 0.86rem; line-height: 1.2; }
+}

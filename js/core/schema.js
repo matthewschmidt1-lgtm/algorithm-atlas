@@ -149,6 +149,11 @@ export function validateFrames(frames, pseudoLen, where, err) {
   for (const f of sample) {
     if (!isStr(f.note)) err(`${where}: every frame needs a plain-language note`);
     else if (/\u2014/.test(f.note)) err(`${where}: a frame note contains an em dash`);
+    if (f.ask !== undefined) {
+      const k = f.ask;
+      if (!k || !isStr(k.q) || !isArr(k.options) || k.options.length < 2 || !Number.isInteger(k.answer) || k.answer < 0 || k.answer >= k.options.length) err(`${where}: frame.ask needs q, at least two options, and answer as the index of the right one`);
+      else if (new Set(k.options.map(String)).size !== k.options.length) err(`${where}: frame.ask lists the same option twice`);
+    }
     if (!isArr(f.views) || !f.views.length) err(`${where}: every frame needs at least one view`);
     else f.views.forEach((v, i) => validateView(v, `${where} view[${i}]`, err));
     const lines = isArr(f.line) ? f.line : f.line === null || f.line === undefined ? [] : [f.line];

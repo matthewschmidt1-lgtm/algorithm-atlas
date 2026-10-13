@@ -7,9 +7,9 @@ export const buildInfo = {
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
  "browser": "Google Chrome 155.0.8059.40",
  "lessons": 57,
- "tests": 513,
- "runs": 474,
- "frames": 27666,
+ "tests": 518,
+ "runs": 475,
+ "frames": 27712,
  "programs": 171,
  "formulas": 78,
  "relations": {
@@ -160,6 +160,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "no value is shown as checked before it has been compared",
     "finds a present value at the position a reference lookup gives",
     "an absent value costs n comparisons and returns -1",
     "the first value costs one comparison",
@@ -3783,10 +3784,14 @@ export const catalog = [
     "matches the reference on a sparse graph",
     "finds the non-greedy route",
     "the worked example",
-    "reports unreachable nodes"
+    "reports unreachable nodes",
+    "with a negative edge, it reports the wrong answer the standard algorithm gives, and flags it",
+    "with a harmless negative edge, it says the answer is right and does not flag anything",
+    "every step that calls a distance final says why, and names the rule it depends on",
+    "the count of edges examined never moves without a step that says which edges"
    ],
-   "runs": 6,
-   "frames": 113,
+   "runs": 7,
+   "frames": 159,
    "cost": [
     {
      "formula": "n log₂ n (scaled)",
@@ -3837,7 +3842,7 @@ export const catalog = [
    ],
    "outputLines": 2
   },
-  "frames": 21
+  "frames": 28
  },
  {
   "id": "bellman-ford",

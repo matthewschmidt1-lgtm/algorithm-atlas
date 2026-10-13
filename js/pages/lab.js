@@ -9,6 +9,7 @@ import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { navigate } from '../core/router.js';
 import { createPlayer } from '../viz/player.js';
+import { createRunCompare } from '../ui/runcompare.js';
 import { createCodePanel } from '../ui/code.js';
 import { createExperimentChart } from '../ui/chart.js';
 import { levelGlyph, plural } from '../ui/parts.js';
@@ -92,6 +93,7 @@ export default async function render({ params }) {
     if (cur) { cur.classList.add('is-current'); const top = cur.offsetTop - log.clientHeight / 2; log.scrollTop = Math.max(0, top); }
     lastActive = i;
   }
+  const runCompare = createRunCompare(player, L);
   player.on('run', (res) => { buildLog(res); markLog(0); });
   player.on('frame', (f, i) => markLog(i));
   buildLog(player.run); markLog(player.index);
@@ -102,16 +104,16 @@ export default async function render({ params }) {
         h('p.lab-summary', meta.summary),
         h('p.lab-meta', levelGlyph(meta.difficulty, true), h('span.mono', meta.time.worst)),
         h('p', h('a.text-link', { href: `#/algorithm/${meta.id}` }, 'Read the full lesson', h('span', { html: icon('arrow', { size: 14 }) })))),
-      h('div.lab-card', h('p.panel-cap', 'Inputs and parameters'), P.inputs)),
+      h('div.lab-card', h('p.panel-cap', 'Inputs and parameters'), P.inputs, runCompare.el)),
     h('div.lab-col.lab-centre',
-      h('div.lab-card.lab-stage', h('p.panel-cap', 'Visualization'), P.stage, P.error, P.transport, P.note, P.state,
+      h('div.lab-card.lab-stage', h('p.panel-cap', 'Visualization'), P.stage, P.error, P.transport, P.note, P.state, h('div.player-foot', P.keys, P.predict),
         h('p.small.faint.lab-describe', L.viz.describe)),
       h('div.lab-row',
         h('div.lab-card', h('p.panel-cap', 'Event log'), h('p.small.faint', 'Every step of this run. Choose one to jump to it.'), log),
         h('div.lab-card', h('p.panel-cap', 'Output'), output, counters))),
     h('div.lab-col.lab-right',
       h('div.lab-card', h('div.tabs', { role: 'tablist', 'aria-label': 'Views of the algorithm' }, tabBtns), panelBody)));
-  player.bindKeys(bench);
+  player.bindKeys(bench, { page: true });
   showTab('pseudo');
 
   const el = h('div.lab.page',

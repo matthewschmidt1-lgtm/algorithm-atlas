@@ -18,8 +18,11 @@ export function createPlayer(algo, opts = {}) {
     playing: false,
     speedIdx: 3,
     userSpeed: false,
+    predict: false,        // the prediction experiment: ask before revealing a step that carries a question
+    pending: null,         // index of the step waiting for a prediction
+    answered: new Map(),   // step index -> the option chosen
   };
-  const listeners = { frame: [], run: [], input: [] };
+  const listeners = { frame: [], run: [], input: [], predict: [] };
   const emit = (ev, ...a) => listeners[ev].forEach((fn) => fn(...a));
 
   /* ---- parts ---- */
@@ -56,6 +59,9 @@ export function createPlayer(algo, opts = {}) {
     compact ? null : h('label.speed-wrap', { for: speedId }, h('span.speed-cap', 'Speed'), speed, speedOut));
 
   const noteEl = h('div.player-note', { 'aria-live': 'polite' });
+  const keysEl = h('p.player-keys', h('kbd', '←'), ' ', h('kbd', '→'), ' step back and forward. ', h('kbd', 'Space'), ' plays and pauses once you have clicked the figure.');
+  const predictBox = h('input', { type: 'checkbox', onchange: (e) => { state.predict = e.target.checked; state.pending = null; state.answered.clear(); render(); } });
+  const predictEl = h('label.player-predict', { hidden: true }, predictBox, h('span', 'Ask me to predict each step first'), h('span.player-predict-tag', 'An experiment'));
   const stateEl = h('div.player-state');
   const inputsEl = h('form.inputs', { onsubmit: (e) => e.preventDefault(), 'aria-label': 'Inputs and parameters' });
   const pseudoEl = h('ol.pseudo', { 'aria-label': 'Pseudocode' });
@@ -66,11 +72,15 @@ export function createPlayer(algo, opts = {}) {
   });
 
   /* ---- run + render ---- */
-  function run() {
+  function run(continuous = false) {
     pause();
     const res = execute(algo, state.input, { maxFrames: opts.maxFrames });
     state.run = res;
     state.i = 0;
+    state.pending = null;
+    state.answered.clear();
+    predictEl.hidden = compact || !(res.ok && res.frames.some((f) => f.ask));
+    syncPresets();
     if (!res.ok || !res.frames.length) {
       errorEl.hidden = false;
       errorEl.textContent = res.ok ? 'This input produced no steps to show.' : res.error;
@@ -86,9 +96,33 @@ export function createPlayer(algo, opts = {}) {
       }
     }
     scrub.max = Math.max(0, (res.frames || []).length - 1);
+    reserveNote();
     render();
-    emit('run', res);
+    emit('run', res, { continuous: continuous === true });
   }
+
+  // On a narrow screen the note sits between the picture and the controls, so that the two
+  // can be read together. Its space is reserved for the longest note of the run: otherwise
+  // the controls would move under the reader's thumb every time the note changed length.
+  const narrow = window.matchMedia ? window.matchMedia('(max-width: 720px)') : { matches: false };
+  function reserveNote() {
+    noteEl.style.minHeight = '';
+    if (compact || !narrow.matches || !state.run || !state.run.ok || !noteEl.isConnected) return;
+    // the longest few notes are measured, because the one with the most characters is not always the tallest
+    const longest = state.run.frames.map((f) => f.note || '').sort((a, b) => b.length - a.length).slice(0, 4);
+    let tall = 0;
+    for (const text of longest) { noteEl.innerHTML = `<span class="note-step">88</span><span class="note-text">${rich(text)}</span>`; tall = Math.max(tall, noteEl.offsetHeight); }
+    if (tall) noteEl.style.minHeight = `${Math.min(tall, 320)}px`;
+    stageEl.style.minHeight = '';
+  }
+  // The picture can grow during a run (a queue wraps onto a second line). On a narrow screen
+  // it is never allowed to shrink back, so the controls below move down at most, and rarely.
+  function holdStage() {
+    if (compact || !narrow.matches) { if (stageEl.style.minHeight) stageEl.style.minHeight = ''; return; }
+    const h = stageEl.offsetHeight;
+    if (h > (parseFloat(stageEl.style.minHeight) || 0)) stageEl.style.minHeight = `${h}px`;
+  }
+  if (narrow.addEventListener) narrow.addEventListener('change', () => { reserveNote(); render(); });
 
   function render() {
     const frames = (state.run && state.run.frames) || [];
@@ -107,9 +141,24 @@ export function createPlayer(algo, opts = {}) {
     playBtn.title = playLabel;
     if (!f) { stage.update([]); clear(noteEl); clear(stateEl); return; }
     stage.update(f.views);
+    holdStage();
     // Announce steps to screen readers only when stepping by hand; during playback they arrive too fast to be useful.
     noteEl.setAttribute('aria-live', state.playing ? 'off' : 'polite');
-    noteEl.innerHTML = `<span class="note-step">${state.i + 1}</span><span class="note-text">${rich(f.note || '')}</span>`;
+    if (state.pending !== null) {
+      // The next step is held back until the reader says what they expect it to be.
+      const ask = frames[state.pending].ask;
+      clear(noteEl).append(h('span.note-step', '?'), h('div.predict', { role: 'group', 'aria-label': 'Predict the next step' },
+        h('p.predict-q', { html: rich(ask.q) }),
+        h('div.predict-options', ask.options.map((o, k) => h('button.btn.btn-sm', { type: 'button', onclick: () => answer(k) }, String(o))),
+          h('button.btn.btn-sm.btn-ghost', { type: 'button', onclick: () => answer(-1) }, 'Just show me'))));
+    } else {
+      const said = state.answered.get(state.i);
+      const verdict = f.ask && said !== undefined && said >= 0
+        ? `<span class="predict-verdict ${said === f.ask.answer ? 'is-right' : 'is-wrong'}">${said === f.ask.answer ? 'As you predicted.' : `You said ${rich(String(f.ask.options[said]))}.`}</span> ` : '';
+      const tally = atEnd && state.predict && [...state.answered.values()].some((v) => v >= 0)
+        ? ` <span class="predict-tally">You predicted ${[...state.answered].filter(([k, v]) => v >= 0 && frames[k].ask && frames[k].ask.answer === v).length} of ${[...state.answered.values()].filter((v) => v >= 0).length} steps.</span>` : '';
+      noteEl.innerHTML = `<span class="note-step">${state.i + 1}</span><span class="note-text">${verdict}${rich(f.note || '')}${tally}</span>`;
+    }
     renderMath(noteEl);
     if (!compact) {
       const chips = [];
@@ -131,10 +180,30 @@ export function createPlayer(algo, opts = {}) {
     emit('frame', f, state.i, n);
   }
 
+  // With predictions on, moving forward stops just before the first step that asks a question.
+  function gate(from, to) {
+    if (!state.predict) return null;
+    const frames = state.run.frames;
+    for (let j = from + 1; j <= to; j++) if (frames[j].ask && !state.answered.has(j)) return j;
+    return null;
+  }
   function seek(i) {
     const n = ((state.run && state.run.frames) || []).length;
-    state.i = Math.max(0, Math.min(n - 1, i));
+    let to = Math.max(0, Math.min(n - 1, i));
+    state.pending = null;
+    const held = to > state.i ? gate(state.i, to) : null;
+    if (held !== null) { to = held - 1; state.pending = held; }
+    state.i = to;
     render();
+  }
+  function answer(k) {
+    const j = state.pending;
+    if (j === null) return;
+    state.answered.set(j, k);
+    state.pending = null;
+    state.i = j;
+    render();
+    emit('predict', { step: j, right: k === state.run.frames[j].ask.answer, skipped: k < 0 });
   }
   function step(d) { seek(state.i + d); }
 
@@ -148,7 +217,10 @@ export function createPlayer(algo, opts = {}) {
     if (adv > 0) {
       acc -= adv;
       const n = state.run.frames.length;
-      state.i = Math.min(n - 1, state.i + adv);
+      const want = Math.min(n - 1, state.i + adv);
+      const held = gate(state.i, want);
+      if (held !== null) { state.playing = false; state.i = held - 1; state.pending = held; render(); return; }
+      state.i = want;
       if (state.i >= n - 1) { state.playing = false; render(); return; }
       render();
     }
@@ -156,8 +228,8 @@ export function createPlayer(algo, opts = {}) {
   }
   function play() {
     const n = ((state.run && state.run.frames) || []).length;
-    if (!n || state.playing) return;
-    if (state.i >= n - 1) state.i = 0;
+    if (!n || state.playing || state.pending !== null) return;
+    if (state.i >= n - 1) { state.i = 0; state.answered.clear(); }
     state.playing = true;
     lastT = performance.now(); acc = 0;
     render();
@@ -172,7 +244,7 @@ export function createPlayer(algo, opts = {}) {
   function toggle() { state.playing ? pause() : play(); }
 
   /* ---- inputs ---- */
-  const rerunSoon = debounce(run, 110);
+  const rerunSoon = debounce(() => run(true), 110);
   function setInput(partial, { silent = false } = {}) {
     Object.assign(state.input, partial);
     if (!silent) buildInputs();
@@ -186,7 +258,7 @@ export function createPlayer(algo, opts = {}) {
     if (algo.viz.presets && algo.viz.presets.length) {
       inputsEl.append(h('div.presets', { role: 'group', 'aria-label': 'Presets' },
         h('span.field-label', 'Presets'),
-        h('div.preset-row', algo.viz.presets.map((p) => h('button.btn.btn-sm', { type: 'button', onclick: () => setInput({ ...p.values }) }, p.label)))));
+        h('div.preset-row', algo.viz.presets.map((p, k) => h('button.btn.btn-sm', { type: 'button', dataset: { preset: k }, 'aria-pressed': 'false', onclick: () => setInput({ ...p.values }) }, p.label)))));
     }
     for (const f of fields) {
       const id = nextId('in');
@@ -239,30 +311,65 @@ export function createPlayer(algo, opts = {}) {
     }
   }
 
+  // A preset is marked as the one in use for as long as the inputs still match it.
+  const sameValue = (a, b) => JSON.stringify(a) === JSON.stringify(b) || (Array.isArray(a) && !a.length && (b === '' || b === undefined)) || (Array.isArray(b) && !b.length && (a === '' || a === undefined));
+  function activePreset() {
+    const list = algo.viz.presets || [];
+    return list.findIndex((p) => Object.entries(p.values).every(([k, v]) => sameValue(state.input[k], v)));
+  }
+  function syncPresets() {
+    const at = activePreset();
+    for (const b of inputsEl.querySelectorAll('[data-preset]')) { const on = Number(b.dataset.preset) === at; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('is-on', on); }
+  }
+
   /* ---- keyboard ---- */
   function onKey(e) {
     const tag = e.target.tagName;
-    if (tag === 'INPUT' && e.target.type !== 'range' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    if (tag === 'INPUT' && e.target.type !== 'range' && e.target.type !== 'checkbox' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    if (state.pending !== null) return;
     if (e.key === ' ' && tag !== 'BUTTON' && tag !== 'INPUT') { e.preventDefault(); toggle(); }
     else if (e.key === 'ArrowRight' && tag !== 'INPUT') { e.preventDefault(); pause(); step(1); }
     else if (e.key === 'ArrowLeft' && tag !== 'INPUT') { e.preventDefault(); pause(); step(-1); }
     else if (e.key === 'Home' && tag !== 'INPUT') { e.preventDefault(); pause(); seek(0); }
   }
 
-  // pause automatically when the stage scrolls out of view
-  let io = null;
+  // pause automatically when the stage scrolls out of view, and remember whether it is in view
+  let io = null, inView = false;
   if ('IntersectionObserver' in window) {
-    io = new IntersectionObserver((entries) => { if (!entries[0].isIntersecting) pause(); });
+    io = new IntersectionObserver((entries) => { const en = entries[entries.length - 1]; inView = en.isIntersecting && en.intersectionRatio >= 0.5; if (!en.isIntersecting) pause(); }, { threshold: [0, 0.5] });
     io.observe(stageEl);
+  }
+
+  // On a page with one demonstration, the arrow keys step it whenever the figure is on screen,
+  // without a click first. Keys typed into a field, a menu or a group of options are left alone,
+  // and so is Space, which scrolls the page unless the reader has put focus on the figure.
+  let keyRoot = null, pageKeys = false;
+  function onPageKey(e) {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const el = e.target;
+    if (keyRoot && keyRoot.contains(el)) return;
+    if (el.closest && el.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="radiogroup"], [role="tablist"], [role="listbox"], [role="combobox"], dialog[open], .settings-panel')) return;
+    if (!inView || !state.run || !state.run.ok || state.pending !== null) return;
+    e.preventDefault();
+    pause(); step(e.key === 'ArrowRight' ? 1 : -1);
   }
 
   buildInputs();
   run();
+  // the note's height can only be measured once the player is on the page
+  requestAnimationFrame(() => { if (noteEl.isConnected && !noteEl.style.minHeight) { reserveNote(); render(); } });
   if (opts.autoplay && !prefersReducedMotion()) play();
 
   return {
-    parts: { stage: stageEl, error: errorEl, transport, note: noteEl, state: stateEl, inputs: inputsEl, pseudo: pseudoEl },
-    bindKeys(root) { root.addEventListener('keydown', onKey); },
+    parts: { stage: stageEl, error: errorEl, transport, note: noteEl, state: stateEl, inputs: inputsEl, pseudo: pseudoEl, keys: keysEl, predict: predictEl },
+    // `page: true` also lets the arrow keys step this player from anywhere on the page.
+    bindKeys(root, { page = false } = {}) {
+      keyRoot = root;
+      root.addEventListener('keydown', onKey);
+      if (page && !pageKeys) { pageKeys = true; document.addEventListener('keydown', onPageKey); }
+    },
+    get activePreset() { const at = activePreset(); return at >= 0 ? algo.viz.presets[at] : null; },
     on(ev, fn) { listeners[ev].push(fn); return this; },
     get run() { return state.run; },
     get index() { return state.i; },
@@ -270,17 +377,17 @@ export function createPlayer(algo, opts = {}) {
     get playing() { return state.playing; },
     setInput, play, pause, toggle, step, seek,
     reset() { pause(); seek(0); },
-    destroy() { pause(); if (io) io.disconnect(); stage.destroy(); },
+    destroy() { pause(); if (io) io.disconnect(); if (pageKeys) document.removeEventListener('keydown', onPageKey); stage.destroy(); },
   };
 }
 
 // Default assembly used by lessons: stage and controls on the left, live pseudocode on the right.
-export function assemblePlayer(player, { pseudo = true } = {}) {
+export function assemblePlayer(player, { pseudo = true, pageKeys = false } = {}) {
   const p = player.parts;
   const root = h('div.player', { tabindex: '-1' },
-    h('div.player-main', p.stage, p.error, p.transport, p.note, p.state),
+    h('div.player-main', p.stage, p.error, p.transport, p.note, p.state, h('div.player-foot', p.keys, p.predict)),
     pseudo && p.pseudo.children.length ? h('aside.player-side', h('div.panel-cap', 'Pseudocode, live'), p.pseudo) : null);
   if (!pseudo || !p.pseudo.children.length) root.classList.add('no-side');
-  player.bindKeys(root);
+  player.bindKeys(root, { page: pageKeys });
   return root;
 }
