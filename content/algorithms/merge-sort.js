@@ -159,9 +159,9 @@ export default {
     interesting: 'All the comparing happens while putting pieces back together. The splitting is only arithmetic on positions and looks at no values at all. [Quick sort](#/algorithm/quick-sort) is the mirror image: it does all its comparing while splitting, and putting the pieces back together costs nothing.',
     where: 'Python\'s built-in sort and Java\'s sort for arrays of objects are Timsort, a merge sort that takes advantage of stretches already in order. Database systems and command-line sorting tools use merging to sort files larger than memory.',
     analogy: {
-      title: 'Two sorted stacks of exam papers',
-      text: 'Two teachers each hold a stack of exam papers sorted by student name. To combine them, they look at the top paper of each stack, move whichever name comes first onto a new stack, and repeat. Nobody ever looks below the top of a stack, and the new stack comes out fully sorted. If the original stacks were not sorted, each teacher could split theirs in two, hand the halves to helpers, and merge what comes back.',
-      limits: 'The desk in this picture has room for a third stack. A computer has to set that room aside: merge sort needs spare memory as large as the list it is sorting. The helpers in the picture also work at the same time, while the algorithm on this page finishes one half completely before it starts the other. And the picture stops at a few helpers, where the algorithm keeps splitting all the way down to single papers.',
+      title: "A stack of exam papers and two helpers",
+      text: "A teacher has a tall stack of exam papers to sort by student name. The teacher splits the stack in two and hands each half to a helper with one request: bring it back sorted. When the two sorted stacks come back, combining them is easy. Look at the top paper of each stack, move whichever name comes first onto a new stack, and repeat. Nobody ever looks below the top of a stack. Each helper does the same with their own half: split it, hand the halves on, and merge what comes back. The handing-on stops when someone is given a single paper, which is already sorted.",
+      limits: "The desk in this picture has room for a third stack. A computer has to set that room aside: merge sort needs spare memory as large as the list it is sorting. The helpers in the picture also work at the same time, while the algorithm on this page finishes one half completely before it starts the other.",
     },
   },
 

@@ -1140,7 +1140,7 @@ export const catalog = [
     "why": "The number of shifts equals the number of inversions in the input, the same count of discordant pairs that Kendall's rank correlation is built on."
    }
   ],
-  "analogy": "Sorting a hand of cards",
+  "analogy": "One card going into a sorted hand",
   "takeaway": "Take each item in turn and slide it left into its place among the items already in order.",
   "decide": {
    "useWhen": "The list is short or nearly in order, or items arrive one at a time and must be kept in order.",
@@ -1406,7 +1406,7 @@ export const catalog = [
     "why": "Sorted runs produced on separate disks or machines are combined by merging, which needs only one sequential pass over each run."
    }
   ],
-  "analogy": "Two sorted stacks of exam papers",
+  "analogy": "A stack of exam papers and two helpers",
   "takeaway": "Split the list in half, sort each half the same way, then merge the two sorted halves by always taking the smaller front item.",
   "decide": {
    "useWhen": "Equal items must keep their order, the running time must be dependable, or the data sits in a file too big for memory.",
@@ -4337,7 +4337,7 @@ export const catalog = [
     "why": "With a consistent heuristic it is Dijkstra's algorithm run on the same graph with adjusted edge weights, so the theory of shortest paths applies directly."
    }
   ],
-  "analogy": "Walking toward a landmark you can see",
+  "analogy": "The straight line to the tower",
   "takeaway": "Always explore the place where steps taken plus a careful guess of steps remaining is smallest, and you reach the goal by a shortest path without searching everywhere.",
   "decide": {
    "useWhen": "You want one route to one known destination, and you have a rough measure of how far away it still is that never guesses too high.",
@@ -8493,7 +8493,7 @@ export const catalog = [
     "why": "Yields and rates of return are defined as the root of a pricing equation, and a bracketing method solves it without risk of divergence."
    }
   ],
-  "analogy": "Finding the right setting on a dial",
+  "analogy": "Putting numbers on the dial",
   "takeaway": "Trap the answer between a guess that is too low and one that is too high, test the middle, keep the half that still traps it, and repeat.",
   "decide": {
    "useWhen": "You know two points that the answer lies between, and you want a method that cannot fail and whose cost you know in advance.",
@@ -9879,7 +9879,7 @@ export const catalog = [
     "why": "Learning from data is posed as minimizing a loss over parameters."
    }
   ],
-  "analogy": "Walking downhill in fog",
+  "analogy": "The steepest way down, and the length of your stride",
   "takeaway": "Feel which way is downhill, take a small step that way, and repeat.",
   "decide": {
    "useWhen": "The thing to minimize changes smoothly, you can work out its slope, and the problem is large.",
@@ -11134,7 +11134,7 @@ export const catalog = [
     "why": "Training a deep network means choosing an optimizer for the gradients from backpropagation, and Adam or one of its variants is a very common choice."
    }
   ],
-  "analogy": "A fog walker with a memory and a separate stride for each compass direction",
+  "analogy": "The fog walker's two notebooks",
   "takeaway": "Step the way the recent slopes agree on, and give every adjustable number its own step size, smaller where its slopes have been large.",
   "decide": {
    "useWhen": "You are training a neural network, or any model whose adjustable numbers have slopes of very different sizes, and you want something that works fairly well before careful tuning.",
@@ -12974,7 +12974,7 @@ export const catalog = [
     "why": "It was an early demonstration that a machine could acquire a skill from examples in place of explicit programming."
    }
   ],
-  "analogy": "Nudging a ruler across a table",
+  "analogy": "What one nudge does",
   "takeaway": "Check the examples one at a time, and only when you get one wrong, shift the dividing line toward it.",
   "decide": {
    "useWhen": "A straight line can separate the two groups completely and a simple, fast learner is enough, or you want to see how a single artificial neuron learns.",
@@ -17890,7 +17890,7 @@ export const catalog = [
     "why": "Signed certificates let machines on an untrusted network check each other's identity before exchanging data."
    }
   ],
-  "analogy": "An open padlock that anyone can snap shut",
+  "analogy": "Why the padlock can be given away",
   "takeaway": "Multiplying two large primes is easy and undoing it is hard, so the product can be a public lock while the primes stay the private key.",
   "decide": {
    "useWhen": "You need to sign something or protect a key in a way almost everything understands. In practice, through a trusted library with standard padding.",

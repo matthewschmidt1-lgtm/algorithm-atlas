@@ -130,8 +130,8 @@ export default {
     where: 'Web crawlers, the garbage collectors that reclaim unused memory in some programming languages, puzzle solvers, and peer-to-peer networks all use it. It is also the kernel of the Graph500 benchmark, which ranks supercomputers by how fast they traverse very large graphs.',
     analogy: {
       title: 'Ripples from a stone dropped in a pond',
-      text: 'Drop a stone into still water and a ring spreads outward. The ring reaches nearby points first and distant points later, and it never skips ahead. Breadth-first search spreads through a network the same way. The first ring is every node one edge from the start, the second ring is every node two edges away, and each ring is finished before the next begins.',
-      limits: 'A ripple touches every point on a ring at the same moment. The algorithm visits one node at a time, so it needs the queue to remember whose turn is next. A ripple also travels real distance, while the search only counts steps: a long road and a short road each count as one. When the lengths matter, the picture is still right but the algorithm must change to Dijkstra\'s.',
+      text: "Drop a stone into still water and a ring spreads outward. Everything inside the ring has been reached and nothing beyond it has. The ring reaches nearby points first and distant points later, and it never skips ahead. In breadth-first search the waiting line plays the part of the ring. The points in the line are the outer edge of what has been found so far, and exploring from the front of the line pushes that edge outward one step at a time.",
+      limits: "A ripple touches every point on a ring at the same moment. The algorithm visits one point at a time, taking them in the order of the line. A ripple also travels real distance, while the search only counts steps: a long road and a short road each count as one. When the lengths matter, the picture is still right but the algorithm must change to Dijkstra's.",
     },
   },
 

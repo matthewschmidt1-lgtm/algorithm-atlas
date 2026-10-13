@@ -102,8 +102,8 @@ export default {
     where: 'Mostly in classrooms and textbooks. Its parallel relative, odd-even transposition sort, is studied in parallel computing because all of its comparisons within one round can happen at the same time.',
     analogy: {
       title: 'A row of people trading places by height',
-      text: 'People stand in a row in any order. Starting at the left, each person compares heights with the neighbour on their right, and the two trade places if the taller one is on the left. One walk along the row carries the tallest person all the way to the right-hand end. A second walk carries the next tallest to stand beside them. When a whole walk happens with nobody trading places, the row is in height order.',
-      limits: 'In a real row, many pairs could trade places at the same moment, and anyone can glance along the row and see who is badly out of place. Bubble sort checks one pair at a time and never looks further than the next neighbour. The picture also hides how uneven the method is: a tall person at the left is carried to the right in a single pass, but a short person at the right moves only one place to the left per pass.',
+      text: "People stand in a row in any order. Starting at the left, each person compares heights with the neighbour on their right, and the two trade places if the taller one is on the left. Now follow two people. The tallest person wins every comparison, so a single walk along the row carries them all the way to the right-hand end. The shortest person, if they start at the right-hand end, is less lucky: each walk gives them one trade, so they move only one place to the left per walk. That slow traveller is why a row can need many walks. When a whole walk happens with nobody trading places, the row is in height order.",
+      limits: "In a real row, many pairs could trade places at the same moment, and anyone can glance along the row and see who is badly out of place. Bubble sort checks one pair at a time and never looks further than the next neighbour.",
     },
   },
 

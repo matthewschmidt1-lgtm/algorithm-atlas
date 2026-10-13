@@ -107,8 +107,8 @@ export default {
     where: 'In teaching, and in small routines where simplicity and a low number of writes matter more than speed. Its idea lives on inside heap sort, which is widely used.',
     analogy: {
       title: 'Lining up books by height',
-      text: 'To arrange a shelf of books from shortest to tallest, run your finger along the whole shelf and find the shortest book. Swap it with the book at the left-hand end. Then run your finger along the rest of the shelf, find the shortest of those, and swap it into the second place. Each sweep fixes one more book, and no book that has been fixed is ever touched again.',
-      limits: 'A person can spot the shortest book on a shelf at a glance. A computer cannot glance: it has to look at every remaining book, one at a time, remembering the shortest it has seen so far, and it must do so on every sweep. A person would also remember which books were nearly the shortest. Selection sort forgets everything it learned in a sweep except the one winner, and starts the next sweep from nothing.',
+      text: "To arrange a shelf of books from shortest to tallest, run your finger along the whole shelf, find the shortest book, and swap it with the book at the left-hand end. From then on the shelf has two parts. On the left are the books already in place, in order and never touched again. On the right are the rest. Each sweep covers only the right-hand part and moves one more book across the line, so the sweeps get shorter as the shelf fills in.",
+      limits: "A person can spot the shortest book on a shelf at a glance. A computer cannot glance: it has to look at every remaining book, one at a time, on every sweep. A person would also remember which books were nearly the shortest. Selection sort forgets everything it learned in a sweep except the one winner, and starts the next sweep from nothing.",
     },
   },
 

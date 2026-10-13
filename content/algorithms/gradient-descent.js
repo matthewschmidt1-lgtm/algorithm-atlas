@@ -119,9 +119,9 @@ export default {
     interesting: 'One number, the learning rate, decides everything. Too small and progress is painfully slow; slightly too large and the iterates bounce across the valley; larger still and they fly off to infinity. The boundary between these regimes is set by the curvature of the surface, and you can find it yourself in the visualization.',
     where: 'It is the engine of modern machine learning: every neural network is trained by a variant of it. It also fits statistical models, tunes engineering designs, and reconstructs images in medical scanners.',
     analogy: {
-      title: 'Walking downhill in fog',
-      limits: "A hiker moves smoothly. The algorithm jumps from point to point, and a jump that is too long can leap right over the valley floor and land higher up on the far side. A hillside also has only two directions to move in, while the problems solved in machine learning have millions of directions at once. And fog or no fog, a hiker who reaches a small dip may be nowhere near the deepest valley. The algorithm has the same weakness.",
-      text: 'You are on a hillside in thick fog and want to reach the valley floor. You cannot see the valley, but you can feel which way the ground slopes under your feet. So you take a step in the steepest downhill direction, feel the slope again, and repeat. Your stride length is the learning rate: tiny strides are safe but slow, and giant strides can carry you clear across the valley and up the other side.',
+      title: "The steepest way down, and the length of your stride",
+      limits: "A hiker moves smoothly and would feel the ground begin to rise. The algorithm jumps from point to point and finds out where it has landed only afterwards. A hillside also has only two directions to move in, while the problems solved in machine learning have millions of directions at once. And fog or no fog, a hiker who reaches a small dip may be nowhere near the deepest valley. The algorithm has the same weakness.",
+      text: "Two things about the foggy hillside still need saying. First, of all the directions that lead down, you step in the steepest one. Second, the length of your stride matters. Tiny strides are safe but slow. Giant strides can carry you clear across the valley and up the other side. In the algorithm the stride length is a number you choose, called the learning rate.",
     },
   },
 

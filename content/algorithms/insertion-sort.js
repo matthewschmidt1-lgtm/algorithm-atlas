@@ -124,9 +124,9 @@ export default {
     interesting: 'It has the worst growth rate of the well-known sorts and is still part of the fastest ones. Its running time is n plus the number of out-of-order pairs in the input, so it ranges smoothly from linear on sorted data to quadratic on reversed data. Almost no other sort gets that for free.',
     where: 'Inside the standard library sorts of many languages. Python\'s built-in sort, Timsort, uses a form of insertion sort to build its short runs, and typical implementations of C++ `std::sort` finish small ranges with it.',
     analogy: {
-      title: 'Sorting a hand of cards',
-      text: 'You hold a few cards in your left hand, already in order. You pick up one more card with your right hand, look along the held cards from the right until you find one that is not larger, and slide the new card in just after it. Your left hand is in order again, with one more card. Repeat until the table is empty.',
-      limits: 'With real cards, opening a gap is a single motion of the fingers. In a list stored in a computer, there is no free space between items: every larger value has to be copied one place to the right, one at a time, and that copying is where most of the time goes. A person also finds the place at a glance, while the algorithm compares one card after another.',
+      title: "One card going into a sorted hand",
+      text: "Look closely at a single card going in. You hold a few cards in your left hand, already in order, and pick up one more. You look along the held cards from the right, largest first, and stop at the first one that is not larger than the new card. The new card slides in just after it. If the new card is larger than everything you hold, one look settles it. If it is the smallest, you look at every card in your hand.",
+      limits: "With real cards, opening a gap is a single motion of the fingers. In a list stored in a computer, there is no free space between items: every larger value has to be copied one place to the right, one at a time, and that copying is where most of the time goes. A real card player also finds the place at a glance. The algorithm has no glance and compares one card after another.",
     },
   },
 
