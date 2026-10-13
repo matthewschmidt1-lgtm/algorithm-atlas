@@ -538,13 +538,13 @@ int main() {
 
   compare: {
     idea: 'Halve a bracket that contains a sign change, always keeping the half that still contains it.',
-    requires: 'A continuous function and two points where it has opposite signs. No derivative.',
+    requires: 'A curve with no jumps, and two points where it lies on opposite sides of zero. Nothing else.',
     sensitivity: 'None to the shape of the function. The step count depends only on the starting width and the tolerance.',
     memory: 'O(1): the two ends of the bracket.',
     difficulty: 'low',
     difficultyNote: 'A short loop. The care goes into comparing signs correctly and stopping at a sensible tolerance.',
-    limits: 'Slow: one binary digit per function evaluation. Needs a bracket. One unknown only.',
-    useWhen: 'You can bracket the root and want a guaranteed answer with a known cost.',
+    limits: 'Slow: each step only halves the uncertainty. It needs the two starting points. It solves for one unknown only.',
+    useWhen: 'You know two points that the answer lies between, and you want a method that cannot fail and whose cost you know in advance.',
   },
 
   advanced: {

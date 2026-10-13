@@ -620,13 +620,13 @@ int main() {
 
   compare: {
     idea: 'Replace the pair (a, b) by (b, a mod b) until the second number is 0.',
-    requires: 'Two non-negative whole numbers, not both zero. The answer is exact.',
+    requires: 'Two whole numbers, zero or more, not both zero. The answer is exact.',
     sensitivity: 'Low. Between 1 step and about 5 steps per decimal digit of the smaller number, whatever the inputs.',
     memory: 'O(1): a handful of numbers.',
     difficulty: 'low',
     difficultyNote: 'Four lines. The extended version needs care with the order of updates and with negative coefficients.',
-    limits: 'Says nothing about the prime factors themselves. Step count depends on the inputs, which matters in timing-sensitive cryptographic code.',
-    useWhen: 'You need a gcd, a reduced fraction, a coprimality test or, in extended form, a modular inverse.',
+    limits: 'It does not tell you the prime factors. The number of steps depends on the numbers, which can leak information in security code.',
+    useWhen: 'You need the largest number that divides two others, a fraction in lowest terms, or a check that two numbers share no factor.',
   },
 
   advanced: {

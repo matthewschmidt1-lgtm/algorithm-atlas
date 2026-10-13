@@ -752,13 +752,13 @@ a[s + k + m // 2] = a[s + k] - v`,
 
   compare: {
     idea: 'Build the transform of n samples from the transforms of the even and odd samples, level by level.',
-    requires: 'n evenly spaced samples with n a power of two (for this radix-2 form). Complex arithmetic.',
+    requires: 'Samples taken at even intervals and, in this form, a number of samples that is a power of two.',
     sensitivity: 'None in cost: the operation count depends only on n. The meaning of the output is sensitive to the window length and sampling rate.',
     memory: 'O(n): in place, plus a table of n/2 twist factors.',
     difficulty: 'high',
     difficultyNote: 'The code is short, but the indexing, the bit reversal and the sign and scaling conventions are easy to get subtly wrong.',
-    limits: 'Evenly spaced samples only. Frequency resolution fixed by the window length. No timing information within the block.',
-    useWhen: 'You need all the frequencies of a sampled signal, or want to do in the frequency domain something that is expensive in time.',
+    limits: 'It needs evenly spaced samples. How finely it separates frequencies is fixed by the length of the recording. It says which frequencies are present, not when they occurred.',
+    useWhen: 'You want all the frequencies in a recorded signal, or want to do something that is slow on the raw signal and quick on its frequencies.',
   },
 
   advanced: {

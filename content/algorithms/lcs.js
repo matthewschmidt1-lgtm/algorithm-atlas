@@ -614,13 +614,13 @@ int main() {
 
   compare: {
     idea: 'Fill a table of LCS lengths for all pairs of prefixes: diagonal plus 1 on a match, otherwise the larger of the cells above and to the left.',
-    requires: 'Two sequences whose items can be tested for equality.',
+    requires: 'Two sequences whose items can be tested for being the same.',
     sensitivity: 'None. The whole table is filled whatever the strings contain.',
     memory: 'O(mn) for the table with traceback, O(min(m, n)) for the length alone.',
     difficulty: 'moderate',
     difficultyNote: 'The recurrence is short. The traceback and its tie-breaking are where care is needed.',
-    limits: 'Quadratic time and memory. No notion of substitution or of moved blocks. Returns one of possibly many answers.',
-    useWhen: 'You want to know what two sequences share in order, or to produce a diff made of insertions and deletions.',
+    limits: 'Slow and memory-hungry on long inputs: twice the length means four times the work. It has no idea of a replaced item or a moved block. It returns one answer when there may be several.',
+    useWhen: 'You want to know what two sequences have in common, in order, or to show what was added and removed between two versions.',
   },
 
   advanced: {

@@ -549,13 +549,13 @@ int main() {
 
   compare: {
     idea: 'Alternate a model-based prediction with a correction toward each measurement, weighted by the two uncertainties.',
-    requires: 'A linear model of the motion and the sensor, with known noise variances. Exact and optimal under those conditions.',
+    requires: 'A model in which movement and readings are simple proportions, and known sizes for the noise in each. Under those conditions, and with bell-shaped noise, no estimate is better.',
     sensitivity: 'Sensitive to the assumed noise levels Q and R, and to how well the linear model matches the real system.',
     memory: 'O(n²) for n state variables: the estimate and its covariance. No history is stored.',
     difficulty: 'moderate',
     difficultyNote: 'Five lines in one dimension. The matrix form and the tuning take experience.',
-    limits: 'Linear models and single-peaked beliefs only. Takes outliers at face value.',
-    useWhen: 'You are tracking a changing quantity from noisy sensors and have a reasonable linear model of how it moves.',
+    limits: 'Only for simple proportional models and beliefs with a single best guess. It takes a wildly wrong reading at face value.',
+    useWhen: 'You are tracking something that changes from noisy readings, and have a reasonable straight-line model of how it moves.',
   },
 
   advanced: {

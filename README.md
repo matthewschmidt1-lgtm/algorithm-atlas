@@ -1,6 +1,6 @@
 # Algorithm Atlas
 
-*Every Algorithm. Every Connection. Infinite Possibilities.*
+*The algorithms behind AI and business decisions, explained and run in front of you.*
 
 An interactive field guide to algorithms. Every lesson starts in plain language, runs a real
 implementation you can step through, and unfolds as far as you want to go: from a simple

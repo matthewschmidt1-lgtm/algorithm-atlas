@@ -657,13 +657,13 @@ int main() {
 
   compare: {
     idea: 'Turn data into noise by a fixed gradual process, learn to undo one small step of it, and generate by undoing all the steps starting from pure noise.',
-    requires: 'A large training set and a neural network trained as a denoiser at every noise level. On this page, an exact formula over four stored images stands in for the network.',
+    requires: 'A large set of training examples and a neural network trained to remove noise. On this page an exact formula over four stored images stands in for the network.',
     sensitivity: 'Moderate. Depends on the noise schedule, the number of sampling steps and above all the quality of the denoiser.',
     memory: 'One sample plus the denoiser. The exact denoiser must store the whole training set.',
     difficulty: 'high',
     difficultyNote: 'The sampling loop is a few lines. The constants are easy to get subtly wrong, and training a real denoiser is a large engineering task.',
-    limits: 'Slow sampling. Can reproduce training data. With an exact denoiser, as here, it can do nothing else.',
-    useWhen: 'You need high-quality, varied samples of images or similar data and can afford many network evaluations per sample.',
+    limits: 'Slow to produce each sample. It can reproduce its training data. With an exact noise remover, as on this page, reproducing them is all it can do.',
+    useWhen: 'You want realistic, varied new images or similar data, and can afford to run a large model many times for each one.',
   },
 
   advanced: {

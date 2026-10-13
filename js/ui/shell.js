@@ -101,7 +101,7 @@ export function mountShell(headHost, footHost) {
     h('div.wrap.foot-grid',
       h('div.foot-about',
         h('p.foot-mark', { html: `${MARK}<span>Algorithm Atlas</span>` }),
-        h('p.foot-tag', 'Every Algorithm. Every Connection. Infinite Possibilities.'),
+        h('p.foot-tag', 'The algorithms behind AI and business decisions, explained and run in front of you.'),
         h('p.foot-note', store.persistent
           ? 'There are no accounts. Your progress and favourites are kept in this browser only.'
           : 'This browser is blocking storage, so progress will not be remembered after you close the tab.')),

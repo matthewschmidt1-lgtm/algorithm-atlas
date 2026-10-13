@@ -667,13 +667,13 @@ int main() {
 
   compare: {
     idea: 'Evolve a population: select the better candidates, blend pairs of them, mutate the children, repeat.',
-    requires: 'Only a way to score a candidate, and crossover and mutation operators that suit the representation. Gives no guarantee of the global minimum.',
+    requires: 'A way to score a candidate, and ways to combine and randomly alter candidates that suit how they are written down. It does not promise the best answer.',
     sensitivity: 'High. Results depend on population size, selection strength, the crossover and mutation settings, and the random seed.',
     memory: 'O(N · d) for a population of N candidates with d variables.',
     difficulty: 'moderate',
     difficultyNote: 'The loop is short. Choosing a representation, operators and parameters that suit the problem is the hard part.',
-    limits: 'Uses many function evaluations. Can converge early on a local minimum. Slow to refine an answer to high precision.',
-    useWhen: 'The objective is a black box or the candidates are structures, evaluations are affordable in the thousands, and a good answer is enough.',
+    limits: 'It needs many scores. It can settle too early on a mediocre answer. It is slow to polish an answer to fine precision.',
+    useWhen: 'You can score a candidate but cannot describe the problem with a formula, you can afford thousands of scores, and a good answer is enough.',
   },
 
   advanced: {

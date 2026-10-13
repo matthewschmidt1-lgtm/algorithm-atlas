@@ -682,13 +682,13 @@ def score_table(a, b):
 
   compare: {
     idea: 'Fill a table of best alignment scores for all pairs of prefixes; each cell is the maximum over three neighbours plus a match, mismatch or gap score.',
-    requires: 'Two sequences and a scoring scheme: match, mismatch and gap scores.',
+    requires: 'Two sequences, and a score for a match, a mismatch and a gap.',
     sensitivity: 'Running time: none. The alignment itself is highly sensitive to the scores chosen.',
     memory: 'O(mn) for the table with traceback, O(min(m, n)) for the score alone.',
     difficulty: 'moderate',
     difficultyNote: 'The table is as simple as edit distance. Choosing meaningful scores is the hard part.',
-    limits: 'Quadratic time and memory. Forces an end-to-end alignment. Linear gap scoring is a crude model of real insertions and deletions.',
-    useWhen: 'Two sequences are related along their whole length and you can state how matches, mismatches and gaps should be scored.',
+    limits: 'Slow and memory-hungry on long sequences: twice the length means four times the work. It lines the two up from end to end even if only part is related. Its simple gap score is a crude picture of real insertions and deletions.',
+    useWhen: 'Two sequences are related along their whole length, and you can say how to score a match, a mismatch and a gap.',
   },
 
   advanced: {

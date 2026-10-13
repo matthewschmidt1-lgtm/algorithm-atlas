@@ -658,13 +658,13 @@ int main() {
 
   compare: {
     idea: 'Fill a table of best values over (items allowed, capacity); each cell is the better of skipping the item or taking it.',
-    requires: 'Whole-number weights and a capacity small enough for a table of n × W cells. Values must add up independently.',
+    requires: 'Whole-number weights, a capacity small enough to fill in a table with one cell per item and unit of capacity, and values that simply add up.',
     sensitivity: 'None in running time: the whole table is filled. The capacity, not the items, decides the cost.',
     memory: 'O(nW) with traceback, O(W) for the best value alone.',
     difficulty: 'moderate',
     difficultyNote: 'The recurrence is two lines. Understanding why O(nW) is not polynomial takes longer.',
-    limits: 'Pseudo-polynomial: impractical for very large capacities. One constraint only. Returns one best load among possibly several.',
-    useWhen: 'Items are all-or-nothing, weights are whole numbers, and the capacity is moderate.',
+    limits: 'Impractical for very large capacities. It handles one limit only. It returns one best choice even when several tie.',
+    useWhen: 'Each item is either taken whole or left, weights are whole numbers, and the capacity is moderate.',
   },
 
   advanced: {

@@ -578,13 +578,13 @@ int main() {
 
   compare: {
     idea: 'Replace each run of one repeated symbol with a count and the symbol.',
-    requires: 'Nothing. It is always correct. It only pays off when equal symbols sit next to each other.',
+    requires: 'Nothing. It is always correct. It only saves space when equal symbols sit next to each other.',
     sensitivity: 'Very high. Output size is 16 bits per run in this model: tiny for long runs, double the input for none.',
     memory: 'A single counter. Works as a stream.',
     difficulty: 'low',
     difficultyNote: 'A dozen lines. The usual bug is forgetting to write the last run.',
-    limits: 'Sees only immediate neighbours. Expands data without runs.',
-    useWhen: 'The data is known to contain long runs, or speed and simplicity matter more than the best ratio.',
+    limits: 'It sees only immediate neighbours. Data without runs comes out larger than it went in.',
+    useWhen: 'The data is known to contain long runs of the same symbol, or speed and simplicity matter more than the best saving.',
   },
 
   advanced: {

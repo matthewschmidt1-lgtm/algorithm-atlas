@@ -458,13 +458,13 @@ int main() {
 
   compare: {
     idea: 'Find the smallest remaining value and swap it into the next position.',
-    requires: 'Any list with a consistent ordering. Always correct.',
+    requires: 'Any list whose items can be compared. It is always correct.',
     sensitivity: 'None for comparisons: always n(n − 1)/2. Swaps vary from 0 to n − 1 with the input.',
     memory: 'In place. A few variables of extra space.',
     difficulty: 'low',
     difficultyNote: 'Two nested loops. The one thing to get right is comparing against the minimum so far.',
-    limits: 'Quadratic on every input, even sorted ones. Not stable.',
-    useWhen: 'The list is short and writes are expensive, or only the first few items are needed in order.',
+    limits: 'Very slow on long lists, even ones already in order: doubling the list makes it about four times slower. Equal items may change their relative order.',
+    useWhen: 'The list is short and moving an item is expensive, or you only need the first few items in order.',
   },
 
   advanced: {

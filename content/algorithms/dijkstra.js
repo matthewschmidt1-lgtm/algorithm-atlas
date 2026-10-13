@@ -700,13 +700,13 @@ int main() {
 
   compare: {
     idea: 'Settle nodes in order of distance from the source, relaxing each edge once.',
-    requires: 'All edge weights must be non-negative. With that, the answer is exact.',
+    requires: 'Every cost must be zero or more. Given that, the answer is exact.',
     sensitivity: 'Low. Work depends on the number of nodes and edges, not on the weights themselves.',
     memory: 'O(V) for distances plus a priority queue of up to O(E) entries.',
     difficulty: 'moderate',
     difficultyNote: 'Straightforward with a library priority queue; subtle if you implement decrease-key yourself.',
-    limits: 'Fails with negative weights. Explores in all directions even when only one destination matters.',
-    useWhen: 'Weights are non-negative and you want distances from one source to many nodes.',
+    limits: 'It can give a wrong answer if any cost is negative. It searches in every direction, even when you only care about one destination.',
+    useWhen: 'No step has a negative cost and you want the cheapest route from one place to many others.',
   },
 
   advanced: {

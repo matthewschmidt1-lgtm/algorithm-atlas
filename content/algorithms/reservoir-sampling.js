@@ -526,13 +526,13 @@ int main() {
 
   compare: {
     idea: 'Admit the i-th item with probability k/i and let it overwrite a uniformly random slot.',
-    requires: 'One pass over the data and a source of uniform random numbers. The sample is exactly uniform; nothing is approximated.',
+    requires: 'One pass over the data and a source of random numbers. Every item has exactly the same chance of being kept.',
     sensitivity: 'None to the order or content of the stream. The result depends only on the random draws.',
     memory: 'O(k): the sample and a counter.',
     difficulty: 'low',
     difficultyNote: 'A dozen lines. The care goes into the off-by-one details and the proof.',
-    limits: 'Uniform samples only, from the whole history. One random draw per item in its basic form.',
-    useWhen: 'You need a fixed-size fair sample from a stream of unknown length.',
+    limits: 'Every item counts equally, from the whole history, with no way to favour recent ones. The basic form draws a random number for every item.',
+    useWhen: 'You need a fair sample of fixed size from a stream whose length you do not know.',
   },
 
   advanced: {

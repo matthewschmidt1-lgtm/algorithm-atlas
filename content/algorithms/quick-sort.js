@@ -483,13 +483,13 @@ int main() {
 
   compare: {
     idea: 'Partition around a pivot, then sort each side independently.',
-    requires: 'Any list with a consistent ordering. Always correct; only speed depends on the input.',
+    requires: 'Any list whose items can be compared. It is always correct. Only its speed depends on the list.',
     sensitivity: 'High. Balanced pivots give n log n; extreme pivots (sorted data with a naive pivot, many duplicates) give n².',
     memory: 'In place. Recursion stack of O(log n) expected, O(n) worst case.',
     difficulty: 'moderate',
     difficultyNote: 'Short to write, but the partition boundaries are a classic source of off-by-one errors.',
-    limits: 'Not stable. No worst-case guarantee without safeguards.',
-    useWhen: 'Default choice for sorting arrays in memory when stability is not required.',
+    limits: 'Equal items may change their relative order. Without safeguards an unlucky list makes it very slow.',
+    useWhen: 'The usual choice for sorting a list held in memory when equal items need not keep their order.',
   },
 
   advanced: {

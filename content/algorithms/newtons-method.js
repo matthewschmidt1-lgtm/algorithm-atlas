@@ -551,13 +551,13 @@ for step in range(20):
 
   compare: {
     idea: 'Replace the curve by its tangent line at the current guess and jump to where that line crosses zero.',
-    requires: 'A differentiable function, its derivative, and a starting guess near the root. Convergence is not guaranteed.',
+    requires: 'A smooth curve, its slope, and a first guess close to the answer. Without a good first guess it may never arrive.',
     sensitivity: 'Very high to the starting guess: the same function can converge in five steps, cycle or diverge.',
     memory: 'O(1) in one variable. An n × n derivative matrix for systems of n equations.',
     difficulty: 'low',
     difficultyNote: 'The loop is a few lines. The difficulty is supplying a correct derivative and a good start, and handling failure.',
-    limits: 'Can cycle or diverge. Slows to linear at multiple roots. Needs the derivative.',
-    useWhen: 'The function is smooth, the derivative is available and you can start close to the root.',
+    limits: 'It can go round in circles or fly off. It slows down where the curve flattens out as it reaches zero. It needs the slope.',
+    useWhen: 'The curve is smooth, you can work out its slope, and you can start near the answer.',
   },
 
   advanced: {

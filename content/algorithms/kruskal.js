@@ -590,13 +590,13 @@ for u, v, w in sorted(edges, key=lambda e: e[2]):
 
   compare: {
     idea: 'Add edges in order of increasing weight, skipping any whose ends are already connected.',
-    requires: 'An undirected graph with comparable edge weights. Exact: the result is always a minimum spanning tree (or forest).',
+    requires: 'A network of two-way links, each with a cost. The result is exact: always a cheapest way to connect everything.',
     sensitivity: 'Low. The cost is set by the number of edges. The input can only shorten the run by letting it stop early.',
     memory: 'O(V + E): the edge list and a union-find structure.',
     difficulty: 'moderate',
     difficultyNote: 'The loop is a few lines. The care goes into the union-find structure that makes the cycle test fast.',
-    limits: 'Must sort all edges. Not a shortest-path method. A tree has no redundancy.',
-    useWhen: 'You need the cheapest set of edges that connects everything, especially on sparse graphs or edge lists.',
+    limits: 'It must put every link in order first. It does not give shortest routes. The result has no spare links, so one failure cuts it in two.',
+    useWhen: 'You need the cheapest set of links that connects everything, especially when there are few links.',
   },
 
   advanced: {

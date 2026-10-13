@@ -727,13 +727,13 @@ int main() {
 
   compare: {
     idea: 'Replace a repeated substring with a pointer to an earlier copy inside a sliding window.',
-    requires: 'Nothing in advance: no statistics and no table. It pays off only when substrings repeat within the window.',
+    requires: 'Nothing in advance: no counts and no table. It only saves space when stretches of data repeat within its window.',
     sensitivity: 'High. Repetitive text shrinks well. Short or patternless input grows, since every triple costs more than a symbol.',
     memory: 'The window and the look-ahead buffer, whatever the length of the text.',
     difficulty: 'moderate',
     difficultyNote: 'The idea is short. Overlapping copies, the end of the input and a fast match search are where the care goes.',
-    limits: 'Blind beyond its window and to near-repeats. Fixed-width triples waste bits without an entropy coder.',
-    useWhen: 'The data repeats phrases, especially if it will be decompressed more often than compressed.',
+    limits: 'It cannot see a repeat that is further back than its window, or one that is nearly but not exactly the same. In this plain form its output wastes bits unless a second stage packs it.',
+    useWhen: 'The data repeats phrases, especially if it will be unpacked more often than packed.',
   },
 
   advanced: {

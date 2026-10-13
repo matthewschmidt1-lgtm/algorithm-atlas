@@ -547,13 +547,13 @@ int main() {
 
   compare: {
     idea: 'Repeatedly place a node with no remaining incoming arrows and remove its outgoing arrows.',
-    requires: 'A directed graph. Produces an order exactly when the graph has no cycle, and reports a cycle otherwise.',
+    requires: 'A set of rules of the form: this before that. It produces an order exactly when the rules contain no loop, and reports the loop otherwise.',
     sensitivity: 'None in cost: every arrow is handled once. Which valid order comes out depends on how ties among ready nodes are broken.',
     memory: 'O(V): one in-degree counter per node plus a queue.',
     difficulty: 'low',
     difficultyNote: 'Short and free of recursion. The detail that matters is the final check for left-over nodes.',
-    limits: 'Returns one valid order, with no notion of a best one. Gives no order at all if there is a cycle.',
-    useWhen: 'You have "must come before" constraints and need a valid sequence or a circular-dependency check.',
+    limits: 'It returns one valid order, with no idea of a best one. If there is a loop it gives no order at all.',
+    useWhen: 'Some things must come before others, and you need an order that respects that, or a check for a circular dependency.',
   },
 
   advanced: {

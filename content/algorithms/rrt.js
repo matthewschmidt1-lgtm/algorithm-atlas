@@ -751,13 +751,13 @@ parent.append(near)`,
 
   compare: {
     idea: 'Grow a tree by extending the node nearest to a random sample a short, collision-checked step toward it.',
-    requires: 'A way to sample configurations, a distance, and a collision test. Returns a feasible path, not an optimal one; complete only in probability.',
+    requires: 'A way to pick random positions, a way to measure distance, and a test for hitting an obstacle. It returns a workable route, not the shortest.',
     sensitivity: 'Sensitive to the step size, the goal bias, and above all to narrow passages in the free space. Results differ from seed to seed.',
     memory: 'O(n) nodes after n iterations.',
     difficulty: 'moderate',
     difficultyNote: 'The loop is short. Correct collision checking along a whole motion and fast nearest-node search are where the work lies.',
-    limits: 'No optimality. Cannot prove that no path exists. Slow through narrow gaps.',
-    useWhen: 'The space is continuous or high-dimensional and any collision-free path, found quickly, is good enough.',
+    limits: 'The route is not the shortest. It cannot prove that no route exists. It is slow to find its way through narrow gaps.',
+    useWhen: 'The space to move through is continuous or has many joints, and any route that hits nothing, found quickly, is good enough.',
   },
 
   advanced: {

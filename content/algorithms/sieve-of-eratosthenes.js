@@ -530,13 +530,13 @@ int main() {
 
   compare: {
     idea: 'Cross out the multiples of each prime in turn; what is never crossed out is prime.',
-    requires: 'A limit small enough that one mark per number fits in memory. The result is exact.',
+    requires: 'A limit small enough that one mark for each number fits in memory. The result is exact.',
     sensitivity: 'None. The work depends only on the limit.',
     memory: 'O(n): one mark, ideally one bit, per number up to the limit.',
     difficulty: 'low',
     difficultyNote: 'Two nested loops. The usual errors are the starting point of the inner loop and the stopping test of the outer one.',
     limits: 'Memory grows with the limit, so it cannot test a single very large number.',
-    useWhen: 'You want all primes up to a limit, or many primality lookups below it.',
+    useWhen: 'You want every prime up to a limit, or to look up many numbers below it.',
   },
 
   advanced: {

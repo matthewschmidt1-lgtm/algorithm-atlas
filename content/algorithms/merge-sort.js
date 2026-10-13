@@ -553,13 +553,13 @@ int main() {
 
   compare: {
     idea: 'Sort each half, then merge the two sorted halves.',
-    requires: 'Any list with a consistent ordering, plus spare memory for n values. Always correct.',
+    requires: 'Any list whose items can be compared, plus spare room for a copy of the list. It is always correct.',
     sensitivity: 'Low. Between about (n/2) log₂ n and n log₂ n comparisons, and the same number of writes on every input.',
     memory: 'O(n) buffer plus an O(log n) recursion stack.',
     difficulty: 'moderate',
     difficultyNote: 'The idea is simple. The index arithmetic of the split and the leftover values in the merge are where bugs hide.',
-    limits: 'Needs O(n) extra memory. Does not speed up on sorted input unless modified to.',
-    useWhen: 'You need stability or a guaranteed running time, or the data is a linked list or lives on disk.',
+    limits: 'It needs spare memory as large as the list. It is no faster on a list already in order unless adapted.',
+    useWhen: 'Equal items must keep their order, the running time must be dependable, or the data sits in a file too big for memory.',
   },
 
   advanced: {

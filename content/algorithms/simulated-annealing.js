@@ -595,13 +595,13 @@ temp *= cooling`,
 
   compare: {
     idea: 'A random walk that always accepts improvements and accepts worse moves with a probability that falls as the temperature is lowered.',
-    requires: 'Only a way to score a candidate and a way to propose a nearby one. No gradient. Gives no guarantee of the global minimum with practical cooling.',
+    requires: 'A way to score a candidate and a way to propose a nearby one. Nothing else. In practice it does not promise the best answer.',
     sensitivity: 'High. Results depend on the starting temperature, the cooling rate, the step size and the random seed.',
     memory: 'O(d): the current point, the proposal and the best point so far.',
     difficulty: 'low',
     difficultyNote: 'About ten lines of code. The work is in choosing the temperature schedule and the move.',
-    limits: 'Needs many evaluations. Results vary from run to run. Slow to polish an answer to high precision.',
-    useWhen: 'The landscape has many local minima or no gradient, evaluations are cheap, and a good answer is enough.',
+    limits: 'It needs many scores. Results differ from run to run. It is slow to polish an answer to fine precision.',
+    useWhen: 'There are many mediocre resting points or no slope to follow, a candidate is cheap to score, and a good answer is enough.',
   },
 
   advanced: {

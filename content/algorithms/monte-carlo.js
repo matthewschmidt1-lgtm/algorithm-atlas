@@ -506,13 +506,13 @@ print(4 * inside / n)`,
 
   compare: {
     idea: 'Average over random samples; the fraction of random points inside a region estimates its area.',
-    requires: 'A way to draw independent random samples from the right distribution, and a quantity with finite variance. The answer is approximate, with a standard error of σ/√n.',
+    requires: 'A way to draw fair random samples of the situation. The answer is approximate, with a margin of error that can be estimated.',
     sensitivity: 'Low sensitivity to dimension and to irregular shapes. High sensitivity to rare events and to the quality of the random numbers.',
     memory: 'O(1): a running count.',
     difficulty: 'low',
     difficultyNote: 'A loop and a counter. The skill lies in knowing how much to trust the answer.',
-    limits: 'Slow convergence: a hundred times the work for each extra digit. Never exact.',
-    useWhen: 'The quantity is an average over many variables and a statistical error bar is acceptable.',
+    limits: 'Slow to sharpen: one more digit of accuracy takes a hundred times the work. It is never exact.',
+    useWhen: 'The quantity is an average over many uncertain things, and an answer with a stated margin of error is acceptable.',
   },
 
   advanced: {

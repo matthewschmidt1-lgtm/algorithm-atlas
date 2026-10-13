@@ -613,13 +613,13 @@ int main() {
 
   compare: {
     idea: 'Compute each Fibonacci number once, store it, and reuse it for the two numbers that depend on it.',
-    requires: 'A non-negative whole number n. Exact results need integers large enough to hold fib(n).',
+    requires: 'A whole number n, zero or more. Exact results need numbers big enough to hold the answer.',
     sensitivity: 'None. The work depends only on n and on the method chosen.',
     memory: 'n + 1 stored values for the memo or table, or two values with the rolling version.',
     difficulty: 'low',
     difficultyNote: 'A few lines in any language. The lesson is in comparing the three versions.',
-    limits: 'Linear only while additions are constant time. Deep recursion in the memoized version. Overflow in fixed-size integers beyond fib(92).',
-    useWhen: 'You are learning dynamic programming, or need a model for turning a slow recursive definition into a table.',
+    limits: 'The answers grow so fast that ordinary 64-bit numbers overflow beyond the 92nd. The version that calls itself can run out of memory for unfinished work when n is large. Its speed assumes each addition takes the same time, which stops being true for very large numbers.',
+    useWhen: 'You are learning dynamic programming, or want a pattern for turning a slow definition that calls itself into a table filled in once.',
   },
 
   advanced: {

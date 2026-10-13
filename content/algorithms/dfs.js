@@ -576,13 +576,13 @@ int main() {
 
   compare: {
     idea: 'Follow one route as deep as it goes, then back up to the latest node with an untried edge.',
-    requires: 'Any graph, directed or undirected. Discovers exactly what the start can reach.',
+    requires: 'Any network, with one-way or two-way links. It finds exactly what can be reached from the start.',
     sensitivity: 'Low for total work, which depends only on the number of nodes and edges. The order of discovery depends on the order in which neighbours are listed.',
     memory: 'O(V) for marks, plus a stack as deep as the longest route followed.',
     difficulty: 'low',
     difficultyNote: 'A few lines when written recursively. The care goes into what you do with the timestamps.',
-    limits: 'Routes are not shortest. Deep recursion can overflow the call stack.',
-    useWhen: 'You need reachability, cycle detection or a dependency order, or memory is too tight for breadth-first search.',
+    limits: 'The routes it finds are not the shortest. A very long chain can use up the memory a program sets aside for unfinished work.',
+    useWhen: 'You want to know what can be reached, whether there is a loop, or an order that respects dependencies, or memory is tight.',
   },
 
   advanced: {

@@ -555,13 +555,13 @@ int main() {
 
   compare: {
     idea: 'Keep the unsorted values in a heap and repeatedly move its largest value to the end.',
-    requires: 'An array with constant-time access to any position, and a consistent ordering. Always correct.',
+    requires: 'A list where you can jump to any position, and items that can be compared. It is always correct.',
     sensitivity: 'Low. O(n log n) comparisons on every input, and existing order does not help.',
     memory: 'In place. No buffer and no recursion.',
     difficulty: 'moderate',
     difficultyNote: 'The sift is short, but the index arithmetic and the direction of the build loop are easy to get wrong.',
-    limits: 'Not stable. Slower in practice than quick sort because of scattered memory access.',
-    useWhen: 'You need a guaranteed O(n log n) sort with no extra memory.',
+    limits: 'Equal items may change their relative order. In practice it is slower than quick sort, because it jumps around in memory.',
+    useWhen: 'You need a sort that is never slow, whatever the list, and that uses no extra memory.',
   },
 
   advanced: {

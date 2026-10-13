@@ -741,13 +741,13 @@ plain = power(cipher, d, n)`,
 
   compare: {
     idea: 'Publish the product of two secret primes. Encrypt by raising to a public power mod n, decrypt by raising to a private power.',
-    requires: 'Two large random primes, an exponent coprime to φ, proper padding, and a message smaller than n.',
+    requires: 'Two large random primes, a matching pair of exponents, proper padding of the message, and a message smaller than the modulus.',
     sensitivity: 'Security depends entirely on key size, randomness and padding. The toy sizes and bare formula on this page offer none.',
     memory: 'A few numbers the size of the modulus.',
     difficulty: 'high',
     difficultyNote: 'The arithmetic fits in thirty lines. A secure implementation (padding, constant time, key generation) is specialist work.',
-    limits: 'Slow. Handles only short inputs. Insecure without padding. Broken by a large quantum computer.',
-    useWhen: 'You need signatures or key wrapping with wide compatibility, through a vetted library and standard padding.',
+    limits: 'Slow. It handles only short inputs. It is unsafe without padding. A large quantum computer would break it.',
+    useWhen: 'You need to sign something or protect a key in a way almost everything understands. In practice, through a trusted library with standard padding.',
   },
 
   advanced: {

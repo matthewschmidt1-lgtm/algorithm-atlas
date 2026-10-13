@@ -718,13 +718,13 @@ bob_key = power(A, b, p)`,
 
   compare: {
     idea: 'Each side raises a public base to a private exponent, swaps the results, and raises again to reach the same value.',
-    requires: 'A group where discrete logarithms are hard, random secrets, and separate authentication of the exchanged values.',
+    requires: 'Numbers large and carefully chosen enough that the calculation cannot be run backwards, random secrets, and a separate way to confirm who you are talking to.',
     sensitivity: 'Security depends entirely on parameter size and quality. The toy sizes on this page offer none.',
     memory: 'A few numbers the size of the prime.',
     difficulty: 'moderate',
     difficultyNote: 'The arithmetic is short. Doing it safely (validation, constant time, authentication) is specialist work.',
-    limits: 'No authentication. Broken by a large quantum computer. Useless with small or badly chosen parameters.',
-    useWhen: 'Two parties need a fresh shared key over an open channel, through a vetted library and inside an authenticated protocol.',
+    limits: 'On its own it does not tell you who you are talking to. A large quantum computer would break it. Useless with small or badly chosen numbers.',
+    useWhen: 'Two parties need a fresh shared secret over a channel that others can read. In practice, through a trusted library and with a check of who is at the other end.',
   },
 
   advanced: {

@@ -595,13 +595,13 @@ for u in pages:
 
   compare: {
     idea: 'Repeatedly pass each node\'s rank along its outgoing links, with a small share spread evenly, until the ranks settle.',
-    requires: 'A directed graph and a damping factor below 1. The result is approximate, to within the stopping tolerance.',
+    requires: 'A network of one-way links and a setting, below 1, for how often the imaginary surfer follows a link. The scores are approximate, to a tolerance you choose.',
     sensitivity: 'Moderate. The number of rounds depends on the damping factor and tolerance. The ranking itself can shift when d changes or a few links are added.',
     memory: 'O(V): two vectors of ranks, besides the graph.',
     difficulty: 'low',
     difficultyNote: 'A few lines of arithmetic per round. The care goes into dead ends and into knowing what the score does and does not mean.',
-    limits: 'Sees only link structure. Open to manipulation by artificial links. Converges slowly when d is close to 1.',
-    useWhen: 'You want a global importance score for the nodes of a large directed network.',
+    limits: 'It sees only who links to whom. Artificial links can inflate a score. It settles slowly when that setting is close to 1.',
+    useWhen: 'You want one importance score for every node of a large network of one-way links.',
   },
 
   advanced: {

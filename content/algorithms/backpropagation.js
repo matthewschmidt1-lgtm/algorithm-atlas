@@ -761,13 +761,13 @@ for j in range(2):
 
   compare: {
     idea: 'One forward pass to compute the loss, one backward pass applying the chain rule to get the gradient for every weight.',
-    requires: 'A model built from differentiable operations and a single number to differentiate. Returns exact gradients. Does not itself guarantee that training succeeds.',
+    requires: 'A model made of smooth steps, so that a small change going in gives a small change coming out, and a single number that says how wrong the model is. It gives the exact direction to adjust. It does not promise that training will work.',
     sensitivity: 'The gradients are exact. Training with them is sensitive to the learning rate, the starting weights and the size of the network.',
     memory: 'O(W) for weights and gradients, plus every activation of the forward pass.',
     difficulty: 'high',
     difficultyNote: 'The idea is the chain rule. Getting every index and every derivative right by hand is error-prone, which is why frameworks automate it.',
-    limits: 'Needs differentiable operations. Stores all intermediate values. Error signals can shrink to nothing in deep saturating networks.',
-    useWhen: 'You are training any model with many parameters by a gradient method.',
+    limits: 'It cannot handle steps that jump suddenly. It has to remember every number from the forward run. In very deep networks the correction can fade to nothing before it reaches the early layers.',
+    useWhen: 'You are training a model with many adjustable numbers and need to know which way to nudge each one.',
   },
 
   advanced: {

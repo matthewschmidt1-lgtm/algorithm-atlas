@@ -697,13 +697,13 @@ int main() {
 
   compare: {
     idea: 'Alternate between assigning points to the nearest centre and moving each centre to the mean of its points.',
-    requires: 'Numeric features on comparable scales, a chosen k, and starting centres. Converges to a local optimum only.',
+    requires: 'Measurements that are numbers on comparable scales, the number of groups chosen in advance, and starting centres. It finds a good grouping, not always the best one.',
     sensitivity: 'High. Depends on the starting centres, on k, on feature scaling and on outliers.',
     memory: 'O(nd + kd).',
     difficulty: 'low',
     difficultyNote: 'Two short loops. The difficulty is choosing k, starting well, and knowing when the clusters mean something.',
-    limits: 'Local optimum of an NP-hard objective. Assumes compact round clusters. Needs k in advance.',
-    useWhen: 'You want k compact groups or k representative points from numeric data, quickly, and can afford several restarts.',
+    limits: 'A different start can give a different grouping, and the best one is too hard to guarantee. It expects round, tight groups. You must choose the number of groups yourself.',
+    useWhen: 'You want a chosen number of tight groups, or that many representative points, from numeric data, quickly, and can afford to run it several times.',
   },
 
   advanced: {

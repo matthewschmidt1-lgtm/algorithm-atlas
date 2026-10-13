@@ -439,13 +439,13 @@ int main() {
 
   compare: {
     idea: 'Check each value in turn until the target appears or the list ends.',
-    requires: 'Nothing. The list may be in any order and only needs to be readable from start to end.',
+    requires: 'Nothing. The list can be in any order and only has to be readable from start to end.',
     sensitivity: 'Depends only on where the target sits: 1 comparison if first, n if last or absent.',
     memory: 'O(1): a single position counter.',
     difficulty: 'low',
     difficultyNote: 'A single loop. The usual errors are loop bounds and the placement of the "not found" return.',
-    limits: 'Every lookup costs time proportional to the list length, and proving absence always costs a full pass.',
-    useWhen: 'The list is short, unsorted, read as a stream, or searched too rarely to justify sorting or indexing it.',
+    limits: 'Each search takes time in proportion to the length of the list. Showing that something is absent always means checking every item.',
+    useWhen: 'The list is short, not in order, arrives as a stream, or is searched too rarely to be worth putting in order.',
   },
 
   advanced: {

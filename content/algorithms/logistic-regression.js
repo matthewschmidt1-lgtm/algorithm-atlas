@@ -638,13 +638,13 @@ int main() {
 
   compare: {
     idea: 'Pass a weighted sum of the features through a sigmoid to get a probability, and fit the weights by minimizing cross-entropy.',
-    requires: 'Labelled examples of two classes, numeric features, a learning rate and a step budget. Reaches the best straight boundary when one exists as a finite minimum.',
+    requires: 'Examples of both outcomes, measurements that are numbers, a step size and a limit on the number of steps.',
     sensitivity: 'Moderate. Sensitive to the learning rate and feature scaling during training, and to separability, which sends the weights to infinity.',
     memory: 'O(d): one weight per feature and a bias.',
     difficulty: 'moderate',
     difficultyNote: 'The code is short. Understanding why cross-entropy is used, and what the probabilities do and do not mean, takes more care.',
-    limits: 'Straight boundaries only. No finite solution on separable data without regularization. Probabilities are only as good as the linear assumption.',
-    useWhen: 'You need class probabilities and an explainable model, and the classes are roughly separable by a line in the available features.',
+    limits: 'Straight boundaries only. If the groups separate perfectly it never settles unless it is held back. Its probabilities are only as good as the straight-line assumption.',
+    useWhen: 'You need a probability of yes or no and a model you can explain, and a straight line can roughly separate the two groups.',
   },
 
   advanced: {

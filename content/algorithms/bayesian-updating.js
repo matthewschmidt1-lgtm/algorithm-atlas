@@ -522,13 +522,13 @@ mean = a / (a + b)`,
 
   compare: {
     idea: 'Reweight every possibility by how well it explains the evidence, then rescale. For a coin with a Beta prior this is counting.',
-    requires: 'A prior over the possibilities and a likelihood for the evidence. The result is exact for the stated prior and model.',
+    requires: 'A starting belief about each possibility, and a way to say how likely the evidence is under each one. The answer is exact for the belief and the model you gave it.',
     sensitivity: 'With little data the answer depends strongly on the prior. With a lot of data it hardly depends on it.',
     memory: 'O(1) in the conjugate case: two counts.',
     difficulty: 'low',
     difficultyNote: 'The arithmetic is simple. Choosing the prior and the model, and resisting the urge to ignore base rates, is the hard part.',
-    limits: 'Only as good as the prior and the model. Cannot assign belief to a possibility that was left out.',
-    useWhen: 'Evidence arrives in pieces, data are limited, and the uncertainty of the conclusion matters.',
+    limits: 'It is only as good as the starting belief and the model. A possibility you left out can never be believed, whatever the evidence.',
+    useWhen: 'Evidence comes in a piece at a time, there is not much of it, and you need to know how sure you can be.',
   },
 
   advanced: {

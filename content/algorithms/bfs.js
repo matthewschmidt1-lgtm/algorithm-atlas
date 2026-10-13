@@ -540,13 +540,13 @@ int main() {
 
   compare: {
     idea: 'Visit nodes in order of their number of edges from the start, using a queue.',
-    requires: 'Any graph, directed or undirected. Distances are exact when every edge counts as one step.',
+    requires: 'Any network, with one-way or two-way links. Distances are exact when each link counts as one step.',
     sensitivity: 'Low. The work is the same for any connected graph with the same number of nodes and edges.',
     memory: 'O(V). The queue can hold an entire layer of the graph at once.',
     difficulty: 'low',
     difficultyNote: 'A dozen lines. The one thing to get right is marking nodes when they are found, not when they are visited.',
-    limits: 'Ignores edge weights. Memory grows with the width of the graph.',
-    useWhen: 'You need fewest-edge routes or want everything reachable, and all edges count the same.',
+    limits: 'It ignores costs on the links. Memory use grows with how many places are the same distance away.',
+    useWhen: 'You want the route with the fewest steps, or everything that can be reached, and every step counts the same.',
   },
 
   advanced: {

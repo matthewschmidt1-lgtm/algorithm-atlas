@@ -518,13 +518,13 @@ int main() {
 
   compare: {
     idea: 'Step forward in time along the current slope, one fixed step at a time.',
-    requires: 'A rule giving the rate of change from the time and state, an initial state and a step size. One derivative evaluation per step.',
+    requires: 'A rule that gives how fast things are changing at any moment, a starting state, and a step size.',
     sensitivity: 'High to the step size: error is proportional to it, and above a system-dependent limit the solution blows up.',
     memory: 'O(d): the current state and its slope.',
     difficulty: 'low',
     difficultyNote: 'One line of arithmetic per step. Choosing a step that is both stable and accurate enough is the real work.',
-    limits: 'First order only. Gains energy on oscillators. Needs very small steps on stiff systems.',
-    useWhen: 'Simplicity or the cost per step matters more than accuracy, or as a first look at a problem.',
+    limits: 'Not very accurate: halving the step only halves the error. Things that should swing steadily slowly gain energy. Some systems force it to take very small steps.',
+    useWhen: 'Simplicity or speed per step matters more than accuracy, or you want a first look at a problem.',
   },
 
   advanced: {

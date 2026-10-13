@@ -464,13 +464,13 @@ int main() {
 
   compare: {
     idea: 'Swap neighbours that are out of order, pass after pass, until a pass makes no swaps.',
-    requires: 'Any list with a consistent ordering. Always correct; only speed depends on the input.',
+    requires: 'Any list whose items can be compared. It is always correct. Only its speed depends on the list.',
     sensitivity: 'High. A sorted list costs n − 1 comparisons; a reversed list costs n(n − 1)/2 comparisons and as many swaps.',
     memory: 'In place. A few variables of extra space.',
     difficulty: 'low',
     difficultyNote: 'Two nested loops and a flag. The usual slips are the loop bound and forgetting to reset the flag.',
-    limits: 'Quadratic time on average and in the worst case. Slower than insertion sort on almost every input.',
-    useWhen: 'Learning or teaching, or when one pass to confirm and lightly repair sorted order is enough.',
+    limits: 'Very slow on long lists: doubling the list makes it about four times slower. Insertion sort beats it on almost every list.',
+    useWhen: 'You are learning or teaching, or one pass to confirm a list is in order and repair it lightly is enough.',
   },
 
   advanced: {

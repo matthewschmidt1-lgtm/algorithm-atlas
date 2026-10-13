@@ -918,13 +918,13 @@ int main() {
 
   compare: {
     idea: 'Join the two rarest symbols repeatedly to build a tree whose leaf depths are the code lengths.',
-    requires: 'The symbol counts in advance. The decoder must also know the code table.',
+    requires: 'A count of how often each symbol appears, made beforehand. Whoever unpacks the data needs the code table too.',
     sensitivity: 'Moderate. Output size follows the entropy of the symbol counts, but never drops below 1 bit per symbol.',
     memory: 'O(k) for k distinct symbols: the tree, the queue and the code table.',
     difficulty: 'moderate',
     difficultyNote: 'The tree building is short. Bit-level input and output and a compact table format take more care.',
-    limits: 'Whole bits per symbol only. Ignores order and context. The table overhead hurts short inputs.',
-    useWhen: 'Symbol frequencies are uneven and you want fast, simple, exactly reversible coding, often after LZ77.',
+    limits: 'Every symbol costs at least one whole bit. It ignores the order of symbols and what came before. Sending the table can outweigh the saving on short texts.',
+    useWhen: 'Some symbols are much more common than others and you want quick, simple compression that restores the text exactly.',
   },
 
   advanced: {

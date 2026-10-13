@@ -590,13 +590,13 @@ int main() {
 
   compare: {
     idea: 'Step one pixel at a time along the longer direction and use the sign of an integer error term to decide when to step sideways.',
-    requires: 'Two endpoints with whole-number coordinates. The result is exact: the nearest pixel at every step.',
+    requires: 'Two end points on whole-number grid positions. The result is exact: the nearest square at every step.',
     sensitivity: 'None in running time beyond the line\'s length. The output depends on the direction of travel only at exact ties.',
     memory: 'O(1): the current pixel, the error term and four constants.',
     difficulty: 'low',
     difficultyNote: 'A dozen lines. The care goes into covering all eight directions and the endpoints.',
-    limits: 'On-or-off pixels only, so lines look stepped. One cell per step, so it does not list every cell a line touches.',
-    useWhen: 'You need the grid cells along a straight segment quickly and exactly, with no need for smooth edges.',
+    limits: 'Squares are either on or off, so lines look stepped. It marks one square per step, so it does not list every square the line touches.',
+    useWhen: 'You need the squares of a grid along a straight line, quickly and exactly, and stepped edges are acceptable.',
   },
 
   advanced: {

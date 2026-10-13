@@ -556,13 +556,13 @@ int main() {
 
   compare: {
     idea: 'Read the exponent in binary: square for each digit, multiply by the base for each 1, reducing modulo m every time.',
-    requires: 'A non-negative whole-number exponent, and arithmetic wide enough to hold the square of the modulus. The result is exact.',
+    requires: 'A whole-number power, zero or more, and arithmetic wide enough to hold the square of the divisor. The result is exact.',
     sensitivity: 'Low. Between log₂ e and 2 log₂ e multiplications, depending only on how many binary digits of e are 1.',
     memory: 'O(1): the result, the base and the modulus.',
     difficulty: 'low',
     difficultyNote: 'A short loop. Order of operations and overflow are the usual errors; making it safe for secret exponents is a specialist task.',
-    limits: 'The plain form leaks the exponent through timing. It cannot invert itself: the discrete logarithm stays hard.',
-    useWhen: 'You need a power modulo m and the exponent is larger than a handful.',
+    limits: 'In its plain form the time it takes reveals the power, which matters when the power is a secret. It cannot be run backwards to recover the power.',
+    useWhen: 'You need the remainder of a large power, and the power is more than a handful.',
   },
 
   advanced: {

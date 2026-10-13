@@ -730,13 +730,13 @@ int main() {
 
   compare: {
     idea: 'Explore positions in order of cost so far plus an optimistic estimate of cost to go.',
-    requires: 'Non-negative step costs and a heuristic. The path is optimal if the heuristic is admissible (and consistent, when closed positions are never reopened).',
+    requires: 'Steps that never have a negative cost, and that rough measure of the distance left. The route is the cheapest possible as long as the measure never guesses too high.',
     sensitivity: 'High. The number of positions explored ranges from the path length to the whole reachable space, depending on the heuristic, the obstacles and the tie-breaking rule.',
     memory: 'O(V): every position reached is kept, with its cost and parent.',
     difficulty: 'moderate',
     difficultyNote: 'The loop is Dijkstra\'s with one extra term. The difficulty lies in choosing a heuristic and knowing what it guarantees.',
-    limits: 'No better than Dijkstra without a good heuristic. Memory-hungry. Not optimal if the heuristic overestimates.',
-    useWhen: 'You need one path to one goal and can estimate the remaining cost without overestimating.',
+    limits: 'With a poor distance estimate it is no faster than Dijkstra\'s algorithm. It keeps a lot in memory. If the estimate guesses too high, the route may not be the cheapest.',
+    useWhen: 'You want one route to one known destination, and you have a rough measure of how far away it still is that never guesses too high.',
   },
 
   advanced: {

@@ -597,13 +597,13 @@ int main() {
 
   compare: {
     idea: 'Label a query with the majority class among the k stored examples closest to it.',
-    requires: 'Labelled examples, a meaningful distance between them, and features on comparable scales. No training.',
+    requires: 'Examples with known answers, a sensible way to measure how far apart two cases are, and measurements on comparable scales.',
     sensitivity: 'Sensitive to the choice of k, to feature scaling and to irrelevant features. With small k, sensitive to individual noisy points.',
     memory: 'O(n): the entire training set is kept.',
     difficulty: 'low',
     difficultyNote: 'A scan, a short sorted list and a count. The care goes into scaling the features and choosing k.',
-    limits: 'Slow queries on large data. Degrades with many features. Cannot ignore irrelevant features.',
-    useWhen: 'Similar inputs have similar labels, features are few, and a method with no training and no assumed boundary shape is wanted.',
+    limits: 'Slow to answer on large collections. It gets worse as the number of measurements grows. It cannot ignore a measurement that does not matter.',
+    useWhen: 'Similar cases tend to have the same answer, there are few measurements per case, and you want a method with no training step.',
   },
 
   advanced: {

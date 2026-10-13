@@ -472,13 +472,13 @@ int main() {
 
   compare: {
     idea: 'Insert each value into its place among the values already in order.',
-    requires: 'Any list with a consistent ordering. Always correct; only speed depends on the input.',
+    requires: 'Any list whose items can be compared. It is always correct. Only its speed depends on the list.',
     sensitivity: 'Very high, in a useful way. Cost is n plus the number of inversions: linear on sorted input, quadratic on reversed input.',
     memory: 'In place. One held value and two indices.',
     difficulty: 'low',
     difficultyNote: 'A short loop. The details that matter are saving the key first and checking the index before the comparison.',
-    limits: 'Quadratic time on long disordered lists.',
-    useWhen: 'The list is short or nearly sorted, or items must be added to a sorted list one at a time.',
+    limits: 'Very slow on long, jumbled lists: doubling the list makes it about four times slower.',
+    useWhen: 'The list is short or nearly in order, or items arrive one at a time and must be kept in order.',
   },
 
   advanced: {

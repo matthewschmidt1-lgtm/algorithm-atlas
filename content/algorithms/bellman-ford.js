@@ -656,13 +656,13 @@ for _ in range(len(nodes) - 1):
 
   compare: {
     idea: 'Relax every edge, pass after pass, until nothing improves or V − 1 passes have been made.',
-    requires: 'Any edge weights. Exact when no negative cycle can be reached; otherwise it reports the cycle.',
+    requires: 'A network with a cost on each link. Any costs are allowed. The answer is exact unless there is a loop that gets cheaper every time round, and then it reports the loop.',
     sensitivity: 'High. The work depends on the order in which edges are scanned and on how many edges shortest routes have, from one pass to V − 1.',
     memory: 'O(V) for distances and predecessors, plus the edge list.',
     difficulty: 'low',
     difficultyNote: 'Two nested loops. The subtleties are the stand-in for infinity and what to report when a negative cycle exists.',
-    limits: 'O(V · E) in the worst case. No answer exists for nodes that a negative cycle can reach.',
-    useWhen: 'Weights can be negative, negative cycles must be detected, or nodes only know their neighbours.',
+    limits: 'Slower than Dijkstra\'s algorithm: it checks every link once for each place in the network. Where an ever-cheaper loop can be reached, there is no answer to give.',
+    useWhen: 'Some steps have a negative cost, you need to detect a loop that keeps getting cheaper, or each place knows only its neighbours.',
   },
 
   advanced: {

@@ -626,13 +626,13 @@ t = t + dt`,
 
   compare: {
     idea: 'Sample the slope four times across each step and step along the weighted average.',
-    requires: 'A smooth rule giving the rate of change from the time and state, an initial state and a step size. Four derivative evaluations per step.',
+    requires: 'A smooth rule that gives how fast things are changing at any moment, a starting state, and a step size. It works that rule out four times per step.',
     sensitivity: 'Moderate to the step size while it is small: error falls with its fourth power. Above a system-dependent limit the solution blows up.',
     memory: 'O(d): the state, four slopes and a trial state.',
     difficulty: 'low',
     difficultyNote: 'Six lines per step. The risk is a wrong coefficient that lowers the order without any visible failure.',
-    limits: 'Not for stiff systems. Slow energy drift on long runs. Fixed step unless extended.',
-    useWhen: 'The problem is smooth and non-stiff and you want good accuracy from a simple fixed-step method.',
+    limits: 'Not suited to systems where some parts change far faster than others. Energy drifts slowly over long runs. The step stays fixed unless the method is extended.',
+    useWhen: 'The problem changes smoothly and you want good accuracy from a simple method with a fixed step.',
   },
 
   advanced: {

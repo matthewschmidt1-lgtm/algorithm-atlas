@@ -547,13 +547,13 @@ for _ in range(k):
 
   compare: {
     idea: 'Alternate a sign flip on the marked item with a reflection of all amplitudes about their mean, rotating the state toward the answer.',
-    requires: 'A quantum computer and a quantum circuit for the test. The answer is correct with high probability and must be checked.',
+    requires: 'A quantum computer, and the check written as a quantum circuit. The answer is right with high probability and has to be confirmed.',
     sensitivity: 'High sensitivity to the number of rounds: too many is as bad as too few. Insensitive to which item is marked.',
     memory: 'log₂ N qubits on a quantum computer; N numbers in a classical simulation.',
     difficulty: 'high',
     difficultyNote: 'The arithmetic is a few lines. Understanding why it works needs amplitudes and interference, and running it needs hardware that does not exist yet.',
-    limits: 'Quadratic speedup only, proved optimal. Not usable at meaningful scale today. No help with stored or structured data.',
-    useWhen: 'In theory, for exhaustive search over a huge space where each candidate can be tested by a circuit.',
+    limits: 'It cuts the work to its square root, and it is proved that nothing does better. No machine today can run it at a useful size. It does not help with data that is stored or has structure.',
+    useWhen: 'For now, in theory only: searching an enormous number of possibilities where each one can be checked by a quantum circuit.',
   },
 
   advanced: {

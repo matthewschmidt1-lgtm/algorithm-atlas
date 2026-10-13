@@ -763,13 +763,13 @@ int main() {
 
   compare: {
     idea: 'Store each set as a tree of parent pointers and name the set by its root.',
-    requires: 'Elements numbered in advance, and connections that are only added, never removed.',
+    requires: 'Items numbered in advance, and connections that are only ever added, never removed.',
     sensitivity: 'Without the two rules, very sensitive to the order of unions. With both, almost none.',
     memory: 'O(n): a parent array and a rank array.',
     difficulty: 'low',
     difficultyNote: 'About twenty lines. The analysis of why it is so fast is among the hardest in the standard curriculum.',
-    limits: 'Cannot split sets, remove connections or report paths. The near-constant cost is an average, not a per-operation limit.',
-    useWhen: 'Groups only ever merge and you need to know, at any time, whether two items are in the same group.',
+    limits: 'It cannot split a group, remove a connection or tell you the route between two things. Its speed is an average over many operations, not a promise for each one.',
+    useWhen: 'Groups only ever merge, and you need to know at any moment whether two things are in the same group.',
   },
 
   advanced: {

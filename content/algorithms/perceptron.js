@@ -596,13 +596,13 @@ int main() {
 
   compare: {
     idea: 'Visit points one at a time and, after each misclassified one, add it to or subtract it from the weights.',
-    requires: 'Labelled examples of two classes. Guaranteed to finish only if the classes are linearly separable, so a pass limit is needed.',
+    requires: 'Examples of two groups. It is sure to finish only if a straight line can separate them, so it needs a limit on the number of passes.',
     sensitivity: 'Sensitive to the order of the points and to whether the data are separable at all. Insensitive to a learning rate when weights start at zero.',
     memory: 'O(d): one weight per feature and a bias.',
     difficulty: 'low',
     difficultyNote: 'A sum, a comparison and an addition. The subtlety is entirely in what it guarantees and what it does not.',
-    limits: 'Straight boundaries only. Never settles on non-separable data. Returns any separating line, not the best. No probabilities.',
-    useWhen: 'The classes are linearly separable and a simple, fast, online learner is enough, or you want to see how a single neuron learns.',
+    limits: 'Straight boundaries only. It never settles if no line separates the groups. It returns some separating line, not the best one, and gives no probabilities.',
+    useWhen: 'A straight line can separate the two groups completely and a simple, fast learner is enough, or you want to see how a single artificial neuron learns.',
   },
 
   advanced: {

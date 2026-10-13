@@ -459,13 +459,13 @@ int main() {
 
   compare: {
     idea: 'Step repeatedly against the gradient, the direction of steepest local increase.',
-    requires: 'A differentiable objective and a suitable learning rate. Reaches a stationary point; global optimality only if the objective is convex.',
+    requires: 'A smooth quantity to minimize, its slope, and a sensible step size. It reaches a point where the slope is flat. That is the lowest point overall only if the surface is a single bowl.',
     sensitivity: 'High. Very sensitive to the learning rate, the starting point and the conditioning of the surface.',
     memory: 'O(d): the current point and one or two vectors of the same size.',
     difficulty: 'low',
     difficultyNote: 'A few lines of code. The difficulty is in choosing the learning rate and getting the gradient right.',
-    limits: 'Stops at the nearest stationary point. Slow in narrow valleys. Needs gradients.',
-    useWhen: 'The objective is smooth, gradients are available, and the problem is large.',
+    limits: 'It stops at the nearest flat point, which may not be the lowest. It is slow in long narrow valleys. It needs the slope.',
+    useWhen: 'The thing to minimize changes smoothly, you can work out its slope, and the problem is large.',
   },
 
   advanced: {

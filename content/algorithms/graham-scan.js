@@ -715,13 +715,13 @@ for c in rest:
 
   compare: {
     idea: 'Sort the points by angle around the lowest one, then sweep once with a stack, discarding every point that does not make a left turn.',
-    requires: 'Points in the plane and a turn test whose sign can be trusted. The result is exact when the arithmetic is.',
+    requires: 'Points on a flat surface, and arithmetic precise enough to tell a left turn from a right turn reliably.',
     sensitivity: 'Low. The sort costs the same whatever the arrangement, and the scan varies only between one and two tests per point.',
     memory: 'O(n) for the sorted points and the stack.',
     difficulty: 'moderate',
     difficultyNote: 'Short to write. The difficulty is in handling ties and collinear points consistently, and in making the turn test reliable.',
-    limits: 'Two dimensions only. Needs all points in advance. Always pays for a full sort.',
-    useWhen: 'You need the convex hull of a fixed planar point set with a guaranteed n log n running time.',
+    limits: 'Flat surfaces only. It needs all the points before it starts. It always pays for putting the points in order.',
+    useWhen: 'You need the outline that wraps a fixed set of points on a flat surface, with a dependable running time.',
   },
 
   advanced: {

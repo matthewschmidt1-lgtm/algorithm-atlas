@@ -783,13 +783,13 @@ int main() {
 
   compare: {
     idea: 'Hash servers and keys onto a ring and give each key to the next server clockwise.',
-    requires: 'A hash function that every participant computes identically, and an agreed list of servers.',
+    requires: 'A rule that turns any name into a number, the same on every machine, and an agreed list of servers.',
     sensitivity: 'Balance depends strongly on the number of positions per server. Movement per change is about one server\'s share regardless.',
     memory: 'O(n·v): one sorted entry per server position, nothing per key.',
     difficulty: 'moderate',
     difficultyNote: 'The ring itself is a sorted list and a binary search. The hard parts in practice are membership, replication and balance.',
-    limits: 'Uneven shares without virtual nodes. Scatters keys, so no efficient range queries. Decides ownership only.',
-    useWhen: 'Keys must be spread over a set of servers that changes, and moving keys is costly.',
+    limits: 'Shares are uneven unless each server is given many positions. It scatters data, so a request for everything from A to F cannot be answered from one place. It only decides who holds what.',
+    useWhen: 'Data has to be shared out among servers that come and go, and moving data from one server to another is costly.',
   },
 
   advanced: {

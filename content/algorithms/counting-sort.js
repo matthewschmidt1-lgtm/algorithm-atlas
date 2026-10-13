@@ -567,13 +567,13 @@ int main() {
 
   compare: {
     idea: 'Count how often each key occurs, then write every item directly to the position the counts imply.',
-    requires: 'Keys must be whole numbers from a range small enough to give each possible key an array cell.',
+    requires: 'Values that are whole numbers from a small range, small enough to keep one counter for each possible value.',
     sensitivity: 'None to the order of the input. Entirely dependent on the key range k: time and memory are O(n + k).',
     memory: 'O(n + k): an output array plus one counter per possible key.',
     difficulty: 'low',
     difficultyNote: 'Three simple loops. The care goes into the offset for the smallest key and into keeping the placement stable.',
-    limits: 'Useless for keys that can only be compared, and impractical when k is far larger than n.',
-    useWhen: 'There are many items and few possible keys, or as the per-digit pass of radix sort.',
+    limits: 'Useless for things that can only be compared, such as names. Impractical when the range of values is far larger than the number of items.',
+    useWhen: 'There are many items but few possible values, such as exam marks out of 100.',
   },
 
   advanced: {

@@ -1165,6 +1165,22 @@ if (on('tracks')) {
     } finally { p.close(); }
     assert(S.search('quick sort')[0].ref === 'quick-sort' && C.algos.length >= 57, 'a lesson outside the tracks can no longer be found');
   });
+  await test('the three "Should you use it?" statements are in plain words on every lesson', async () => {
+    // terms a newcomer should not meet in a block written for someone deciding, without explanation
+    const JARGON = /NP-hard|\bO\(|pseudo-polynomial|admissible|\bheuristic|stationary point|\bconvex\b|differentiable|\bstiff\b|\bmodes?\b|discrete logarithm|coprime|φ|quadratic|radix|entropy coder|asymptot|amortized|non-stiff|local optimum|global optimum|likelihood|posterior|\bprior\b|hyperparameter|regulari[sz]ation|eigen|covariance|stochastic|Markov|softmax|logits?\b|gradient\b/i;
+    const bad = [];
+    for (const a of C.algos) {
+      const L = await C.loadLesson(a.id);
+      for (const k of ['useWhen', 'requires', 'limits']) {
+        const t = L.compare[k];
+        const m = t.match(JARGON);
+        if (m) bad.push(`${a.id}.${k}: "${m[0]}"`);
+        if (t.length > 330) bad.push(`${a.id}.${k}: ${t.length} characters`);
+      }
+    }
+    assert(!bad.length, `${bad.length}: ${bad.slice(0, 12).join(' | ')}`);
+    return `${C.algos.length * 3} statements`;
+  });
   await test('every lesson says when to use it, what it needs and where it falls short, in its own words', async () => {
     for (const a of C.algos) { const L = await C.loadLesson(a.id); assert(L.compare && L.compare.useWhen && L.compare.requires && L.compare.limits, `${a.id} is missing one of the three statements`); }
     const L = await C.loadLesson('k-means');

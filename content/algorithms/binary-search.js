@@ -491,13 +491,13 @@ int main() {
 
   compare: {
     idea: 'Check the middle of the remaining range and discard the half that cannot hold the target.',
-    requires: 'A list sorted by the comparison in use, with direct access to any position. On unsorted data the answer is unreliable.',
+    requires: 'A list that is already in order, where you can jump straight to any position. On a list that is not in order the answer cannot be trusted.',
     sensitivity: 'Low. Between 1 and ⌊log₂ n⌋ + 1 probes whatever the values are.',
     memory: 'O(1): two or three position variables.',
     difficulty: 'moderate',
     difficultyNote: 'A dozen lines, but the loop condition, the range updates and the midpoint formula are each a classic source of bugs.',
-    limits: 'Useless on unsorted data, and keeping an array sorted makes insertions slow.',
-    useWhen: 'The data is sorted once and searched many times, or you need the nearest value or insertion point.',
+    limits: 'Useless on a list that is not in order. Keeping a list in order makes adding to it slow.',
+    useWhen: 'The list is put in order once and searched many times, or you want the nearest value or the place where a new value belongs.',
   },
 
   advanced: {

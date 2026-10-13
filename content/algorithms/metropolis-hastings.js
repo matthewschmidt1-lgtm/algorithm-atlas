@@ -599,13 +599,13 @@ int main() {
 
   compare: {
     idea: 'Random walk with an accept-or-reject step based on the ratio of target densities.',
-    requires: 'The target density at any point, up to a constant. Converges to the target in the limit of a long run; no guarantee for a finite one.',
+    requires: 'A way to compare how likely any two points are. A long enough run matches the target. A run of fixed length carries no promise.',
     sensitivity: 'High. Performance depends strongly on the proposal width, the starting point and the shape of the target.',
     memory: 'O(d) for the current state.',
     difficulty: 'moderate',
     difficultyNote: 'Ten lines to write, and a good deal of judgement to tune and to check.',
-    limits: 'Correlated samples. Can miss separated modes entirely. Slow in high dimensions.',
-    useWhen: 'You can evaluate a density up to a constant, cannot sample it directly, and want averages over it.',
+    limits: 'Each sample resembles the last. It can miss a separate region of likely points entirely. It is slow when there are many unknowns.',
+    useWhen: 'You can say how likely any point is compared with another, cannot draw samples directly, and want averages.',
   },
 
   advanced: {

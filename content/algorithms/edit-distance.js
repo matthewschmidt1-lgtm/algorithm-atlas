@@ -633,13 +633,13 @@ int main() {
 
   compare: {
     idea: 'Fill a table of distances between all pairs of prefixes; each cell is the minimum over three neighbours.',
-    requires: 'Two strings. Every insertion, deletion and substitution costs 1.',
+    requires: 'Two pieces of text. Adding, removing or replacing one letter each count as one change.',
     sensitivity: 'None. The whole table is filled whatever the strings contain.',
     memory: 'O(mn) for the table with traceback, O(min(m, n)) for the distance alone.',
     difficulty: 'moderate',
     difficultyNote: 'Ten lines of code, but the border and the off-by-one between table and string indices need care.',
-    limits: 'Quadratic time and memory. Treats all edits as equally likely and counts a swap of neighbours as two edits.',
-    useWhen: 'You need an exact count of single-character edits between two short strings.',
+    limits: 'Slow and memory-hungry on long texts: twice the length means four times the work. It treats every change as equally likely, and counts two swapped neighbouring letters as two changes.',
+    useWhen: 'You need to know exactly how many single-letter changes separate two short pieces of text.',
   },
 
   advanced: {

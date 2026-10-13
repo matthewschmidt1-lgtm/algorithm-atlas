@@ -636,13 +636,13 @@ for step in range(1000):
 
   compare: {
     idea: 'Choose the slope and intercept that minimize the mean squared vertical gap between line and points.',
-    requires: 'Numeric inputs and outputs, and a relationship that is roughly linear. Exact solution by formula, or gradient descent with a suitable learning rate.',
+    requires: 'Inputs and outputs that are numbers, and a relationship that is roughly a straight line.',
     sensitivity: 'Sensitive to outliers. Gradient descent is also sensitive to the learning rate and to how the inputs are centred and scaled; the formula is not.',
     memory: 'O(d) for gradient descent; O(d²) for the normal equations.',
     difficulty: 'low',
     difficultyNote: 'A dozen lines of code. The judgment lies in checking that a line suits the data.',
-    limits: 'Only straight-line relationships. Outliers pull the fit. Says nothing about cause.',
-    useWhen: 'You need a fast, readable model of how a number changes with its inputs, or a baseline to beat.',
+    limits: 'Straight-line relationships only. A few extreme points can pull the line. It says nothing about what causes what.',
+    useWhen: 'You need a quick, readable account of how a number changes with what it depends on, or a simple baseline to beat.',
   },
 
   advanced: {

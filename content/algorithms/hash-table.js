@@ -697,13 +697,13 @@ int main() {
 
   compare: {
     idea: 'Compute a slot from the key; on a collision, walk to the next free slot.',
-    requires: 'A hash function that spreads keys evenly, a table kept partly empty, and exact-match keys.',
+    requires: 'A rule that spreads names evenly over the table, a table kept partly empty, and lookups by exact name.',
     sensitivity: 'High. Cost depends on the load factor and on how well the hash function spreads the actual keys.',
     memory: 'O(n), with a fixed fraction of slots deliberately left empty.',
     difficulty: 'moderate',
     difficultyNote: 'Insert and lookup are a few lines each. Deletion and resizing are where most bugs are found.',
-    limits: 'No ordering of keys. Constant time only on average; worst case linear. Degrades quickly as the table fills.',
-    useWhen: 'You need fast exact-match lookup, insertion and membership tests and do not need the keys in order.',
+    limits: 'It does not keep things in order. It is fast on average, not always: a bad run of collisions is slow. It slows sharply as the table fills.',
+    useWhen: 'You need to store, find and check for things by their exact name very quickly, and do not need them kept in order.',
   },
 
   advanced: {
