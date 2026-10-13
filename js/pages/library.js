@@ -124,6 +124,7 @@ export default async function render({ query }) {
       h('div.seg', { role: 'group', 'aria-label': 'View' }, viewBtns)),
     h('details.lib-filter-fold', { open: ['discipline', 'difficulty', 'paradigm', 'time', 'space', 'random', 'exact', 'app', 'kind', 'lang'].some((k) => f[k]) }, h('summary', h('span', { html: icon('filter', { size: 16 }) }), 'Filter by field, level, technique or cost'), filters),
     h('div.lib-status', count, activeBar),
+    h('p.lib-elsewhere', 'Do not know what the method is called? ', h('a.link', { href: '#/problems' }, 'Browse by what you want to do'), '.'),
     out);
   apply();
   return { el, title: 'Algorithm Library' };

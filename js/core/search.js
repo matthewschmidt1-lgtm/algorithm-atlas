@@ -65,6 +65,8 @@ for (const group of synonymGroups) {
   }
 }
 
+export const synonymsOf = (stemmed) => [...(synonymOf.get(stemmed) || [])];
+
 // Endings that turn one word into a close relative of itself: detect, detection.
 const DERIVED = /^(ion|ions|ation|ations|ition|itions|ment|ments|ness|ity|ize|ise|ized|ised|ization|isation|able|ive)$/;
 function derives(a, b) {

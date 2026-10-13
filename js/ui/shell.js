@@ -105,7 +105,7 @@ export function mountShell(headHost, footHost) {
           ? 'There are no accounts. Your progress and favourites are kept in this browser only.'
           : 'This browser is blocking storage, so progress will not be remembered after you close the tab.')),
       h('nav.foot-nav', { 'aria-label': 'Footer' },
-        h('div', h('p.panel-cap', 'Explore'), h('a', { href: '#/explore' }, 'The Algorithm Universe'), h('a', { href: '#/disciplines' }, 'Disciplines'), h('a', { href: '#/library' }, 'Algorithm Library'), h('a', { href: '#/connections' }, 'Connections')),
+        h('div', h('p.panel-cap', 'Explore'), h('a', { href: '#/explore' }, 'The Algorithm Universe'), h('a', { href: '#/disciplines' }, 'Disciplines'), h('a', { href: '#/problems' }, 'I want to…'), h('a', { href: '#/library' }, 'Algorithm Library'), h('a', { href: '#/connections' }, 'Connections')),
         h('div', h('p.panel-cap', 'Learn'), h('a', { href: '#/paths' }, 'Learning Paths'), h('a', { href: '#/lab' }, 'Interactive Lab'), h('a', { href: '#/compare' }, 'Compare algorithms'), h('a', { href: '#/profile' }, 'Your atlas')),
         h('div', h('p.panel-cap', 'About'), h('a', { href: '#/about' }, 'About the atlas'), h('a', { href: '#/verification' }, 'How lessons are checked'), h('a', { href: '#/about?at=accessibility' }, 'Accessibility'))))));
 

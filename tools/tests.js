@@ -291,6 +291,148 @@ if (on('defects')) {
   });
 }
 
+/* ------------------------------------------------------------------ the "I want to" index */
+if (on('index')) {
+  suite('"I want to" index');
+  const P = await import('../js/core/problems.js');
+  const index = P.problemIndex();
+  // the source of truth, read straight from the lessons, without going through the module under test
+  const declared = new Map();
+  for (const a of C.algos) for (const t of a.tags.problems || []) { const k = t.trim().toLowerCase(); if (!declared.has(k)) declared.set(k, new Set()); declared.get(k).add(a.id); }
+
+  await test('it lists every phrase the lessons declare, once, and nothing else', () => {
+    assert(index.total === declared.size, `the index has ${index.total} phrases, the lessons declare ${declared.size}`);
+    const listed = index.categories.flatMap((c) => c.phrases.map((p) => p.key));
+    assert(listed.length === new Set(listed).size, 'a phrase is listed twice');
+    assert(listed.length === declared.size, `${listed.length} phrases are in groups, ${declared.size} are declared`);
+    for (const p of index.phrases) {
+      const want = declared.get(p.key);
+      assert(want, `"${p.text}" is not declared by any lesson`);
+      assert(p.lessons.length === want.size && p.lessons.every((l) => want.has(l.id)), `"${p.text}" leads to ${p.lessons.map((l) => l.id).join(', ')} but is declared by ${[...want].join(', ')}`);
+    }
+    return `${index.total} phrases from ${C.algos.length} lessons`;
+  });
+  await test('every published lesson can be reached from it', () => {
+    const reached = new Set(index.phrases.flatMap((p) => p.lessons.map((l) => l.id)));
+    const missing = C.algos.filter((a) => !reached.has(a.id)).map((a) => a.id);
+    assert(!missing.length, `no phrase leads to: ${missing.join(', ')}`);
+  });
+  await test('every group has an everyday heading that differs from the technical name', () => {
+    for (const c of index.categories) assert(c.want && c.want !== c.name && c.want.length > 12, `group "${c.id}" has no plain heading`);
+    return `${index.categories.length} groups`;
+  });
+  await test('"and N more" leads to a search that lists every lesson for that phrase', () => {
+    const many = index.phrases.filter((p) => p.lessons.length > 3);
+    assert(many.length, 'no phrase has more than three lessons, so nothing to check');
+    for (const p of many) {
+      const got = new Set(S.search(p.text, { limit: 60 }).filter((r) => r.type === 'algorithm').map((r) => r.ref));
+      const lost = p.lessons.filter((l) => !got.has(l.id)).map((l) => l.id);
+      assert(!lost.length, `searching "${p.text}" does not list ${lost.join(', ')}`);
+    }
+    return `${many.length} phrases`;
+  });
+  await test('the filter finds lessons from everyday words, with no algorithm named', () => {
+    // word typed -> a lesson that must be among the destinations
+    const cases = { route: 'dijkstra', order: 'quick-sort', smaller: 'huffman-coding', secret: 'rsa', groups: 'k-means', primes: 'sieve-of-eratosthenes', spam: 'logistic-regression', recommend: 'knn', maze: 'bfs', duplicates: 'hash-table', 'house price': 'linear-regression', 'neural network': 'backpropagation', 'web pages': 'pagerank', dependencies: 'topological-sort', spelling: 'edit-distance', bag: 'knapsack', dna: 'needleman-wunsch', frequencies: 'fft', 'random file': 'reservoir-sampling', robot: 'rrt' };
+    const bad = [];
+    for (const [typed, id] of Object.entries(cases)) {
+      const found = P.filterPhrases(typed);
+      if (!found.some((p) => p.lessons.some((l) => l.id === id))) bad.push(`"${typed}" does not lead to ${id} (${found.length} phrases)`);
+      const name = C.algoById[id].name.toLowerCase();
+      if (typed.split(' ').some((w) => w.length > 3 && name.includes(w))) bad.push(`the test word "${typed}" is part of the name "${name}"`);
+    }
+    assert(!bad.length, bad.join(' | '));
+    assert(P.filterPhrases('qwertyuiop').length === 0, 'nonsense matched something');
+    assert(P.filterPhrases('generate').every((p) => !/gene\b/.test(p.text)), '"generate" matched a phrase about genes');
+    return `${Object.keys(cases).length} everyday words`;
+  });
+
+  await test('the page shows a few phrases per group, and the rest on request', async () => {
+    const p = await open('/problems', '.want-row');
+    try {
+      const groups = p.$$('.want-group');
+      assert(groups.length === index.categories.length, `${groups.length} groups on the page, ${index.categories.length} in the index`);
+      const shown = p.$$('.want-row').length;
+      assert(shown <= index.categories.length * P.PREVIEW, `${shown} phrases are shown at once`);
+      assert(shown < index.total / 3, `${shown} of ${index.total} phrases are shown before anyone asks`);
+      const toggle = groups[0].querySelector('.want-toggle');
+      const before = groups[0].querySelectorAll('.want-row').length;
+      toggle.click();
+      await sleep(80);
+      const g0 = p.$$('.want-group')[0];
+      assert(g0.querySelectorAll('.want-row').length === index.categories[0].phrases.length, 'opening a group did not show all of it');
+      assert(g0.querySelector('.want-toggle').getAttribute('aria-expanded') === 'true', 'the toggle does not report that the group is open');
+      return `${shown} of ${index.total} shown at first; the first group opens from ${before} to ${index.categories[0].phrases.length}`;
+    } finally { p.close(); }
+  });
+  await test('every link on the page, with every group open, goes to a published lesson or a working search', async () => {
+    const p = await open(`/problems?open=${index.categories.map((c) => c.id).join(',')}`, '.want-row');
+    try {
+      const rows = p.$$('.want-row');
+      assert(rows.length === index.total, `${rows.length} rows with everything open, ${index.total} phrases`);
+      let links = 0;
+      for (const row of rows) {
+        const as = [...row.querySelectorAll('a')];
+        assert(as.length >= 2, `"${row.textContent.slice(0, 40)}" has no destination`);
+        for (const a of as) {
+          links++;
+          const hrefAttr = a.getAttribute('href');
+          const lesson = hrefAttr.match(/^#\/algorithm\/([a-z0-9-]+)$/);
+          if (lesson) assert(C.algoById[lesson[1]], `${hrefAttr} is not a published lesson`);
+          else assert(/^#\/search\?q=/.test(hrefAttr), `${hrefAttr} is neither a lesson nor a search`);
+        }
+        // the phrase itself must link to a lesson that declares that phrase
+        const key = row.querySelector('.want-phrase').textContent.trim().toLowerCase();
+        const id = row.querySelector('.want-phrase').getAttribute('href').split('/').pop();
+        assert(declared.get(key) && declared.get(key).has(id), `"${key}" links to ${id}, which does not declare it`);
+      }
+      return `${rows.length} rows, ${links} links`;
+    } finally { p.close(); }
+  });
+  await test('typing in the filter narrows the page, and an unmatched word offers the full search', async () => {
+    const p = await open('/problems', '.want-row');
+    try {
+      const input = p.$('.want-search input');
+      const type = async (v) => { input.value = v; input.dispatchEvent(new p.win.Event('input', { bubbles: true })); await sleep(260); };
+      await type('route');
+      const rows = p.$$('.want-row');
+      assert(rows.length > 0 && rows.length < 25, `"route" leaves ${rows.length} rows`);
+      assert(rows.some((r) => /Dijkstra/.test(r.textContent)), '"route" does not show Dijkstra');
+      assert(/match/.test(p.$('.want-count-line').textContent), 'the count line does not report the matches');
+      await type('zanzibar');
+      assert(p.$$('.want-row').length === 0 && p.$('.empty a[href^="#/search?q=zanzibar"]'), 'an unmatched word does not offer the full search');
+    } finally { p.close(); }
+  });
+  await test('a newcomer can go from the home page to a running lesson without typing a name', async () => {
+    const p = await open('/', '.home-want-list a');
+    try {
+      const sample = p.$$('.home-want-list a');
+      assert(sample.length >= 4, `the home page offers ${sample.length} phrases`);
+      for (const a of sample) assert(C.algoById[a.getAttribute('href').split('/').pop()], `${a.getAttribute('href')} is not a lesson`);
+      p.$('.home-want-more a').click();
+      await until(() => p.$('.want-row'), 5000, 'the index did not open from the home page');
+      const row = p.$$('.want-row').find((r) => /Fastest way between two places/i.test(r.textContent));
+      assert(row, 'the phrase "Fastest way between two places" is not among those shown first');
+      row.querySelector('.want-phrase').click();
+      await until(() => p.$('.lesson h1'), 8000, 'the lesson did not open');
+      assert(/Dijkstra/.test(p.$('.lesson h1').textContent), `opened "${p.$('.lesson h1').textContent}"`);
+      await until(() => p.$('.player-note .note-text'), 5000, 'the demonstration is not on the page');
+      return 'home, then "Browse all", then "Fastest way between two places", then the Dijkstra lesson: two clicks';
+    } finally { p.close(); }
+  });
+  await test('at phone width the page fits and each phrase is a comfortable target', async () => {
+    const p = await open('/problems', '.want-row', { width: 375, height: 812 });
+    try {
+      const doc = p.doc.documentElement;
+      assert(doc.scrollWidth <= 376, `the page is ${doc.scrollWidth}px wide in a 375px window`);
+      const cols = new Set(p.$$('.want-group').map((g) => Math.round(g.getBoundingClientRect().left)));
+      assert(cols.size === 1, 'the groups are not in a single column');
+      const small = p.$$('.want-row').filter((r) => r.getBoundingClientRect().height < 44).length;
+      assert(small === 0, `${small} rows are shorter than 44px`);
+    } finally { p.close(); }
+  });
+}
+
 /* ------------------------------------------------------------------ report */
 const payload = { results, bench };
 document.getElementById('out').textContent = results.map((r) => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.suite}: ${r.name}${r.ok ? '' : '\n      ' + r.detail}`).join('\n');

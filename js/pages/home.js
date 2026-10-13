@@ -14,6 +14,7 @@ import { sectionHead, plural, fact } from '../ui/parts.js';
 import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
+import { problemIndex, samplePhrases } from '../core/problems.js';
 
 const HOME_DEMOS = ['dijkstra', 'quick-sort', 'gradient-descent', 'ddpm'];
 
@@ -36,8 +37,15 @@ export default async function render() {
           h('a.btn.btn-lg', { href: '#/lab' }, 'Enter the Interactive Lab')),
         h('div.hero-search', search.el,
           h('p.hero-try', 'Try ',
-            ['shortest route', 'compress files', 'make a neural network learn'].map((q, i) => [i ? ', ' : '', h('a', { href: `#/search?q=${encodeURIComponent(q)}` }, q)]), '.')))));
+            ['shortest route', 'compress files', 'make a neural network learn'].map((q, i) => [i ? ', ' : '', h('a', { href: `#/search?q=${encodeURIComponent(q)}` }, q)]), '. Or ', h('a', { href: '#/problems' }, 'browse by what you want to do'), '.')))));
   queueMicrotask(() => requestAnimationFrame(() => cleanups.push(mountHeroNetwork(netHost))));
+
+  /* ---- start from a problem ---- */
+  const wants = samplePhrases(6);
+  const want = wants.length ? h('section.home-want', { 'aria-labelledby': 'home-want-h' }, h('div.wrap.home-want-inner',
+    h('div', h('p.eyebrow', 'No names needed'), h('h2', { id: 'home-want-h' }, 'Start from what you want to do')),
+    h('ul.home-want-list', wants.map((p) => h('li', h('a', { href: `#/algorithm/${p.lessons[0].id}` }, h('span.home-want-phrase', p.label), h('span.home-want-lesson', p.lessons[0].name))))),
+    h('p.home-want-more', h('a.text-link', { href: '#/problems' }, `Browse all ${problemIndex().total} by what you want to do`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
 
   /* ---- what was checked ---- */
   const trust = h('section.ledger', { 'aria-label': 'How the lessons were checked' }, h('div.wrap',
@@ -123,6 +131,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, trust, universe, levels, featured, ways);
+  const el = h('div.home', hero, want, trust, universe, levels, featured, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

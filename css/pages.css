@@ -676,3 +676,37 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .profile-records details.fold > summary span:first-child { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; }
 .profile-records { gap: 0; }
 .profile-records > h2 { margin-bottom: var(--s-4); }
+
+/* ---------- "I want to": the problem-first index ---------- */
+.home-want { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); }
+.home-want-inner { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--s-6) var(--s-8); padding-top: var(--s-7); padding-bottom: var(--s-7); align-items: start; }
+.home-want h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); margin-top: 6px; }
+.home-want-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-6); border-top: 1px solid var(--line-2); }
+.home-want-list a { display: grid; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.home-want-phrase { font-family: var(--font-serif); font-size: 1.12rem; font-weight: 600; }
+.home-want-list a:hover .home-want-phrase { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.home-want-lesson { font-size: 0.84rem; color: var(--text-3); }
+.home-want-more { grid-column: 2; margin: 0; }
+@media (max-width: 860px) { .home-want-inner { grid-template-columns: minmax(0, 1fr); } .home-want-more { grid-column: 1; } }
+@media (max-width: 520px) { .home-want-list { grid-template-columns: minmax(0, 1fr); } }
+
+.want-tools { display: grid; gap: var(--s-3); max-width: 760px; margin-bottom: var(--s-6); }
+.want-count-line { color: var(--text-2); font-size: 0.95rem; }
+.want-out { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-7) var(--s-8); align-items: start; }
+.want-out > .empty { grid-column: 1 / -1; }
+.want-group { min-width: 0; }
+.want-group h2 { font-size: 1.38rem; line-height: 1.25; }
+.want-field { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); margin: 4px 0 var(--s-3); }
+.want-list { border-top: 1px solid var(--line-2); }
+.want-row { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.want-phrase { font-size: 1.04rem; font-weight: 500; color: var(--text); justify-self: start; }
+.want-phrase:hover { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.want-leads { font-size: 0.86rem; color: var(--text-3); display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; }
+.want-leads .want-arrow { display: inline-flex; color: var(--text-3); }
+.want-lesson { color: var(--text-2); }
+.want-lesson:hover, .want-more:hover { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 3px; }
+.want-more { color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+.want-toggle { margin-top: var(--s-3); }
+.want-foot { margin-top: var(--s-8); padding-top: var(--s-5); border-top: 1px solid var(--line); color: var(--text-2); }
+.lib-elsewhere { color: var(--text-2); font-size: 0.95rem; margin: var(--s-2) 0 var(--s-4); }
+@media (max-width: 820px) { .want-out { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); } }
