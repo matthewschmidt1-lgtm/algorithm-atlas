@@ -525,6 +525,18 @@ if (on('links')) {
     assert(!loops.length, loops.slice(0, 3).join(' | '));
   });
 
+  await test('a lesson page carries no verification line, and its record is on the Verification page', async () => {
+    const p = await open('/algorithm/merge-sort', '.lesson h1');
+    try {
+      assert(!p.$('.check-line') && !p.$('.check-host'), 'the lesson still shows the verification line');
+      assert(!/Checked\.\s+\d+ tests? of the demonstration/.test(p.$('.lesson-head').textContent), 'the lesson header still carries the "Checked" sentence');
+    } finally { p.close(); }
+    const q = await open('/verification?lesson=merge-sort', '.check-panel');
+    try {
+      assert(/Merge Sort/.test(q.$('#example').textContent), 'the Verification page does not show the record of the lesson asked for');
+      assert(q.$$('.vledger a[href^="#/verification?lesson="]').length === C.algos.length, 'the table does not link to every lesson\'s record');
+    } finally { q.close(); }
+  });
   await test('the skip link moves to the content and does not leave the page', async () => {
     const p = await open('/library', '.lib-results');
     try {

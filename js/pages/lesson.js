@@ -23,7 +23,6 @@ import { createCodePanel } from '../ui/code.js';
 import { createExperimentChart } from '../ui/chart.js';
 import { createQuiz } from '../ui/quiz.js';
 import { createRelMap } from '../ui/relmap.js';
-import { checkLine, checkPanel } from '../ui/checks.js';
 import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
 import { createRunCompare } from '../ui/runcompare.js';
 
@@ -82,8 +81,6 @@ export default async function render({ params, query }) {
   favBtn.addEventListener('click', () => { store.toggleFavorite(m.id); syncFav(); });
   syncFav();
   const group = C.compareGroups.find((g) => g.members.includes(m.id));
-  const checksHost = h('div.check-host', { hidden: true });
-  const line = checkLine(meta, (open) => { checksHost.hidden = !open; if (open && !checksHost.children.length) checksHost.append(checkPanel(meta), h('p', h('a.text-link', { href: '#/verification' }, 'How every lesson is checked', h('span', { html: icon('arrow', { size: 15 }) })))); });
 
   const head = h(`header.lesson-head.c-${C.colorOf(m.discipline)}`,
     crumbs([{ label: 'Library', href: '#/library' }, { label: d.name, href: `#/discipline/${d.id}` }, { label: m.subfield, href: `#/library?discipline=${d.id}` }, { label: m.name }]),
@@ -95,8 +92,7 @@ export default async function render({ params, query }) {
       h('div', h('dt', 'Running time'), h('dd.mono', m.time.worst)),
       h('div', h('dt', 'Memory'), h('dd.mono', m.space.worst)),
       h('div', h('dt', 'Approach'), h('dd', m.paradigms.map((p) => PARADIGM_LABELS[p]).join(', '))),
-      m.year && m.authors ? h('div', h('dt', 'First described'), h('dd', `${m.authors}, ${m.year}`)) : null),
-    line, checksHost);
+      m.year && m.authors ? h('div', h('dt', 'First described'), h('dd', `${m.authors}, ${m.year}`)) : null));
 
   /* ---------- level control ---------- */
   let depth = Math.max(1, Math.min(3, Number(query.level) || store.state.depth || 1));

@@ -57,7 +57,7 @@ export default async function render({ query }) {
         h('p', 'Three safeguards apply to the writing. Authors are instructed to leave out any fact they are not certain of. Every application is marked as either an established use or an illustrative example. And the pipeline rejects lessons that are missing a plain-language explanation, a worked example or a statement of their limits. None of this is proof. If you find an error, it is a defect and should be corrected.'))),
 
     h('section.about-sec', { id: 'example' }, h('h2', `One lesson's record: ${example.name}`),
-      h('p.muted', 'Every lesson carries its own record, reachable from the line under its title. This is the full record for one of them.'),
+      h('p.muted', 'Every lesson has a record like this one. Choose any lesson in the table below to see its own.'),
       h('div.check-host', checkPanel(example, { heading: false })),
       h('p', { style: { marginTop: '16px' } }, h('a.text-link', { href: `#/algorithm/${example.id}` }, `Open the ${example.name} lesson`, h('span', { html: icon('arrow', { size: 15 }) })))),
 

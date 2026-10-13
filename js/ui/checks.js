@@ -1,6 +1,7 @@
 // What the pipeline verified for a lesson, in words a reader can follow. The record comes
 // from tools/build.py (stored on the catalog entry as `checks`); nothing here is asserted
-// by hand. Used on lesson pages and on the verification page.
+// by hand. Shown on the verification page, where any lesson's record can be opened.
+// Lesson pages do not show it: a lesson's job is to teach, and the record is one link away.
 
 import { h, fmt } from '../core/dom.js';
 import { icon } from '../core/icons.js';
@@ -20,19 +21,6 @@ export function costSummary(checks) {
   return { text: RELATION_SHORT[best.relation], count: checks.cost.length };
 }
 
-// One line under the lesson title. Pressing it opens the full record.
-export function checkLine(a, onToggle) {
-  const k = a.checks;
-  const cost = costSummary(k);
-  const btn = h('button.check-line', { type: 'button', 'aria-expanded': 'false', onclick: () => { const open = btn.getAttribute('aria-expanded') !== 'true'; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); onToggle(open); } },
-    h('span.check-mark', { html: icon('check', { size: 14 }) }),
-    h('span', h('strong', 'Checked. '),
-      `${plural(k.tests.length, 'test')} of the demonstration passed, the code ran in ${plural(k.languages.length, 'language')}, `,
-      cost ? `and the stated cost was measured against the code (${cost.text.toLowerCase()}).` : 'and the cost is argued in the text, not measured.'),
-    h('span.check-more', 'See how'));
-  return btn;
-}
-
 function costTable(c) {
   const hasFormula = c.rows.some((r) => r[2] !== null);
   const rows = c.rows.length > 8 ? c.rows.filter((_, i) => i % Math.ceil(c.rows.length / 8) === 0 || i === c.rows.length - 1) : c.rows;
@@ -49,11 +37,11 @@ export function checkPanel(a, { heading = true } = {}) {
   return h('div.check-panel',
     heading ? h('p.check-intro', `This lesson was last run through the pipeline on ${info.date}. Here is exactly what was checked, and what was not.`) : null,
     block(1, 'The demonstration is the real algorithm',
-      h('p', `The picture on this page is drawn by running an implementation of ${a.name}, not by playing a recording. That implementation had to pass ${plural(k.tests.length, 'test')}, each comparing its result with an independent answer or a known mathematical fact:`),
+      h('p', `The picture in the lesson is drawn by running an implementation of ${a.name}, not by playing a recording. That implementation had to pass ${plural(k.tests.length, 'test')}, each comparing its result with an independent answer or a known mathematical fact:`),
       h('ul.check-tests', k.tests.map((t) => h('li', { html: icon('check', { size: 13 }) }, h('span', t)))),
       h('p.small.muted', `It was also run on every preset and worked example, ${plural(k.runs, 'run')} in all. Each of the ${fmt(k.frames)} recorded steps was checked for a valid picture, a written explanation and a matching line of pseudocode.`)),
     block(2, 'The code runs and agrees with itself',
-      h('p', `The ${sentenceList(langs(k.languages))} programs on this page were each run. All ${k.languages.length} had to print exactly the same ${plural(k.outputLines, 'line')} of expected output, character for character.`),
+      h('p', `The ${sentenceList(langs(k.languages))} programs in the lesson were each run. All ${k.languages.length} had to print exactly the same ${plural(k.outputLines, 'line')} of expected output, character for character.`),
       h('p.small.muted', `Run with ${info.python}, ${info.cxx.replace(/ \(.*\)$/, '')} (C++17) and ${info.browser}.`)),
     block(3, 'The stated cost matches the implementation',
       k.cost.length
@@ -62,7 +50,7 @@ export function checkPanel(a, { heading = true } = {}) {
             h('p', h('span.check-rel', { class: `is-${c.relation}` }, RELATION_SHORT[c.relation]), ' ', h('strong', c.formula), `. For "${c.series}", the measured count ${RELATION_TEXT[c.relation]} (${c.detail}).`),
             costTable(c)))]
         : h('p', k.costNote),
-      k.cost.length ? h('p.small.muted', 'These are counts of operations, which are exact and repeatable. They are not timings. You can rerun the measurement yourself in the chart under "The Technical Explanation".') : null),
+      k.cost.length ? h('p.small.muted', 'These are counts of operations, which are exact and repeatable. They are not timings. You can rerun the measurement yourself in the lesson, in the chart under "The Technical Explanation".') : null),
     h('section.check-block.is-limit',
       h('h3', 'What a machine cannot check'),
       h('p', 'The explanations, the history, the applications and the references were written and reviewed by hand. No program can confirm that prose is true. If you find a mistake in the writing, it is a defect, and it should be corrected.')));
