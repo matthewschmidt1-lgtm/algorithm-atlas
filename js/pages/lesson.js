@@ -25,6 +25,7 @@ import { createQuiz } from '../ui/quiz.js';
 import { createRelMap } from '../ui/relmap.js';
 import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
 import { createRunCompare } from '../ui/runcompare.js';
+import { businessView } from '../core/tracks.js';
 
 const LEVELS = [
   { n: 1, name: 'Explain it simply', about: 'Plain language and a small example.' },
@@ -89,8 +90,8 @@ export default async function render({ params, query }) {
     h('p.lede', m.summary),
     h('dl.lesson-facts.lv2',
       h('div', h('dt', 'Level'), h('dd', levelGlyph(m.difficulty, true))),
-      h('div', h('dt', 'Running time'), h('dd.mono', m.time.worst)),
-      h('div', h('dt', 'Memory'), h('dd.mono', m.space.worst)),
+      h('div', h('dt', 'Time, worst case'), h('dd.mono', m.time.worst)),
+      h('div', h('dt', 'Memory, worst case'), h('dd.mono', m.space.worst)),
       h('div', h('dt', 'Approach'), h('dd', m.paradigms.map((p) => PARADIGM_LABELS[p]).join(', '))),
       m.year && m.authors ? h('div', h('dt', 'First described'), h('dd', `${m.authors}, ${m.year}`)) : null));
 
@@ -121,11 +122,21 @@ export default async function render({ params, query }) {
     h('p.example-result', h('strong', 'Result. '), h('span', { html: rich(E.result) })),
     E.tryInput ? h('p', h('button.btn.btn-sm', { type: 'button', onclick: () => toPlayer(E.tryInput), html: `${icon('play', { size: 13 })}<span>Watch this exact example run</span>` })) : null);
 
+  // Where the lesson teaches a method on a simple example, say what that example stands for
+  // in a business, in the words the business guide uses. The example itself is left alone.
+  const biz = businessView(m.id);
+  const bridge = biz && biz.role === 'method' ? h('aside.biz-bridge-box', { 'aria-label': 'What this means in a business' },
+    h('p.panel-cap', 'In a business'),
+    h('h3', biz.question),
+    h('p', biz.bridge),
+    h('p.small', biz.cases.map((c) => [h('a.link', { href: `#/case/${c.id}` }, `Worked case: ${c.title}`), ' · ']), h('a.link', { href: `#/track/business` }, 'More decisions like this'))) : null;
+
   const inputsFold = h('details.fold.inputs-fold', h('summary', 'Change the input'), h('div.fold-body', player.parts.inputs, runCompare.el));
   const see = sec('see', 1, 'See it work', 'Step by step',
     h('p.muted', 'The real algorithm, running here one step at a time. Press play, or step through it yourself.'),
     playerEl,
     h('p.fig-cap', h('b', 'What you are looking at'), L.viz.describe),
+    bridge,
     inputsFold,
     report,
     h('div.lv2.try-this', h('h3', 'Things to try'), h('ol.try-list', L.viz.tryThis.map((t) => h('li', { html: rich(t) }))),

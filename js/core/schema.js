@@ -40,9 +40,24 @@ export const KIND_LABELS = {
 };
 export const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
 export const TIME_CLASSES = ['constant', 'logarithmic', 'linear', 'linearithmic', 'quadratic', 'cubic', 'polynomial', 'pseudo-polynomial', 'exponential', 'iterative'];
+// One vocabulary for cost, used everywhere a lesson's cost is shown. `time.class` names how the
+// work typically grows with the size of the input. `time.worst` gives the worst case in full.
+// Neither says anything about the approach (greedy, dynamic programming and so on), which is
+// `paradigms` and is always shown under its own label.
 export const TIME_CLASS_LABELS = {
-  constant: 'O(1)', logarithmic: 'O(log n)', linear: 'O(n)', linearithmic: 'Near-linear, such as O(n log n)', quadratic: 'O(n²)',
-  cubic: 'O(n³)', polynomial: 'Higher polynomial', 'pseudo-polynomial': 'Pseudo-polynomial', exponential: 'Exponential', iterative: 'Depends on iterations',
+  constant: 'Constant, O(1)', logarithmic: 'Logarithmic, O(log n)', linear: 'Linear, O(n)', linearithmic: 'Just above linear, O(n log n)', quadratic: 'Quadratic, O(n²)',
+  cubic: 'Cubic, O(n³)', polynomial: 'Higher polynomial', 'pseudo-polynomial': 'Grows with the size of the numbers', exponential: 'Exponential', iterative: 'Set by the number of steps run',
+};
+// The same, short enough for a row, and in words a non-specialist can read.
+export const TIME_CLASS_SHORT = {
+  constant: 'Constant time', logarithmic: 'Logarithmic time', linear: 'Linear time', linearithmic: 'n log n time', quadratic: 'Quadratic time',
+  cubic: 'Cubic time', polynomial: 'Polynomial time', 'pseudo-polynomial': 'Time grows with the numbers', exponential: 'Exponential time', iterative: 'Time set by steps run',
+};
+export const TIME_CLASS_PLAIN = {
+  constant: 'The same amount of work however large the input.', logarithmic: 'Doubling the input adds one more step.', linear: 'Twice the input, twice the work.',
+  linearithmic: 'Twice the input, a little more than twice the work.', quadratic: 'Twice the input, four times the work.', cubic: 'Twice the input, eight times the work.',
+  polynomial: 'The work grows as a higher power of the input.', 'pseudo-polynomial': 'The work grows with how large the numbers are, not only with how many there are.',
+  exponential: 'Each extra item can multiply the work.', iterative: 'The work is the number of steps you choose to run, and no fixed number is guaranteed to be enough.',
 };
 export const SPACE_CLASSES = ['constant', 'logarithmic', 'linear', 'quadratic', 'other'];
 export const SPACE_CLASS_LABELS = { constant: 'O(1)', logarithmic: 'O(log n)', linear: 'O(n)', quadratic: 'O(n²)', other: 'Other' };
@@ -358,6 +373,7 @@ export function catalogEntry(a) {
     connections: (a.connections || []).map((x) => ({ to: x.to, type: x.type, why: x.why })),
     analogy: a.bigIdea && a.bigIdea.analogy ? a.bigIdea.analogy.title : '',
     takeaway: a.takeaway || '',
+    decide: a.compare ? { useWhen: a.compare.useWhen || '', requires: a.compare.requires || '', limits: a.compare.limits || '' } : null,
     describe: a.viz ? a.viz.describe : '',
     views: [],
   };

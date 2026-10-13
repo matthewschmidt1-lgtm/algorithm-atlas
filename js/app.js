@@ -15,6 +15,7 @@ route('/explore', () => import('./pages/explore.js'));
 route('/disciplines', () => import('./pages/disciplines.js'));
 route('/discipline/:id', () => import('./pages/discipline.js'));
 route('/track/:id', () => import('./pages/track.js'));
+route('/case/:id', () => import('./pages/case.js'));
 route('/library', () => import('./pages/library.js'));
 route('/problems', () => import('./pages/problems.js'));
 route('/algorithm/:id', () => import('./pages/lesson.js'));

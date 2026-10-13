@@ -9,7 +9,7 @@ import { createSearchBox } from './searchbox.js';
 
 const NAV = [
   { path: '/track/ai', label: 'AI and Machine Learning', short: 'AI & ML', match: ['/track/ai'] },
-  { path: '/track/business', label: 'Business', match: ['/track/business'] },
+  { path: '/track/business', label: 'Business', match: ['/track/business', '/case'] },
   { path: '/library', label: 'Algorithm Library', short: 'Library', match: ['/library', '/algorithm', '/concept', '/problems'] },
   { path: '/lab', label: 'Interactive Lab', short: 'Lab', match: ['/lab', '/compare'] },
   { path: '/paths', label: 'Learning Paths', short: 'Paths', match: ['/paths', '/path'] },
@@ -28,7 +28,7 @@ function progressRing() {
   const explored = [...store.explored()].filter((id) => algos.some((a) => a.id === id)).length;
   const frac = total ? explored / total : 0;
   const r = 9, c = 2 * Math.PI * r;
-  return `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="${r}" fill="none" stroke="var(--line-2)" stroke-width="2"/><circle cx="13" cy="13" r="${r}" fill="none" stroke="var(--terracotta)" stroke-width="2" stroke-linecap="round" stroke-dasharray="${(c * frac).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 13 13)"/></svg><span class="progress-text"><b>${explored}</b> of ${total}<span class="sr-only"> lessons explored. Open your atlas.</span></span>`;
+  return `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="${r}" fill="none" stroke="var(--line-2)" stroke-width="2"/><circle cx="13" cy="13" r="${r}" fill="none" stroke="var(--terracotta)" stroke-width="2" stroke-linecap="round" stroke-dasharray="${(c * frac).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 13 13)"/></svg><span class="progress-text"><b>${explored}</b> of ${total}<span class="sr-only"> lessons opened. Open your atlas.</span></span>`;
 }
 
 export function mountShell(headHost, footHost) {

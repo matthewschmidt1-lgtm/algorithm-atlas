@@ -20,7 +20,7 @@ export function pathCard(p, reason) {
     h('div.path-row-meta',
       h('span', plural(p.stages.length, 'stage')),
       h('span', `${plural(published, 'lesson')}${plannedN ? `, ${plannedN} planned` : ''}`),
-      pr.started ? h('span.path-progress', h('span.bar', h('i', { style: { width: `${Math.round((pr.done / Math.max(1, pr.total)) * 100)}%` } })), `${pr.done} of ${pr.total} explored`) : null));
+      pr.started ? h('span.path-progress', h('span.bar', h('i', { style: { width: `${Math.round((pr.done / Math.max(1, pr.total)) * 100)}%` } })), `${pr.done} of ${pr.total} opened`) : null));
 }
 
 export default async function render() {

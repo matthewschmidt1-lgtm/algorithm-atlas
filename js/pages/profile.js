@@ -26,7 +26,7 @@ export default async function render() {
 
     body.append(h('section.profile-sec.profile-summary',
       h('div.profile-stats',
-        h('div.fact', h('span.fact-value', `${explored.length}`), h('span.fact-label', `of ${plural(C.algos.length, 'lesson')} explored`)),
+        h('div.fact', h('span.fact-value', `${explored.length}`), h('span.fact-label', `of ${plural(C.algos.length, 'lesson')} opened`)),
         h('div.fact', h('span.fact-value', `${answered}`), h('span.fact-label', 'questions answered correctly')),
         h('div.fact', h('span.fact-value', `${mastered.length}`), h('span.fact-label', 'lessons with every question correct')),
         h('div.fact', h('span.fact-value', `${favs.length}`), h('span.fact-label', 'favourites saved'))),

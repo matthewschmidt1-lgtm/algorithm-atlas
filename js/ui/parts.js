@@ -5,7 +5,7 @@ import { h, esc } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
-import { KIND_LABELS } from '../core/schema.js';
+import { KIND_LABELS, TIME_CLASS_SHORT } from '../core/schema.js';
 import { plateArt, roman } from '../art/plates.js';
 
 export const LEVEL_NAMES = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
@@ -51,10 +51,10 @@ export function lessonRow(a, { showDiscipline = true, note = null } = {}) {
       a.kind !== 'algorithm' ? h('span.lesson-kind', KIND_LABELS[a.kind]) : null,
       h('p', note || a.summary)),
     h('div.lesson-meta',
-      seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Explored` }) : null,
+      seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Opened` }) : null,
       showDiscipline ? h('span', d.short) : null,
       levelGlyph(a.difficulty, true),
-      h('span.mono', a.time.worst.length > 26 ? a.time.class.replace(/^./, (c) => c.toUpperCase()) : a.time.worst),
+      h('span.lesson-cost', { title: `Typical growth. Worst case: ${a.time.worst}` }, TIME_CLASS_SHORT[a.time.class]),
       fav));
 }
 

@@ -153,6 +153,11 @@ export const catalog = [
   ],
   "analogy": "A name on an unsorted sign-up sheet",
   "takeaway": "Check every item in turn until you find the one you want or run out of items.",
+  "decide": {
+   "useWhen": "The list is short, not in order, arrives as a stream, or is searched too rarely to be worth putting in order.",
+   "requires": "Nothing. The list can be in any order and only has to be readable from start to end.",
+   "limits": "Each search takes time in proportion to the length of the list. Showing that something is absent always means checking every item."
+  },
   "describe": "A row of bars, one per value in the list, with a marker under the position being checked. The bar being checked is ochre, bars not yet checked are grey, bars already checked and rejected are faded, and a match turns forest green. Below the bars, one strip shows the target value and another lists the values checked so far.",
   "views": [
    "bars",
@@ -426,6 +431,11 @@ export const catalog = [
   ],
   "analogy": "The higher-or-lower guessing game",
   "takeaway": "Look at the middle of a sorted list, throw away the half that cannot hold what you want, and repeat with the half that is left.",
+  "decide": {
+   "useWhen": "The list is put in order once and searched many times, or you want the nearest value or the place where a new value belongs.",
+   "requires": "A list that is already in order, where you can jump straight to any position. On a list that is not in order the answer cannot be trusted.",
+   "limits": "Useless on a list that is not in order. Keeping a list in order makes adding to it slow."
+  },
   "describe": "A row of bars rising from left to right, one per value in the sorted list. Markers under the bars show lo and hi, the ends of the range that could still hold the target, and mid, the position being checked. The middle bar is ochre, the half ruled out by the current check is brick red, bars ruled out earlier are faded, and a match is forest green. Below, one strip shows the target and another lists the values checked so far.",
   "views": [
    "bars",
@@ -655,6 +665,11 @@ export const catalog = [
   ],
   "analogy": "A row of people trading places by height",
   "takeaway": "Keep swapping neighbours that are in the wrong order, and stop when a whole pass needs no swaps.",
+  "decide": {
+   "useWhen": "You are learning or teaching, or one pass to confirm a list is in order and repair it lightly is enough.",
+   "requires": "Any list whose items can be compared. It is always correct. Only its speed depends on the list.",
+   "limits": "Very slow on long lists: doubling the list makes it about four times slower. Insertion sort beats it on almost every list."
+  },
   "describe": "A row of bars, one per value. The two neighbours being compared are ochre, a pair that has just been swapped is brick red, and values that have reached their final position at the right-hand end are forest green. A shaded band covers the part of the list that is still unsorted, and it shrinks by one bar after each pass.",
   "views": [
    "bars"
@@ -913,6 +928,11 @@ export const catalog = [
   ],
   "analogy": "Lining up books by height",
   "takeaway": "Find the smallest item that is left, swap it into the next free spot, and repeat.",
+  "decide": {
+   "useWhen": "The list is short and moving an item is expensive, or you only need the first few items in order.",
+   "requires": "Any list whose items can be compared. It is always correct.",
+   "limits": "Very slow on long lists, even ones already in order: doubling the list makes it about four times slower. Equal items may change their relative order."
+  },
   "describe": "A row of bars, one per value. The smallest value found so far in the current search is drawn in dark ink and carries the marker \"min\". The value being compared against it is ochre, a pair that has just been swapped is brick red, and values in their final position at the left are forest green. A shaded band covers the unsorted part of the list.",
   "views": [
    "bars"
@@ -1122,6 +1142,11 @@ export const catalog = [
   ],
   "analogy": "Sorting a hand of cards",
   "takeaway": "Take each item in turn and slide it left into its place among the items already in order.",
+  "decide": {
+   "useWhen": "The list is short or nearly in order, or items arrive one at a time and must be kept in order.",
+   "requires": "Any list whose items can be compared. It is always correct. Only its speed depends on the list.",
+   "limits": "Very slow on long, jumbled lists: doubling the list makes it about four times slower."
+  },
   "describe": "A row of bars, one per value. The key being inserted is terracotta and carries the marker \"key\". The algorithm holds the key aside, and the picture draws it above the gap where it would be dropped. The value being compared with the key is ochre, a value that has just been shifted right is brick red, and the group at the left that is in order so far is moss green inside a shaded band. When the run ends every bar turns forest green.",
   "views": [
    "bars"
@@ -1383,6 +1408,11 @@ export const catalog = [
   ],
   "analogy": "Two sorted stacks of exam papers",
   "takeaway": "Split the list in half, sort each half the same way, then merge the two sorted halves by always taking the smaller front item.",
+  "decide": {
+   "useWhen": "Equal items must keep their order, the running time must be dependable, or the data sits in a file too big for memory.",
+   "requires": "Any list whose items can be compared, plus spare room for a copy of the list. It is always correct.",
+   "limits": "It needs spare memory as large as the list. It is no faster on a list already in order unless adapted."
+  },
   "describe": "A row of bars, one per value, with a second, shorter row underneath for the buffer. A shaded band marks the range being worked on. During a merge the left half is moss green and the right half is sage. Of the two front values being compared, the one that is taken is terracotta and the other is ochre, and the taken value appears in the buffer. Values already copied to the buffer turn pale. When the buffer is copied back the whole range is terracotta, and at the end every bar is forest green.",
   "views": [
    "bars"
@@ -1634,6 +1664,11 @@ export const catalog = [
   ],
   "analogy": "Sorting a class by height with one volunteer",
   "takeaway": "Pick one item, put everything smaller on its left and everything bigger on its right, then do the same to each side.",
+  "decide": {
+   "useWhen": "The usual choice for sorting a list held in memory when equal items need not keep their order.",
+   "requires": "Any list whose items can be compared. It is always correct. Only its speed depends on the list.",
+   "limits": "Equal items may change their relative order. Without safeguards an unlucky list makes it very slow."
+  },
   "describe": "A row of bars, one per value. The pivot is drawn in dark ink, the value being compared in ochre, swapped values in brick red, and values in their final position in forest green. A shaded band shows the range currently being partitioned.",
   "views": [
    "bars"
@@ -1894,6 +1929,11 @@ export const catalog = [
   ],
   "analogy": "Finding the runner-up in a knockout tournament",
   "takeaway": "Arrange the list so the largest item is always on top, then keep taking the top item and repairing the arrangement.",
+  "decide": {
+   "useWhen": "You need a sort that is never slow, whatever the list, and that uses no extra memory.",
+   "requires": "A list where you can jump to any position, and items that can be compared. It is always correct.",
+   "limits": "Equal items may change their relative order. In practice it is slower than quick sort, because it jumps around in memory."
+  },
   "describe": "Two pictures of the same data. On top, a row of bars, one per value, with a shaded band over the part of the array that is still a heap. Below, the same values drawn as a binary tree, each node showing its value with its array position underneath. The value being sifted down is terracotta, the child or children it is compared with are ochre, a pair that has just been swapped is brick red, and values that have reached their final position at the end of the array are forest green in both pictures.",
   "views": [
    "bars",
@@ -2114,6 +2154,11 @@ export const catalog = [
   ],
   "analogy": "Pigeonholes in a sorting office",
   "takeaway": "Count how many of each value there are, work out where each group starts, and put every item straight into its place.",
+  "decide": {
+   "useWhen": "There are many items but few possible values, such as exam marks out of 100.",
+   "requires": "Values that are whole numbers from a small range, small enough to keep one counter for each possible value.",
+   "limits": "Useless for things that can only be compared, such as names. Impractical when the range of values is far larger than the number of items."
+  },
   "describe": "On top, a row of bars for the input list, with a second, shorter row underneath for the output. Below that, the count array is drawn as a strip of cells, one for each possible key, with the key written small under each cell. A second strip of position cells appears once the counts are complete. The value being read and the cells and output position it affects are terracotta. Input values that have already been handled turn pale green. Cells for keys that never occur are faint, and when the key range is large a run of such cells is drawn as one faint cell labelled with the range of keys it stands for. With negative keys, the output bars are measured from the smallest key.",
   "views": [
    "bars",
@@ -2397,6 +2442,11 @@ export const catalog = [
   ],
   "analogy": "Assigned parking on a ring road",
   "takeaway": "Work out from the key itself where it should go, and if that place is taken, use the next free one along.",
+  "decide": {
+   "useWhen": "You need to store, find and check for things by their exact name very quickly, and do not need them kept in order.",
+   "requires": "A rule that spreads names evenly over the table, a table kept partly empty, and lookups by exact name.",
+   "limits": "It does not keep things in order. It is fast on average, not always: a bad run of collisions is slow. It slows sharply as the table fills."
+  },
   "describe": "A row of numbered slots, each empty or holding one key. For the key being inserted or looked up, the slot about to be checked is ochre (first its home slot, then each slot after it), slots found to be taken by other keys are brick red, and the slot where the key is placed or found is forest green. A second panel lists the keys in arrival order with the number of probes each one needed, and shows the key being looked up.",
   "views": [
    "rows"
@@ -2692,6 +2742,11 @@ export const catalog = [
   ],
   "analogy": "Companies that keep merging",
   "takeaway": "Give every group one leader, have every member point toward that leader, and merge two groups by pointing one leader at the other.",
+  "decide": {
+   "useWhen": "Groups only ever merge, and you need to know at any moment whether two things are in the same group.",
+   "requires": "Items numbered in advance, and connections that are only ever added, never removed.",
+   "limits": "It cannot split a group, remove a connection or tell you the route between two things. Its speed is an average over many operations, not a promise for each one."
+  },
   "describe": "A forest of trees drawn with arrows from each element to its parent. Roots are outlined in dark ink and, when union by rank is on, show their rank beneath. Elements named in the current operation are ochre, the element being visited is terracotta, and a root that has been found is filled forest green. Below the forest, rows show the same structure as an array: element numbers, each element's parent, and the rank of each root.",
   "views": [
    "graph",
@@ -2983,6 +3038,11 @@ export const catalog = [
   ],
   "analogy": "Ripples from a stone dropped in a pond",
   "takeaway": "Explore everything one step away before anything two steps away, and the first route you find to each place is a shortest one.",
+  "decide": {
+   "useWhen": "You want the route with the fewest steps, or everything that can be reached, and every step counts the same.",
+   "requires": "Any network, with one-way or two-way links. Distances are exact when each link counts as one step.",
+   "limits": "It ignores costs on the links. Memory use grows with how many places are the same distance away."
+  },
   "describe": "A graph whose edges all count as one step. The number beneath each node is the fewest edges from the start node, shown once the node has been found. The node being visited is terracotta, nodes waiting in the queue are ochre, and visited nodes are forest green. Thick green edges are the ones that first reached each node. Below the graph, two rows list the queue from front to back and the order in which nodes were visited.",
   "views": [
    "graph",
@@ -3245,6 +3305,11 @@ export const catalog = [
   ],
   "analogy": "Exploring a maze with a ball of string",
   "takeaway": "Go as far as you can along one route, and when you are stuck, step back to the last place that still had an untried way out.",
+  "decide": {
+   "useWhen": "You want to know what can be reached, whether there is a loop, or an order that respects dependencies, or memory is tight.",
+   "requires": "Any network, with one-way or two-way links. It finds exactly what can be reached from the start.",
+   "limits": "The routes it finds are not the shortest. A very long chain can use up the memory a program sets aside for unfinished work."
+  },
   "describe": "A graph being explored depth first. The current node, at the top of the stack, is terracotta. Other nodes on the stack are ochre and finished nodes are forest green. Under each node is its discovery time, joined by its finish time once it is finished. Thick green edges are tree edges, which were followed to discover a new node. Dashed edges led to a node already discovered and were not followed. Below the graph, three rows show the stack, the order of discovery and the order of finishing.",
   "views": [
    "graph",
@@ -3509,6 +3574,11 @@ export const catalog = [
   ],
   "analogy": "Choosing courses with prerequisites",
   "takeaway": "Keep doing a job that is waiting for nothing, and if you get stuck with jobs left over, the rules contradict each other.",
+  "decide": {
+   "useWhen": "Some things must come before others, and you need an order that respects that, or a check for a circular dependency.",
+   "requires": "A set of rules of the form: this before that. It produces an order exactly when the rules contain no loop, and reports the loop otherwise.",
+   "limits": "It returns one valid order, with no idea of a best one. If there is a loop it gives no order at all."
+  },
   "describe": "A directed graph in which an arrow from one node to another means the first must come before the second. The number beneath each node is its remaining in-degree: how many arrows still point into it. Nodes in the ready queue are ochre, the node being placed is terracotta, and placed nodes are forest green. Arrows fade once they have been removed. Below the graph, two rows show the ready queue and the order built so far. If the graph has a cycle, the run ends with the stuck nodes in brick red and one cycle drawn with dashed arrows.",
   "views": [
    "graph",
@@ -3773,6 +3843,11 @@ export const catalog = [
   ],
   "analogy": "Water spreading through pipes",
   "takeaway": "Always finish the nearest unfinished place next, and use it to improve your best guesses for its neighbours.",
+  "decide": {
+   "useWhen": "No step has a negative cost and you want the cheapest route from one place to many others.",
+   "requires": "Every cost must be zero or more. Given that, the answer is exact.",
+   "limits": "It can give a wrong answer if any cost is negative. It searches in every direction, even when you only care about one destination."
+  },
   "describe": "A weighted graph. Each node shows its best known distance from the source beneath it. The node being processed is terracotta, nodes waiting in the priority queue are ochre, settled nodes are forest green, and the edges of the shortest-path tree are drawn thick. Below the graph, two rows list the priority queue contents and the order in which nodes were settled.",
   "views": [
    "graph",
@@ -3992,6 +4067,11 @@ export const catalog = [
   ],
   "analogy": "Towns passing on news of a cheaper route",
   "takeaway": "Check every road again and again, taking any improvement on offer, until a whole round changes nothing.",
+  "decide": {
+   "useWhen": "Some steps have a negative cost, you need to detect a loop that keeps getting cheaper, or each place knows only its neighbours.",
+   "requires": "A network with a cost on each link. Any costs are allowed. The answer is exact unless there is a loop that gets cheaper every time round, and then it reports the loop.",
+   "limits": "Slower than Dijkstra's algorithm: it checks every link once for each place in the network. Where an ever-cheaper loop can be reached, there is no answer to give."
+  },
   "describe": "A weighted graph. Each node shows its best known distance from the source beneath it, or ∞ if it has not been reached. Reached nodes are ochre. The edge being checked is terracotta when it gives a cheaper route and dashed brick red when it does not, and the node at its start is highlighted. Below the graph, the first row is the edge list in the order it is scanned on every pass. Edges already checked in the current pass are faded, and those that lowered a distance are ochre. The second row lists the current distances, with those lowered in the current pass in ochre. At the end the shortest route to the last node is drawn thick, or, if a negative cycle exists, the cycle is drawn dashed and the affected nodes turn brick red with distance −∞.",
   "views": [
    "graph",
@@ -4259,6 +4339,11 @@ export const catalog = [
   ],
   "analogy": "Walking toward a landmark you can see",
   "takeaway": "Always explore the place where steps taken plus a careful guess of steps remaining is smallest, and you reach the goal by a shortest path without searching everywhere.",
+  "decide": {
+   "useWhen": "You want one route to one known destination, and you have a rough measure of how far away it still is that never guesses too high.",
+   "requires": "Steps that never have a negative cost, and that rough measure of the distance left. The route is the cheapest possible as long as the measure never guesses too high.",
+   "limits": "With a poor distance estimate it is no faster than Dijkstra's algorithm. It keeps a lot in memory. If the estimate guesses too high, the route may not be the cheapest."
+  },
   "describe": "A grid world with walls. The start cell is dark and the goal is brick red. Cells in the open set, reached but not yet explored, are ochre. Closed cells, already explored, are pale green, and the cell being explored is terracotta. Each reached cell shows its score: steps taken plus the estimated steps to the goal. A row beneath the grid lists the lowest scores in the open set. At the end the path found is drawn in forest green. Click any cell to add or remove a wall.",
   "views": [
    "grid",
@@ -4486,6 +4571,11 @@ export const catalog = [
   ],
   "analogy": "Choose a bag, and a rival picks what you get from it",
   "takeaway": "Assume your opponent will always make the reply that is worst for you, choose the move whose worst case is best, and stop studying a move as soon as one reply proves it worse than a move you already have.",
+  "decide": {
+   "useWhen": "You want a program to choose a move in a two-player board game, and the game is small enough to look several moves ahead.",
+   "requires": "A game for two players who take turns, where both can see everything and what is good for one is bad for the other. You need the rules, and a way to score a finished game or to make a fair guess about an unfinished one.",
+   "limits": "The number of possible lines of play grows very quickly as you look further ahead, so in a big game it can only look a few moves deep and has to guess from there. It does not handle dice, hidden cards or more than two sides."
+  },
   "describe": "A game tree drawn with the position to move from at the top and the endings along the bottom, each ending labelled with its score. Levels alternate between Max, who takes the highest value below, and Min, who takes the lowest. The position being looked at is terracotta and the positions on the current line of play are ochre. A position whose value has been worked out exactly turns forest green and shows the value. A position that was cut shows only a limit, such as ≤2, in brick red, and the branches that were never looked at are greyed out with a dashed line leading to them. Rows under the tree show the current line of play, the scores each player is already sure of (alpha and beta), and how many endings have been examined and skipped. At the end the best line of play is drawn in forest green. With the noughts-and-crosses option the board of the position being looked at is shown as well.",
   "views": [
    "graph",
@@ -4791,6 +4881,11 @@ export const catalog = [
   ],
   "analogy": "Signposts in a park with no map",
   "takeaway": "After every step, nudge your guess for that step toward the reward you got plus the best you now expect from where you landed, and good guesses will spread back from the reward.",
+  "decide": {
+   "useWhen": "You cannot write down how to do the task, but you can let a program try it again and again and tell it how well each try went.",
+   "requires": "Something that can try the task over and over and be told a score for how each step went, cheaply and without harm. The different situations and choices must be few enough to keep a number for each. It does not need to be told the rules.",
+   "limits": "It learns slowly, because each try teaches it about one step only, so it needs a very large number of tries. That makes it better suited to a simulation than to the real world. It stops working when there are too many different situations to keep a number for each one."
+  },
   "describe": "A small grid world seen from above. The agent is a dark dot, the goal cell is green and marked +10, the hazard cell is brick red and marked −10, and walls are dark blocks. Every other cell is divided into four triangles, one for each move out of it (up, right, down, left), and each triangle shows the value the agent currently holds for that move. A dot means the move has never been tried. Triangles shade green as a value rises above zero and brick red as it falls below. The triangle just updated is outlined in terracotta, and an ochre line traces the agent's path in the current episode. Under the grid, a row gives the numbers that went into the latest update, and a small chart shows the average difference between the table and the exact values, episode by episode. At the end the route the table gives is drawn as a thick green line, with arrows for the best move in the other cells.",
   "views": [
    "scene",
@@ -5020,6 +5115,11 @@ export const catalog = [
   ],
   "analogy": "Islands and bridges",
   "takeaway": "Take the cheapest connection that joins two things not yet joined, again and again, and you get the cheapest way to connect everything.",
+  "decide": {
+   "useWhen": "You need the cheapest set of links that connects everything, especially when there are few links.",
+   "requires": "A network of two-way links, each with a cost. The result is exact: always a cheapest way to connect everything.",
+   "limits": "It must put every link in order first. It does not give shortest routes. The result has no spare links, so one failure cuts it in two."
+  },
   "describe": "A weighted graph. The edge being examined is terracotta. Edges accepted into the tree are thick forest green, and rejected edges are dashed brick red. The letter beneath each node names the group of connected nodes it belongs to, which is the alphabetically first node of that group. Below the graph, the first row lists every edge from lightest to heaviest and colours each one as it is accepted or rejected. The second row shows the current groups.",
   "views": [
    "graph",
@@ -5245,6 +5345,11 @@ export const catalog = [
   ],
   "analogy": "The random surfer",
   "takeaway": "A page is important if important pages link to it, and you can find every page's score by sharing scores along the links again and again until they stop changing.",
+  "decide": {
+   "useWhen": "You want one importance score for every node of a large network of one-way links.",
+   "requires": "A network of one-way links and a setting, below 1, for how often the imaginary surfer follows a link. The scores are approximate, to a tolerance you choose.",
+   "limits": "It sees only who links to whom. Artificial links can inflate a score. It settles slowly when that setting is close to 1."
+  },
   "describe": "A directed graph of pages and links. The number beneath each page is its current rank, to three decimal places. Pages with no outgoing links, called dead ends, are outlined in dark ink. In the first round each page is highlighted in turn while its incoming links are drawn in terracotta. In later rounds the page whose rank changed most is highlighted. Below the graph, the pages are listed from highest rank to lowest, with a second row showing how much each rank changed in the latest round. At the end the highest-ranked page is filled forest green.",
   "views": [
    "graph",
@@ -5469,6 +5574,11 @@ export const catalog = [
   ],
   "analogy": "Cooking a dinner with several dishes",
   "takeaway": "A project is as long as its longest chain of tasks that must follow one another, and only the tasks on that chain have no time to spare.",
+  "decide": {
+   "useWhen": "You have a project made of tasks that depend on one another, and you want to know the soonest it can finish and which tasks must not run late.",
+   "requires": "A list of tasks, how long each one takes, and which tasks must finish before which others can start. Those links must not go round in a circle.",
+   "limits": "It assumes there are always enough people and equipment to do unrelated tasks at the same time, and that every duration is known exactly. It tells you how long the plan takes, not how to make it shorter."
+  },
   "describe": "Three linked pictures. On top, the project as boxes joined by arrows that run from left to right: each box is a task with its number of days, and an arrow means the task on the left must finish before the task on the right can start. The task being worked out is terracotta, the task it is checked against is ochre, and the caption under a box shows its times so far. In the middle, a timeline with one row per task: a bar runs from the earliest start to the earliest finish, and after the backward pass a pale ochre extension shows how far the task could run late. A dashed line marks the end of the project. At the bottom, a table of the earliest start, earliest finish, latest start, latest finish and slack of every task. At the end the critical tasks, their arrows and their bars turn forest green.",
   "views": [
    "graph",
@@ -5764,6 +5874,11 @@ export const catalog = [
   ],
   "analogy": "A notebook of answers",
   "takeaway": "If the same small question keeps coming back, answer it once, write the answer down, and look it up from then on.",
+  "decide": {
+   "useWhen": "You are learning dynamic programming, or want a pattern for turning a slow definition that calls itself into a table filled in once.",
+   "requires": "A whole number n, zero or more. Exact results need numbers big enough to hold the answer.",
+   "limits": "The answers grow so fast that ordinary 64-bit numbers overflow beyond the 92nd. The version that calls itself can run out of memory for unfinished work when n is large. Its speed assumes each addition takes the same time, which stops being true for very large numbers."
+  },
   "describe": "For plain recursion and for the memo, with n up to 6, a tree of circles shows every request for fib(k), labelled with k and with the returned value beneath. The request being handled is terracotta, requests waiting for their answers are ochre, first-time answers are forest green, and requests never made are faint. Brick red marks a request for something already solved: under plain recursion the whole subtree below it is brick red because it is all redone, while with the memo a single brick red circle sits on top of a faint subtree that is never run. Below the tree a strip of cells shows, for plain recursion, how many times each subproblem has been requested, and for the memo, which answers have been stored. The bottom-up method shows only the strip: a table filling from left to right, with the two cells being added in ochre.",
   "views": [
    "graph",
@@ -6046,6 +6161,11 @@ export const catalog = [
   ],
   "analogy": "Two playlists with songs in common",
   "takeaway": "What two texts share, in order, is found by comparing all their beginnings first: on a match extend the shared part by one, otherwise carry forward the better of two smaller answers.",
+  "decide": {
+   "useWhen": "You want to know what two sequences have in common, in order, or to show what was added and removed between two versions.",
+   "requires": "Two sequences whose items can be tested for being the same.",
+   "limits": "Slow and memory-hungry on long inputs: twice the length means four times the work. It has no idea of a replaced item or a moved block. It returns one answer when there may be several."
+  },
   "describe": "A table with the first string down the left side and the second string along the top, plus a row and column of zeros marked with an empty-set sign. Each cell holds the length of the longest common subsequence of the two prefixes it stands for. The cell being filled is terracotta and the cells it reads are ochre: the diagonal cell on a match, the cells above and to the left otherwise. After the table is full, a forest green path runs back from the bottom-right cell. Beneath the table, the two strings are shown as rows of letters. During the traceback the letters of the common subsequence turn forest green, letters only in the first string turn brick red, and letters only in the second turn terracotta.",
   "views": [
    "table",
@@ -6353,6 +6473,11 @@ export const catalog = [
   ],
   "analogy": "Crossing a city grid with tolls",
   "takeaway": "To compare two words, compare all their beginnings first, shortest to longest, and build each answer from the three answers just before it.",
+  "decide": {
+   "useWhen": "You need to know exactly how many single-letter changes separate two short pieces of text.",
+   "requires": "Two pieces of text. Adding, removing or replacing one letter each count as one change.",
+   "limits": "Slow and memory-hungry on long texts: twice the length means four times the work. It treats every change as equally likely, and counts two swapped neighbouring letters as two changes."
+  },
   "describe": "A table with the first string down the left side and the second string along the top, plus a row and column marked with an empty-set sign for \"no letters yet\". Each cell holds the fewest edits between the two prefixes it stands for. The cell being filled is terracotta and the three cells it reads (above, left and diagonal) are ochre. After the table is full, a forest green path runs from the bottom-right cell back to the top-left. Beneath the table, two rows of letter cells show the prefixes being compared, and at the end they show the two strings lined up with a third row marking each column as keep, substitute, delete or insert.",
   "views": [
    "table",
@@ -6650,6 +6775,11 @@ export const catalog = [
   ],
   "analogy": "A packing notebook for every bag size",
   "takeaway": "For each item ask one question, take it or leave it, and answer that question for every bag size using the answers already worked out for the items before it.",
+  "decide": {
+   "useWhen": "Each item is either taken whole or left, weights are whole numbers, and the capacity is moderate.",
+   "requires": "Whole-number weights, a capacity small enough to fill in a table with one cell per item and unit of capacity, and values that simply add up.",
+   "limits": "Impractical for very large capacities. It handles one limit only. It returns one best choice even when several tie."
+  },
   "describe": "A table with one row per item, plus a top row for \"no items\", and one column per capacity from 0 to W. Each cell holds the best total value using the items of its row and the rows above in a bag of that capacity. The cell being filled is terracotta. The cells it reads are ochre: the cell directly above (skip the item) and a cell in the row above further to the left (take the item). After the table is full, a forest green path climbs from the bottom-right cell to the top row, stepping left whenever an item was taken. Beneath the table, rows of cells list each item's number, weight and value, and a final row shows a tick for taken and a cross for left behind.",
   "views": [
    "table",
@@ -6948,6 +7078,11 @@ export const catalog = [
   ],
   "analogy": "Two worn copies of the same manuscript",
   "takeaway": "Score every way two sequences can begin, shortest beginnings first, and the best line-up of the whole sequences falls out of the last square of the grid.",
+  "decide": {
+   "useWhen": "Two sequences are related along their whole length, and you can say how to score a match, a mismatch and a gap.",
+   "requires": "Two sequences, and a score for a match, a mismatch and a gap.",
+   "limits": "Slow and memory-hungry on long sequences: twice the length means four times the work. It lines the two up from end to end even if only part is related. Its simple gap score is a crude picture of real insertions and deletions."
+  },
   "describe": "A table with the first sequence down the left side and the second along the top, plus a row and column marked with an empty-set sign for \"no letters yet\". Each cell holds the best alignment score for the two prefixes it stands for, and scores can be negative. The cell being filled is terracotta and the three cells it reads (above, left and diagonal) are ochre. After the table is full, a forest green path runs from the bottom-right cell back to the top-left. Beneath the table, two rows of letter cells show the prefixes being lined up, and at the end they show the two sequences aligned with dashes for gaps, with a third row giving the score of each column: forest green for a match, ochre for a mismatch, brick red for a gap.",
   "views": [
    "table",
@@ -7245,6 +7380,11 @@ export const catalog = [
   ],
   "analogy": "Labelling a trail map from the ends back to the start",
   "takeaway": "Write down what the option pays at every possible final price, then step backwards through the tree, blending two later values into each earlier one, until you reach today.",
+  "decide": {
+   "useWhen": "You want to understand or compute what an option is worth in the standard textbook model, especially one that may be used before its last day.",
+   "requires": "Today's price, the fixed price and last day written into the option, an interest rate, and a number for how much the price tends to swing. That last number has to be estimated, and the answer depends heavily on it.",
+   "limits": "It gives a value inside a simplified model: steady swings, no sudden jumps, no trading costs and, on this page, no dividends. Real markets break each of these, so the number is a reference point for study, not a prediction and not advice."
+  },
   "describe": "A tree drawn left to right, one column for each time step. Each node is an oval holding a share price. The top node of a column is the price after nothing but up-moves and the bottom node is the price after nothing but down-moves. Under each node, once it has been worked out, is the value of the option at that node. The node being valued is terracotta and the two later nodes it is computed from are ochre, with the two weights written on the lines that join them. Nodes already valued are forest green. For an American option, nodes where exercising at once is worth more than holding are brick and are marked exercise, shortened to ex. on larger trees. A strip of cells under the tree lists the up factor, the down factor, the growth of cash in one step and the two weights, and a second strip shows the numbers used at the current node.",
   "views": [
    "graph",
@@ -7483,6 +7623,11 @@ export const catalog = [
   ],
   "analogy": "Measuring two sticks against each other",
   "takeaway": "Divide the larger number by the smaller, keep the smaller number and the remainder, and repeat until the remainder is zero.",
+  "decide": {
+   "useWhen": "You need the largest number that divides two others, a fraction in lowest terms, or a check that two numbers share no factor.",
+   "requires": "Two whole numbers, zero or more, not both zero. The answer is exact.",
+   "limits": "It does not tell you the prime factors. The number of steps depends on the numbers, which can leak information in security code."
+  },
   "describe": "A rectangle whose sides are the two numbers, cut step by step into the largest squares that fit. Each division step has its own colour and each square shows its side length. A dashed terracotta outline marks the part still to be cut. Below, a table lists each division: the two numbers, the quotient, the remainder and the equation that links them. The side of the smallest square is the greatest common divisor.",
   "views": [
    "scene",
@@ -7779,6 +7924,11 @@ export const catalog = [
   ],
   "analogy": "Children sitting down in a line",
   "takeaway": "Write down the numbers, and each time you reach one that has not been crossed out, call it prime and cross out all its multiples.",
+  "decide": {
+   "useWhen": "You want every prime up to a limit, or to look up many numbers below it.",
+   "requires": "A limit small enough that one mark for each number fits in memory. The result is exact.",
+   "limits": "Memory grows with the limit, so it cannot test a single very large number."
+  },
   "describe": "A grid of the numbers from 1 up to the limit, ten or twenty to a row. Numbers not yet decided are pale. The prime currently being used is terracotta, the multiples being crossed out at this step are brick red, numbers crossed out earlier are sage green, and numbers confirmed as prime are dark forest green. A strip below lists the primes found so far.",
   "views": [
    "grid",
@@ -8057,6 +8207,11 @@ export const catalog = [
   ],
   "analogy": "A copier that can only double",
   "takeaway": "To raise a number to a big power, read the exponent in binary: square for every digit, multiply once more for every 1, and keep only the remainder as you go.",
+  "decide": {
+   "useWhen": "You need the remainder of a large power, and the power is more than a handful.",
+   "requires": "A whole-number power, zero or more, and arithmetic wide enough to hold the square of the divisor. The result is exact.",
+   "limits": "In its plain form the time it takes reveals the power, which matters when the power is a secret. It cannot be run backwards to recover the power."
+  },
   "describe": "The exponent is shown as a row of binary digits, read from left to right. The digit being processed is terracotta and digits already used are forest green; a strip beneath shows the exponent reached so far. Below, a table adds one row per digit with the squaring, the optional multiplication by the base, the running result and which power of the base that result is.",
   "views": [
    "rows",
@@ -8340,6 +8495,11 @@ export const catalog = [
   ],
   "analogy": "Finding the right setting on a dial",
   "takeaway": "Trap the answer between a guess that is too low and one that is too high, test the middle, keep the half that still traps it, and repeat.",
+  "decide": {
+   "useWhen": "You know two points that the answer lies between, and you want a method that cannot fail and whose cost you know in advance.",
+   "requires": "A curve with no jumps, and two points where it lies on opposite sides of zero. Nothing else.",
+   "limits": "Slow: each step only halves the uncertainty. It needs the two starting points. It solves for one unknown only."
+  },
   "describe": "A plot of the chosen function with a horizontal line at zero. A shaded ochre band marks the current bracket from a to b, with a dot on the curve at each end. A terracotta dot marks the midpoint being tested, a hollow green ring marks the true root, a grey band marks the half that was just discarded, and a green dot marks the final answer. Below, a strip shows the same bracket magnified to fill the full width, with the values of a, b and the midpoint written out.",
   "views": [
    "scene"
@@ -8663,6 +8823,11 @@ export const catalog = [
   ],
   "analogy": "A straight ramp laid along the curve",
   "takeaway": "Measure how far off your guess is and how fast things change there, divide one by the other to get the correction, and repeat.",
+  "decide": {
+   "useWhen": "The curve is smooth, you can work out its slope, and you can start near the answer.",
+   "requires": "A smooth curve, its slope, and a first guess close to the answer. Without a good first guess it may never arrive.",
+   "limits": "It can go round in circles or fly off. It slows down where the curve flattens out as it reaches zero. It needs the slope."
+  },
   "describe": "A plot of the chosen function with a horizontal line at zero and a hollow green ring at the true root. A terracotta dot on the curve marks the current guess. An ochre straight line is the tangent to the curve at that dot, and an ochre dot marks where the tangent crosses zero, which becomes the next guess. Earlier guesses and tangents stay on the picture, faded. Below, a bar chart shows how many decimal digits of each guess are correct.",
   "views": [
    "scene"
@@ -8853,6 +9018,11 @@ export const catalog = [
   ],
   "analogy": "Navigating with only a compass and a speedometer",
   "takeaway": "Assume the current rate of change holds for one short step, take the step, then measure the rate again.",
+  "decide": {
+   "useWhen": "Simplicity or speed per step matters more than accuracy, or you want a first look at a problem.",
+   "requires": "A rule that gives how fast things are changing at any moment, a starting state, and a step size.",
+   "limits": "Not very accurate: halving the step only halves the error. Things that should swing steadily slowly gain energy. Some systems force it to take very small steps."
+  },
   "describe": "A plot of value against time. A green curve is the exact solution. A terracotta chain of straight segments, with a dot at every step, is Euler's approximation growing from left to right. An ochre arrow at the current point shows the slope about to be followed for one step, and a short brick-red vertical line shows the gap between the approximation and the exact solution. A second, smaller chart plots that error at every step.",
   "views": [
    "scene"
@@ -9125,6 +9295,11 @@ export const catalog = [
   ],
   "analogy": "A navigator who checks the water ahead",
   "takeaway": "Before each step, sample the slope at the start, twice at the middle and once at the end, then step along their weighted average.",
+  "decide": {
+   "useWhen": "The problem changes smoothly and you want good accuracy from a simple method with a fixed step.",
+   "requires": "A smooth rule that gives how fast things are changing at any moment, a starting state, and a step size. It works that rule out four times per step.",
+   "limits": "Not suited to systems where some parts change far faster than others. Energy drifts slowly over long runs. The step stays fixed unless the method is extended."
+  },
   "describe": "Two plots. The upper one shows value against time: a green curve for the exact solution, a terracotta chain of segments with dots for the RK4 approximation, and a shaded strip marking the step being computed. The lower plot magnifies that one step. In it, four short ochre strokes labelled k1 to k4 show the slope sampled at the start, at two trial points in the middle and at a trial point at the end, with dashed ochre lines showing the trial moves from the start that reach them. A terracotta line then shows the step actually taken, and a short brick-red line shows the remaining gap to the exact solution.",
   "views": [
    "scene"
@@ -9404,6 +9579,11 @@ export const catalog = [
   ],
   "analogy": "Hearing the notes in a chord",
   "takeaway": "A signal is a mix of pure waves, and the FFT finds how much of each is present by splitting the samples in half again and again and reusing the shared work.",
+  "decide": {
+   "useWhen": "You want all the frequencies in a recorded signal, or want to do something that is slow on the raw signal and quick on its frequencies.",
+   "requires": "Samples taken at even intervals and, in this form, a number of samples that is a power of two.",
+   "limits": "It needs evenly spaced samples. How finely it separates frequencies is fixed by the length of the recording. It says which frequencies are present, not when they occurred."
+  },
   "describe": "Two charts. The upper one plots the signal: its samples in time order, joined by a line. The lower one shows the FFT's working array as a row of bars. First the bars are the samples, and brick-red pairs mark the swaps that put them in bit-reversed order. Then each bar shows the size of an entry while blocks are merged level by level: terracotta marks the pair being combined, moss marks entries already merged at this level, and thin vertical lines separate blocks. In the last step the lower chart becomes the spectrum, one bar per frequency, with the peaks in forest green and labelled with their frequency (for a short custom signal, every frequency present is marked and labelled with its amount).",
   "views": [
    "scene"
@@ -9701,6 +9881,11 @@ export const catalog = [
   ],
   "analogy": "Walking downhill in fog",
   "takeaway": "Feel which way is downhill, take a small step that way, and repeat.",
+  "decide": {
+   "useWhen": "The thing to minimize changes smoothly, you can work out its slope, and the problem is large.",
+   "requires": "A smooth quantity to minimize, its slope, and a sensible step size. It reaches a point where the slope is flat. That is the lowest point overall only if the surface is a single bowl.",
+   "limits": "It stops at the nearest flat point, which may not be the lowest. It is slow in long narrow valleys. It needs the slope."
+  },
   "describe": "A contour map of a two-variable loss function, with closed curves joining points of equal loss and hollow green circles marking the known minima. A terracotta path shows every position visited so far and an ochre arrow shows the current downhill direction. A second, smaller chart plots the loss at each step.",
   "views": [
    "scene"
@@ -9980,6 +10165,11 @@ export const catalog = [
   ],
   "analogy": "A marble on a shaken tray",
   "takeaway": "Accept every improvement, accept some setbacks while the search is young, and grow stricter as it goes on.",
+  "decide": {
+   "useWhen": "There are many mediocre resting points or no slope to follow, a candidate is cheap to score, and a good answer is enough.",
+   "requires": "A way to score a candidate and a way to propose a nearby one. Nothing else. In practice it does not promise the best answer.",
+   "limits": "It needs many scores. Results differ from run to run. It is slow to polish an answer to fine precision."
+  },
   "describe": "A contour map of a function of two variables, with hollow green circles on its known minima. A terracotta ring marks the current point and small terracotta dots trace where it has been. A dark dot marks the best point seen so far. At each step an arrow shows the proposed move, green if it was accepted and brick red if it was refused, and a dashed square outlines the region in which a proposal can land. A second, smaller chart plots the value at the current point, the best value so far, and the falling temperature at every step.",
   "views": [
    "scene"
@@ -10166,6 +10356,11 @@ export const catalog = [
   ],
   "analogy": "Selective breeding",
   "takeaway": "Keep a crowd of guesses, let the better ones have more children, mix and slightly alter those children, and repeat.",
+  "decide": {
+   "useWhen": "You can score a candidate but cannot describe the problem with a formula, you can afford thousands of scores, and a good answer is enough.",
+   "requires": "A way to score a candidate, and ways to combine and randomly alter candidates that suit how they are written down. It does not promise the best answer.",
+   "limits": "It needs many scores. It can settle too early on a mediocre answer. It is slow to polish an answer to fine precision."
+  },
   "describe": "A contour map of a function of two variables with hollow green circles on its known minima. Ochre dots are the members of the current population, and a ringed dark dot is the best of them. In the selection frames, members chosen as parents are dark green and members that leave no children are grey. The first frames follow the making of one child: two tournaments, a dashed box showing where crossover can place the child, and an arrow for the mutation. A second, smaller chart plots the best and the average value of the population in every generation.",
   "views": [
    "scene"
@@ -10350,6 +10545,11 @@ export const catalog = [
   ],
   "analogy": "Walking the fence of a sloping field",
   "takeaway": "When everything adds up in straight lines, a best plan sits at a corner, so walk from corner to corner along edges that raise the profit until none does.",
+  "decide": {
+   "useWhen": "You are dividing limited resources among several products or activities, the profit and the limits add up in simple proportion, and fractional amounts are fine.",
+   "requires": "A goal and limits that all add up in simple proportion: each unit of a product adds a fixed amount to the profit and uses a fixed amount of each resource. In the form taught here, every limit must say \"at most\" some number that is zero or more, and no amount can be negative.",
+   "limits": "It cannot insist on whole-number answers, so it may tell you to make 2.5 chairs. Everything must scale in straight lines, with no bulk discounts and no set-up costs. On rare, specially built problems it can take a very long time."
+  },
   "describe": "Two linked views. The first is a graph with x across and y up. A shaded shape marks every mix that obeys all the limits, and each limit is a numbered straight line along one side of it. The walk is a terracotta line from corner to corner, starting at (0, 0), with the current corner ringed and labelled with its profit. A dashed line through the current corner joins all mixes that earn the same profit. While a move is being chosen, an ochre arrow shows the edge being considered and ochre circles show where each limit would stop it. At the end the best corner is forest green and every corner is labelled with its profit. The second view is the tableau: a table with a column for x, y, each slack variable, the value, and the ratio, and a row for each basis variable plus the profit row. The column of the variable about to enter and the row of the variable about to leave are tinted, and the pivot cell where they cross is outlined.",
   "views": [
    "scene",
@@ -10654,6 +10854,11 @@ export const catalog = [
   ],
   "analogy": "Asking ten customers instead of the whole town",
   "takeaway": "Check a few random examples, take a small step the way they point, and repeat: each step is rough, but there can be a great many of them.",
+  "decide": {
+   "useWhen": "There are too many examples to look at all of them before every step, or the examples keep arriving.",
+   "requires": "A score for how wrong the model is that is an average over many examples, a way to pick examples at random, and a step size found by trying a few.",
+   "limits": "It gets close to the best answer quickly but keeps wobbling around it unless the steps are made smaller over time. It is slow when a very exact answer is needed."
+  },
   "describe": "Three charts. The first is a contour map of the loss over every possible line, with the slope on the horizontal axis and the intercept on the vertical axis. A hollow green circle marks the least squares line. A terracotta path shows every line tried so far, an ochre arrow shows the downhill direction according to the current batch, and an ink arrow shows the downhill direction according to all the data. A dashed ink path shows where plain gradient descent would go. The second chart shows the data points and the current line, with the points of the current batch enlarged in terracotta and their gaps to the line drawn in ochre. The third chart plots the loss over all points at each step, with the smallest possible loss as a dashed green line.",
   "views": [
    "scene"
@@ -10931,6 +11136,11 @@ export const catalog = [
   ],
   "analogy": "A fog walker with a memory and a separate stride for each compass direction",
   "takeaway": "Step the way the recent slopes agree on, and give every adjustable number its own step size, smaller where its slopes have been large.",
+  "decide": {
+   "useWhen": "You are training a neural network, or any model whose adjustable numbers have slopes of very different sizes, and you want something that works fairly well before careful tuning.",
+   "requires": "A way to work out the slope of the score for every adjustable number, room to store two extra numbers for each one, and a step size, for which a rough guess is often good enough to start.",
+   "limits": "It can walk past the lowest point and wobble back. It helps most when the hard directions line up with single adjustable numbers. It is not always the method that gives the best final result, and nothing guarantees that it reaches the lowest point."
+  },
   "describe": "A contour map of a two-variable loss function, with a hollow green circle on each known minimum. A terracotta path shows every position Adam has visited, and an ink path shows plain gradient descent started from the same point. An ochre arrow shows the downhill direction at Adam's position and a brick arrow shows the direction of the step Adam is about to take. Below the map, a table with one row for x and one for y lists the current slope, the two running averages m and v, their bias-corrected values and the step taken, with the cells that have just changed highlighted. A third, smaller chart plots the loss at each step for both methods.",
   "views": [
    "scene",
@@ -11251,6 +11461,11 @@ export const catalog = [
   ],
   "analogy": "A rod held by springs",
   "takeaway": "The best line is the one that makes the squared gaps between the line and the points add up to the least.",
+  "decide": {
+   "useWhen": "You need a quick, readable account of how a number changes with what it depends on, or a simple baseline to beat.",
+   "requires": "Inputs and outputs that are numbers, and a relationship that is roughly a straight line.",
+   "limits": "Straight-line relationships only. A few extreme points can pull the line. It says nothing about what causes what."
+  },
   "describe": "A scatter plot of data points in ink with a terracotta line through them. Short ochre vertical segments join each point to the line: these are the residuals. A dashed green line shows the least squares line computed by formula. As gradient descent runs, the terracotta line tilts and shifts until it lies on the dashed one. A second, smaller chart plots the mean squared error at each step, with a dashed green line at the smallest possible value.",
   "views": [
    "scene"
@@ -11491,6 +11706,11 @@ export const catalog = [
   ],
   "analogy": "Asking the nearest houses",
   "takeaway": "To label something new, find the few known examples most like it and go with the majority.",
+  "decide": {
+   "useWhen": "Similar cases tend to have the same answer, there are few measurements per case, and you want a method with no training step.",
+   "requires": "Examples with known answers, a sensible way to measure how far apart two cases are, and measurements on comparable scales.",
+   "limits": "Slow to answer on large collections. It gets worse as the number of measurements grows. It cannot ignore a measurement that does not matter."
+  },
   "describe": "A square scatter plot of training points, green for class 0 and terracotta for class 1, with a ringed ink point marking the query. During the scan an ochre segment joins the query to the point being measured, and ochre rings mark the k nearest found so far. After the scan a circle shows the neighbourhood, segments in each class colour show the votes, and the query takes the colour of the winning class. In the last frame the part of the plane where a query would be labelled class 1 is shaded terracotta, and the rest, where it would be labelled class 0, is left clear. A strip below lists the k nearest points with their distances and the running vote count.",
   "views": [
    "scene",
@@ -11739,6 +11959,11 @@ export const catalog = [
   ],
   "analogy": "Moving the notice boards",
   "takeaway": "Give each point to its nearest centre, move each centre to the middle of its points, and repeat until nothing changes.",
+  "decide": {
+   "useWhen": "You want a chosen number of tight groups, or that many representative points, from numeric data, quickly, and can afford to run it several times.",
+   "requires": "Measurements that are numbers on comparable scales, the number of groups chosen in advance, and starting centres. It finds a good grouping, not always the best one.",
+   "limits": "A different start can give a different grouping, and the best one is too hard to guarantee. It expects round, tight groups. You must choose the number of groups yourself."
+  },
   "describe": "A square scatter plot of points. Each point is coloured by the cluster it currently belongs to, and thin lines join it to that cluster's centre. Centres are large numbered dots with a dark outline, and a dashed trail shows where each centre has been. On update frames an arrow shows a centre moving to the average of its points. A second, smaller chart plots the cost, the within-cluster sum of squares, after every assignment and every update. It never rises.",
   "views": [
    "scene"
@@ -12006,6 +12231,11 @@ export const catalog = [
   ],
   "analogy": "The shadow that shows the most",
   "takeaway": "Find the direction along which the points spread out most, then the next one at right angles to it, and describe every point by where it sits along those few directions.",
+  "decide": {
+   "useWhen": "You have many measurements that largely repeat one another and want a few numbers that keep most of the differences between items, for a chart or as simpler input to another method.",
+   "requires": "A table of numbers with the same measurements for every item, in units that can fairly be compared. If the units differ, rescale each column to the same spread first.",
+   "limits": "It finds only straight directions, so it misses curved patterns. It keeps what varies most, which is not always what matters. The new directions are blends of all the measurements and can be hard to give a name to."
+  },
   "describe": "A square scatter plot of unlabelled points in moss green, with faint axes through the origin. The first frames show the cloud sliding so that its centre sits on the origin. During power iteration a terracotta arrow from the origin shows the current direction, an ochre arrow shows the matrix times that direction, and faint arrows show where the direction was on earlier steps. A small chart below plots how far the tip of the arrow moved at each step, as a power of ten, against a dashed line at the stopping tolerance. Once found, the first principal direction is a forest green line and the second a brick line, each two standard deviations long either way. In the projection frames thin lines drop every point onto a principal direction, and a strip below shows the resulting scores as dots on one line. A table shows the covariance matrix while it is being built and again after deflation.",
   "views": [
    "scene",
@@ -12274,6 +12504,11 @@ export const catalog = [
   ],
   "analogy": "A ramp between a plain and a plateau",
   "takeaway": "Draw the straight line that best separates two groups, and let distance from the line say how sure you are.",
+  "decide": {
+   "useWhen": "You need a probability of yes or no and a model you can explain, and a straight line can roughly separate the two groups.",
+   "requires": "Examples of both outcomes, measurements that are numbers, a step size and a limit on the number of steps.",
+   "limits": "Straight boundaries only. If the groups separate perfectly it never settles unless it is held back. Its probabilities are only as good as the straight-line assumption."
+  },
   "describe": "A square scatter plot of training points, green for class 0 and terracotta for class 1. The background is shaded terracotta in proportion to the predicted probability of class 1, clear where it is near 0 and strongest where it is near 1. An ink line marks the decision boundary, where the probability is one half, and brick rings mark points on the wrong side of it. As training runs the line turns and shifts and the shading sharpens. A second, smaller chart plots the cross-entropy loss at each step.",
   "views": [
    "scene"
@@ -12494,6 +12729,11 @@ export const catalog = [
   ],
   "analogy": "The key at the front of a field guide",
   "takeaway": "Keep asking the yes-or-no question that best separates the examples, stop before the questions start describing accidents, and read each prediction and its reasons off the path.",
+  "decide": {
+   "useWhen": "You need a prediction that comes with reasons a person can read and check, such as which customers are likely to leave and why.",
+   "requires": "Past examples whose outcome is already known, each described by the same measurements. The more examples there are, the more questions the tree can be trusted to ask.",
+   "limits": "It asks about one measurement at a time, so a slanted or curved border takes many questions. Left to grow, it memorizes its examples and gets worse on new ones. One tree is usually less accurate than many trees voting together."
+  },
   "describe": "A scatter plot of training points, green for class 0 and terracotta for class 1. The tree divides the plot into boxes with straight splits parallel to the axes. Each box is shaded in the colour of the class it predicts, more strongly the purer it is. An ochre outline marks the group being examined and a dashed ochre line marks the split being scored, while splits already made are ink lines. Below the plot the tree itself is drawn: questions in ink, leaves in the colour of the class they predict, and under every node the number of class 0 and class 1 points it holds. While a group is searched, a small chart plots the score of every possible split on one feature against its threshold, with a dashed line at the impurity of the group before splitting. In the last frame brick rings mark the training points the tree gets wrong, small dots show fresh points, and a chart compares accuracy on training points and on fresh points at every depth.",
   "views": [
    "scene",
@@ -12736,6 +12976,11 @@ export const catalog = [
   ],
   "analogy": "Nudging a ruler across a table",
   "takeaway": "Check the examples one at a time, and only when you get one wrong, shift the dividing line toward it.",
+  "decide": {
+   "useWhen": "A straight line can separate the two groups completely and a simple, fast learner is enough, or you want to see how a single artificial neuron learns.",
+   "requires": "Examples of two groups. It is sure to finish only if a straight line can separate them, so it needs a limit on the number of passes.",
+   "limits": "Straight boundaries only. It never settles if no line separates the groups. It returns some separating line, not the best one, and gives no probabilities."
+  },
   "describe": "A square scatter plot of training points, green for class 0 and terracotta for class 1. An ink line is the current decision boundary and the side predicted as class 1 is shaded terracotta. A large ring marks the point being checked, brick-coloured when it is a mistake. Smaller brick rings mark every point currently on the wrong side. After an update a dashed grey line shows where the boundary was before. A bar chart below counts the mistakes made in each pass over the data. Training ends when a bar has height zero.",
   "views": [
    "scene"
@@ -12948,6 +13193,11 @@ export const catalog = [
   ],
   "analogy": "Tracing a fault back along a production line",
   "takeaway": "Run the network forwards to see how wrong it is, then pass the error backwards so every weight learns which way to move.",
+  "decide": {
+   "useWhen": "You are training a model with many adjustable numbers and need to know which way to nudge each one.",
+   "requires": "A model made of smooth steps, so that a small change going in gives a small change coming out, and a single number that says how wrong the model is. It gives the exact direction to adjust. It does not promise that training will work.",
+   "limits": "It cannot handle steps that jump suddenly. It has to remember every number from the forward run. In very deep networks the correction can fade to nothing before it reaches the early layers."
+  },
   "describe": "Two kinds of picture. During training, a plot of the data points, class 0 in dark green and class 1 in terracotta, over a shading that is darker where the network's output is closer to 1. A dark curve marks where the output equals 0.5, and points on the wrong side of it are ringed. Below it, a chart of the loss after each epoch. In the early frames the plot is replaced by a diagram of the network for a single example: two inputs on the left, the hidden units in the middle and the output on the right. The unit being computed is terracotta, units whose value is known are green, and units whose error signal is known are brick red, with the numbers underneath. A table below lists the example, its forward values, its error signals and its gradients as they are filled in.",
   "views": [
    "scene",
@@ -13220,6 +13470,11 @@ export const catalog = [
   ],
   "analogy": "A card with nine windows",
   "takeaway": "Slide a small grid of weights across a picture and write down one weighted sum at each stop: the weights decide whether you get a blur, a sharper picture or a map of the edges.",
+  "decide": {
+   "useWhen": "You want to blur or sharpen a picture, or to mark the places where its brightness changes suddenly.",
+   "requires": "A picture stored as a grid of numbers, and a small grid of weights chosen for the job. You must also decide what happens at the border, where the small grid does not fit.",
+   "limits": "It only looks at a few neighbouring pixels at a time, so it cannot judge anything that needs a wider view. An edge map is a number at every pixel, and it still takes more work to get clean outlines. Speckled or grainy pictures give many false edges."
+  },
   "describe": "Two grids of numbers side by side. On the left is the image: each cell shows one pixel as a number from 0 to 9 and is shaded more strongly the larger the number. A terracotta outline marks the three by three patch the kernel is lying on. On the right is the output, drawn inside a dashed outline the size of the image so that each output cell sits where the middle of the kernel was. Output cells are shaded green when above zero and brick red when below zero, and the cell just filled has a terracotta outline. Under the picture a table shows the nine numbers under the kernel, the nine weights, and the nine products that are added up. When both Sobel kernels are used, a last stage shows their two outputs and the edge strength made from them, one row at a time.",
   "views": [
    "scene",
@@ -13494,6 +13749,11 @@ export const catalog = [
   ],
   "analogy": "News passed between neighbours",
   "takeaway": "Each round, every node mixes its own numbers with its neighbours' numbers by one shared recipe, so after k rounds a node knows about everything within k steps and nothing beyond.",
+  "decide": {
+   "useWhen": "The links between things matter for the answer: who is connected to whom, which atoms are bonded, which roads meet.",
+   "requires": "Data that comes as things with links between them, and a few starting numbers that describe each thing. To give useful answers it also needs many examples with known answers to learn its weights from.",
+   "limits": "Each round carries news only one link further, so things that are far apart barely influence each other. With many rounds all the nodes start to look alike. Some networks with different shapes cannot be told apart at all."
+  },
   "describe": "A graph drawn in columns: the first node on the left, then the nodes one step from it, then two steps, and so on. Under each node are the two numbers it currently holds. The node being updated is terracotta, the neighbours it is reading are ochre with the edges to them highlighted, and nodes that the first node's starting numbers can have reached are green. Below the graph a table has one row per node and one column per round. It fills in column by column, and each new cell is worked out from cells in the column before it. The cell being worked out is terracotta, the cells being read are ochre, the node's own last value is outlined in dark ink, and cells that can depend on the first node's starting numbers are green, which makes a staircase as the rounds go by. The rule with its fixed weights is written above the table.",
   "views": [
    "graph",
@@ -13790,6 +14050,11 @@ export const catalog = [
   ],
   "analogy": "A room where everyone compares notes",
   "takeaway": "Each token scores every token, turns the scores into shares that add up to one, and takes that blend of what the others carry.",
+  "decide": {
+   "useWhen": "Each item in a sequence needs information from other items that may be far away, such as the words of a sentence, and you have the data and computing power to train a large model.",
+   "requires": "A sequence that has already been turned into lists of numbers, one list for each item. A way of telling the model what order the items are in, because this step ignores order. And, for a model that is any use, a great deal of example data and computing power to train it.",
+   "limits": "The work grows fast with length: twice as many items means four times as many comparisons. It has to be trained on a great deal of data before the comparisons mean anything. On its own it cannot tell what order the items came in."
+  },
   "describe": "Tables of numbers. The first frames show a table with one row for each token and the four numbers of its vector, then a table listing each token's query, key and value as they are computed, beside the matrix that produces them. After that the main table is the attention table: one row and one column per token, where the cell in a row gives the weight that the row's token puts on the column's token. Rows are filled in one at a time. The row being worked on is terracotta, and in a finished row the largest weight is forest green. Cells hidden by a causal mask are faint and hold 0. Under the table, strips of cells show the working for the current token: its query, every key, the score against each key, the scores after division, the exponentials, the weights, the values and the output vector. The last frame shows the full attention table and a table of the output vectors.",
   "views": [
    "table",
@@ -14079,6 +14344,11 @@ export const catalog = [
   ],
   "analogy": "A drop of ink in water, played backwards",
   "takeaway": "Learn to remove a little noise from a picture, then start from pure noise and remove a little, many times over.",
+  "decide": {
+   "useWhen": "You want realistic, varied new images or similar data, and can afford to run a large model many times for each one.",
+   "requires": "A large set of training examples and a neural network trained to remove noise. On this page an exact formula over four stored images stands in for the network.",
+   "limits": "Slow to produce each sample. It can reproduce its training data. With an exact noise remover, as on this page, reproducing them is all it can do."
+  },
   "describe": "A 10 by 10 grid of grey pixels shows the current picture: pure noise at the start of sampling, a recognizable shape at the end. Below it, a strip shows the four training images, a plus, a ring, a cross and a triangle. Under each is a bar and a percentage: the weight the denoiser gives that image as the explanation of the current picture. At the right of the strip is the denoiser's best guess of the clean picture, which is the weighted average of the four. This demonstration uses no neural network. Its denoiser is the exact optimal one for these four images, so it can only ever reproduce one of them. Real models approximate that denoiser with a network, which is why they can produce new images.",
   "views": [
    "grid",
@@ -14289,6 +14559,11 @@ export const catalog = [
   ],
   "analogy": "An opinion poll",
   "takeaway": "When you cannot work out an answer, try many random cases and count: the fraction that succeed is your estimate, and it sharpens slowly as the cases pile up.",
+  "decide": {
+   "useWhen": "The quantity is an average over many uncertain things, and an answer with a stated margin of error is acceptable.",
+   "requires": "A way to draw fair random samples of the situation. The answer is approximate, with a margin of error that can be estimated.",
+   "limits": "Slow to sharpen: one more digit of accuracy takes a hundred times the work. It is never exact."
+  },
   "describe": "A unit square with a shaded quarter circle of radius 1 in its lower left corner. Random points appear one after another: points inside the quarter circle are forest green, points outside are ochre, and the newest point is terracotta with a ring. A second, smaller chart plots the running estimate of π against the number of points thrown, with a dashed line at the true value and a sage band showing the typical size of the error, which narrows as points are added.",
   "views": [
    "scene"
@@ -14529,6 +14804,11 @@ export const catalog = [
   ],
   "analogy": "A detective and the clues",
   "takeaway": "Start from what you believed, shift toward whatever explains the new evidence better, and shift further when the evidence is stronger or your starting belief was weaker.",
+  "decide": {
+   "useWhen": "Evidence comes in a piece at a time, there is not much of it, and you need to know how sure you can be.",
+   "requires": "A starting belief about each possibility, and a way to say how likely the evidence is under each one. The answer is exact for the belief and the model you gave it.",
+   "limits": "It is only as good as the starting belief and the model. A possibility you left out can never be believed, whatever the evidence."
+  },
   "describe": "A chart of belief about a coin's chance of heads, from 0 to 1. A dashed sage curve shows the starting belief (the prior). A terracotta curve shows the current belief (the posterior), with the middle 95% of it shaded and a dot at its mean. A dashed vertical ink line marks the coin's true chance of heads, which the method never sees. Below, one row lists the flips seen so far, heads in forest green and tails in ochre with the newest flip in terracotta, and a second row shows the tally of heads and tails, the current Beta parameters and the mean.",
   "views": [
    "scene",
@@ -14715,6 +14995,11 @@ export const catalog = [
   ],
   "analogy": "A twitchy kitchen scale",
   "takeaway": "A gap between two versions means something only when it is clearly bigger than luck would make it, and only if you chose when to stop before you looked.",
+  "decide": {
+   "useWhen": "You can try a change on some people and not on others, chosen at random, and you want to know whether it made a difference before giving it to everyone.",
+   "requires": "A way to show each version to a random share of people at the same time. One yes-or-no outcome you can count for each person. Enough people. A sample size chosen before you start.",
+   "limits": "It says whether a difference probably exists, not whether it is big enough to matter. It misses small differences unless you have a great many people. Used correctly it still calls a winner 1 time in 20 when nothing differs, and far more often if you stop the moment you see a win."
+  },
   "describe": "Three views. The first chart plots, against the number of visitors per group, the share of each group that has bought so far: A in forest green, B in terracotta, with dashed ink lines at the true rates that the test never sees. The second, smaller chart plots the test score z at each check. A sage band from −1.96 to +1.96 marks where 95% of scores land when nothing differs. Scores the test used are solid ink dots, a score past the line is a larger brick dot, and scores drawn for the reader but not used by the test are hollow. After an early stop a dashed brick line marks where it happened and the rest of the run is drawn faded. The third view is a tally: visitors, buyers and rate for each group, and the gap, standard error, z and p-value of the latest test.",
   "views": [
    "scene",
@@ -14960,6 +15245,11 @@ export const catalog = [
   ],
   "analogy": "Your opinion of a restaurant",
   "takeaway": "Keep a running estimate, move it part of the way toward each new figure, and add a trend and a seasonal pattern when the history shows them.",
+  "decide": {
+   "useWhen": "You need next month's number for many products, the recent past is the best guide you have, and you want something quick that you can explain.",
+   "requires": "A history of regular figures, such as monthly sales, with none missing. For a seasonal forecast, at least two full years of them and the length of the season. A choice of how strongly to react to each new figure.",
+   "limits": "It looks only at past figures, so it cannot foresee anything new, such as a price change, a promotion or a competitor. It notices a sudden change only after the change has shown up in the figures. Its forecasts get less reliable the further ahead they reach."
+  },
   "describe": "Two charts. The main chart plots units sold against the month. Actual demand is shown as ink dots joined by a faint line, and the forecast made one month before each figure as a terracotta line. In the current month a thick ochre bar joins the forecast to the actual, showing the miss, and a hollow terracotta dot marks the forecast for the month after. At the end a dashed vertical line marks where history ends, the forecast for the months ahead is drawn as a dashed terracotta line, and the figures that actually followed appear as hollow ink dots. The second chart depends on the method. For simple smoothing it is a bar for each past month showing its share of the current level. For Holt's method it is the estimated trend month by month, with a dashed line at the true growth. For Holt-Winters it is twelve bars, one seasonal value per calendar month, with hollow dots at the true seasonal pattern.",
   "views": [
    "scene"
@@ -15260,6 +15550,11 @@ export const catalog = [
   ],
   "analogy": "Choosing one song from the radio",
   "takeaway": "Keep the first k items, then let the i-th item replace a random one of them with chance k in i, and the sample stays fair however long the stream runs.",
+  "decide": {
+   "useWhen": "You need a fair sample of fixed size from a stream whose length you do not know.",
+   "requires": "One pass over the data and a source of random numbers. Every item has exactly the same chance of being kept.",
+   "limits": "Every item counts equally, from the whole history, with no way to favour recent ones. The basic form draws a random number for every item."
+  },
   "describe": "Three rows of cells. The first row shows the stream so far: items now in the reservoir are forest green, items no longer or never held are dimmed, and the item just handled is terracotta if it was kept or brick if it was passed over. The second row shows the reservoir slots and their contents, with a slot that was just overwritten in terracotta. The third row shows the random draw for the current item: the whole numbers from 1 to the item's position, with the first k (the draws that mean \"keep\") in ochre and the number actually drawn highlighted.",
   "views": [
    "rows"
@@ -15514,6 +15809,11 @@ export const catalog = [
   ],
   "analogy": "A politician touring a chain of islands",
   "takeaway": "Wander at random, always accept a move to somewhere more probable, accept a move to somewhere less probable only in proportion to how much less, and the places you visit become samples of the distribution.",
+  "decide": {
+   "useWhen": "You can say how likely any point is compared with another, cannot draw samples directly, and want averages.",
+   "requires": "A way to compare how likely any two points are. A long enough run matches the target. A run of fixed length carries no promise.",
+   "limits": "Each sample resembles the last. It can miss a separate region of likely points entirely. It is slow when there are many unknowns."
+  },
   "describe": "The main chart shows the target as a dark curve with a smaller bump at −2 and a larger one at +2. Sage bars form a histogram of the samples collected so far, scaled to the same area as the curve. A terracotta dot marks the current position of the chain on the curve. Each step draws an arrow from the current position to the proposed one: forest green and solid if the proposal was accepted, brick and dashed if it was rejected. A second chart below plots the position of the chain against the step number, with dashed lines at the centres of the two bumps. Histogram bars that would rise above the top of the chart are cut off there.",
   "views": [
    "scene"
@@ -15712,6 +16012,11 @@ export const catalog = [
   ],
   "analogy": "A navigator with a compass and a glimpse of the coast",
   "takeaway": "Predict where the thing should be, look at where the sensor says it is, and settle in between, closer to whichever you have more reason to trust.",
+  "decide": {
+   "useWhen": "You are tracking something that changes from noisy readings, and have a reasonable straight-line model of how it moves.",
+   "requires": "A model in which movement and readings are simple proportions, and known sizes for the noise in each. Under those conditions, and with bell-shaped noise, no estimate is better.",
+   "limits": "Only for simple proportional models and beliefs with a single best guess. It takes a wildly wrong reading at face value."
+  },
   "describe": "The main chart plots position against time. A dashed ink line shows the true position, which the filter never sees. Ochre dots are the noisy measurements. A terracotta line is the filter's estimate, inside a shaded terracotta band that reaches 2 standard deviations either side of it. At each step a hollow circle marks the prediction, and an arrow shows the estimate moving from the prediction part of the way toward the new measurement. A second, smaller chart plots the Kalman gain at each step as a forest green line, with a dashed line at the value it settles to.",
   "views": [
    "scene"
@@ -15933,6 +16238,11 @@ export const catalog = [
   ],
   "analogy": "A search party with one radio",
   "takeaway": "Scatter many guesses, move them as the thing moves, and after every reading keep copies of the guesses that fit it: the survivors show where the thing is.",
+  "decide": {
+   "useWhen": "You are tracking something whose possible positions come in several separate groups, or whose motion or sensor follows no simple straight-line rule.",
+   "requires": "A way to imitate how the thing moves, including its randomness, and a way to say how well any guessed position fits a reading. The answer is approximate and changes a little from run to run.",
+   "limits": "It needs many guesses, and far more when several things are tracked at once. If no guess is near the truth, it cannot find its way back on its own."
+  },
   "describe": "The main chart shows a hallway running left to right, with time steps stacked from bottom to top. Each time step has a row of forest green dots, one for each particle, at the positions the particles hold. Rows of earlier steps are pale sage. A dashed ink line with an ink dot is the true position, which the filter never sees. Hollow ochre rings are the sensor readings. With the distance sensor each reading is drawn twice, once on each side of a vertical line that marks the beacon, because a distance does not say which side. A terracotta line is the estimate. In the weighing step the dots grow or shrink with their weights. A second chart below draws one vertical line for each particle at its position, as tall as its weight, with dashed lines at the reading and at the true position and a solid terracotta line at the estimate. In the plain case a dashed brick line shows the exact answer from the Kalman filter formulas.",
   "views": [
    "scene"
@@ -16181,6 +16491,11 @@ export const catalog = [
   ],
   "analogy": "Explorers and a dispatcher",
   "takeaway": "Grow a tree from the start by pulling its nearest point a short, obstacle-checked step toward one random spot after another, and it will spread through the open space until it touches the goal.",
+  "decide": {
+   "useWhen": "The space to move through is continuous or has many joints, and any route that hits nothing, found quickly, is good enough.",
+   "requires": "A way to pick random positions, a way to measure distance, and a test for hitting an obstacle. It returns a workable route, not the shortest.",
+   "limits": "The route is not the shortest. It cannot prove that no route exists. It is slow to find its way through narrow gaps."
+  },
   "describe": "A square map with dark rectangular obstacles, an ink dot for the start in the lower left and a brick dot for the goal in the upper right, ringed by a circle one step in radius. The tree is drawn in moss green. At each iteration a hollow ochre circle marks the random target, an ink ring marks the tree node nearest to it, and a short thick segment shows the attempted branch: terracotta if it is added, brick and dashed if it would hit an obstacle. When the goal is reached, the path from start to goal is drawn as a thick forest green line over the faded tree.",
   "views": [
    "scene"
@@ -16370,6 +16685,11 @@ export const catalog = [
   ],
   "analogy": "A knitting pattern",
   "takeaway": "Instead of repeating a symbol, say how many times it repeats, and expect this to pay off only when the repeats are long.",
+  "decide": {
+   "useWhen": "The data is known to contain long runs of the same symbol, or speed and simplicity matter more than the best saving.",
+   "requires": "Nothing. It is always correct. It only saves space when equal symbols sit next to each other.",
+   "limits": "It sees only immediate neighbours. Data without runs comes out larger than it went in."
+  },
   "describe": "Three strips of cells. The top strip is the input text, one symbol per cell: the run being counted is terracotta, the symbol that ends it is brick red, and symbols already encoded are forest green. The middle strip collects the output pairs, each written as a count, a multiplication sign and a symbol. The bottom strip compares the size of the input with the size of the output so far, in bits. After encoding, the pairs are decoded one by one into a second strip to show that the input comes back exactly.",
   "views": [
    "rows"
@@ -16598,6 +16918,11 @@ export const catalog = [
   ],
   "analogy": "Morse code, with the gaps removed",
   "takeaway": "Give common symbols short codes and rare symbols long ones, by joining the two rarest again and again until one tree is left.",
+  "decide": {
+   "useWhen": "Some symbols are much more common than others and you want quick, simple compression that restores the text exactly.",
+   "requires": "A count of how often each symbol appears, made beforehand. Whoever unpacks the data needs the code table too.",
+   "limits": "Every symbol costs at least one whole bit. It ignores the order of symbols and what came before. Sending the table can outweigh the saving on short texts."
+  },
   "describe": "A tree drawn as a graph. Each leaf is labelled with a symbol and its count, such as e:4, and sits in a row at the bottom. Nodes waiting in the priority queue are ochre, the nodes being joined are terracotta, and nodes already joined into a subtree are forest green. As pairs are joined, new nodes labelled with the combined count appear above them until a single root remains. Branches are then labelled 0 and 1 and each leaf shows its code beneath it. Under the tree, strips of cells show the priority queue during building, then the code table, the encoded bits and the decoded text.",
   "views": [
    "rows",
@@ -16859,6 +17184,11 @@ export const catalog = [
   ],
   "analogy": "A song sheet that says \"repeat chorus\"",
   "takeaway": "When something you are about to write has appeared recently, point back to it and say how much to copy instead of writing it again.",
+  "decide": {
+   "useWhen": "The data repeats phrases, especially if it will be unpacked more often than packed.",
+   "requires": "Nothing in advance: no counts and no table. It only saves space when stretches of data repeat within its window.",
+   "limits": "It cannot see a repeat that is further back than its window, or one that is nearly but not exactly the same. In this plain form its output wastes bits unless a second stage packs it."
+  },
   "describe": "Strips of cells. The top strip is the whole text: symbols that have slid out of the search window are faint, the search window is moss green, the look-ahead buffer is ochre and symbols not yet reached are plain. The second strip repeats the search window with the distance back written under each symbol, and the third repeats the look-ahead buffer. The longest match and the earlier copy it matches are terracotta, and the symbol that follows the match is brick red. The last strip collects the triples written so far. After encoding, the triples are decoded one at a time into a second strip to show that the text comes back exactly.",
   "views": [
    "rows"
@@ -17051,6 +17381,11 @@ export const catalog = [
   ],
   "analogy": "Inventing shorthand as you go",
   "takeaway": "Keep gluing together the two neighbouring pieces that occur most often, remember the order you did it in, and replay those steps to split any new text.",
+  "decide": {
+   "useWhen": "You need to cut text into pieces from a fixed list for a language model: few enough pieces to list, yet able to spell any word.",
+   "requires": "A sample of the kind of text you will handle later, and a decision on how many pieces you want in the end. The same list of rules must then be used every time.",
+   "limits": "The pieces come from counting, not from meaning, so a word can be cut in odd places. Text unlike the sample breaks into many small pieces. Once a language model has been trained on one set of pieces, the set cannot be changed."
+  },
   "describe": "Strips of labelled cells. The upper strip shows the training text as tokens, one row for each different word, with the number of copies of that word at the left. The end-of-word marker is drawn faintly. When a pair is chosen its cells turn ochre, and when it has been merged the new token is terracotta. The lower strip lists every pair with its count, in the order the pairs are first met, with the highest count in terracotta and any ties in ochre, and below that the merge list as it grows, in forest green. In the second half the upper strip shows one new word being split, and the lower strip shows the merge list being replayed: the rule being tried is terracotta, rules that applied are green, and rules that did not apply are faint. A character that never appeared in the training text is brick red.",
   "views": [
    "rows"
@@ -17319,6 +17654,11 @@ export const catalog = [
   ],
   "analogy": "Mixing paint in public",
   "takeaway": "Each side mixes a private number into a public one, swaps the results and mixes again, so both reach the same secret and it never has to travel.",
+  "decide": {
+   "useWhen": "Two parties need a fresh shared secret over a channel that others can read. In practice, through a trusted library and with a check of who is at the other end.",
+   "requires": "Numbers large and carefully chosen enough that the calculation cannot be run backwards, random secrets, and a separate way to confirm who you are talking to.",
+   "limits": "On its own it does not tell you who you are talking to. A large quantum computer would break it. Useless with small or badly chosen numbers."
+  },
   "describe": "A board with three lanes: Alice on the left, the public channel in the middle and Bob on the right. Cards appear in each lane as the exchange proceeds, showing the agreed prime and base, each side's private number, the values sent across and the secret each side computes. The card for the current step is terracotta and the matching shared secrets turn forest green. Below the board, a strip of cells then shows the eavesdropper trying every exponent until one reproduces Alice's public value. With the attacker switched on, the middle lane belongs to Mallory, who replaces both public values with her own, and the two secrets that fail to match are brick red. All numbers are toy-sized and insecure.",
   "views": [
    "board",
@@ -17552,6 +17892,11 @@ export const catalog = [
   ],
   "analogy": "An open padlock that anyone can snap shut",
   "takeaway": "Multiplying two large primes is easy and undoing it is hard, so the product can be a public lock while the primes stay the private key.",
+  "decide": {
+   "useWhen": "You need to sign something or protect a key in a way almost everything understands. In practice, through a trusted library with standard padding.",
+   "requires": "Two large random primes, a matching pair of exponents, proper padding of the message, and a message smaller than the modulus.",
+   "limits": "Slow. It handles only short inputs. It is unsafe without padding. A large quantum computer would break it."
+  },
   "describe": "A board with three lanes: key generation, the sender and the receiver. Cards appear as the steps proceed: the secret primes, their product n, the value φ, the public exponent e and the private exponent d, then the public key and message on the sender's side, the ciphertext, and the recovered message on the receiver's side. The card for the current step is terracotta, and the message and its recovered copy are forest green. Under the board a second view changes with the phase: a table of the extended Euclidean algorithm while d is computed, strips showing the bits of the exponent and the running value during each square-and-multiply, and finally what an attacker computes after factoring n, in brick red. All numbers are toy-sized and insecure.",
   "views": [
    "board",
@@ -17799,6 +18144,11 @@ export const catalog = [
   ],
   "analogy": "Stacking blocks beside a ramp",
   "takeaway": "Take one step per pixel along the line's longer direction, and step sideways whenever a running whole-number tally says the true line has drifted more than half a pixel.",
+  "decide": {
+   "useWhen": "You need the squares of a grid along a straight line, quickly and exactly, and stepped edges are acceptable.",
+   "requires": "Two end points on whole-number grid positions. The result is exact: the nearest square at every step.",
+   "limits": "Squares are either on or off, so lines look stepped. It marks one square per step, so it does not list every square the line touches."
+  },
   "describe": "A grid of 24 by 16 pixels, with y counted upward from the bottom-left corner. Lit pixels are terracotta, the pixel just lit is drawn in ink, the two candidate pixels for the next step are ochre, and the far endpoint is brick red until the line reaches it. Below the grid, a second picture shows the true line in green over a dot for each pixel centre, with the chosen centres marked and a short brick red tick from each one to the true line showing how far off it is.",
   "views": [
    "grid",
@@ -18141,6 +18491,11 @@ export const catalog = [
   ],
   "analogy": "A rubber band around nails",
   "takeaway": "Start at the lowest point, sweep around the others in order, and throw away any point where the outline would bend to the right.",
+  "decide": {
+   "useWhen": "You need the outline that wraps a fixed set of points on a flat surface, with a dependable running time.",
+   "requires": "Points on a flat surface, and arithmetic precise enough to tell a left turn from a right turn reliably.",
+   "limits": "Flat surfaces only. It needs all the points before it starts. It always pays for putting the points in order."
+  },
   "describe": "A scatter of points. The pivot, the lowest point, is drawn in ink. After sorting, each point carries a number giving its order around the pivot. Points on the stack are forest green and joined by a green line, the hull so far. The three points in the current turn test are ochre, joined by arrows that are terracotta for a left turn and brick red for a right turn or straight line. Popped points become hollow grey circles. A dashed line from the pivot shows the direction of the sweep. At the end the hull is a filled green polygon. Below, two rows list the stack from bottom to top and the points popped so far.",
   "views": [
    "scene",
@@ -18419,6 +18774,11 @@ export const catalog = [
   ],
   "analogy": "Stops on a circular bus route",
   "takeaway": "Put servers and keys on a circle and give each key to the next server clockwise; then adding or removing a server only disturbs the keys right beside it.",
+  "decide": {
+   "useWhen": "Data has to be shared out among servers that come and go, and moving data from one server to another is costly.",
+   "requires": "A rule that turns any name into a number, the same on every machine, and an agreed list of servers.",
+   "limits": "Shares are uneven unless each server is given many positions. It scatters data, so a request for everything from A to F cannot be answered from one place. It only decides who holds what."
+  },
   "describe": "Two circles side by side. The left circle is the hash ring: positions run clockwise from 0 degrees at the top. Servers are large labelled dots, each in its own colour, and the arc each server owns is drawn in that colour just outside the ring. Keys are small dots on the ring, coloured by the server that owns them. The right circle shows the same keys at the same positions, coloured instead by the server that hash mod n assigns. After a server is added or removed, every key that changed server is drawn larger with a halo, and arcs that changed owner are drawn thick. Below, a board lists the number of keys on each server under both schemes, before and after, and how many keys moved.",
   "views": [
    "scene",
@@ -18693,6 +19053,11 @@ export const catalog = [
   ],
   "analogy": "Turning a dial in equal clicks",
   "takeaway": "Grover's search does not check every answer at once: it uses about the square root of N checks to make the right answer the one a measurement almost surely shows.",
+  "decide": {
+   "useWhen": "For now, in theory only: searching an enormous number of possibilities where each one can be checked by a quantum circuit.",
+   "requires": "A quantum computer, and the check written as a quantum circuit. The answer is right with high probability and has to be confirmed.",
+   "limits": "It cuts the work to its square root, and it is proved that nothing does better. No machine today can run it at a useful size. It does not help with data that is stored or has structure."
+  },
   "describe": "A bar chart with one bar per item, showing that item's amplitude, which can be positive or negative. The marked item's bar is brick red and labelled with its current probability; all other bars are moss green. A dashed ochre line shows the mean of all amplitudes during the diffusion step. Below it, a smaller chart plots the probability of measuring the marked item after each round, with the predicted sine-squared curve dashed and a vertical line at the best number of rounds.",
   "views": [
    "scene"

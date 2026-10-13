@@ -214,6 +214,39 @@ things. Use `prerequisite` and `advanced` only when you mean an order of learnin
 lesson that names another as a prerequisite is shown on that other lesson as "Builds on
 this". `tools/test.py` fails if two lessons each call the other a prerequisite.
 
+### Cost and approach are different things
+
+`meta.time.class` names how the work typically grows with the size of the input, from a
+fixed list (`constant`, `logarithmic`, `linear`, `linearithmic`, `quadratic`, `cubic`,
+`polynomial`, `pseudo-polynomial`, `exponential`, and `iterative` for methods whose cost is
+the number of steps you choose to run). `meta.time.worst` is the worst case, written out.
+The site turns the class into one standard wording everywhere ("Linear time", "Time set by
+steps run"), so do not put a description of the method in either field. How the method
+works (greedy, dynamic programming, local search) belongs in `meta.paradigms`, which is
+always shown under its own label, "Approach".
+
+### The business guide (`content/tracks.js`, `content/cases.js`)
+
+The business guide is built for someone with a decision to make. Each lesson on it has a
+`role`, a `question` and a `bridge`:
+
+- `role: 'direct'` when the lesson itself models a recognisable business problem,
+  `'method'` when it teaches a general method on a simplified example. Lessons that only
+  support others are not listed: the page finds them from prerequisites and labels them
+  technical foundations.
+- `question` is the decision, as a question, without naming the method.
+- `bridge` says what the method does for that decision, what the lesson's own example is
+  when it is a simplified one ("The lesson ..."), and where the method stops being reliable.
+
+Do not replace a simple teaching example with a business one to make a lesson look more
+practical. Keep the example that teaches the mechanics best and let the bridge say what it
+stands for. The same question and bridge appear on the lesson beside its demonstration.
+
+A worked case (`content/cases.js`) runs one lesson's real method on a business problem
+with realistic, invented figures, and says what the model leaves out. Add one only when it
+can be checked: `tools/test.py` compares the budget case with a search over every
+combination.
+
 ### Problem phrases (`meta.tags.problems`)
 
 Each phrase is something a person might say they want to do, in everyday words: "find an

@@ -446,7 +446,7 @@ if (on('index')) {
 
 /* ------------------------------------------------------------------ links and relationships */
 const SECTIONS = ['simple', 'example', 'see', 'decide', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
-const STATIC = ['/', '/track/ai', '/track/business', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
+const STATIC = ['/', '/track/ai', '/track/business', '/case/budget', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
 // Does an internal address lead to something that exists? Written from the content, not from the router.
 function resolves(hrefAttr) {
   const raw = hrefAttr.replace(/^#/, '');
@@ -473,6 +473,7 @@ function resolves(hrefAttr) {
     return null;
   }
   if (kind === 'lab') return C.algoById[id] ? null : `no demonstration "${id}"`;
+  if (kind === 'case') return C.caseById[id] ? null : `no worked case "${id}"`;
   if (kind === 'concept') return C.conceptById[id] ? null : `no concept "${id}"`;
   if (kind === 'discipline') return C.disciplineById[id] ? null : `no discipline "${id}"`;
   if (kind === 'path') return C.pathById[id] ? null : `no path "${id}"`;
@@ -1122,35 +1123,157 @@ if (on('tracks')) {
     }
     return C.tracks.map((t) => { const x = T.trackLessons(t); return `${t.title}: ${x.published.length} written, ${x.planned.length} planned`; }).join('; ');
   });
-  await test('business track: the decision shown for each lesson is one that lesson itself declares', () => {
-    const t = C.trackById.business; const bad = [];
-    for (const g of t.groups) for (const id of g.lessons) {
-      const a = C.algoById[id]; if (!a) continue;
-      const why = g.why && g.why[id];
-      if (!why) bad.push(`${id} has no decision`);
-      else if (!(a.tags.problems || []).includes(why)) bad.push(`${id} does not declare "${why}"`);
+  await test('business guide: every lesson has a role, a question and a bridge that names its limits', async () => {
+    const t = C.trackById.business; const bad = []; const roles = { direct: 0, method: 0 };
+    for (const g of t.groups) {
+      assert(/\?$/.test(g.title), `the group "${g.title}" is not put as a decision`);
+      for (const it of g.items) {
+        const a = C.algoById[it.id]; if (!a) continue;
+        if (!(it.role in roles)) { bad.push(`${it.id}: role "${it.role}"`); continue; }
+        roles[it.role]++;
+        if (!it.question || !/\?$/.test(it.question) || it.question.length > 110) bad.push(`${it.id}: the question is missing, too long, or not a question`);
+        if (!it.bridge || it.bridge.length < 150 || it.bridge.length > 430) bad.push(`${it.id}: the bridge is ${it.bridge ? it.bridge.length : 0} characters`);
+        if (/—/.test(`${it.question}${it.bridge}`)) bad.push(`${it.id}: em dash`);
+        if (it.question.toLowerCase().includes(a.name.toLowerCase().split(' ')[0]) && a.name.split(' ')[0].length > 4) bad.push(`${it.id}: the question names the method`);
+        // a lesson that teaches on a simplified example must say what that example is
+        if (it.role === 'method' && !/The lesson /.test(it.bridge)) bad.push(`${it.id}: a "method" lesson whose bridge does not say what the lesson's own example is`);
+        // and every bridge must carry a limit: a sentence about what the method assumes, cannot do, or needs
+        if (!/\b(assum|cannot|only|not |never|no |depends|needs|must|slow|check|margin|nothing|without)\b/i.test(it.bridge)) bad.push(`${it.id}: the bridge states no limit`);
+      }
     }
     assert(!bad.length, bad.join(' | '));
+    assert(roles.direct >= 4 && roles.method >= 10 && roles.direct + roles.method === 22, `roles: ${JSON.stringify(roles)}`);
+    return `${roles.direct} direct applications, ${roles.method} methods on simplified examples`;
   });
-  await test('a track page lists its lessons, marks planned ones, and offers a place to start', async () => {
-    for (const t of C.tracks) {
-      const { published, planned } = T.trackLessons(t);
-      const p = await open(`/track/${t.id}`, '.track-group .lesson-row');
+  await test('business guide page: the question leads each card, the lesson is named, and technical detail is one click away', async () => {
+    const t = C.trackById.business;
+    const { published } = T.trackLessons(t);
+    const p = await open('/track/business', '.biz-card');
+    try {
+      assert(p.$('.page-head .eyebrow').textContent.trim() === 'Guide' && !/\btrack\b/i.test(p.$('#main').textContent), 'the page still uses the word "track"');
+      const cards = p.$$('.biz-card');
+      assert(cards.length === published.length && published.length === 22, `${cards.length} cards for ${published.length} lessons`);
+      for (const card of cards) {
+        const id = card.id.replace('lesson-', ''); const a = C.algoById[id];
+        const it = t.groups.flatMap((g) => g.items).find((x) => x.id === id);
+        const kids = [...card.children].map((c) => c.className.split(' ')[0] || c.tagName);
+        assert(kids[0] === 'biz-role' && kids[1] === 'H3' && kids[2] === 'biz-bridge', `${id}: the card's order is ${kids.join(', ')}`);
+        assert(card.querySelector('h3').textContent === it.question && card.querySelector('h3 a').getAttribute('href') === `#/algorithm/${id}`, `${id}: the heading is not the question, linked to the lesson`);
+        assert(card.querySelector('.biz-role').textContent === T.ROLES[it.role].label, `${id}: wrong role label`);
+        assert(card.querySelector('.biz-meta').textContent.includes(a.name) && card.querySelector('.biz-meta').textContent.includes(C.disciplineById[a.discipline].short), `${id}: the lesson name or discipline is missing`);
+        const tech = card.querySelector('details.biz-tech');
+        assert(tech && !tech.open, `${id}: technical details are not tucked away`);
+        // nothing outside the fold may state a cost formula
+        const visible = [...card.children].filter((c) => c !== tech).map((c) => c.textContent).join(' ');
+        assert(!/O\(|log n|n²/.test(visible), `${id}: a cost formula is shown before the reader asks for it`);
+        const rows = Object.fromEntries([...tech.querySelectorAll('.biz-dl > div')].map((d) => [d.querySelector('dt').textContent, d.querySelector('dd').textContent]));
+        for (const k of ['What the lesson shows', 'Approach', 'How the work grows', 'Time, worst case', 'Memory, worst case', 'It needs']) assert(rows[k], `${id}: technical details lack "${k}"`);
+        assert(rows['Time, worst case'] === a.time.worst && rows.Approach !== rows['How the work grows'], `${id}: cost and approach are not kept apart`);
+      }
+      assert(p.$$('.biz-legend > div').length === 3, 'the three kinds of lesson are not explained');
+      // technical foundations: shown under the group that needs them, and really assumed by a lesson in it
+      const groups = p.$$('.track-group').slice(0, t.groups.length);
+      for (const [k, g] of t.groups.entries()) {
+        const shown = [...groups[k].querySelectorAll('.track-found li a')].map((x) => x.getAttribute('href').split('/').pop());
+        const real = T.foundationsFor(t, g.lessons).map((f) => f.lesson.id);
+        assert(shown.join() === real.join(), `"${g.title}": foundations shown ${shown.join()} but the lessons assume ${real.join()}`);
+        for (const id of shown) assert(!published.some((a) => a.id === id), `${id} is listed as a foundation and as a lesson`);
+      }
+      assert(p.$$('.track-paths li').length === t.paths.length && p.$$('.track-paths .track-path-progress').every((x) => /\d+ of \d+ lessons opened/.test(x.textContent)), 'learning paths are not listed with their progress');
+      const start = p.$('.track-status .btn');
+      assert(start && C.algoById[start.getAttribute('href').split('/').pop()], 'no working place to start');
+      assert(p.$('.biz-case') && p.$('.biz-case').getAttribute('href') === '#/case/budget', 'the worked case is not offered');
+      const crypto = t.groups.find((g) => g.lessons.includes('rsa')), scale = t.groups.find((g) => g.lessons.includes('consistent-hashing'));
+      assert(crypto !== scale, 'cryptography and distributed systems share a group');
+      return `${cards.length} cards, ${t.groups.length} groups`;
+    } finally { p.close(); }
+  });
+  await test('the other guide lists its lessons in the usual way', async () => {
+    const t = C.trackById.ai;
+    const { published, planned } = T.trackLessons(t);
+    const p = await open('/track/ai', '.track-group .lesson-row');
+    try {
+      const live = p.$$('.track-group .lesson-row:not(.is-planned) h3 a').map((a) => a.getAttribute('href').split('/').pop());
+      assert(live.length === published.length && published.every((a) => live.includes(a.id)), `the page lists ${live.length} lessons, the guide has ${published.length}`);
+      assert(p.$$('.track-group .lesson-row.is-planned').length === planned.length, 'planned lessons are not all shown as planned');
+      assert(p.$('.page-head .eyebrow').textContent.trim() === 'Guide', 'the page does not call itself a guide');
+    } finally { p.close(); }
+    const q = await open('/track/nope', '#main h1');
+    try { assert(/no guide at this address/i.test(q.$('#main h1').textContent), 'an unknown guide does not say so'); } finally { q.close(); }
+  });
+  await test('a lesson that teaches on a simple example says what it stands for in a business', async () => {
+    const p = await open('/algorithm/monte-carlo', '.lesson h1');
+    try {
+      const box = p.$('.biz-bridge-box');
+      const it = C.trackById.business.groups.flatMap((g) => g.items).find((x) => x.id === 'monte-carlo');
+      assert(box && box.querySelector('h3').textContent === it.question && box.textContent.includes(it.bridge), 'the Monte Carlo lesson has no business bridge beside its demonstration');
+      assert(p.$('#see').contains(box) && box.offsetParent !== null, 'the bridge is not beside the demonstration at level 1');
+      assert(/π|pi/i.test(p.$('#see').textContent) || /π|pi/i.test(p.$('.lesson-head').textContent), 'the simple example was removed');
+    } finally { p.close(); }
+    const q = await open('/algorithm/ab-testing', '.lesson h1');
+    try { assert(!q.$('.biz-bridge-box'), 'a lesson that already models a business problem carries a bridge it does not need'); } finally { q.close(); }
+    const r = await open('/algorithm/quick-sort', '.lesson h1');
+    try { assert(!r.$('.biz-bridge-box'), 'a lesson outside the business guide carries a business bridge'); } finally { r.close(); }
+  });
+  await test('worked budget case: the answer on the page is the best possible, checked by trying every combination', async () => {
+    const c = C.caseById.budget;
+    // every one of the 256 ways to fund the eight proposals
+    let best = { benefit: -1, set: [] }, ties = 0;
+    for (let mask = 0; mask < (1 << c.items.length); mask++) {
+      let cost = 0, benefit = 0; const set = [];
+      c.items.forEach((x, i) => { if (mask & (1 << i)) { cost += x.cost; benefit += x.benefit; set.push(i); } });
+      if (cost > c.budget) continue;
+      if (benefit > best.benefit) { best = { benefit, set }; ties = 1; } else if (benefit === best.benefit) ties++;
+    }
+    assert(ties === 1, `${ties} plans tie for the best, so the page could not name one`);
+    const byHand = (rank) => { const order = c.items.map((_, i) => i).sort((a, b) => rank(c.items[b]) - rank(c.items[a]) || a - b); let spent = 0, benefit = 0; for (const i of order) if (spent + c.items[i].cost <= c.budget) { spent += c.items[i].cost; benefit += c.items[i].benefit; } return benefit; };
+    const p = await open('/case/budget', '.case-route.is-best');
+    try {
+      const money = (el) => Number(el.textContent.replace(/[£,]/g, ''));
+      const totals = p.$$('.case-route-total').map(money);
+      assert(totals[2] === best.benefit * 1000, `the page says the best is £${totals[2]}, trying every combination gives £${best.benefit * 1000}`);
+      assert(totals[0] === byHand((x) => x.benefit) * 1000 && totals[1] === byHand((x) => x.benefit / x.cost) * 1000, `the two shortcuts read £${totals[0]} and £${totals[1]}`);
+      assert(totals[0] < totals[2] && totals[1] < totals[2], 'a shortcut matches the best plan, so the case teaches nothing');
+      const funded = p.$$('.case-table tbody tr').map((tr, i) => (tr.children[4].textContent === 'Yes' ? i : -1)).filter((i) => i >= 0);
+      assert(funded.join() === best.set.join(), `the page funds ${funded.join()}, the best plan is ${best.set.join()}`);
+      for (const name of best.set.map((i) => c.items[i].name)) assert(p.$('.case-route.is-best').textContent.includes(name), `the best plan does not name ${name}`);
+      assert(p.$('.player-stage') && /Step 1 \//.test(p.$('.step-label').textContent), 'the lesson\'s method is not running on the page');
+      assert(/invented/.test(p.$('.case-note').textContent), 'the page does not say the figures are invented');
+      assert(p.$$('.case-assume li').length === c.assumptions.length && p.$$('.case-assume a').every((a) => C.algoById[a.getAttribute('href').split('/').pop()]), 'the limits of the model are not all stated, or point at a missing lesson');
+      return `best £${best.benefit * 1000} against £${totals[0]} and £${totals[1]} for the shortcuts, out of ${1 << c.items.length} combinations`;
+    } finally { p.close(); }
+  });
+  await test('cost is named the same way everywhere, and never confused with approach', async () => {
+    const { TIME_CLASS_SHORT, TIME_CLASS_LABELS, TIME_CLASS_PLAIN, TIME_CLASSES, PARADIGM_LABELS } = await import('../js/core/schema.js');
+    for (const k of TIME_CLASSES) assert(TIME_CLASS_SHORT[k] && TIME_CLASS_LABELS[k] && TIME_CLASS_PLAIN[k], `no standard wording for "${k}"`);
+    const approach = new Set(Object.values(PARADIGM_LABELS).map((x) => x.toLowerCase()));
+    for (const v of Object.values(TIME_CLASS_SHORT)) { assert(/time/i.test(v), `"${v}" does not say it is about time`); assert(!approach.has(v.toLowerCase()) && !/^iterative$/i.test(v), `"${v}" reads as an approach`); }
+    const p = await open('/library', '.lesson-row');
+    try {
+      const labels = new Set(p.$$('.lesson-row .lesson-cost').map((x) => x.textContent));
+      assert(labels.size >= 5, 'the library rows show no cost labels');
+      for (const l of labels) assert(Object.values(TIME_CLASS_SHORT).includes(l), `a row shows the cost as "${l}"`);
+      assert(p.$$('.lesson-row .lesson-cost').every((x) => /Worst case: /.test(x.title)), 'a cost label does not carry the worst case');
+    } finally { p.close(); }
+  });
+  await test('progress is described with one word, "opened", wherever it is shown', async () => {
+    localStorage.clear();
+    const { store } = await import('../js/core/store.js');
+    const bad = [];
+    for (const hash of ['/algorithm/linear-search', '/', '/track/business', '/track/ai', '/paths', '/path/absolute-beginners', '/profile', '/library']) {
+      const p = await open(hash, '#main h1');
       try {
-        const live = p.$$('.track-group .lesson-row:not(.is-planned) h3 a').map((a) => a.getAttribute('href').split('/').pop());
-        assert(live.length === published.length && published.every((a) => live.includes(a.id)), `${t.id}: the page lists ${live.length} lessons, the track has ${published.length}`);
-        assert(p.$$('.track-group .lesson-row.is-planned').length === planned.length, `${t.id}: planned lessons are not all shown as planned`);
-        assert(p.$$('.track-group .lesson-row.is-planned a').length === 0, `${t.id}: a planned lesson is a link`);
-        const start = p.$('.track-status .btn');
-        assert(start && C.algoById[start.getAttribute('href').split('/').pop()], `${t.id}: no working place to start`);
-        for (const f of T.trackFoundations(t)) { assert(!published.includes(f.lesson), `${t.id}: ${f.lesson.id} is listed as outside the track but is in it`); assert(f.neededBy.every((a) => (a.prerequisites || []).includes(f.lesson.id) || (a.connections || []).some((c) => c.to === f.lesson.id && c.type === 'prerequisite')), `${t.id}: ${f.lesson.id} is not assumed by the lessons named`); }
-        if (t.id === 'business') assert(/Select projects within a budget\./.test(p.$('.track-page').textContent), 'the business track does not show the decision each lesson helps with');
+        await sleep(120);
+        const text = `${p.$('#main').textContent} ${p.$('.site-head').textContent}`;
+        // words for the reader's progress; "visited" is also what a search does to a node, so it is only counted beside "lesson"
+        const m = text.match(/\bexplored\b|\blessons? (visited|completed|read)\b|\b(visited|completed) (lessons?|\d+ of)/i);
+        if (m) bad.push(`${hash}: "${m[0]}"`);
       } finally { p.close(); }
     }
-    const q = await open('/track/nope', '#main h1');
-    try { assert(/no track at this address/i.test(q.$('#main h1').textContent), 'an unknown track does not say so'); } finally { q.close(); }
+    localStorage.clear();
+    assert(!bad.length, bad.join(' | '));
   });
-  await test('the home page and the navigation lead with the two tracks, and nothing is removed', async () => {
+  await test('the home page and the navigation lead with the two guides, and nothing is removed', async () => {
     const p = await open('/', '.track-card');
     try {
       const cards = p.$$('.track-card').map((a) => a.getAttribute('href'));

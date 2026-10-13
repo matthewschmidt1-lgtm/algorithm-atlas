@@ -24,6 +24,8 @@ export let threads = [];
 export let compareGroups = [];
 export let featured = [];
 export let tracks = [];
+export let cases = [];
+export let caseById = {};
 export let trackById = {};
 
 // Optional content files. A missing or broken file must not take the site down.
@@ -37,7 +39,12 @@ export async function loadContent() {
     grab('connections.js', (m) => { threads = m.threads || []; }),
     grab('compare-groups.js', (m) => { compareGroups = (m.compareGroups || []).map((g) => ({ ...g, members: g.members.filter((id) => algoById[id]) })).filter((g) => g.members.length >= 2); }),
     grab('featured.js', (m) => { featured = (m.featured || []).filter((f) => algoById[f.id]); }),
-    grab('tracks.js', (m) => { tracks = m.tracks || []; trackById = Object.fromEntries(tracks.map((t) => [t.id, t])); }),
+    grab('cases.js', (m) => { cases = (m.cases || []).filter((c) => algoById[c.lesson]); caseById = Object.fromEntries(cases.map((c) => [c.id, c])); }),
+    grab('tracks.js', (m) => {
+      // a group lists lessons as ids, or as objects that carry a business question; `items` is always objects and `lessons` always ids
+      tracks = (m.tracks || []).map((t) => ({ ...t, groups: t.groups.map((g) => { const items = g.lessons.map((x) => (typeof x === 'string' ? { id: x } : x)); return { ...g, items, lessons: items.map((x) => x.id) }; }) }));
+      trackById = Object.fromEntries(tracks.map((t) => [t.id, t]));
+    }),
   ]);
 }
 

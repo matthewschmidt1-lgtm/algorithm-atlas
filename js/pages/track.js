@@ -1,52 +1,90 @@
-// A track: the lessons that matter most to one kind of reader, in a few groups.
-// One job: show what is in the track, what is still to be written, and where to start.
-// Nothing about a lesson is restated here beyond its own summary and, on the business
-// track, the problem it says it solves.
+// A guide: the lessons that matter most to one kind of reader, in a few groups.
+// One job: show what is in the guide and where to start.
+//
+// The business guide leads every lesson with the decision it serves, says honestly whether
+// the lesson models that decision or teaches a general method on a simple example, and keeps
+// the technical detail one click away. The other guide lists lessons in the usual way.
+// (The address and the files say "track". The page says "guide".)
 
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
-import { pageHead, lessonRow, plannedRow, plural } from '../ui/parts.js';
-import { pathCard } from './paths.js';
-import { trackLessons, trackFoundations } from '../core/tracks.js';
+import { PARADIGM_LABELS, TIME_CLASS_LABELS, TIME_CLASS_PLAIN } from '../core/schema.js';
+import { pageHead, lessonRow, plannedRow, plural, levelGlyph } from '../ui/parts.js';
+import { pathProgress } from '../core/recommend.js';
+import { trackLessons, foundationsFor, ROLES } from '../core/tracks.js';
 
-const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+// A lesson on the business guide: the question first, then what the method does for it.
+function businessCard(item, seen) {
+  const a = C.algoById[item.id];
+  const d = C.disciplineById[a.discipline];
+  const role = ROLES[item.role] || ROLES.method;
+  return h(`article.biz-card.is-${item.role}`, { id: `lesson-${a.id}` },
+    h('p.biz-role', role.label),
+    h('h3', h('a', { href: `#/algorithm/${a.id}` }, item.question)),
+    h('p.biz-bridge', item.bridge),
+    h('p.biz-meta',
+      h('span', 'Lesson: ', h('a.link', { href: `#/algorithm/${a.id}` }, a.name)),
+      h('span', d.short), levelGlyph(a.difficulty, true),
+      seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Opened` }) : null),
+    h('details.fold.biz-tech', h('summary', 'Technical details'), h('div.fold-body', h('dl.biz-dl',
+      h('div', h('dt', 'What the lesson shows'), h('dd', a.summary)),
+      h('div', h('dt', 'Approach'), h('dd', a.paradigms.map((p) => PARADIGM_LABELS[p]).join(', '))),
+      h('div', h('dt', 'How the work grows'), h('dd', `${TIME_CLASS_LABELS[a.time.class]}. ${TIME_CLASS_PLAIN[a.time.class]}`)),
+      h('div', h('dt', 'Time, worst case'), h('dd.mono', a.time.worst)),
+      h('div', h('dt', 'Memory, worst case'), h('dd.mono', a.space.worst)),
+      a.decide && a.decide.requires ? h('div', h('dt', 'It needs'), h('dd', a.decide.requires)) : null))));
+}
 
 export default async function render({ params }) {
   const t = C.trackById[params.id];
   if (!t) {
-    return { title: 'Track not found', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Tracks'), h('h1', 'There is no track at this address.'), h('p.lede', 'The atlas has two: AI and machine learning, and decisions in business.')),
+    return { title: 'Guide not found', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Guides'), h('h1', 'There is no guide at this address.'), h('p.lede', 'The atlas has two: AI and machine learning, and decisions in business.')),
       h('p', C.tracks.map((x) => [h('a.btn', { href: `#/track/${x.id}` }, x.title), ' ']))) };
   }
+  const business = t.groups.some((g) => g.items.some((x) => x.question));
   const { published, planned } = trackLessons(t);
   const seen = store.explored();
   const opened = published.filter((a) => seen.has(a.id)).length;
   const next = published.find((a) => !seen.has(a.id));
-  const foundations = trackFoundations(t);
   const paths = (t.paths || []).map((id) => C.pathById[id]).filter(Boolean);
   const other = C.tracks.find((x) => x.id !== t.id);
+  const cases = (t.cases || []).map((id) => C.caseById[id]).filter(Boolean);
+  const count = (role) => t.groups.reduce((n, g) => n + g.items.filter((x) => x.role === role && C.algoById[x.id]).length, 0);
+
+  const groupEl = (g) => {
+    const found = foundationsFor(t, g.lessons);
+    return h('section.track-group',
+      h('h2', g.title), h('p.track-group-blurb', g.blurb),
+      business
+        ? h('div.biz-cards', g.items.map((it) => (C.algoById[it.id] ? businessCard(it, seen.has(it.id)) : C.plannedById[it.id] ? plannedRow(C.plannedById[it.id]) : null)))
+        : h('div.lesson-list', g.items.map((it) => (C.algoById[it.id] ? lessonRow(C.algoById[it.id]) : C.plannedById[it.id] ? plannedRow(C.plannedById[it.id]) : null))),
+      found.length ? h('div.track-found',
+        h('p.biz-role', business ? ROLES.foundation.label + (found.length === 1 ? '' : 's') : 'What these lean on'),
+        h('ul', found.map((f) => h('li', h('a.link', { href: `#/algorithm/${f.lesson.id}` }, f.lesson.name), h('span', ` for ${f.neededBy.map((a) => a.name).join(', ')}`), seen.has(f.lesson.id) ? h('span.seen', { html: `${icon('check', { size: 13 })}Opened` }) : null)))) : null);
+  };
 
   const el = h('div.page.wrap.track-page',
-    pageHead({ eyebrow: 'Track', title: t.title, lede: t.blurb }),
+    pageHead({ eyebrow: 'Guide', title: t.title, lede: t.blurb }),
     h('p.track-reader', t.reader),
     h('div.track-status',
-      h('p', h('strong', plural(published.length, 'lesson')), ` written and checked${planned.length ? `, ${planned.length} more planned` : ''}. `, opened ? `You have opened ${opened}.` : ''),
+      h('p', h('strong', plural(published.length, 'lesson')), ` written and checked${planned.length ? `, ${planned.length} more planned` : ''}. `, `You have opened ${opened} of ${published.length}.`),
       next ? h('a.btn.btn-primary', { href: `#/algorithm/${next.id}` }, opened ? `Continue with ${next.name}` : `Start with ${next.name}`, h('span', { html: icon('arrow', { size: 15 }) })) : null),
-    t.groups.map((g) => h('section.track-group',
-      h('h2', g.title), h('p.track-group-blurb', g.blurb),
-      h('div.lesson-list', g.lessons.map((id) => {
-        const a = C.algoById[id];
-        if (!a) return C.plannedById[id] ? plannedRow(C.plannedById[id]) : null;
-        const why = g.why && g.why[id];
-        return lessonRow(a, { note: why ? `${cap(why)}. ${a.summary}` : null });
-      })))),
-    paths.length ? h('section.track-group', h('h2', 'Follow it in order'), h('p.track-group-blurb', 'These learning paths walk through the same ground one step at a time, with a reason for each step.'),
-      h('div.path-list', paths.map((p) => pathCard(p)))) : null,
-    foundations.length ? h('section.track-group', h('h2', 'What these lessons lean on'),
-      h('p.track-group-blurb', 'Lessons outside this track that the ones above name as worth reading first. They are in the library with everything else.'),
-      h('ul.track-foundations', foundations.map((f) => h('li', h('a.link', { href: `#/algorithm/${f.lesson.id}` }, f.lesson.name), h('span', ` for ${f.neededBy.map((a) => a.name).join(', ')}`))))) : null,
-    h('p.track-foot', other ? ['The other track: ', h('a.link', { href: `#/track/${other.id}` }, other.title), '. '] : null,
+    business ? h('dl.biz-legend', { 'aria-label': 'How to read the labels on this page' },
+      h('div', h('dt', `${ROLES.direct.label} (${count('direct')})`), h('dd', ROLES.direct.about)),
+      h('div', h('dt', `${ROLES.method.label} (${count('method')})`), h('dd', ROLES.method.about)),
+      h('div', h('dt', ROLES.foundation.label), h('dd', `${ROLES.foundation.about} Listed under the group that needs it.`))) : null,
+    cases.length ? h('section.biz-cases', { 'aria-label': 'Worked business cases' }, cases.map((c) => h('a.biz-case', { href: `#/case/${c.id}` },
+      h('span.biz-role', 'Worked business case'), h('span.biz-case-title', c.title, h('span', { html: icon('arrow', { size: 18 }) })), h('span.biz-case-sum', c.summary),
+      h('span.biz-case-with', `Runs the ${C.algoById[c.lesson].name} lesson's method on realistic figures.`)))) : null,
+    t.groups.map(groupEl),
+    paths.length ? h('section.track-group', h('h2', 'Follow it in order'), h('p.track-group-blurb', 'Learning paths that cover the same ground one step at a time, with a reason for each step.'),
+      h('ul.track-paths', paths.map((p) => { const pr = pathProgress(p); return h('li',
+        h('a.link', { href: `#/path/${p.id}` }, p.title),
+        h('span.track-path-level', p.level.charAt(0).toUpperCase() + p.level.slice(1)),
+        h('span.track-path-progress', pr.total ? `${pr.done} of ${pr.total} lessons opened` : '')); }))) : null,
+    h('p.track-foot', other ? ['The other guide: ', h('a.link', { href: `#/track/${other.id}` }, other.title), '. '] : null,
       'Everything else is still here: ', h('a.link', { href: '#/library' }, `all ${C.algos.length} lessons in the library`), ' and ', h('a.link', { href: '#/explore' }, 'the map of every field'), '.'));
   return { el, title: t.title };
 }

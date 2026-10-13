@@ -63,7 +63,7 @@ export default async function render() {
       h('span.track-card-count', `${plural(published.length, 'lesson')}${planned.length ? `, ${planned.length} more planned` : ''}`));
   };
   const tracksSec = C.tracks.length ? h('section.section.home-tracks', { 'aria-labelledby': 'home-tracks-h' }, h('div.wrap',
-    sectionHead({ eyebrow: 'Two ways through', title: 'Where the atlas goes deepest', id: 'home-tracks-h', single: true }),
+    sectionHead({ eyebrow: 'Two guides', title: 'Where the atlas goes deepest', id: 'home-tracks-h', single: true }),
     h('div.track-cards', C.tracks.map(trackCard)))) : null;
 
   /* ---- start from a problem ---- */
