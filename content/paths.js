@@ -458,7 +458,7 @@ export const paths = [
       {
         id: 'search-with-a-heuristic',
         title: "Search with a heuristic",
-        goal: "Focus the search with an estimate of the distance still to go, ahead of a planned lesson on searching against an opponent.",
+        goal: "Focus the search with an estimate of the distance still to go, then search against an opponent who is trying to stop you.",
         modules: [
           { algo: 'a-star', why: "Adds an estimate of the remaining cost to Dijkstra's ordering, and keeps the best answer if the estimate never overshoots." },
           { algo: 'minimax', why: "Search against an opponent who is also choosing moves, with pruning of lines that cannot matter." },
@@ -493,7 +493,7 @@ export const paths = [
       {
         id: 'from-rules-to-learning',
         title: "From rules to learning",
-        goal: "Meet the simplest methods that learn from examples instead of following hand-written rules, in a stage that is still growing while the lesson on learning from reward is planned.",
+        goal: "Meet the simplest methods that learn from examples instead of following hand-written rules, and one that learns from reward.",
         modules: [
           { algo: 'knn', why: "Decides by finding the most similar past cases: the most direct way to learn from examples." },
           { algo: 'perceptron', why: "Learns a dividing line by correcting itself after every mistake." },
@@ -570,7 +570,7 @@ export const paths = [
       {
         id: 'groups-without-labels',
         title: "Finding groups without labels",
-        goal: "Learn what can be found in data when nobody has supplied the answers, with the lesson on principal components still planned.",
+        goal: "Learn what can be found in data when nobody has supplied the answers: its natural groups, and the directions along which it varies most.",
         modules: [
           { algo: 'k-means', why: "Alternates two simple steps, assign and average, until the groups stop changing." },
           { algo: 'pca', why: "Finds the directions along which the data varies most, so that it can be described with fewer numbers." },
@@ -581,7 +581,7 @@ export const paths = [
       {
         id: 'other-ways-to-learn',
         title: "Other ways to learn",
-        goal: "See learning as the updating of a belief, and note two methods whose lessons are planned: learning by asking questions of the data, and learning from a few examples at a time.",
+        goal: "See learning as the updating of a belief, then meet two more ways to learn: by asking questions of the data, and from a few examples at a time.",
         modules: [
           { algo: 'bayesian-updating', why: "Keeps a whole distribution over the answer, so it can say how sure it is." },
           { algo: 'decision-tree', why: "Learns a sequence of yes-or-no questions that splits the data into purer groups." },
@@ -593,7 +593,7 @@ export const paths = [
       {
         id: 'from-one-unit-to-many',
         title: "From one unit to many",
-        goal: "Stack the units from the second stage into layers and train them all at once, with the lesson on the Adam optimizer still planned.",
+        goal: "Stack the units from the second stage into layers and train them all at once, then see what an optimizer such as Adam changes.",
         modules: [
           { algo: 'backpropagation', why: "Computes the gradient for every weight of a layered network in one backward pass." },
           { algo: 'adam', why: "Adapts the step size for each weight separately, a common default for training networks." },
@@ -629,7 +629,7 @@ export const paths = [
     level: 'advanced',
     group: 'intelligence',
     blurb: "From a single unit to layered networks: how gradients flow backwards, what makes training succeed or fail, and how a diffusion model is trained.",
-    audience: "Learners who know what a loss function and gradient descent are and want to understand how layered networks are trained. Several lessons in the later stages are planned, so this path is still growing.",
+    audience: "Learners who know what a loss function and gradient descent are and want to understand how layered networks are trained. The later stages go on to optimizers and to networks shaped for images, sequences and graphs.",
     prerequisites: [
       { text: "Gradient descent, linear regression and loss functions", path: 'machine-learning-first-principles' },
       { text: "Derivatives and the chain rule", path: 'mathematics-for-algorithms' },
@@ -667,7 +667,7 @@ export const paths = [
       {
         id: 'making-training-work',
         title: "Making training work",
-        goal: "Understand why plain gradient descent struggles on real loss surfaces and what optimizers change, using the published Gradient Descent lesson while both lessons of this stage are planned.",
+        goal: "Understand why plain gradient descent struggles on real loss surfaces and what optimizers change.",
         modules: [
           { algo: 'stochastic-gradient-descent', why: "Replaces the exact gradient with a noisy estimate from a small batch of examples." },
           { algo: 'adam', why: "Combines momentum with a separate step size for each weight." },
@@ -678,7 +678,7 @@ export const paths = [
       {
         id: 'architectures-and-generation',
         title: "Architectures and generation",
-        goal: "Survey how networks are shaped for images, sequences and graphs, where all three lessons are planned, and study one generative model in full.",
+        goal: "Survey how networks are shaped for images, sequences and graphs, and study one generative model in full.",
         modules: [
           { algo: 'convolution', why: "Slides one small set of weights across an image, so that a feature is recognized wherever it appears." },
           { algo: 'attention', why: "Lets every position of a sequence draw on every other, the basis of the transformer." },
@@ -716,7 +716,7 @@ export const paths = [
     level: 'advanced',
     group: 'intelligence',
     blurb: "How programs produce new text and images: generation as sampling, prediction as compression, and diffusion as learned noise removal.",
-    audience: "Learners who want to understand what lies beneath models that generate text and images. Only part of this subject is published so far: diffusion is covered, while the lessons on attention and tokenization are planned, so this path is still growing.",
+    audience: "Learners who want to understand what lies beneath models that generate text and images. The path covers tokenization, attention and diffusion. Each demonstration is a small worked computation, not a trained model.",
     prerequisites: [
       { text: "Backpropagation and gradient descent", path: 'deep-learning' },
       { text: "Probability, expected value and the Gaussian distribution", path: 'mathematics-for-algorithms' },
@@ -744,7 +744,7 @@ export const paths = [
       {
         id: 'prediction-and-compression',
         title: "Prediction and compression",
-        goal: "See why predicting the next symbol well and storing a text in few bits are the same skill, with the lesson on tokenization still planned.",
+        goal: "See why predicting the next symbol well and storing a text in few bits are the same skill, and how a text is cut into the tokens a language model reads.",
         modules: [
           { algo: 'run-length-encoding', why: "The simplest compressor, and a reminder that a method gains only where the data is predictable in the way it expects." },
           { algo: 'huffman-coding', why: "Gives likely symbols short codes, so a better probability model means a shorter message." },
@@ -757,7 +757,7 @@ export const paths = [
       {
         id: 'networks-that-generate',
         title: "Networks that generate",
-        goal: "Put a trained network in charge of the probabilities and study diffusion as a complete example, with the lesson on attention still planned.",
+        goal: "Put a trained network in charge of the probabilities: attention for sequences, and diffusion as a complete example.",
         modules: [
           { algo: 'backpropagation', why: "The procedure used to train the networks inside generative models." },
           { algo: 'attention', why: "The mechanism that lets a language model use the whole of its context when predicting the next token." },
@@ -834,7 +834,7 @@ export const paths = [
       {
         id: 'following-the-slope',
         title: "Following the slope",
-        goal: "Optimize over continuous quantities, where the gradient says which way to move, with the lesson on linear programming still planned.",
+        goal: "Optimize over continuous quantities, where the gradient says which way to move, and over straight-line limits, where the best answer sits at a corner.",
         modules: [
           { algo: 'gradient-descent', why: "The basic downhill method, with step size, momentum and conditioning all visible." },
           { algo: 'newtons-method', why: "Applied to the derivative, it uses curvature as well as slope, and near a minimum it needs far fewer steps." },
@@ -881,7 +881,7 @@ export const paths = [
     title: 'Quantitative Finance',
     level: 'intermediate',
     group: 'applied',
-    blurb: "The numerical methods behind pricing and risk: simulation, root finding, fitting and filtering, built from general lessons while the finance lessons are planned.",
+    blurb: "The numerical methods behind pricing and risk: simulation, root finding, fitting and filtering, built from general lessons, with one lesson on pricing an option.",
     audience: "Learners with some programming and probability who want to see the algorithms that quantitative finance borrows, taught as algorithms and not as investment advice. The atlas has no published finance lesson yet, so this path is built from the general methods and is still growing.",
     prerequisites: [
       { text: "Probability, expected value and the Gaussian distribution", path: 'mathematics-for-algorithms' },
@@ -898,7 +898,7 @@ export const paths = [
       {
         id: 'expected-values-by-simulation',
         title: "Expected values by simulation",
-        goal: "Estimate an average over uncertain outcomes by generating many of them, with the lesson on binomial option pricing still planned.",
+        goal: "Estimate an average over uncertain outcomes by generating many of them, and price an option by working backward through a tree of possible prices.",
         modules: [
           { algo: 'monte-carlo', why: "The method itself, on a problem with a known answer, so that the error can be seen." },
           { algo: 'binomial-option-pricing', why: "Values a contract on a tree of up and down moves, working backwards from the final payoffs." },
@@ -921,7 +921,7 @@ export const paths = [
       {
         id: 'fitting-and-optimizing',
         title: "Fitting and optimizing",
-        goal: "Fit a model to observed data and choose quantities that minimize a cost, with the lesson on linear programming still planned.",
+        goal: "Fit a model to observed data and choose quantities that minimize a cost, including under several limits at once.",
         modules: [
           { algo: 'gradient-descent', why: "Minimizes a cost by following its slope, and shows why badly scaled problems converge slowly." },
           { algo: 'linear-regression', why: "Estimates how one quantity moves with another from noisy observations." },

@@ -19,6 +19,8 @@
 //   was      for the questions of the original audit: how the search did before this work
 //
 // The "heldout" set was written before any change to the search and was not used to tune it.
+// When new lessons are published, add them to `ok` wherever they plainly answer the query
+// (sixteen were added on 2026-10-13, and the "tracks" set was written for them).
 // Do not edit a fixture to make a failing search pass. (A result nobody had judged may be
 // added to `ok` when it is plainly right: two discipline pages were added that way.) Add the missing vocabulary to
 // content/synonyms.js or to the lesson's own aliases and problem phrases instead.
@@ -33,6 +35,7 @@ export const SETS = {
   trap: 'False-positive risks',
   none: 'Questions the atlas cannot answer',
   expert: 'Precise queries from someone who knows the subject',
+  tracks: 'Questions for the lessons added to the two tracks, never tuned against',
   heldout: 'Held out: written before the changes and never tuned against',
 };
 
@@ -60,7 +63,7 @@ export const fixtures = [
   { q: 'why does my GPS reroute', set: 'original', was: 'fail', ok: [...ROUTES, 'kalman-filter'] },
   { q: 'how do computers generate images', set: 'original', was: 'pass', ok: ['ddpm', 'path:generative-ai', 'discipline:deep-learning'], forbid: ALIGN },
   { q: 'find a word in a document', set: 'original', was: 'marginal', ok: ['hash-table', 'linear-search', 'binary-search', 'lz77', 'edit-distance'] },
-  { q: 'schedule tasks', set: 'original', was: 'pass', ok: ['topological-sort', 'concept:topological-order'] },
+  { q: 'schedule tasks', set: 'original', was: 'pass', ok: ['topological-sort', 'critical-path', 'concept:topological-order'] },
   { q: 'spot spam', set: 'original', was: 'fail', ok: ['logistic-regression', 'bayesian-updating', 'concept:supervised-learning'] },
   { q: 'guess a number quickly', set: 'original', was: 'pass', ok: ['binary-search', 'bisection-method'] },
 
@@ -176,8 +179,8 @@ export const fixtures = [
   { q: 'gene', set: 'trap', ok: ['needleman-wunsch', 'genetic-algorithm'] },
   { q: 'genetic', set: 'trap', ok: ['genetic-algorithm'] },
   { q: 'hash map', set: 'trap', ok: ['hash-table', 'consistent-hashing', 'concept:hashing'], forbid: ROUTES },
-  { q: 'social network', set: 'trap', ok: ['pagerank', 'bfs', 'union-find', 'dfs', 'concept:graph'], forbid: ['backpropagation', 'perceptron'] },
-  { q: 'neural network', set: 'trap', ok: [...TRAIN, 'ddpm'] },
+  { q: 'social network', set: 'trap', ok: ['pagerank', 'bfs', 'union-find', 'dfs', 'graph-neural-network', 'concept:graph'], forbid: ['backpropagation', 'perceptron'] },
+  { q: 'neural network', set: 'trap', ok: [...TRAIN, 'ddpm', 'graph-neural-network', 'attention', 'convolution', 'path:deep-learning'] },
   { q: 'tree', set: 'trap', ok: ['kruskal', 'huffman-coding', 'dfs', 'bfs', 'rrt', 'binary-search-tree', 'decision-tree', 'concept:tree', 'concept:spanning-tree', 'concept:heap'] },
   { q: 'compress images', set: 'trap', ok: [...COMPRESS, 'k-means'], forbid: ['ddpm'] },
   { q: 'resort booking', set: 'trap', none: true, ok: [], forbid: SORTS },
@@ -187,7 +190,7 @@ export const fixtures = [
   { q: 'translate languages', set: 'none', none: true, ok: ['attention', 'byte-pair-encoding', 'discipline:nlp', 'path:natural-language-processing'] },
   { q: 'undo a mistake', set: 'none', none: true, ok: [] },
   { q: 'how to split a bill', set: 'none', none: true, ok: [] },
-  { q: 'weather forecast', set: 'none', none: true, ok: ['euler-method', 'runge-kutta-4', 'kalman-filter', 'linear-regression'] },
+  { q: 'weather forecast', set: 'none', none: true, ok: ['euler-method', 'runge-kutta-4', 'kalman-filter', 'linear-regression', 'graph-neural-network', 'exponential-smoothing'] },
   { q: 'blockchain', set: 'none', none: true, ok: ['sha-256'] },
   { q: 'pizza recipe', set: 'none', none: true, ok: [] },
   { q: 'asdfgh', set: 'none', none: true, ok: [] },
@@ -207,6 +210,22 @@ export const fixtures = [
   { q: 'disjoint set union', set: 'expert', ok: ['union-find'] },
   { q: 'kahn', set: 'expert', ok: ['topological-sort'] },
 
+  /* ---- the lessons added to the two tracks ---- */
+  { q: 'did my change make sales go up', set: 'tracks', ok: ['ab-testing'] },
+  { q: 'which version of the page is better', set: 'tracks', ok: ['ab-testing'] },
+  { q: 'forecast sales for next month', set: 'tracks', ok: ['exponential-smoothing', 'linear-regression'] },
+  { q: 'how long will my project take', set: 'tracks', ok: ['critical-path', 'topological-sort'] },
+  { q: 'best mix of products to make', set: 'tracks', ok: ['simplex', 'knapsack'] },
+  { q: 'which customers will leave', set: 'tracks', ok: ['decision-tree', 'logistic-regression'] },
+  { q: 'what is an option worth', set: 'tracks', ok: ['binomial-option-pricing'] },
+  { q: 'how does ChatGPT read text', set: 'tracks', ok: ['attention', 'byte-pair-encoding'] },
+  { q: 'find edges in a photo', set: 'tracks', ok: ['convolution'] },
+  { q: 'how does a computer win at noughts and crosses', set: 'tracks', ok: ['minimax', 'q-learning'] },
+  { q: 'learn by trial and error', set: 'tracks', ok: ['q-learning', 'dfs', 'perceptron'] },
+  { q: 'reduce the number of columns in my data', set: 'tracks', ok: ['pca'] },
+  { q: 'train on a few examples at a time', set: 'tracks', ok: ['stochastic-gradient-descent', 'adam'] },
+  { q: 'track a moving object with noisy readings', set: 'tracks', ok: ['particle-filter', 'kalman-filter'] },
+
   /* ---- held out ---- */
   { q: 'quickest way to get across town', set: 'heldout', ok: ROUTES },
   { q: 'arrange names alphabetically', set: 'heldout', ok: SORTS },
@@ -214,7 +233,7 @@ export const fixtures = [
   { q: 'is my email spam', set: 'heldout', ok: ['logistic-regression', 'bayesian-updating', 'concept:supervised-learning'] },
   { q: 'songs I might enjoy', set: 'heldout', ok: ['knn', 'k-means'] },
   { q: 'finding the closest match for a misspelled word', set: 'heldout', ok: ['edit-distance', 'lcs', 'knn'] },
-  { q: 'plan a project with dependencies', set: 'heldout', ok: ['topological-sort', 'concept:topological-order'] },
+  { q: 'plan a project with dependencies', set: 'heldout', ok: ['topological-sort', 'critical-path', 'concept:topological-order'] },
   { q: 'connect houses with the least wire', set: 'heldout', ok: ['kruskal', 'prim', 'concept:spanning-tree'] },
   { q: 'what are the odds', set: 'heldout', ok: ['monte-carlo', 'bayesian-updating', 'concept:probability', 'concept:bayes-theorem'] },
   { q: 'how do search engines decide what comes first', set: 'heldout', ok: ['pagerank'] },
@@ -293,5 +312,5 @@ export function score(run, { sets = null } = {}) {
   };
   const bySet = {};
   for (const id of Object.keys(SETS)) { const list = rows.filter((r) => r.set === id); if (list.length) bySet[id] = summarise(list); }
-  return { rows, bySet, tuned: summarise(rows.filter((r) => r.set !== 'heldout')), heldout: summarise(rows.filter((r) => r.set === 'heldout')), all: summarise(rows) };
+  return { rows, bySet, tuned: summarise(rows.filter((r) => r.set !== 'heldout' && r.set !== 'tracks')), heldout: summarise(rows.filter((r) => r.set === 'heldout')), tracks: summarise(rows.filter((r) => r.set === 'tracks')), all: summarise(rows) };
 }

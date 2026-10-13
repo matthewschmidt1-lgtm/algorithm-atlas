@@ -34,6 +34,8 @@ def print_bench(bench, rows, hide_heldout=False):
         line(bench["sets"][key], s)
     line("ALL EXCEPT HELD OUT", bench["tuned"])
     line("HELD OUT", bench["heldout"])
+    if bench.get("tracks"):
+        line("NEW TRACK LESSONS (untuned)", bench["tracks"])
     line("EVERYTHING", bench["all"])
     if rows:
         print()

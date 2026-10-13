@@ -6,21 +6,21 @@ export const buildInfo = {
  "python": "Python 3.9.6",
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
  "browser": "Google Chrome 155.0.8059.40",
- "lessons": 57,
- "tests": 518,
- "runs": 475,
- "frames": 27712,
- "programs": 171,
- "formulas": 78,
+ "lessons": 73,
+ "tests": 737,
+ "runs": 631,
+ "frames": 38641,
+ "programs": 219,
+ "formulas": 105,
  "relations": {
-  "exact": 41,
-  "close": 13,
+  "exact": 58,
+  "close": 16,
   "average": 2,
-  "upper": 4,
-  "growth": 17,
-  "lower": 1
+  "upper": 5,
+  "growth": 22,
+  "lower": 2
  },
- "lessonsWithCostCheck": 47
+ "lessonsWithCostCheck": 63
 };
 export const catalog = [
  {
@@ -4337,6 +4337,533 @@ export const catalog = [
   "frames": 95
  },
  {
+  "id": "minimax",
+  "name": "Minimax with Alpha-Beta Pruning",
+  "aliases": [
+   "minimax",
+   "minmax",
+   "alpha-beta pruning",
+   "alpha-beta search",
+   "game tree search",
+   "adversarial search"
+  ],
+  "kind": "algorithm",
+  "discipline": "ai",
+  "alsoIn": [
+   {
+    "id": "algorithms",
+    "why": "It is depth-first search over a tree of positions, with a rule for passing values back up the tree and a bound for abandoning branches early."
+   },
+   {
+    "id": "optimization",
+    "why": "Choosing the option whose worst case is best is a standard decision rule, and alpha-beta is a form of branch and bound: it discards options that a known bound already rules out."
+   }
+  ],
+  "subfield": "Search",
+  "family": "Adversarial (game) search",
+  "lab": "graphs",
+  "summary": "Chooses a move in a two-player game by assuming the opponent always replies as well as possible, and skips branches that provably cannot change the choice.",
+  "difficulty": "intermediate",
+  "order": 265,
+  "paradigms": [
+   "graph-search"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(b^(d/2)) with pruning and the best move tried first",
+   "average": "Depends on the order of moves",
+   "worst": "O(b^d)",
+   "class": "exponential"
+  },
+  "space": {
+   "worst": "O(b·d)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "how does a computer choose a move in a game",
+    "play noughts and crosses perfectly",
+    "pick the best move against an opponent",
+    "look several moves ahead",
+    "how does a chess program think",
+    "plan for the worst an opponent can do"
+   ],
+   "techniques": [
+    "game tree",
+    "depth-first search",
+    "pruning",
+    "evaluation function",
+    "move ordering"
+   ],
+   "applications": [
+    "games"
+   ]
+  },
+  "prerequisites": [
+   "dfs",
+   "concept:tree",
+   "concept:recursion",
+   "concept:state-space"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Chess programs",
+    "status": "established"
+   },
+   {
+    "title": "Perfect play in small games",
+    "status": "established"
+   },
+   {
+    "title": "Computer opponents in board-game apps",
+    "status": "illustrative"
+   },
+   {
+    "title": "Planning for the worst case",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "dfs",
+    "type": "prerequisite",
+    "why": "Minimax is depth-first search over the tree of game positions: it follows one line of play to its end, backs up, and tries the next. Depth-first search supplies the order of visiting, and minimax adds a value passed back up."
+   },
+   {
+    "to": "concept:tree",
+    "type": "prerequisite",
+    "why": "Minimax works on a game tree, with the current position at the root, one child for each legal move, and the ends of the game as leaves."
+   },
+   {
+    "to": "concept:recursion",
+    "type": "prerequisite",
+    "why": "The value of a position in minimax is defined by the values of the positions one move later, so the search is a function that calls itself on each child."
+   },
+   {
+    "to": "concept:state-space",
+    "type": "related",
+    "why": "The game tree that minimax searches is the state space of the game, unrolled from the current position one move at a time."
+   },
+   {
+    "to": "concept:backtracking",
+    "type": "related",
+    "why": "Backtracking abandons a partial solution as soon as it cannot succeed. Alpha-beta abandons a position in the minimax search as soon as it cannot change the choice at the root."
+   },
+   {
+    "to": "a-star",
+    "type": "related",
+    "why": "A* and alpha-beta both use a bound to avoid exploring what cannot matter. A* leaves positions whose estimated total cost is too high, and alpha-beta leaves positions whose value is already outside the range that could change the choice. A* searches with no opponent, minimax against one."
+   },
+   {
+    "to": "fibonacci-dp",
+    "type": "related",
+    "why": "Both compute a value at the top of a tree of subproblems from the values below. Fibonacci by dynamic programming stores each subproblem so that it is solved once, and game programs add the same idea to minimax by storing positions reached through different orders of moves."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "related",
+    "why": "Monte Carlo tree search swaps the full minimax search for Monte Carlo estimation: it judges a position by the average result of many sampled lines of play, which works where the tree is too large for alpha-beta."
+   },
+   {
+    "to": "q-learning",
+    "type": "related",
+    "why": "Minimax and Q-learning both give a position a value by looking at the values of the positions that can follow it. Minimax computes them by searching a game whose rules it knows, and Q-learning learns them from experience."
+   },
+   {
+    "to": "discipline:optimization",
+    "type": "application",
+    "why": "Robust optimization picks the design whose worst case is best, the same rule minimax applies to a game tree, and alpha-beta is a form of the branch-and-bound method used there to discard options that a bound already rules out."
+   }
+  ],
+  "analogy": "Choose a bag, and a rival picks what you get from it",
+  "takeaway": "Assume your opponent will always make the reply that is worst for you, choose the move whose worst case is best, and stop studying a move as soon as one reply proves it worse than a move you already have.",
+  "describe": "A game tree drawn with the position to move from at the top and the endings along the bottom, each ending labelled with its score. Levels alternate between Max, who takes the highest value below, and Min, who takes the lowest. The position being looked at is terracotta and the positions on the current line of play are ochre. A position whose value has been worked out exactly turns forest green and shows the value. A position that was cut shows only a limit, such as ≤2, in brick red, and the branches that were never looked at are greyed out with a dashed line leading to them. Rows under the tree show the current line of play, the scores each player is already sure of (alpha and beta), and how many endings have been examined and skipped. At the end the best line of play is drawn in forest green. With the noughts-and-crosses option the board of the position being looked at is shown as well.",
+  "views": [
+   "graph",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "the worked example: value 4 after 6 of 9 endings, with the 9, 8 and 1 skipped",
+    "the worked example without pruning examines all 9 endings and gives the same value",
+    "the predicted run: with the groups reversed nothing is cut and the value is still 4",
+    "alpha-beta agrees with plain minimax and with an independent reference on 1,600 seeded trees, and never examines more endings",
+    "with the best move first, exactly b^⌈d/2⌉ + b^⌊d/2⌋ − 1 endings are examined",
+    "noughts and crosses: X must block on square 7, the game is a draw, and 4 of 6 endings are examined",
+    "noughts and crosses without pruning reaches the same value from all 6 endings"
+   ],
+   "runs": 8,
+   "frames": 204,
+   "cost": [
+    {
+     "formula": "2^d",
+     "series": "Plain minimax",
+     "metric": "Endings examined",
+     "sizeLabel": "Moves looked ahead (d), with 2 choices per move",
+     "relation": "exact",
+     "detail": "all 9 sizes agree",
+     "rows": [
+      [
+       2,
+       4,
+       4
+      ],
+      [
+       3,
+       8,
+       8
+      ],
+      [
+       4,
+       16,
+       16
+      ],
+      [
+       5,
+       32,
+       32
+      ],
+      [
+       6,
+       64,
+       64
+      ],
+      [
+       8,
+       256,
+       256
+      ],
+      [
+       10,
+       1024,
+       1024
+      ],
+      [
+       12,
+       4096,
+       4096
+      ],
+      [
+       14,
+       16384,
+       16384
+      ]
+     ]
+    },
+    {
+     "formula": "2^⌈d/2⌉ + 2^⌊d/2⌋ − 1",
+     "series": "Alpha-beta, best move first",
+     "metric": "Endings examined",
+     "sizeLabel": "Moves looked ahead (d), with 2 choices per move",
+     "relation": "exact",
+     "detail": "all 9 sizes agree",
+     "rows": [
+      [
+       2,
+       3,
+       3
+      ],
+      [
+       3,
+       5,
+       5
+      ],
+      [
+       4,
+       7,
+       7
+      ],
+      [
+       5,
+       11,
+       11
+      ],
+      [
+       6,
+       15,
+       15
+      ],
+      [
+       8,
+       31,
+       31
+      ],
+      [
+       10,
+       63,
+       63
+      ],
+      [
+       12,
+       127,
+       127
+      ],
+      [
+       14,
+       255,
+       255
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 3
+  },
+  "frames": 43
+ },
+ {
+  "id": "q-learning",
+  "name": "Q-Learning",
+  "aliases": [
+   "Q learning",
+   "reinforcement learning",
+   "tabular Q-learning",
+   "temporal-difference learning",
+   "TD learning",
+   "learning from rewards"
+  ],
+  "kind": "algorithm",
+  "discipline": "ai",
+  "alsoIn": [
+   {
+    "id": "machine-learning",
+    "why": "It is the usual first example of reinforcement learning, the branch of machine learning that learns from rewards instead of from labelled examples."
+   },
+   {
+    "id": "robotics",
+    "why": "A robot can use it to learn which action to take in each situation by trial and error, when nobody can write down exactly how its actions will turn out."
+   }
+  ],
+  "subfield": "Reinforcement learning",
+  "family": "Temporal-difference learning",
+  "lab": "machine-learning",
+  "year": 1989,
+  "authors": "Christopher Watkins",
+  "summary": "Learns how good each action is in each situation by trying actions, seeing the reward, and nudging a table of values toward what it has just experienced.",
+  "difficulty": "intermediate",
+  "order": 268,
+  "paradigms": [
+   "iterative-refinement",
+   "dynamic-programming",
+   "randomized-sampling"
+  ],
+  "randomized": true,
+  "approximate": true,
+  "time": {
+   "best": "O(A) per step, for A actions",
+   "average": "O(A) per step",
+   "worst": "No fixed number of steps: the values converge in the limit",
+   "class": "iterative"
+  },
+  "space": {
+   "worst": "O(S·A)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "learn by trial and error",
+    "teach a program to reach a goal using only rewards",
+    "learn which action is best in each situation",
+    "train an agent to avoid danger and find a reward",
+    "make good decisions without being told the rules",
+    "learn from a reward that only arrives at the end"
+   ],
+   "techniques": [
+    "value table",
+    "temporal-difference update",
+    "epsilon-greedy exploration",
+    "discounting",
+    "Bellman equation"
+   ],
+   "applications": [
+    "machine learning",
+    "robotics",
+    "games"
+   ]
+  },
+  "prerequisites": [
+   "concept:state-space",
+   "concept:dynamic-programming",
+   "concept:learning-rate",
+   "concept:exploration-exploitation"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Playing video games from the screen",
+    "status": "established"
+   },
+   {
+    "title": "A model of learning in the brain",
+    "status": "established"
+   },
+   {
+    "title": "Robot skills learned by trial",
+    "status": "illustrative"
+   },
+   {
+    "title": "Tuning a controller",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:exploration-exploitation",
+    "type": "prerequisite",
+    "why": "Every step of Q-learning is a choice between using the best value known so far and trying something else to learn more. The exploration rate sets the balance."
+   },
+   {
+    "to": "concept:learning-rate",
+    "type": "prerequisite",
+    "why": "Each Q-learning update moves a value a fixed fraction of the way toward its target, and that fraction is a learning rate: too large and the value chases every sample, too small and it learns slowly."
+   },
+   {
+    "to": "concept:dynamic-programming",
+    "type": "prerequisite",
+    "why": "Q-learning rests on the idea behind dynamic programming: the value of a state can be built from the values of the states that follow it. Dynamic programming computes them from known rules, and Q-learning learns them from experience."
+   },
+   {
+    "to": "concept:state-space",
+    "type": "prerequisite",
+    "why": "The Q-learning table has one row for every state the agent can be in, so the method only works when the state space is small enough to list."
+   },
+   {
+    "to": "fibonacci-dp",
+    "type": "related",
+    "why": "Both fill a table in which each entry depends on entries for what comes next. Fibonacci by dynamic programming fills it once, in a fixed order, from a known rule. Q-learning fills it gradually, in whatever order the agent happens to wander."
+   },
+   {
+    "to": "gradient-descent",
+    "type": "related",
+    "why": "Gradient descent and Q-learning both improve a guess through many small corrections scaled by a learning rate. Gradient descent steps down the slope of an error, and Q-learning steps toward a target built from the reward just received."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "related",
+    "why": "Monte Carlo estimation and Q-learning both learn from samples instead of from a formula. Monte Carlo averages whole outcomes, while Q-learning uses one step of real experience and fills in the rest from its own current estimates."
+   },
+   {
+    "to": "bayesian-updating",
+    "type": "related",
+    "why": "Bayesian updating and Q-learning both revise a belief a little with each observation instead of starting again. Bayesian updating weighs the evidence by an exact rule of probability, and Q-learning moves a value by a fixed fraction of its surprise."
+   },
+   {
+    "to": "a-star",
+    "type": "same-problem",
+    "why": "A* and Q-learning can both produce a shortest route across a grid. A* is handed the map and searches it. Q-learning is given no map and learns the route from rewards, at a far greater cost in steps."
+   },
+   {
+    "to": "minimax",
+    "type": "related",
+    "why": "Minimax and Q-learning both value a position by the values of the positions that can follow it. Minimax works them out by searching a game whose rules it knows, and Q-learning learns them from the rewards it meets."
+   },
+   {
+    "to": "backpropagation",
+    "type": "advanced",
+    "why": "Deep Q-learning replaces the Q-learning table with a neural network that estimates the values, and that network is trained by backpropagation."
+   },
+   {
+    "to": "discipline:robotics",
+    "type": "application",
+    "why": "A robot can learn which action to take in each situation from reward alone, which is the Q-learning setting, when the effect of its actions is too complicated to model by hand."
+   }
+  ],
+  "analogy": "Signposts in a park with no map",
+  "takeaway": "After every step, nudge your guess for that step toward the reward you got plus the best you now expect from where you landed, and good guesses will spread back from the reward.",
+  "describe": "A small grid world seen from above. The agent is a dark dot, the goal cell is green and marked +10, the hazard cell is brick red and marked −10, and walls are dark blocks. Every other cell is divided into four triangles, one for each move out of it (up, right, down, left), and each triangle shows the value the agent currently holds for that move. A dot means the move has never been tried. Triangles shade green as a value rises above zero and brick red as it falls below. The triangle just updated is outlined in terracotta, and an ochre line traces the agent's path in the current episode. Under the grid, a row gives the numbers that went into the latest update, and a small chart shows the average difference between the table and the exact values, episode by episode. At the end the route the table gives is drawn as a thick green line, with arrows for the best move in the other cells.",
+  "views": [
+   "scene",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "small room, always exploring, 2,000 episodes: every value within 0.001 of value iteration, and the route is a shortest one",
+    "open room, exploring half the time, 3,000 episodes: every value within 0.001 of value iteration, route of 7 moves",
+    "cliff edge, exploring half the time, 3,000 episodes: values within 0.001, and the route runs along the edge",
+    "the same tolerance holds for 20 other seeds in the small room",
+    "default run: a shortest route, exact along it, and every recorded update obeys the update rule",
+    "the worked example: C1 goes 5, 7.5, 8.75 and B1 goes 2.25, 4.5 in the first episodes",
+    "the predicted run: moving at random throughout still gives a shortest route of 5 moves",
+    "the three small-room presets: all give a 5-move route, with 12 moves untried when never exploring and 135 falls when always exploring",
+    "never exploring on the cliff keeps a 9-move route where 7 is possible, and exploring finds the 7",
+    "the reference values match the closed form on the cliff: 10 × 0.9^6 at the start"
+   ],
+   "runs": 9,
+   "frames": 411,
+   "cost": [
+    {
+     "formula": "proportional to the number of episodes (scaled)",
+     "series": "Always explores",
+     "metric": "Steps taken (updates)",
+     "sizeLabel": "Episodes of training",
+     "relation": "growth",
+     "detail": "ratio to the formula varies by 3.8% across the larger sizes",
+     "rows": [
+      [
+       50,
+       1251,
+       null
+      ],
+      [
+       100,
+       2592,
+       null
+      ],
+      [
+       200,
+       5727,
+       null
+      ],
+      [
+       400,
+       12013,
+       null
+      ],
+      [
+       800,
+       24150,
+       null
+      ],
+      [
+       1600,
+       49881,
+       null
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 6
+  },
+  "frames": 45
+ },
+ {
   "id": "kruskal",
   "name": "Kruskal's Algorithm",
   "aliases": [
@@ -4792,6 +5319,271 @@ export const catalog = [
    "outputLines": 4
   },
   "frames": 33
+ },
+ {
+  "id": "critical-path",
+  "name": "Critical Path Method",
+  "aliases": [
+   "CPM",
+   "critical path analysis",
+   "critical path scheduling",
+   "project scheduling",
+   "PERT/CPM",
+   "longest path in a project network"
+  ],
+  "kind": "algorithm",
+  "discipline": "optimization",
+  "alsoIn": [
+   {
+    "id": "graph-theory",
+    "why": "A project is a directed graph with no cycles, and its critical path is the longest path through that graph, found in one sweep along a topological order."
+   }
+  ],
+  "subfield": "Scheduling",
+  "family": "Project scheduling",
+  "lab": "graphs",
+  "year": 1959,
+  "authors": "James E. Kelley Jr. and Morgan R. Walker",
+  "summary": "Finds the shortest possible length of a project and the tasks that cannot run late, with one forward and one backward sweep over tasks linked by dependencies.",
+  "difficulty": "intermediate",
+  "order": 290,
+  "paradigms": [
+   "dynamic-programming",
+   "graph-search"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(V + E)",
+   "average": "O(V + E)",
+   "worst": "O(V + E)",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(V)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "how long will the project take",
+    "which tasks can I delay",
+    "find the tasks that cannot run late",
+    "plan a project whose tasks depend on each other",
+    "how much spare time does a task have",
+    "find the longest chain of tasks"
+   ],
+   "techniques": [
+    "forward pass",
+    "backward pass",
+    "slack",
+    "longest path",
+    "topological order"
+   ],
+   "applications": [
+    "engineering design",
+    "logistics",
+    "data processing"
+   ]
+  },
+  "prerequisites": [
+   "topological-sort",
+   "concept:graph",
+   "concept:topological-order"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Construction scheduling",
+    "status": "established"
+   },
+   {
+    "title": "Project scheduling software",
+    "status": "established"
+   },
+   {
+    "title": "Timing analysis of digital circuits",
+    "status": "established"
+   },
+   {
+    "title": "Parallel builds and data pipelines",
+    "status": "illustrative"
+   },
+   {
+    "title": "Planning an event",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "topological-sort",
+    "type": "prerequisite",
+    "why": "The Critical Path Method handles tasks in a topological order, so that every earliest time is computed after the times it depends on. Topological Sort is how that order is found, and it is also what detects a circular plan."
+   },
+   {
+    "to": "concept:topological-order",
+    "type": "prerequisite",
+    "why": "Both passes of the Critical Path Method walk a topological order of the project, once forwards and once backwards."
+   },
+   {
+    "to": "concept:graph",
+    "type": "prerequisite",
+    "why": "The Critical Path Method models a project as a directed graph: tasks are nodes and \"must finish before\" links are arrows."
+   },
+   {
+    "to": "bellman-ford",
+    "type": "related",
+    "why": "The critical path is a longest path, which is a shortest path once every duration is negated. Bellman-Ford can solve that because it allows negative costs, but the Critical Path Method needs only one sweep because a project has no cycles."
+   },
+   {
+    "to": "dijkstra",
+    "type": "related",
+    "why": "Dijkstra's Algorithm and the Critical Path Method both label each node with the best total over all routes to it, one keeping the smallest and the other the largest. Dijkstra cannot be turned to the longest chain, because negating the durations produces the negative costs it does not allow."
+   },
+   {
+    "to": "concept:dynamic-programming",
+    "type": "related",
+    "why": "The earliest finish of a task is built from the earliest finishes of the tasks before it, each worked out once and reused. The Critical Path Method is dynamic programming over the graph of the project."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "related",
+    "why": "When durations are uncertain, Monte Carlo simulation runs the Critical Path Method on thousands of randomly drawn sets of durations to estimate the chance of finishing by a date."
+   },
+   {
+    "to": "simplex",
+    "type": "advanced",
+    "why": "The Critical Path Method reports a schedule but does not improve it. Deciding which tasks to pay to speed up, when each has a price per day saved, is a linear program that the Simplex Method can solve."
+   },
+   {
+    "to": "discipline:distributed-systems",
+    "type": "application",
+    "why": "A computation split across many machines can finish no sooner than its longest chain of dependent steps, which is the critical path of its task graph."
+   }
+  ],
+  "analogy": "Cooking a dinner with several dishes",
+  "takeaway": "A project is as long as its longest chain of tasks that must follow one another, and only the tasks on that chain have no time to spare.",
+  "describe": "Three linked pictures. On top, the project as boxes joined by arrows that run from left to right: each box is a task with its number of days, and an arrow means the task on the left must finish before the task on the right can start. The task being worked out is terracotta, the task it is checked against is ochre, and the caption under a box shows its times so far. In the middle, a timeline with one row per task: a bar runs from the earliest start to the earliest finish, and after the backward pass a pale ochre extension shows how far the task could run late. A dashed line marks the end of the project. At the bottom, a table of the earliest start, earliest finish, latest start, latest finish and slack of every task. At the end the critical tasks, their arrows and their bars turn forest green.",
+  "views": [
+   "graph",
+   "scene",
+   "table"
+  ],
+  "checks": {
+   "tests": [
+    "the worked example: 11 days, critical path base, walls, roof, paint",
+    "default random project agrees with a search over every chain",
+    "sparse random project agrees with a search over every chain",
+    "dense random project agrees with a search over every chain",
+    "another dense random project agrees with a search over every chain",
+    "two chains of equal length are both critical",
+    "the predicted late delivery: still 11 days, and a second chain becomes critical",
+    "a delivery one day later than its slack lengthens the project",
+    "shortening a critical task by 3 days shortens the shed by only 2",
+    "with no dependencies the longest task is the project",
+    "a single chain leaves no slack anywhere",
+    "a task of 0 days and tasks typed out of order",
+    "a single task"
+   ],
+   "runs": 9,
+   "frames": 334,
+   "cost": [
+    {
+     "formula": "3 (V − 1)",
+     "series": "Few dependencies",
+     "metric": "Dependency checks",
+     "sizeLabel": "Number of tasks (V)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       8,
+       21,
+       21
+      ],
+      [
+       16,
+       45,
+       45
+      ],
+      [
+       32,
+       93,
+       93
+      ],
+      [
+       64,
+       189,
+       189
+      ],
+      [
+       128,
+       381,
+       381
+      ],
+      [
+       256,
+       765,
+       765
+      ]
+     ]
+    },
+    {
+     "formula": "proportional to V (scaled)",
+     "series": "Many dependencies",
+     "metric": "Dependency checks",
+     "sizeLabel": "Number of tasks (V)",
+     "relation": "growth",
+     "detail": "ratio to the formula varies by 0.2% across the larger sizes",
+     "rows": [
+      [
+       8,
+       54,
+       null
+      ],
+      [
+       16,
+       111,
+       null
+      ],
+      [
+       32,
+       228,
+       null
+      ],
+      [
+       64,
+       459,
+       null
+      ],
+      [
+       128,
+       918,
+       null
+      ],
+      [
+       256,
+       1839,
+       null
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 8
+  },
+  "frames": 43
  },
  {
   "id": "fibonacci-dp",
@@ -6279,6 +7071,267 @@ export const catalog = [
    "outputLines": 6
   },
   "frames": 62
+ },
+ {
+  "id": "binomial-option-pricing",
+  "name": "Binomial Option Pricing",
+  "aliases": [
+   "binomial tree",
+   "Cox-Ross-Rubinstein model",
+   "CRR model",
+   "binomial options pricing model",
+   "lattice model",
+   "option pricing tree"
+  ],
+  "kind": "algorithm",
+  "discipline": "finance",
+  "alsoIn": [
+   {
+    "id": "algorithms",
+    "why": "It is dynamic programming on a tree whose branches rejoin: each node is valued once, from the two nodes that follow it."
+   },
+   {
+    "id": "optimization",
+    "why": "Choosing when to exercise an American option is an optimal stopping problem, solved here by comparing \"stop now\" with \"carry on\" at every node."
+   }
+  ],
+  "subfield": "Derivative pricing",
+  "family": "Lattice methods",
+  "lab": "dynamic-programming",
+  "year": 1979,
+  "authors": "John C. Cox, Stephen A. Ross and Mark Rubinstein",
+  "summary": "Values an option by building a tree of possible share prices and working backwards from the payoffs at expiry, node by node. A teaching model, not advice.",
+  "difficulty": "intermediate",
+  "order": 345,
+  "paradigms": [
+   "dynamic-programming"
+  ],
+  "randomized": false,
+  "approximate": true,
+  "time": {
+   "best": "O(n²) for n steps",
+   "average": "O(n²)",
+   "worst": "O(n²)",
+   "class": "quadratic"
+  },
+  "space": {
+   "worst": "O(n) for the price alone; O(n²) to keep every node",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "what is the right to buy something later worth today",
+    "decide whether to use an option now or wait",
+    "put a value on a choice you can make in the future",
+    "work backwards from the possible outcomes to a value today",
+    "what is it worth to be allowed to sell at a fixed price",
+    "value a contract whose payoff depends on a future price"
+   ],
+   "techniques": [
+    "backward induction",
+    "recombining tree",
+    "risk-neutral valuation",
+    "replication",
+    "early exercise test"
+   ],
+   "applications": [
+    "finance"
+   ]
+  },
+  "prerequisites": [
+   "fibonacci-dp",
+   "concept:dynamic-programming",
+   "concept:expectation",
+   "concept:probability",
+   "concept:optimal-substructure"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Options that can be exercised early",
+    "status": "established"
+   },
+   {
+    "title": "Employee share options in company accounts",
+    "status": "established"
+   },
+   {
+    "title": "Trees of interest rates",
+    "status": "established"
+   },
+   {
+    "title": "Flexibility in business decisions",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "fibonacci-dp",
+    "type": "prerequisite",
+    "why": "Fibonacci by dynamic programming and the binomial tree both avoid exponential work by solving each shared subproblem once. In the tree, 2ⁿ price paths pass through only (n + 1)(n + 2)/2 nodes, and each node is valued a single time."
+   },
+   {
+    "to": "knapsack",
+    "type": "related",
+    "why": "The knapsack table and the American option tree make the same kind of choice in every cell: take the better of two alternatives, one of which is read from cells already filled. Knapsack chooses between taking and skipping an item, the tree between exercising and holding."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "same-problem",
+    "why": "Monte Carlo estimation and the binomial tree both compute an expected payoff over uncertain price paths. The tree enumerates a simplified set of paths exactly, and Monte Carlo samples from the full set at random."
+   },
+   {
+    "to": "bellman-ford",
+    "type": "related",
+    "why": "Bellman-Ford and the binomial tree both apply Bellman's principle: the best value from a state is built from the best values of the states it leads to. The tree does it in a single backward sweep because its nodes are already ordered by time."
+   },
+   {
+    "to": "minimax",
+    "type": "related",
+    "why": "Minimax and the binomial tree both value a tree of future positions from the leaves back to the root. Minimax takes the best move at each node, while the binomial tree averages over the two price moves and, for an American option, also takes the better of exercising and holding."
+   },
+   {
+    "to": "q-learning",
+    "type": "related",
+    "why": "Valuing an American option is a small decision problem under uncertainty: at each node compare stopping with the expected value of carrying on. The binomial tree solves it exactly from a known model, and Q-learning estimates values of the same kind from experience when no model is given."
+   },
+   {
+    "to": "concept:dynamic-programming",
+    "type": "prerequisite",
+    "why": "The value at each node is computed once from the stored values of the two nodes after it, which is dynamic programming on a tree that rejoins."
+   },
+   {
+    "to": "concept:expectation",
+    "type": "prerequisite",
+    "why": "Each backward step is an expected value: the two later values weighted by p and 1 − p, then discounted."
+   },
+   {
+    "to": "concept:optimal-substructure",
+    "type": "prerequisite",
+    "why": "The best policy for an American option from a node onward does not depend on how the price reached that node, so the value at a node can be built from the values at the nodes after it."
+   },
+   {
+    "to": "concept:overlapping-subproblems",
+    "type": "related",
+    "why": "Up then down and down then up reach the same node. Those shared nodes are the overlapping subproblems that make the tree cheap."
+   },
+   {
+    "to": "concept:discretization",
+    "type": "related",
+    "why": "The tree replaces a price that moves continuously with one that moves in fixed steps. Finer steps bring its answer closer to that of the continuous model."
+   },
+   {
+    "to": "concept:convergence",
+    "type": "advanced",
+    "why": "As the number of steps grows, the tree's price approaches the Black-Scholes value, with an error that shrinks roughly like one over the number of steps."
+   },
+   {
+    "to": "discipline:optimization",
+    "type": "application",
+    "why": "Deciding when to exercise is an optimal stopping problem, and the backward comparison of exercising with holding is its solution by dynamic programming."
+   },
+   {
+    "to": "discipline:algorithms",
+    "type": "application",
+    "why": "The method is a standard example of how merging equivalent states turns an exponential enumeration into a quadratic table."
+   }
+  ],
+  "analogy": "Labelling a trail map from the ends back to the start",
+  "takeaway": "Write down what the option pays at every possible final price, then step backwards through the tree, blending two later values into each earlier one, until you reach today.",
+  "describe": "A tree drawn left to right, one column for each time step. Each node is an oval holding a share price. The top node of a column is the price after nothing but up-moves and the bottom node is the price after nothing but down-moves. Under each node, once it has been worked out, is the value of the option at that node. The node being valued is terracotta and the two later nodes it is computed from are ochre, with the two weights written on the lines that join them. Nodes already valued are forest green. For an American option, nodes where exercising at once is worth more than holding are brick and are marked exercise, shortened to ex. on larger trees. A strip of cells under the tree lists the up factor, the down factor, the growth of cash in one step and the two weights, and a second strip shows the numbers used at the current node.",
+  "views": [
+   "graph",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "the tree worked by hand: share 60 that doubles or halves, no interest, call at 60 is worth 20",
+    "put-call parity for European options: call − put = share − strike × e^(−rT), to rounding error, on trees of every size",
+    "an American option is worth at least its European counterpart at every size, and an American call equals the European call",
+    "the price approaches the Black-Scholes value: within 0.005 at 1,000 steps, and ten times the steps leaves about a tenth of the gap",
+    "default American put: 5.88 today, early exercise at three nodes, 24.68 to hold against 25.92 to exercise at 74.08",
+    "tryThis: the European put values the 74.08 node at 24.68, below its exercise value; steps 3, 4, 5 give 6.50, 5.88, 6.37",
+    "quiz: with no interest no node prefers early exercise, and both puts are worth 7.49",
+    "quiz: the in-place update in the wrong direction turns the hand-worked 20 into 33.33",
+    "a tree too coarse for its inputs: p = 1.27, a node worth −4.95, the tree says 1.13 where 500 steps say 0.10",
+    "the picture and the count-only run give the same price, there are (n + 1)(n + 2)/2 nodes, and one step is a single blend",
+    "code sample: the values printed for 4 and 256 steps"
+   ],
+   "runs": 9,
+   "frames": 174,
+   "cost": [
+    {
+     "formula": "(n + 1)(n + 2) / 2",
+     "series": "American put",
+     "metric": "Nodes valued",
+     "sizeLabel": "Steps in the tree (n)",
+     "relation": "exact",
+     "detail": "all 9 sizes agree",
+     "rows": [
+      [
+       4,
+       15,
+       15
+      ],
+      [
+       8,
+       45,
+       45
+      ],
+      [
+       16,
+       153,
+       153
+      ],
+      [
+       32,
+       561,
+       561
+      ],
+      [
+       64,
+       2145,
+       2145
+      ],
+      [
+       128,
+       8385,
+       8385
+      ],
+      [
+       256,
+       33153,
+       33153
+      ],
+      [
+       512,
+       131841,
+       131841
+      ],
+      [
+       1024,
+       525825,
+       525825
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 8
+  },
+  "frames": 23
  },
  {
   "id": "euclidean-algorithm",
@@ -9143,6 +10196,877 @@ export const catalog = [
   "frames": 66
  },
  {
+  "id": "simplex",
+  "name": "Simplex Method",
+  "aliases": [
+   "simplex algorithm",
+   "linear programming",
+   "LP",
+   "linear optimization",
+   "Dantzig's simplex method",
+   "tableau method"
+  ],
+  "kind": "algorithm",
+  "discipline": "optimization",
+  "alsoIn": [
+   {
+    "id": "mathematics",
+    "why": "Each step is an elimination step from linear algebra, and the reason it works is a fact about shapes with flat sides: a linear function reaches its largest value at a corner."
+   }
+  ],
+  "subfield": "Linear programming",
+  "family": "Pivoting methods",
+  "lab": "optimization",
+  "year": 1947,
+  "authors": "George B. Dantzig",
+  "summary": "Maximises a linear objective under linear limits by walking from corner to corner of the allowed region, raising the objective at each step, until no neighbouring corner is better.",
+  "difficulty": "advanced",
+  "order": 525,
+  "paradigms": [
+   "local-search",
+   "iterative-refinement"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(m(n + m)) per pivot",
+   "average": "Few pivots on practical problems; no simple formula",
+   "worst": "Exponentially many pivots on specially built problems",
+   "class": "iterative"
+  },
+  "space": {
+   "worst": "O(m(n + m))",
+   "class": "quadratic"
+  },
+  "tags": {
+   "problems": [
+    "what mix of products earns the most",
+    "how much of each thing to make",
+    "make the most profit under several limits",
+    "share limited resources between products",
+    "cheapest mix that meets every requirement",
+    "best plan under a budget and other limits"
+   ],
+   "techniques": [
+    "tableau",
+    "pivoting",
+    "slack variables",
+    "ratio test",
+    "Bland's rule"
+   ],
+   "applications": [
+    "logistics",
+    "finance",
+    "engineering design",
+    "scientific computing"
+   ]
+  },
+  "prerequisites": [
+   "concept:linear-algebra",
+   "concept:matrix",
+   "concept:convexity"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Blending and refining",
+    "status": "established"
+   },
+   {
+    "title": "The diet problem",
+    "status": "established"
+   },
+   {
+    "title": "Inside integer programming solvers",
+    "status": "established"
+   },
+   {
+    "title": "General-purpose optimization software",
+    "status": "established"
+   },
+   {
+    "title": "Production planning in a small business",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:convexity",
+    "type": "prerequisite",
+    "why": "The allowed region of a linear program is convex, which is why a corner that no neighbour can beat is the best point overall. The Simplex Method relies on this to stop at the first such corner."
+   },
+   {
+    "to": "concept:linear-algebra",
+    "type": "prerequisite",
+    "why": "A pivot in the Simplex Method is a step of elimination on a system of linear equations: it rewrites the same system so that a different set of variables can be read off directly."
+   },
+   {
+    "to": "concept:matrix",
+    "type": "prerequisite",
+    "why": "The Simplex Method keeps its whole state in a matrix, the tableau, and every step is a set of row operations on it."
+   },
+   {
+    "to": "concept:local-search",
+    "type": "related",
+    "why": "The Simplex Method is a local search over corners: move to a better neighbour until there is none. Unlike most local searches it cannot stop at a false peak, because a linear program has no dents to get caught in."
+   },
+   {
+    "to": "gradient-descent",
+    "type": "related",
+    "why": "Gradient Descent and the Simplex Method both improve an objective step by step. Gradient Descent moves through open space with a step size that must be tuned, while the Simplex Method moves along the edges of a shape with flat sides, takes steps whose length the limits decide, and stops exactly."
+   },
+   {
+    "to": "knapsack",
+    "type": "related",
+    "why": "The Knapsack problem and the Simplex Method both choose amounts under a limit to maximise a total. Knapsack demands whole items, which makes it hard. Allow fractions of items and it becomes a linear program that the Simplex Method solves exactly."
+   },
+   {
+    "to": "gaussian-elimination",
+    "type": "related",
+    "why": "Gaussian elimination and the Simplex Method use the same row operations. Elimination chooses its pivots to solve the equations. Simplex chooses them to raise an objective while keeping every variable non-negative."
+   },
+   {
+    "to": "critical-path",
+    "type": "application",
+    "why": "The Critical Path Method finds how long a project takes. Choosing which tasks to pay to speed up, at the least total cost, is a linear program that the Simplex Method can solve."
+   },
+   {
+    "to": "concept:np-hardness",
+    "type": "advanced",
+    "why": "The Simplex Method solves linear programs with fractional answers. Demand whole-number answers and the problem becomes NP-hard in general, which shows how sharply difficulty can change with one extra rule."
+   },
+   {
+    "to": "discipline:finance",
+    "type": "application",
+    "why": "Matching a stream of future payments with the cheapest set of bonds is a linear program, because prices and payments add up in proportion to the amount of each bond held. The Simplex Method solves it."
+   }
+  ],
+  "analogy": "Walking the fence of a sloping field",
+  "takeaway": "When everything adds up in straight lines, a best plan sits at a corner, so walk from corner to corner along edges that raise the profit until none does.",
+  "describe": "Two linked views. The first is a graph with x across and y up. A shaded shape marks every mix that obeys all the limits, and each limit is a numbered straight line along one side of it. The walk is a terracotta line from corner to corner, starting at (0, 0), with the current corner ringed and labelled with its profit. A dashed line through the current corner joins all mixes that earn the same profit. While a move is being chosen, an ochre arrow shows the edge being considered and ochre circles show where each limit would stop it. At the end the best corner is forest green and every corner is labelled with its profit. The second view is the tableau: a table with a column for x, y, each slack variable, the value, and the ratio, and a row for each basis variable plus the profit row. The column of the variable about to enter and the row of the variable about to leave are tinted, and the pivot cell where they cross is outlined.",
+  "views": [
+   "scene",
+   "table"
+  ],
+  "checks": {
+   "tests": [
+    "the worked example: (0, 0), (6, 0), (6, 2), (2, 4), profit 24 in 3 pivots",
+    "the predicted bakery with profits 5 and 2 stops at (6, 2)",
+    "five limits agree with a check of every corner",
+    "fractions and negative coefficients agree with a check of every corner",
+    "random problem 3 with 4 limits agrees with a check of every corner",
+    "random problem 8 with 4 limits agrees with a check of every corner",
+    "random problem 15 with 4 limits agrees with a check of every corner",
+    "random problem 22 with 4 limits agrees with a check of every corner",
+    "random problem 31 with 4 limits agrees with a check of every corner",
+    "random problem 47 with 4 limits agrees with a check of every corner",
+    "random problem 5 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "random problem 26 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "random problem 40 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "random problem 3 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "random problem 18 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "random problem 27 with negative numbers agrees with a check of every corner, or of every open direction if it is unbounded",
+    "an unbounded problem is reported, with a direction that stays allowed and raises the profit",
+    "closing the open shape with one more limit gives a best corner",
+    "a tie in the ratio test is broken by the lowest variable, and one pivot does not move",
+    "a tie between two best corners is reported",
+    "an equals with zero on the right is inside the form and solved through degenerate pivots",
+    "no profit rate is positive: the start is best and nothing pivots",
+    "outside the form: an \"at least\" limit cannot start, and the answer shown matches a check of every corner",
+    "outside the form: limits that cannot all hold are reported as having no allowed mix",
+    "the staircase with 5 limits takes 6 pivots the long way and 1 the short way",
+    "the staircase with 5 limits and profit y takes 1 pivot"
+   ],
+   "runs": 10,
+   "frames": 225,
+   "cost": [
+    {
+     "formula": "m + 1",
+     "series": "Profit x + 2m·y: the long way round",
+     "metric": "Pivots",
+     "sizeLabel": "Number of limits (m)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       2,
+       3,
+       3
+      ],
+      [
+       4,
+       5,
+       5
+      ],
+      [
+       8,
+       9,
+       9
+      ],
+      [
+       16,
+       17,
+       17
+      ],
+      [
+       32,
+       33,
+       33
+      ],
+      [
+       64,
+       65,
+       65
+      ]
+     ]
+    },
+    {
+     "formula": "1",
+     "series": "Profit y: straight to the top",
+     "metric": "Pivots",
+     "sizeLabel": "Number of limits (m)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       2,
+       1,
+       1
+      ],
+      [
+       4,
+       1,
+       1
+      ],
+      [
+       8,
+       1,
+       1
+      ],
+      [
+       16,
+       1,
+       1
+      ],
+      [
+       32,
+       1,
+       1
+      ],
+      [
+       64,
+       1,
+       1
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 15
+  },
+  "frames": 27
+ },
+ {
+  "id": "stochastic-gradient-descent",
+  "name": "Stochastic Gradient Descent",
+  "aliases": [
+   "SGD",
+   "mini-batch gradient descent",
+   "minibatch gradient descent",
+   "mini-batch SGD",
+   "online gradient descent",
+   "stochastic gradient method"
+  ],
+  "kind": "algorithm",
+  "discipline": "optimization",
+  "alsoIn": [
+   {
+    "id": "machine-learning",
+    "why": "A model's loss is an average over training examples, and sampling a few of them per step is what makes fitting on large datasets affordable."
+   },
+   {
+    "id": "deep-learning",
+    "why": "Neural networks are trained on mini-batches: backpropagation computes the gradient for one batch and a stochastic gradient step applies it."
+   }
+  ],
+  "subfield": "Gradient methods",
+  "family": "First-order methods",
+  "variantOf": "gradient-descent",
+  "lab": "optimization",
+  "summary": "Gradient descent that estimates the gradient from one example or a small random batch at each step instead of the whole dataset.",
+  "difficulty": "intermediate",
+  "order": 530,
+  "paradigms": [
+   "gradient-based",
+   "iterative-refinement",
+   "randomized-sampling"
+  ],
+  "randomized": true,
+  "approximate": true,
+  "time": {
+   "best": "O(B·d) per step",
+   "average": "O(1/ε) steps (strongly convex, shrinking rate)",
+   "worst": "No guarantee without assumptions",
+   "class": "iterative"
+  },
+  "space": {
+   "worst": "O(d) plus one batch of data",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "train a model on more data than fits in memory",
+    "learn from examples that arrive one at a time",
+    "make each training step cheaper",
+    "train a neural network on a large dataset",
+    "fit parameters to data",
+    "reduce a loss"
+   ],
+   "techniques": [
+    "mini-batch",
+    "random sampling",
+    "learning rate schedule",
+    "epoch",
+    "gradient estimate"
+   ],
+   "applications": [
+    "machine learning",
+    "signal processing",
+    "statistics",
+    "data processing"
+   ]
+  },
+  "prerequisites": [
+   "gradient-descent",
+   "concept:gradient",
+   "concept:loss-function",
+   "concept:sampling",
+   "concept:learning-rate"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Training neural networks",
+    "status": "established"
+   },
+   {
+    "title": "Large linear models",
+    "status": "established"
+   },
+   {
+    "title": "Adaptive filters",
+    "status": "established"
+   },
+   {
+    "title": "Recommender systems",
+    "status": "established"
+   },
+   {
+    "title": "Learning from a live stream",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "gradient-descent",
+    "type": "prerequisite",
+    "why": "Stochastic gradient descent takes the same downhill step as gradient descent, but measures the slope on a random sample of the data instead of all of it. With the batch equal to the dataset the two are identical."
+   },
+   {
+    "to": "concept:gradient",
+    "type": "prerequisite",
+    "why": "Each step of stochastic gradient descent moves against a gradient, here the average of the gradients of a few examples."
+   },
+   {
+    "to": "concept:sampling",
+    "type": "prerequisite",
+    "why": "A mini-batch is a random sample of the dataset, and stochastic gradient descent relies on that sample being drawn fairly so that its gradient is right on average."
+   },
+   {
+    "to": "concept:expectation",
+    "type": "related",
+    "why": "The mini-batch gradient in stochastic gradient descent is an unbiased estimate: its expected value over the random draw is exactly the full gradient."
+   },
+   {
+    "to": "concept:learning-rate",
+    "type": "related",
+    "why": "In stochastic gradient descent the learning rate sets both the speed of progress and the width of the cloud in which the parameters hover, which is why it is often lowered over time."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "related",
+    "why": "Monte Carlo estimation and stochastic gradient descent both replace a sum that is too large to compute with an average over random samples, and both get an estimate whose error shrinks as the sample grows."
+   },
+   {
+    "to": "linear-regression",
+    "type": "application",
+    "why": "The demonstration fits a linear regression by stochastic gradient descent, and because least squares has an exact answer, the noisy path can be compared with where it ought to end."
+   },
+   {
+    "to": "logistic-regression",
+    "type": "application",
+    "why": "Logistic regression has no formula for its best weights, so on large datasets it is fitted by stochastic gradient descent, a few examples at a time."
+   },
+   {
+    "to": "perceptron",
+    "type": "related",
+    "why": "The perceptron learning rule updates its weights after each single example, the same one-example-at-a-time pattern as stochastic gradient descent with a batch size of 1."
+   },
+   {
+    "to": "backpropagation",
+    "type": "related",
+    "why": "Backpropagation computes the gradient of a network's loss on one mini-batch, and stochastic gradient descent is the rule that uses that gradient to change the weights."
+   },
+   {
+    "to": "adam",
+    "type": "advanced",
+    "why": "Adam starts from stochastic gradient descent and adds two running averages: one smooths the noisy batch gradients, and the other gives every parameter its own step size."
+   },
+   {
+    "to": "discipline:deep-learning",
+    "type": "application",
+    "why": "Training a deep network means running stochastic gradient descent, or a variant of it, over mini-batches for many epochs."
+   },
+   {
+    "to": "discipline:statistics",
+    "type": "related",
+    "why": "Stochastic gradient descent grew out of stochastic approximation, the statistical study of finding a root or an optimum from noisy measurements."
+   }
+  ],
+  "analogy": "Asking ten customers instead of the whole town",
+  "takeaway": "Check a few random examples, take a small step the way they point, and repeat: each step is rough, but there can be a great many of them.",
+  "describe": "Three charts. The first is a contour map of the loss over every possible line, with the slope on the horizontal axis and the intercept on the vertical axis. A hollow green circle marks the least squares line. A terracotta path shows every line tried so far, an ochre arrow shows the downhill direction according to the current batch, and an ink arrow shows the downhill direction according to all the data. A dashed ink path shows where plain gradient descent would go. The second chart shows the data points and the current line, with the points of the current batch enlarged in terracotta and their gaps to the line drawn in ochre. The third chart plots the loss over all points at each step, with the smallest possible loss as a dashed green line.",
+  "views": [
+   "scene"
+  ],
+  "checks": {
+   "tests": [
+    "a batch of every point takes exactly the gradient descent step, at every step",
+    "a batch size above the number of points is treated as the full batch",
+    "the average of the per-example gradients equals the full gradient",
+    "every step is the average gradient of its own batch, times the stated learning rate",
+    "every point is used exactly once per epoch",
+    "the last batch of an epoch is smaller when the batch size does not divide n",
+    "larger batches estimate the full gradient more closely, and the full batch exactly",
+    "the same seed reproduces the run exactly and a different seed does not",
+    "the worked example: order B, A, C, D and the lines quoted in the text",
+    "quiz prediction: at batch size 24 the loss never rises, while at batch size 1 it does",
+    "with no scatter in the data a fixed learning rate comes to rest on the exact line",
+    "a shrinking learning rate ends closer to the least squares line than a fixed one"
+   ],
+   "runs": 11,
+   "frames": 1437,
+   "cost": [
+    {
+     "formula": "proportional to n",
+     "series": "Full batch (plain gradient descent)",
+     "metric": "Point gradients computed",
+     "sizeLabel": "Number of data points (n)",
+     "relation": "growth",
+     "detail": "ratio to the formula varies by 0.0% across the larger sizes",
+     "rows": [
+      [
+       32,
+       576,
+       null
+      ],
+      [
+       64,
+       1152,
+       null
+      ],
+      [
+       128,
+       2176,
+       null
+      ],
+      [
+       256,
+       4608,
+       null
+      ],
+      [
+       512,
+       9216,
+       null
+      ],
+      [
+       1024,
+       18432,
+       null
+      ],
+      [
+       2048,
+       36864,
+       null
+      ]
+     ]
+    },
+    {
+     "formula": "no growth with n",
+     "series": "Batches of 8",
+     "metric": "Point gradients computed",
+     "sizeLabel": "Number of data points (n)",
+     "relation": "growth",
+     "detail": "ratio to the formula varies by 17% across the larger sizes",
+     "rows": [
+      [
+       32,
+       152,
+       null
+      ],
+      [
+       64,
+       152,
+       null
+      ],
+      [
+       128,
+       144,
+       null
+      ],
+      [
+       256,
+       160,
+       null
+      ],
+      [
+       512,
+       144,
+       null
+      ],
+      [
+       1024,
+       168,
+       null
+      ],
+      [
+       2048,
+       160,
+       null
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 6
+  },
+  "frames": 125
+ },
+ {
+  "id": "adam",
+  "name": "Adam Optimizer",
+  "aliases": [
+   "Adam",
+   "adaptive moment estimation",
+   "Adam optimiser",
+   "ADAM"
+  ],
+  "kind": "algorithm",
+  "discipline": "optimization",
+  "alsoIn": [
+   {
+    "id": "deep-learning",
+    "why": "Adam and its close relatives are among the most widely used rules for turning the gradients from backpropagation into weight updates."
+   }
+  ],
+  "subfield": "Gradient methods",
+  "family": "Adaptive first-order methods",
+  "lab": "optimization",
+  "year": 2014,
+  "authors": "Diederik P. Kingma and Jimmy Ba",
+  "summary": "Gradient descent with memory: it steps along a running average of recent gradients and gives every parameter its own step size.",
+  "difficulty": "advanced",
+  "order": 540,
+  "paradigms": [
+   "gradient-based",
+   "iterative-refinement"
+  ],
+  "randomized": false,
+  "approximate": true,
+  "time": {
+   "best": "O(d) per step",
+   "average": "Number of steps depends on the problem",
+   "worst": "No guarantee without assumptions",
+   "class": "iterative"
+  },
+  "space": {
+   "worst": "O(d)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "train a neural network without tuning a step size for every weight",
+    "make training work when some settings need big steps and others need small ones",
+    "speed up learning that crawls along a narrow valley",
+    "choose step sizes automatically",
+    "make a neural network learn",
+    "minimize a function"
+   ],
+   "techniques": [
+    "momentum",
+    "adaptive learning rate",
+    "exponential moving average",
+    "bias correction"
+   ],
+   "applications": [
+    "machine learning",
+    "natural language",
+    "image processing",
+    "scientific computing"
+   ]
+  },
+  "prerequisites": [
+   "gradient-descent",
+   "stochastic-gradient-descent",
+   "concept:gradient",
+   "concept:learning-rate"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Training Transformers",
+    "status": "established"
+   },
+   {
+    "title": "A standard optimizer in deep learning libraries",
+    "status": "established"
+   },
+   {
+    "title": "Generative adversarial networks",
+    "status": "established"
+   },
+   {
+    "title": "Fitting a small differentiable model",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "gradient-descent",
+    "type": "prerequisite",
+    "why": "Adam is gradient descent with two changes: it steps along a running average of gradients instead of the newest one, and it divides each parameter's step by the typical size of that parameter's gradients."
+   },
+   {
+    "to": "stochastic-gradient-descent",
+    "type": "prerequisite",
+    "why": "Adam was designed for the noisy mini-batch gradients of stochastic gradient descent. Its first average smooths that noise, and its second sets a step size for each parameter."
+   },
+   {
+    "to": "concept:gradient",
+    "type": "prerequisite",
+    "why": "Adam's two memories are running averages of the gradient and of its square, kept for every parameter."
+   },
+   {
+    "to": "concept:learning-rate",
+    "type": "prerequisite",
+    "why": "Adam turns one learning rate into a separate effective step size for each parameter, so understanding what the single rate does in gradient descent comes first."
+   },
+   {
+    "to": "concept:expectation",
+    "type": "related",
+    "why": "Adam's m and v estimate the expected value of the gradient and of its square, and the bias correction is exactly what makes those estimates right on average from the first step."
+   },
+   {
+    "to": "exponential-smoothing",
+    "type": "related",
+    "why": "Adam's running averages are exponential smoothing applied to the gradient and its square: each new value is blended into the old average with a fixed weight."
+   },
+   {
+    "to": "backpropagation",
+    "type": "related",
+    "why": "Backpropagation produces the gradient of a network's loss for every weight, and Adam decides how far to move each weight given that gradient and its history."
+   },
+   {
+    "to": "newtons-method",
+    "type": "related",
+    "why": "Newton's method and Adam both rescale the gradient before stepping. Newton divides by the true curvature in every direction, while Adam divides each coordinate by the typical size of its recent gradients, which is far cheaper and only works along the coordinate axes."
+   },
+   {
+    "to": "logistic-regression",
+    "type": "application",
+    "why": "The paper that introduced Adam tested it first on logistic regression, whose convex loss makes it a clean problem on which to compare optimizers."
+   },
+   {
+    "to": "attention",
+    "type": "application",
+    "why": "The Transformer, built on attention, was trained with Adam in the paper that introduced it, with the learning rate warmed up and then decayed."
+   },
+   {
+    "to": "discipline:deep-learning",
+    "type": "application",
+    "why": "Training a deep network means choosing an optimizer for the gradients from backpropagation, and Adam or one of its variants is a very common choice."
+   }
+  ],
+  "analogy": "A fog walker with a memory and a separate stride for each compass direction",
+  "takeaway": "Step the way the recent slopes agree on, and give every adjustable number its own step size, smaller where its slopes have been large.",
+  "describe": "A contour map of a two-variable loss function, with a hollow green circle on each known minimum. A terracotta path shows every position Adam has visited, and an ink path shows plain gradient descent started from the same point. An ochre arrow shows the downhill direction at Adam's position and a brick arrow shows the direction of the step Adam is about to take. Below the map, a table with one row for x and one for y lists the current slope, the two running averages m and v, their bias-corrected values and the step taken, with the cells that have just changed highlighted. A third, smaller chart plots the loss at each step for both methods.",
+  "views": [
+   "scene",
+   "table"
+  ],
+  "checks": {
+   "tests": [
+    "the first step moves each coordinate by the learning rate, whatever its slope",
+    "the first step is the learning rate on a different surface and with a different rate",
+    "the first three updates match the formulas written out without running averages",
+    "the worked example: the positions and averages quoted in the text",
+    "without bias correction the first step is (1 − β₁) ÷ √(1 − β₂) times as long",
+    "every step respects the Cauchy-Schwarz bound on its length",
+    "the path does not depend on how steep the valley is when it lines up with the axes",
+    "momentum: less of it stops sooner on the ravine, none of it fails on the turned ravine",
+    "plain gradient descent mode takes the textbook step",
+    "on the steep ravine Adam ends lower than plain descent, and plain descent diverges above 0.02",
+    "Adam stops at the minimum of the ravine, and takes longer on the turned ravine",
+    "on the round bowl and the mild valley a single well chosen rate settles first",
+    "on the rippled surface both methods stop in the same local minimum"
+   ],
+   "runs": 13,
+   "frames": 4878,
+   "cost": [
+    {
+     "formula": "ln(1000) ÷ −ln(1 − 1/κ), rounded up",
+     "series": "Plain gradient descent, rate 1/κ",
+     "metric": "Steps to get within 0.001 of the minimum",
+     "sizeLabel": "Condition number κ (steepest curvature ÷ gentlest curvature)",
+     "relation": "exact",
+     "detail": "all 8 sizes agree",
+     "rows": [
+      [
+       2,
+       10,
+       10
+      ],
+      [
+       5,
+       31,
+       31
+      ],
+      [
+       10,
+       66,
+       66
+      ],
+      [
+       20,
+       135,
+       135
+      ],
+      [
+       50,
+       342,
+       342
+      ],
+      [
+       100,
+       688,
+       688
+      ],
+      [
+       200,
+       1379,
+       1379
+      ],
+      [
+       500,
+       3451,
+       3451
+      ]
+     ]
+    },
+    {
+     "formula": "the same at every κ",
+     "series": "Adam, valley along the axes",
+     "metric": "Steps to get within 0.001 of the minimum",
+     "sizeLabel": "Condition number κ (steepest curvature ÷ gentlest curvature)",
+     "relation": "growth",
+     "detail": "ratio to the formula varies by 0.0% across the larger sizes",
+     "rows": [
+      [
+       2,
+       82,
+       null
+      ],
+      [
+       5,
+       82,
+       null
+      ],
+      [
+       10,
+       82,
+       null
+      ],
+      [
+       20,
+       82,
+       null
+      ],
+      [
+       50,
+       82,
+       null
+      ],
+      [
+       100,
+       82,
+       null
+      ],
+      [
+       200,
+       82,
+       null
+      ],
+      [
+       500,
+       82,
+       null
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 9
+  },
+  "frames": 242
+ },
+ {
   "id": "linear-regression",
   "name": "Linear Regression",
   "aliases": [
@@ -9885,6 +11809,284 @@ export const catalog = [
   "frames": 34
  },
  {
+  "id": "pca",
+  "name": "Principal Component Analysis",
+  "aliases": [
+   "PCA",
+   "principal components",
+   "principal components analysis",
+   "Karhunen-Loève transform",
+   "Hotelling transform",
+   "empirical orthogonal functions",
+   "dimensionality reduction"
+  ],
+  "kind": "algorithm",
+  "discipline": "machine-learning",
+  "alsoIn": [
+   {
+    "id": "statistics",
+    "why": "It was devised by statisticians to summarize many correlated measurements, and it remains a standard first step in multivariate analysis."
+   },
+   {
+    "id": "mathematics",
+    "why": "The principal directions are the eigenvectors of a symmetric matrix, and finding them is a problem of numerical linear algebra."
+   },
+   {
+    "id": "computer-vision",
+    "why": "Treating each image as one long list of pixel values and keeping the leading principal directions gives a compact description of a set of images, the idea behind eigenfaces."
+   }
+  ],
+  "subfield": "Unsupervised learning",
+  "family": "Dimensionality reduction",
+  "lab": "machine-learning",
+  "year": 1901,
+  "authors": "Karl Pearson",
+  "summary": "Finds the perpendicular directions along which data vary most, so that many overlapping measurements can be replaced by a few new ones with little lost.",
+  "difficulty": "intermediate",
+  "order": 625,
+  "paradigms": [
+   "iterative-refinement",
+   "transform"
+  ],
+  "randomized": false,
+  "approximate": true,
+  "time": {
+   "best": "O(nd²) to form the covariance matrix",
+   "average": "O(nd² + k·i·d²) for k directions at i steps each",
+   "worst": "Steps grow without limit as the top two variances approach each other",
+   "class": "iterative"
+  },
+  "space": {
+   "worst": "O(nd) for the points and O(d²) for the matrix",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "summarize many measurements with a few",
+    "plot data that has too many columns",
+    "find the main direction in a cloud of points",
+    "see which measurements rise and fall together",
+    "remove columns that repeat each other",
+    "shrink data and keep most of the differences"
+   ],
+   "techniques": [
+    "covariance matrix",
+    "eigenvectors",
+    "power iteration",
+    "deflation",
+    "projection",
+    "singular value decomposition"
+   ],
+   "applications": [
+    "machine learning",
+    "statistics",
+    "image processing",
+    "finance",
+    "bioinformatics",
+    "signal processing",
+    "data compression"
+   ]
+  },
+  "prerequisites": [
+   "concept:linear-algebra",
+   "concept:matrix",
+   "concept:unsupervised-learning",
+   "concept:feature-space"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Eigenfaces",
+    "status": "established"
+   },
+   {
+    "title": "Ancestry in genetic data",
+    "status": "established"
+   },
+   {
+    "title": "Movements of the yield curve",
+    "status": "established"
+   },
+   {
+    "title": "Charts of data with many columns",
+    "status": "established"
+   },
+   {
+    "title": "Preparing data for another method",
+    "status": "established"
+   },
+   {
+    "title": "Summarizing a customer survey",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:linear-algebra",
+    "type": "prerequisite",
+    "why": "Principal component analysis is stated in the language of linear algebra: directions are vectors, the principal directions are eigenvectors of the covariance matrix, and scores are dot products."
+   },
+   {
+    "to": "concept:matrix",
+    "type": "prerequisite",
+    "why": "The covariance matrix is the object principal component analysis works on, and power iteration is nothing but repeated multiplication of a vector by that matrix."
+   },
+   {
+    "to": "concept:unsupervised-learning",
+    "type": "prerequisite",
+    "why": "Principal component analysis uses no labels. It looks for structure in the measurements alone, which is what unsupervised learning means."
+   },
+   {
+    "to": "concept:feature-space",
+    "type": "prerequisite",
+    "why": "Each item is a point whose coordinates are its measurements, and principal component analysis chooses new axes for that space."
+   },
+   {
+    "to": "concept:convergence",
+    "type": "related",
+    "why": "Power iteration, the method used here to find each principal direction, converges at a steady rate set by the ratio of the two largest variances."
+   },
+   {
+    "to": "pagerank",
+    "type": "related",
+    "why": "PageRank and this lesson's principal component analysis both find the leading eigenvector of a matrix by power iteration: multiply, rescale, repeat."
+   },
+   {
+    "to": "k-means",
+    "type": "related",
+    "why": "k-means and principal component analysis both summarize unlabelled data by minimizing squared distance. k-means replaces each point by the nearest of a few centres, and principal component analysis by its projection onto a few directions."
+   },
+   {
+    "to": "linear-regression",
+    "type": "related",
+    "why": "Linear regression and principal component analysis both fit a line to a cloud of points by least squares. Regression measures the gaps vertically to predict one feature, and principal component analysis measures them at right angles and treats the features alike."
+   },
+   {
+    "to": "knn",
+    "type": "related",
+    "why": "k-nearest neighbours depends on distances, which become less informative as features are added. Principal component analysis is often used first, to replace many features by a few before distances are measured."
+   },
+   {
+    "to": "fft",
+    "type": "related",
+    "why": "The Fourier transform and principal component analysis both describe data along a new set of perpendicular directions. The Fourier transform uses fixed waves, while principal component analysis learns its directions from the data."
+   },
+   {
+    "to": "backpropagation",
+    "type": "advanced",
+    "why": "A neural network trained by backpropagation to squeeze data through a narrow layer and rebuild it generalizes principal component analysis: with no nonlinear units, the narrow layer learns the same subspace."
+   },
+   {
+    "to": "discipline:statistics",
+    "type": "application",
+    "why": "Principal component analysis is a basic tool of multivariate statistics, used to describe the joint variation of many measured variables with a few."
+   },
+   {
+    "to": "discipline:computer-vision",
+    "type": "application",
+    "why": "Sets of images are compressed and compared through their scores on a few principal directions, as in the eigenface method for faces."
+   },
+   {
+    "to": "discipline:finance",
+    "type": "application",
+    "why": "The joint movements of many interest rates or asset returns are routinely summarized by a few principal directions, which serve as risk factors."
+   },
+   {
+    "to": "discipline:biology",
+    "type": "application",
+    "why": "In population genetics the leading principal directions of genotype data reveal shared ancestry among the people sampled."
+   }
+  ],
+  "analogy": "The shadow that shows the most",
+  "takeaway": "Find the direction along which the points spread out most, then the next one at right angles to it, and describe every point by where it sits along those few directions.",
+  "describe": "A square scatter plot of unlabelled points in moss green, with faint axes through the origin. The first frames show the cloud sliding so that its centre sits on the origin. During power iteration a terracotta arrow from the origin shows the current direction, an ochre arrow shows the matrix times that direction, and faint arrows show where the direction was on earlier steps. A small chart below plots how far the tip of the arrow moved at each step, as a power of ten, against a dashed line at the stopping tolerance. Once found, the first principal direction is a forest green line and the second a brick line, each two standard deviations long either way. In the projection frames thin lines drop every point onto a principal direction, and a strip below shows the resulting scores as dots on one line. A table shows the covariance matrix while it is being built and again after deflation.",
+  "views": [
+   "scene",
+   "table"
+  ],
+  "checks": {
+   "tests": [
+    "default: directions and variances match the closed form for a 2 by 2 symmetric matrix",
+    "default: the two directions are perpendicular and of length 1",
+    "default: the variances along the two directions add up to the total variance",
+    "closed form, right angle and variance sum hold across tilts, thicknesses, seeds and starts",
+    "the worked example: covariance 2.5, 1.5, 2.5, first step (0.86, 0.51), variances 4 and 1 along the diagonals",
+    "the variance along the direction never falls, and the movement shrinks by the ratio of the two variances",
+    "points on one straight line: the first direction carries all the variance",
+    "a start exactly at right angles finds the directions in the wrong order, and they are swapped",
+    "the corners of a square have no principal direction: equal variances, any perpendicular pair",
+    "x in millimetres: the first direction turns to within 4° of the x axis with over 99% of the variance (quiz prediction)",
+    "the scores on the two directions are uncorrelated, and moving the whole cloud changes nothing",
+    "presets: the nearly round cloud needs 29 multiplications for its first direction, the default 11",
+    "inputs with no spread are refused with a reason"
+   ],
+   "runs": 10,
+   "frames": 302,
+   "cost": [
+    {
+     "formula": "3 + ln(10⁻⁹ ÷ (1 − r²)) ÷ ln(r²)",
+     "series": "Both directions, to a tolerance of one billionth",
+     "metric": "Matrix-vector products",
+     "sizeLabel": "Thickness of the cloud (r)",
+     "relation": "close",
+     "detail": "largest gap 1.5% at the larger sizes",
+     "rows": [
+      [
+       0.2,
+       10,
+       9.425
+      ],
+      [
+       0.3,
+       12,
+       11.567
+      ],
+      [
+       0.4,
+       15,
+       14.213
+      ],
+      [
+       0.5,
+       18,
+       17.741
+      ],
+      [
+       0.6,
+       23,
+       22.847
+      ],
+      [
+       0.7,
+       31,
+       31.107
+      ],
+      [
+       0.8,
+       47,
+       47.146
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 16
+  },
+  "frames": 29
+ },
+ {
   "id": "logistic-regression",
   "name": "Logistic Regression",
   "aliases": [
@@ -10098,6 +12300,270 @@ export const catalog = [
    "outputLines": 6
   },
   "frames": 84
+ },
+ {
+  "id": "decision-tree",
+  "name": "Decision Tree Learning",
+  "aliases": [
+   "decision tree",
+   "decision trees",
+   "classification tree",
+   "CART",
+   "classification and regression trees",
+   "ID3",
+   "C4.5",
+   "recursive partitioning",
+   "tree induction"
+  ],
+  "kind": "algorithm",
+  "discipline": "machine-learning",
+  "alsoIn": [
+   {
+    "id": "statistics",
+    "why": "Statisticians developed tree methods under the name recursive partitioning, as a way to model data without assuming a formula for how the outcome depends on the measurements."
+   },
+   {
+    "id": "ai",
+    "why": "A learned tree is a set of if-then rules, which made tree induction a practical way to get rules from examples in place of writing them by hand."
+   }
+  ],
+  "subfield": "Supervised learning",
+  "family": "Tree-based methods",
+  "lab": "machine-learning",
+  "summary": "Learns a tree of yes-or-no questions from labelled examples by repeatedly choosing the split that leaves the two sides least mixed, then predicts by following the answers.",
+  "difficulty": "intermediate",
+  "order": 635,
+  "paradigms": [
+   "greedy",
+   "divide-and-conquer"
+  ],
+  "randomized": false,
+  "approximate": true,
+  "time": {
+   "best": "O(d·n log n) for one split",
+   "average": "O(d·n log² n) for a balanced tree",
+   "worst": "O(d·n² log n) when every split removes one point",
+   "class": "linearithmic"
+  },
+  "space": {
+   "worst": "O(n) for the points plus one record per question",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "which customers are likely to leave",
+    "explain why a prediction was made",
+    "turn past cases into if-then rules",
+    "classify a new example",
+    "find which measurements separate two outcomes",
+    "decide who qualifies from past decisions"
+   ],
+   "techniques": [
+    "recursive partitioning",
+    "Gini impurity",
+    "information gain",
+    "greedy splitting",
+    "depth limit",
+    "pruning"
+   ],
+   "applications": [
+    "machine learning",
+    "statistics",
+    "finance",
+    "data processing",
+    "image processing"
+   ]
+  },
+  "prerequisites": [
+   "concept:supervised-learning",
+   "concept:feature-space",
+   "concept:greedy",
+   "concept:tree"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "The building block of forests and boosted ensembles",
+    "status": "established"
+   },
+   {
+    "title": "Recognizing body parts in depth images",
+    "status": "established"
+   },
+   {
+    "title": "Which customers are likely to leave, and why",
+    "status": "illustrative"
+   },
+   {
+    "title": "Lending decisions that must be explained",
+    "status": "illustrative"
+   },
+   {
+    "title": "Short rules for use without a computer",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:supervised-learning",
+    "type": "prerequisite",
+    "why": "A decision tree is learned from examples whose class is already known, which is the setting supervised learning describes."
+   },
+   {
+    "to": "concept:feature-space",
+    "type": "prerequisite",
+    "why": "Each example is a point whose coordinates are its measurements, and a decision tree works by dividing that space into boxes."
+   },
+   {
+    "to": "concept:greedy",
+    "type": "prerequisite",
+    "why": "Decision tree learning is a greedy algorithm: it takes the split that scores best now and never reconsiders it, which is fast but does not give the best tree."
+   },
+   {
+    "to": "concept:tree",
+    "type": "prerequisite",
+    "why": "The learned model is a rooted binary tree, with a question at each inner node and a prediction at each leaf."
+   },
+   {
+    "to": "concept:overfitting",
+    "type": "related",
+    "why": "A decision tree left to grow fits its training points exactly, which makes it one of the plainest demonstrations of overfitting and of why depth has to be limited."
+   },
+   {
+    "to": "concept:entropy",
+    "type": "related",
+    "why": "Entropy is the other common way to score a split in decision tree learning. Like Gini impurity it is zero for a pure group and largest for an even mix."
+   },
+   {
+    "to": "concept:np-hardness",
+    "type": "related",
+    "why": "Finding an optimal decision tree is NP-complete, which is the reason decision tree learning settles for a greedy search."
+   },
+   {
+    "to": "knn",
+    "type": "same-problem",
+    "why": "A decision tree and k-nearest neighbours can both draw borders that are not straight. The tree does its work in advance and ignores the scale of the features, while nearest neighbours does its work at prediction time and depends on scale."
+   },
+   {
+    "to": "logistic-regression",
+    "type": "same-problem",
+    "why": "Both classify a point from its features. Logistic regression makes one cut at any angle, and a decision tree makes many cuts that are each parallel to an axis."
+   },
+   {
+    "to": "perceptron",
+    "type": "same-problem",
+    "why": "The perceptron learns a single straight border and cannot represent XOR. A decision tree represents XOR with two levels of questions."
+   },
+   {
+    "to": "k-means",
+    "type": "related",
+    "why": "k-means and a decision tree both divide feature space into regions. k-means has no labels and draws its regions around centres, while a decision tree uses the labels and draws boxes."
+   },
+   {
+    "to": "linear-regression",
+    "type": "related",
+    "why": "A tree grown to predict a number, called a regression tree, answers with one constant per box, where linear regression answers with a single line across the whole range."
+   },
+   {
+    "to": "binary-search",
+    "type": "related",
+    "why": "Predicting with a decision tree is a search by comparisons: like binary search, each answer discards part of the space and only one path is followed."
+   },
+   {
+    "to": "ab-testing",
+    "type": "related",
+    "why": "A decision tree shows which groups differ in past data. An A/B test checks whether acting on that difference changes the outcome, which the tree cannot show."
+   },
+   {
+    "to": "discipline:statistics",
+    "type": "application",
+    "why": "Recursive partitioning is a nonparametric method of regression and classification: it models an outcome without assuming a formula for how it depends on the measurements."
+   },
+   {
+    "to": "discipline:computer-vision",
+    "type": "application",
+    "why": "Forests of decision trees have been used to label the pixels of depth images with body parts, fast enough for real-time tracking."
+   }
+  ],
+  "analogy": "The key at the front of a field guide",
+  "takeaway": "Keep asking the yes-or-no question that best separates the examples, stop before the questions start describing accidents, and read each prediction and its reasons off the path.",
+  "describe": "A scatter plot of training points, green for class 0 and terracotta for class 1. The tree divides the plot into boxes with straight splits parallel to the axes. Each box is shaded in the colour of the class it predicts, more strongly the purer it is. An ochre outline marks the group being examined and a dashed ochre line marks the split being scored, while splits already made are ink lines. Below the plot the tree itself is drawn: questions in ink, leaves in the colour of the class they predict, and under every node the number of class 0 and class 1 points it holds. While a group is searched, a small chart plots the score of every possible split on one feature against its threshold, with a dashed line at the impurity of the group before splitting. In the last frame brick rings mark the training points the tree gets wrong, small dots show fresh points, and a chart compares accuracy on training points and on fresh points at every depth.",
+  "views": [
+   "scene",
+   "graph"
+  ],
+  "checks": {
+   "tests": [
+    "default: every chosen split matches a brute-force search over every threshold",
+    "moons, fully grown: every chosen split matches brute force",
+    "XOR, 80 points, fully grown: every chosen split matches brute force",
+    "a fully grown tree labels every one of its training points correctly",
+    "identical points with different classes cannot be separated at any depth",
+    "the worked example: 0.5 at the top, calls ≤ 2.5 scores 0.2, then years ≤ 2 scores 0",
+    "exact XOR: the first split gains nothing, and two levels still get all four right (quiz prediction)",
+    "default and fully grown presets: 39 of 40 and 349 of 400, then 40 of 40 and 331 of 400",
+    "training accuracy never falls with depth, and a tree limited to depth d is the top d levels of a deeper one",
+    "a depth limit of 1 asks exactly one question, the first question of the deeper tree",
+    "training points of a single class give a tree that asks nothing",
+    "moons preset: deeper questions help on fresh points (357 of 400 at depth 2, 383 at full depth)",
+    "XOR preset: the first split barely lowers the impurity, and accuracy on fresh points arrives late",
+    "rescaling a feature changes the thresholds and not the predictions"
+   ],
+   "runs": 9,
+   "frames": 224,
+   "cost": [
+    {
+     "formula": "2(n − 1), one split per gap on each feature",
+     "series": "One question (depth limit 1)",
+     "metric": "Splits scored",
+     "sizeLabel": "Training points (n)",
+     "relation": "close",
+     "detail": "largest gap 9.4% at the larger sizes",
+     "rows": [
+      [
+       25,
+       47,
+       48
+      ],
+      [
+       50,
+       96,
+       98
+      ],
+      [
+       100,
+       189,
+       198
+      ],
+      [
+       200,
+       370,
+       398
+      ],
+      [
+       400,
+       723,
+       798
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 9
+  },
+  "frames": 24
  },
  {
   "id": "perceptron",
@@ -10595,6 +13061,852 @@ export const catalog = [
    "outputLines": 10
   },
   "frames": 116
+ },
+ {
+  "id": "convolution",
+  "name": "Convolution and Edge Detection",
+  "aliases": [
+   "image filter",
+   "Sobel filter",
+   "Sobel operator",
+   "image kernel",
+   "convolution matrix",
+   "cross-correlation",
+   "2D convolution",
+   "edge detector",
+   "sliding window filter"
+  ],
+  "kind": "algorithm",
+  "discipline": "computer-vision",
+  "alsoIn": [
+   {
+    "id": "deep-learning",
+    "why": "A convolutional layer slides kernels like these across its input, with the weights learned from examples instead of written by hand."
+   },
+   {
+    "id": "computer-graphics",
+    "why": "Blurring, sharpening and embossing a picture are all done by sliding a fixed kernel over its pixels."
+   }
+  ],
+  "subfield": "Image processing",
+  "family": "Linear filters",
+  "lab": "neural-networks",
+  "summary": "Slides a small grid of weights over an image and writes one weighted sum per position. The weights decide whether the result is a blur, a sharper image or a map of the edges.",
+  "difficulty": "intermediate",
+  "order": 652,
+  "paradigms": [
+   "transform"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(N · K)",
+   "average": "O(N · K)",
+   "worst": "O(N · K) for N pixels and K kernel weights",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(N) for the output image",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "find the edges in a photo",
+    "blur a picture",
+    "sharpen a photo",
+    "outline the shapes in a picture",
+    "find where brightness changes in an image",
+    "smooth out speckles in an image"
+   ],
+   "techniques": [
+    "sliding window",
+    "weighted sum",
+    "kernel",
+    "finite differences",
+    "cross-correlation"
+   ],
+   "applications": [
+    "image processing",
+    "computer graphics",
+    "machine learning",
+    "signal processing"
+   ]
+  },
+  "prerequisites": [
+   "concept:array",
+   "concept:matrix"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Photo editing",
+    "status": "established"
+   },
+   {
+    "title": "Edge detection as a first step in computer vision",
+    "status": "established"
+   },
+   {
+    "title": "Convolutional neural networks",
+    "status": "established"
+   },
+   {
+    "title": "Filtering sound and other signals",
+    "status": "established"
+   },
+   {
+    "title": "Checking parts on a production line",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:matrix",
+    "type": "prerequisite",
+    "why": "An image and a kernel are both grids of numbers, and convolution combines them by multiplying matching entries and adding, the same operation that builds a matrix product one entry at a time."
+   },
+   {
+    "to": "concept:derivative",
+    "type": "related",
+    "why": "A Sobel kernel estimates the derivative of brightness by subtracting the pixels on one side from the pixels on the other. Convolution turns the idea of a slope into something that can be computed on a grid."
+   },
+   {
+    "to": "fft",
+    "type": "related",
+    "why": "Convolution in the image corresponds to multiplication of Fourier transforms, so for very large kernels the fast Fourier transform computes the same sliding sums at a cost that does not grow with the kernel."
+   },
+   {
+    "to": "perceptron",
+    "type": "related",
+    "why": "A perceptron computes a weighted sum of its inputs. One step of convolution is the same weighted sum taken over a small patch, and the whole operation applies that one set of weights at every position of the image."
+   },
+   {
+    "to": "backpropagation",
+    "type": "related",
+    "why": "Convolution with hand-written weights finds edges. Backpropagation lets a convolutional network choose its own kernel weights, by computing how the error changes with every one of them."
+   },
+   {
+    "to": "k-means",
+    "type": "related",
+    "why": "k-means clustering of pixel colours splits an image into regions, and edge detection by convolution finds the boundaries between regions. They approach the same task, dividing up a picture, from opposite sides."
+   },
+   {
+    "to": "bresenham-line",
+    "type": "related",
+    "why": "Bresenham's algorithm decides which pixels to switch on to draw a line, and convolution with an edge kernel finds where lines and boundaries are in pixels that are already there. One writes the pixel grid and the other reads it."
+   },
+   {
+    "to": "graph-neural-network",
+    "type": "advanced",
+    "why": "Convolution combines each pixel with its neighbours on a regular grid. A graph neural network does the same for data in which each item has its own set of neighbours, so it must combine them in a way that needs no fixed order."
+   },
+   {
+    "to": "discipline:deep-learning",
+    "type": "application",
+    "why": "Convolutional layers are convolution with learned weights, stacked so that later layers respond to arrangements of the patterns found by earlier ones."
+   },
+   {
+    "to": "discipline:computer-graphics",
+    "type": "application",
+    "why": "Graphics uses the same sliding kernels to soften, sharpen and resize images."
+   }
+  ],
+  "analogy": "A card with nine windows",
+  "takeaway": "Slide a small grid of weights across a picture and write down one weighted sum at each stop: the weights decide whether you get a blur, a sharper picture or a map of the edges.",
+  "describe": "Two grids of numbers side by side. On the left is the image: each cell shows one pixel as a number from 0 to 9 and is shaded more strongly the larger the number. A terracotta outline marks the three by three patch the kernel is lying on. On the right is the output, drawn inside a dashed outline the size of the image so that each output cell sits where the middle of the kernel was. Output cells are shaded green when above zero and brick red when below zero, and the cell just filled has a terracotta outline. Under the picture a table shows the nine numbers under the kernel, the nine weights, and the nine products that are added up. When both Sobel kernels are used, a last stage shows their two outputs and the edge strength made from them, one row at a time.",
+  "views": [
+   "scene",
+   "table",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "every kernel matches an independent shift-and-add computation on a random image",
+    "with the kernel turned, the output matches convolution computed straight from its definition",
+    "a blur whose weights add up to 1 leaves a flat image unchanged",
+    "the edge kernels give exactly zero on a flat image, and so does the edge strength",
+    "edge strength is the root of the summed squares of two independently computed Sobel outputs",
+    "turning a symmetric kernel changes nothing; turning a Sobel kernel flips every sign and leaves the strength alone",
+    "the worked example: a strip 1 1 1 9 9 9 gives 0, 32, 32, 0",
+    "the default run: a square gives ±32 on its sides, 0 in its middle and on the flat border",
+    "the predicted answer: the horizontal Sobel kernel gives 8 everywhere on a ramp, and blur and sharpen leave it unchanged",
+    "a single 1 on the right moves a dot one cell left, and one cell right once the kernel is turned",
+    "the numbers quoted in Try this: blurring a dot, and sharpening a step",
+    "the output of a sum of two images is the sum of their outputs",
+    "a typed kernel and a typed image are used as given, and the count is positions times weights",
+    "a 5 by 5 kernel on a larger image also matches the reference"
+   ],
+   "runs": 12,
+   "frames": 750,
+   "cost": [
+    {
+     "formula": "9 (n − 2)²",
+     "series": "3 by 3 kernel",
+     "metric": "Kernel multiplications",
+     "sizeLabel": "Image side in pixels (n)",
+     "relation": "exact",
+     "detail": "all 5 sizes agree",
+     "rows": [
+      [
+       8,
+       324,
+       324
+      ],
+      [
+       16,
+       1764,
+       1764
+      ],
+      [
+       32,
+       8100,
+       8100
+      ],
+      [
+       64,
+       34596,
+       34596
+      ],
+      [
+       128,
+       142884,
+       142884
+      ]
+     ]
+    },
+    {
+     "formula": "25 (n − 4)²",
+     "series": "5 by 5 kernel",
+     "metric": "Kernel multiplications",
+     "sizeLabel": "Image side in pixels (n)",
+     "relation": "exact",
+     "detail": "all 5 sizes agree",
+     "rows": [
+      [
+       8,
+       400,
+       400
+      ],
+      [
+       16,
+       3600,
+       3600
+      ],
+      [
+       32,
+       19600,
+       19600
+      ],
+      [
+       64,
+       90000,
+       90000
+      ],
+      [
+       128,
+       384400,
+       384400
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 21
+  },
+  "frames": 108
+ },
+ {
+  "id": "graph-neural-network",
+  "name": "Graph Neural Networks",
+  "aliases": [
+   "GNN",
+   "message passing neural network",
+   "MPNN",
+   "graph convolutional network",
+   "GCN",
+   "message passing",
+   "neighbourhood aggregation",
+   "graph network"
+  ],
+  "kind": "architecture",
+  "discipline": "deep-learning",
+  "alsoIn": [
+   {
+    "id": "graph-theory",
+    "why": "The computation runs along the edges of a graph, and what a node can learn in k rounds is decided by which nodes lie within k steps of it."
+   },
+   {
+    "id": "machine-learning",
+    "why": "It is the standard way to learn from data that comes as items and the links between them, where a table of independent rows would throw the links away."
+   }
+  ],
+  "subfield": "Learning on graphs",
+  "family": "Message passing networks",
+  "lab": "neural-networks",
+  "summary": "Lets every node of a graph repeatedly mix its own numbers with a summary of its neighbours' numbers, using one shared set of weights, so each round carries information one edge further.",
+  "difficulty": "advanced",
+  "order": 654,
+  "paradigms": [
+   "iterative-refinement"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(K · (V + E))",
+   "average": "O(K · (V + E))",
+   "worst": "O(K · (E · d + V · d²)) for K rounds and d numbers per node",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(V · d) for the node values",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "learn from data shaped like a network",
+    "predict something about each member of a network",
+    "predict the properties of a molecule",
+    "let neighbours in a network share what they know",
+    "recommend things using who is connected to whom",
+    "sort the members of a social network into groups"
+   ],
+   "techniques": [
+    "message passing",
+    "neighbourhood aggregation",
+    "weight sharing",
+    "ReLU activation",
+    "permutation equivariance"
+   ],
+   "applications": [
+    "machine learning",
+    "bioinformatics",
+    "navigation",
+    "scientific computing"
+   ]
+  },
+  "prerequisites": [
+   "backpropagation",
+   "pagerank",
+   "convolution",
+   "concept:graph",
+   "concept:neural-network",
+   "concept:activation-function",
+   "concept:matrix"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Predicting properties of molecules",
+    "status": "established"
+   },
+   {
+    "title": "Recommending items",
+    "status": "established"
+   },
+   {
+    "title": "Estimating travel times",
+    "status": "established"
+   },
+   {
+    "title": "Weather forecasting",
+    "status": "established"
+   },
+   {
+    "title": "Spotting rings of fraudulent accounts",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "pagerank",
+    "type": "prerequisite",
+    "why": "PageRank updates every node from its neighbours, round after round, with one fixed formula. A graph neural network keeps the rounds and replaces the fixed formula by weights that are learned, and lets each node hold several numbers instead of one."
+   },
+   {
+    "to": "backpropagation",
+    "type": "prerequisite",
+    "why": "The rounds of a graph neural network are layers, and its weights are found by backpropagation: the error at the output is sent back through every round to say how each weight should change."
+   },
+   {
+    "to": "convolution",
+    "type": "prerequisite",
+    "why": "Convolution combines each pixel with the pixels around it using shared weights. A graph neural network carries the same idea to graphs, where a node may have any number of neighbours in no particular order, so it combines them with a mean or a sum."
+   },
+   {
+    "to": "bfs",
+    "type": "related",
+    "why": "After k rounds of message passing, the nodes whose starting values can affect a given node are exactly those that breadth-first search reaches from it in k layers. Both spread outward one edge at a time."
+   },
+   {
+    "to": "perceptron",
+    "type": "related",
+    "why": "A perceptron takes a weighted sum of its inputs and applies a simple function. Every node of a graph neural network does the same in every round, with inputs that are its own numbers and a summary of its neighbours' numbers."
+   },
+   {
+    "to": "k-means",
+    "type": "related",
+    "why": "A graph neural network turns each node into a list of numbers that reflects its surroundings. k-means can then group nodes whose lists are close, which is one way of finding communities in a graph."
+   },
+   {
+    "to": "concept:graph",
+    "type": "prerequisite",
+    "why": "A graph neural network computes along the edges of a graph, so the graph is both its input and the wiring of the calculation."
+   },
+   {
+    "to": "concept:activation-function",
+    "type": "prerequisite",
+    "why": "The activation applied at every node is what stops many rounds of message passing from collapsing into a single weighted sum of the starting values."
+   },
+   {
+    "to": "attention",
+    "type": "advanced",
+    "why": "Attention lets a node weigh its neighbours unequally and learn the weighting. A transformer can be read as message passing on a graph in which every item is joined to every other."
+   },
+   {
+    "to": "discipline:graph-theory",
+    "type": "related",
+    "why": "Which graphs a message passing network can tell apart is a question about graph structure, tied to a classical test for whether two graphs have the same shape."
+   },
+   {
+    "to": "discipline:biology",
+    "type": "application",
+    "why": "Molecules and proteins are graphs of atoms and bonds, and graph neural networks are used to predict how candidate drugs will behave before they are made."
+   }
+  ],
+  "analogy": "News passed between neighbours",
+  "takeaway": "Each round, every node mixes its own numbers with its neighbours' numbers by one shared recipe, so after k rounds a node knows about everything within k steps and nothing beyond.",
+  "describe": "A graph drawn in columns: the first node on the left, then the nodes one step from it, then two steps, and so on. Under each node are the two numbers it currently holds. The node being updated is terracotta, the neighbours it is reading are ochre with the edges to them highlighted, and nodes that the first node's starting numbers can have reached are green. Below the graph a table has one row per node and one column per round. It fills in column by column, and each new cell is worked out from cells in the column before it. The cell being worked out is terracotta, the cells being read are ochre, the node's own last value is outlined in dark ink, and cells that can depend on the first node's starting numbers are green, which makes a staircase as the rounds go by. The rule with its fixed weights is written above the table.",
+  "views": [
+   "graph",
+   "table"
+  ],
+  "checks": {
+   "tests": [
+    "the default run matches an independent computation with whole matrices",
+    "random graphs, every weight set and both ways of combining also match it",
+    "relabelling the nodes relabels the outputs and changes nothing else",
+    "a value after k rounds depends only on nodes within k steps: changing a node further away changes nothing",
+    "the bound is tight on the default graph: A reaches D in round 2 and E and F in round 3, not sooner",
+    "the numbers quoted for the default run",
+    "the worked example: four nodes in a line, two rounds",
+    "the predicted answer: on a line of five, two rounds reach A, B and C only",
+    "two marked nodes: each node sides with the nearer mark",
+    "equal starting values: the mean cannot tell nodes apart, the sum can",
+    "a ring of six and two triangles give identical values when all nodes start alike",
+    "averaging for many rounds: the spread quoted in Try this, and the degree-weighted limit",
+    "with neighbours only, a node forgets its own value",
+    "a node with no neighbours and a repeated edge are handled"
+   ],
+   "runs": 10,
+   "frames": 415,
+   "cost": [
+    {
+     "formula": "3 × 2n",
+     "series": "Ring: n edges",
+     "metric": "Neighbour values read in three rounds",
+     "sizeLabel": "Number of nodes (n)",
+     "relation": "exact",
+     "detail": "all 5 sizes agree",
+     "rows": [
+      [
+       8,
+       48,
+       48
+      ],
+      [
+       16,
+       96,
+       96
+      ],
+      [
+       32,
+       192,
+       192
+      ],
+      [
+       64,
+       384,
+       384
+      ],
+      [
+       128,
+       768,
+       768
+      ]
+     ]
+    },
+    {
+     "formula": "3 × n(n − 1)",
+     "series": "Complete graph: n(n − 1)/2 edges",
+     "metric": "Neighbour values read in three rounds",
+     "sizeLabel": "Number of nodes (n)",
+     "relation": "exact",
+     "detail": "all 5 sizes agree",
+     "rows": [
+      [
+       8,
+       168,
+       168
+      ],
+      [
+       16,
+       720,
+       720
+      ],
+      [
+       32,
+       2976,
+       2976
+      ],
+      [
+       64,
+       12096,
+       12096
+      ],
+      [
+       128,
+       48768,
+       48768
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 5
+  },
+  "frames": 41
+ },
+ {
+  "id": "attention",
+  "name": "Attention and the Transformer",
+  "aliases": [
+   "transformer",
+   "self-attention",
+   "scaled dot-product attention",
+   "attention mechanism",
+   "multi-head attention",
+   "transformers"
+  ],
+  "kind": "model",
+  "discipline": "deep-learning",
+  "alsoIn": [
+   {
+    "id": "nlp",
+    "why": "Transformers were introduced for machine translation, and the large language models that followed are stacks of attention layers."
+   },
+   {
+    "id": "computer-vision",
+    "why": "A vision transformer cuts an image into patches and lets every patch attend to every other, with the same layer that is used for text."
+   }
+  ],
+  "subfield": "Sequence models",
+  "family": "Attention mechanisms",
+  "lab": "neural-networks",
+  "year": 2017,
+  "authors": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser and Illia Polosukhin",
+  "summary": "Lets every token in a sequence take a weighted blend of all the others, with weights from query-key scores. Stacked with other layers, this step forms the transformer.",
+  "difficulty": "advanced",
+  "order": 656,
+  "paradigms": [
+   "gradient-based",
+   "transform"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(n² · d)",
+   "average": "O(n² · d)",
+   "worst": "O(n² · d)",
+   "class": "quadratic"
+  },
+  "space": {
+   "worst": "O(n²) for the weights, plus O(n · d) for the vectors",
+   "class": "quadratic"
+  },
+  "tags": {
+   "problems": [
+    "how does a chatbot decide which words matter",
+    "how does ChatGPT work",
+    "work out what a word like \"it\" refers to",
+    "let each word in a sentence use the other words",
+    "how a language model reads a whole sentence at once",
+    "mix information between the positions of a sequence"
+   ],
+   "techniques": [
+    "dot product",
+    "softmax",
+    "weighted average",
+    "query, key and value",
+    "residual connection",
+    "positional encoding"
+   ],
+   "applications": [
+    "natural language",
+    "machine learning",
+    "image processing",
+    "bioinformatics"
+   ]
+  },
+  "prerequisites": [
+   "backpropagation",
+   "concept:neural-network",
+   "concept:matrix",
+   "concept:linear-algebra"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Machine translation",
+    "status": "established"
+   },
+   {
+    "title": "Large language models",
+    "status": "established"
+   },
+   {
+    "title": "Image recognition",
+    "status": "established"
+   },
+   {
+    "title": "Protein structure prediction",
+    "status": "established"
+   },
+   {
+    "title": "Image generation from text",
+    "status": "established"
+   },
+   {
+    "title": "Recommending the next item",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "backpropagation",
+    "type": "prerequisite",
+    "why": "Every operation in attention is differentiable, so backpropagation can pass the error at a transformer's output back through the softmax and the dot products to the query, key and value matrices. That is how those matrices are learned."
+   },
+   {
+    "to": "concept:matrix",
+    "type": "prerequisite",
+    "why": "Attention is matrix arithmetic: queries, keys and values are each a matrix times the token vectors, and all the scores of a sequence are one matrix product."
+   },
+   {
+    "to": "concept:neural-network",
+    "type": "prerequisite",
+    "why": "A transformer is a neural network in which attention layers alternate with ordinary feed-forward layers, and all of its weights are trained together."
+   },
+   {
+    "to": "gradient-descent",
+    "type": "related",
+    "why": "Gradient descent is the rule that changes a transformer's weights. The hand-written matrices in the attention demonstration stand where numbers found by gradient descent would be in a trained model."
+   },
+   {
+    "to": "logistic-regression",
+    "type": "related",
+    "why": "Logistic regression turns one score into a probability with the logistic function. The softmax in attention does the same for a whole row of scores, turning them into shares that add up to 1."
+   },
+   {
+    "to": "byte-pair-encoding",
+    "type": "related",
+    "why": "Byte-pair encoding cuts text into the tokens that attention then works on. A transformer never sees letters or words, only the tokens its tokenizer produces."
+   },
+   {
+    "to": "hash-table",
+    "type": "related",
+    "why": "A hash table returns the one value whose key equals the query. Attention is a soft version of the same lookup: every key is scored against the query, and the answer is a weighted mix of all the values."
+   },
+   {
+    "to": "knn",
+    "type": "related",
+    "why": "k-nearest neighbours answers a query from the few stored examples closest to it. Attention weighs every token by how well its key matches the query, a soft form of the same idea in which no neighbour is left out entirely."
+   },
+   {
+    "to": "ddpm",
+    "type": "application",
+    "why": "The denoising network of a diffusion model usually contains attention layers, and text-to-image diffusion uses attention to let each part of the image draw on the tokens of the prompt."
+   },
+   {
+    "to": "convolution",
+    "type": "same-problem",
+    "why": "A convolution and an attention layer both compute a new value for each position from other positions. A convolution uses a fixed neighbourhood and fixed weights, while attention reaches every position and computes its weights from the content."
+   },
+   {
+    "to": "graph-neural-network",
+    "type": "related",
+    "why": "Self-attention is message passing on a graph in which every token is joined to every other and the strength of each link is computed from the tokens. A graph neural network passes messages along links that are given."
+   },
+   {
+    "to": "adam",
+    "type": "related",
+    "why": "The original transformer was trained with the Adam optimizer, which takes the gradients that backpropagation sends through the attention layers and sets the step size for each weight."
+   },
+   {
+    "to": "discipline:nlp",
+    "type": "application",
+    "why": "Translation, summarising, question answering and text generation are now mostly done with transformers, in which attention carries information between the tokens of a text."
+   },
+   {
+    "to": "discipline:computer-vision",
+    "type": "application",
+    "why": "Vision transformers apply attention to the patches of an image, so that any region can draw on any other in a single layer."
+   },
+   {
+    "to": "discipline:biology",
+    "type": "application",
+    "why": "Protein structure prediction uses attention to relate positions that are far apart along a protein chain but close together once it folds."
+   }
+  ],
+  "analogy": "A room where everyone compares notes",
+  "takeaway": "Each token scores every token, turns the scores into shares that add up to one, and takes that blend of what the others carry.",
+  "describe": "Tables of numbers. The first frames show a table with one row for each token and the four numbers of its vector, then a table listing each token's query, key and value as they are computed, beside the matrix that produces them. After that the main table is the attention table: one row and one column per token, where the cell in a row gives the weight that the row's token puts on the column's token. Rows are filled in one at a time. The row being worked on is terracotta, and in a finished row the largest weight is forest green. Cells hidden by a causal mask are faint and hold 0. Under the table, strips of cells show the working for the current token: its query, every key, the score against each key, the scores after division, the exponentials, the weights, the values and the output vector. The last frame shows the full attention table and a table of the output vectors.",
+  "views": [
+   "table",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "each row of weights sums to 1 and the output matches an independent direct computation",
+    "the same with position information",
+    "the same with a causal mask",
+    "the same without scaling",
+    "the same on six other tokens with positions and mask together",
+    "identical tokens at different positions get identical outputs when no position information is added",
+    "with position information the same two tokens get different outputs",
+    "with a causal mask the same two tokens get different outputs, and later tokens are hidden",
+    "under a causal mask, changing the last token leaves every earlier output unchanged",
+    "reordering the tokens reorders the outputs in the same way",
+    "one word repeated gives equal weights and the value itself as output",
+    "a single token attends only to itself",
+    "the numbers of the worked example and the code sample",
+    "without scaling the weights are more lopsided: cat goes from 0.498 to 0.765",
+    "the position vector is the sine and cosine formula for four entries",
+    "the feed-forward layer of the original block has twice the weights of its attention layer"
+   ],
+   "runs": 10,
+   "frames": 404,
+   "cost": [
+    {
+     "formula": "n²",
+     "series": "Every token sees every token",
+     "metric": "Query-key scores",
+     "sizeLabel": "Number of tokens (n)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       2,
+       4,
+       4
+      ],
+      [
+       4,
+       16,
+       16
+      ],
+      [
+       8,
+       64,
+       64
+      ],
+      [
+       16,
+       256,
+       256
+      ],
+      [
+       32,
+       1024,
+       1024
+      ],
+      [
+       64,
+       4096,
+       4096
+      ]
+     ]
+    },
+    {
+     "formula": "n(n + 1)/2",
+     "series": "Causal mask",
+     "metric": "Query-key scores",
+     "sizeLabel": "Number of tokens (n)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       2,
+       3,
+       3
+      ],
+      [
+       4,
+       10,
+       10
+      ],
+      [
+       8,
+       36,
+       36
+      ],
+      [
+       16,
+       136,
+       136
+      ],
+      [
+       32,
+       528,
+       528
+      ],
+      [
+       64,
+       2080,
+       2080
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 12
+  },
+  "frames": 45
  },
  {
   "id": "ddpm",
@@ -11249,6 +14561,561 @@ export const catalog = [
   "frames": 42
  },
  {
+  "id": "ab-testing",
+  "name": "A/B Testing",
+  "aliases": [
+   "A/B test",
+   "split test",
+   "split testing",
+   "bucket test",
+   "controlled experiment",
+   "online controlled experiment",
+   "randomized controlled trial",
+   "two-proportion z-test",
+   "significance test",
+   "hypothesis test"
+  ],
+  "kind": "algorithm",
+  "discipline": "statistics",
+  "alsoIn": [
+   {
+    "id": "machine-learning",
+    "why": "A new ranking or recommendation model is judged in the end by showing it to a random share of real users and comparing their behaviour with the old model's."
+   }
+  ],
+  "subfield": "Hypothesis testing",
+  "family": "Randomized experiments",
+  "lab": "probability-statistics",
+  "summary": "Shows two versions to randomly split visitors, then asks whether the gap in results is bigger than luck alone would make. Stopping at the first win breaks the answer.",
+  "difficulty": "beginner",
+  "order": 712,
+  "paradigms": [
+   "probabilistic-inference",
+   "randomized-sampling"
+  ],
+  "randomized": true,
+  "approximate": true,
+  "time": {
+   "best": "O(n)",
+   "average": "O(n)",
+   "worst": "O(n)",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(1)",
+   "class": "constant"
+  },
+  "tags": {
+   "problems": [
+    "did my change make a difference",
+    "which version is better",
+    "is this difference real or just luck",
+    "how many visitors do I need before deciding",
+    "compare two conversion rates",
+    "can I stop my experiment early"
+   ],
+   "techniques": [
+    "random assignment",
+    "two-proportion z-test",
+    "p-value",
+    "significance level",
+    "statistical power",
+    "pooled standard error"
+   ],
+   "applications": [
+    "statistics",
+    "machine learning",
+    "search engines",
+    "data processing"
+   ]
+  },
+  "prerequisites": [
+   "monte-carlo",
+   "concept:probability",
+   "concept:sampling",
+   "concept:gaussian-distribution"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Changes to websites and apps",
+    "status": "established"
+   },
+   {
+    "title": "Clinical trials",
+    "status": "established"
+   },
+   {
+    "title": "Email and advertising",
+    "status": "illustrative"
+   },
+   {
+    "title": "Prices and store layouts",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "monte-carlo",
+    "type": "prerequisite",
+    "why": "Each group's rate in an A/B test is an average of random yes-or-no outcomes, so its error shrinks like 1/√n, the rule Monte Carlo estimation demonstrates. The standard error of the test is that rule applied to two groups."
+   },
+   {
+    "to": "bayesian-updating",
+    "type": "same-problem",
+    "why": "Both judge two versions from counts of successes. A/B testing asks how surprising the gap would be if nothing differed, while Bayesian updating keeps a belief about each rate and asks how probable it is that one is higher."
+   },
+   {
+    "to": "exponential-smoothing",
+    "type": "related",
+    "why": "When visitors cannot be split at random, the fallback is to compare results after a change with an exponential smoothing forecast of what would have happened without it. An A/B test is stronger because its two groups live through the same days."
+   },
+   {
+    "to": "linear-regression",
+    "type": "related",
+    "why": "An A/B comparison is a regression of the outcome on a 0-or-1 label for the group: the fitted slope is exactly the gap between the two group averages. Linear regression extends the comparison to several factors at once."
+   },
+   {
+    "to": "concept:probability",
+    "type": "prerequisite",
+    "why": "The p-value of an A/B test is a probability worked out under an assumption, and reading it correctly depends on being clear about which assumption."
+   },
+   {
+    "to": "concept:gaussian-distribution",
+    "type": "prerequisite",
+    "why": "An A/B test compares its score with the bell curve of the Gaussian distribution, because the gap between two large-sample averages is approximately normally distributed."
+   },
+   {
+    "to": "concept:sampling",
+    "type": "prerequisite",
+    "why": "The visitors in an A/B test are a sample of all future visitors, and the whole question is one about sampling: how far a sample can stray from what it was drawn from."
+   },
+   {
+    "to": "concept:law-of-large-numbers",
+    "type": "related",
+    "why": "By the law of large numbers each observed rate settles toward its true rate as visitors accumulate, which is why a large enough A/B test can separate two rates that are close together."
+   },
+   {
+    "to": "concept:exploration-exploitation",
+    "type": "related",
+    "why": "An A/B test explores for a fixed period and only then exploits the winner. Bandit methods blend the two, sending more traffic to the leading version while still learning."
+   },
+   {
+    "to": "discipline:machine-learning",
+    "type": "application",
+    "why": "In machine learning, accuracy on stored data does not settle whether a new model is better for users. The final check is an A/B test against the old model on live traffic."
+   }
+  ],
+  "analogy": "A twitchy kitchen scale",
+  "takeaway": "A gap between two versions means something only when it is clearly bigger than luck would make it, and only if you chose when to stop before you looked.",
+  "describe": "Three views. The first chart plots, against the number of visitors per group, the share of each group that has bought so far: A in forest green, B in terracotta, with dashed ink lines at the true rates that the test never sees. The second, smaller chart plots the test score z at each check. A sage band from −1.96 to +1.96 marks where 95% of scores land when nothing differs. Scores the test used are solid ink dots, a score past the line is a larger brick dot, and scores drawn for the reader but not used by the test are hollow. After an early stop a dashed brick line marks where it happened and the rest of the run is drawn faded. The third view is a tally: visitors, buyers and rate for each group, and the gap, standard error, z and p-value of the latest test.",
+  "views": [
+   "scene",
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "worked example: 30 of 200 against 50 of 200 gives z = 2.5 and p = 0.0124",
+    "z squared equals Pearson's chi-squared statistic for the two-by-two table of counts",
+    "p-values agree with known points of the normal distribution and with an independent formula",
+    "no real difference, one planned test: false wins stay near 5% over 2000 seeded experiments",
+    "no real difference, peeking at 20 checks: false wins rise to about a quarter, far above 5%",
+    "every added check adds false wins: 1, 5 and 20 checks",
+    "peeking can only add winners: whenever the planned test is significant, the peeking run also declares one",
+    "presets and quiz: the same visitors give no difference when tested once, and a false win for B at check 6 when peeking",
+    "default: a true gap of 3 points is found at 2000 per group, and with peeking the run stops at 1100",
+    "power: 10% against 13% with 2000 per group is detected in most experiments",
+    "sample size: 3839 per group separates 10% from 12% about four times in five",
+    "preset and quiz: a one-point improvement is missed at 1000 per group",
+    "nobody buys, or everybody buys: the score is 0 and the p-value is 1, not a division by zero",
+    "the number of progress checks does not change the planned test, and the same seed repeats exactly"
+   ],
+   "runs": 8,
+   "frames": 184,
+   "cost": [
+    {
+     "formula": "5% of 2000",
+     "series": "Test once at the end",
+     "metric": "Experiments out of 2000 that declared a winner",
+     "sizeLabel": "Number of checks during the experiment",
+     "relation": "close",
+     "detail": "largest gap 4.0% at the larger sizes",
+     "rows": [
+      [
+       1,
+       96,
+       100
+      ],
+      [
+       2,
+       96,
+       100
+      ],
+      [
+       5,
+       96,
+       100
+      ],
+      [
+       10,
+       96,
+       100
+      ],
+      [
+       20,
+       96,
+       100
+      ],
+      [
+       40,
+       96,
+       100
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 4
+  },
+  "frames": 29
+ },
+ {
+  "id": "exponential-smoothing",
+  "name": "Exponential Smoothing",
+  "aliases": [
+   "Holt-Winters",
+   "Holt's method",
+   "simple exponential smoothing",
+   "double exponential smoothing",
+   "triple exponential smoothing",
+   "exponentially weighted moving average",
+   "EWMA",
+   "exponential moving average",
+   "EMA",
+   "demand forecasting"
+  ],
+  "kind": "algorithm",
+  "discipline": "statistics",
+  "alsoIn": [
+   {
+    "id": "optimization",
+    "why": "Inventory and production planning take a demand forecast as their input, and exponential smoothing was developed to supply one for thousands of stocked items at a time."
+   },
+   {
+    "id": "finance",
+    "why": "Risk models estimate how volatile a price is with an exponentially weighted average of its squared changes, so that recent market moves count most."
+   },
+   {
+    "id": "deep-learning",
+    "why": "Optimizers such as momentum and Adam smooth the stream of gradients with the same recurrence, to steady the direction of each training step."
+   }
+  ],
+  "subfield": "Time series forecasting",
+  "family": "Exponential smoothing methods",
+  "lab": "probability-statistics",
+  "summary": "Forecasts the next value of a series from a running estimate in which recent figures count most. Extra terms follow a trend and a repeating season.",
+  "difficulty": "beginner",
+  "order": 716,
+  "paradigms": [
+   "incremental"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(n)",
+   "average": "O(n)",
+   "worst": "O(n)",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(1), or O(m) with a season of length m",
+   "class": "constant"
+  },
+  "tags": {
+   "problems": [
+    "forecast next month's sales",
+    "how much stock should I order",
+    "predict demand with a busy season",
+    "forecast from past data",
+    "see the direction under bumpy monthly figures",
+    "find a trend"
+   ],
+   "techniques": [
+    "weighted average",
+    "level, trend and season",
+    "smoothing weight",
+    "one-step-ahead forecast",
+    "recurrence"
+   ],
+   "applications": [
+    "logistics",
+    "finance",
+    "statistics",
+    "networking",
+    "signal processing",
+    "machine learning"
+   ]
+  },
+  "prerequisites": [
+   "concept:recurrence"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 5,
+  "quizAnswerable": 4,
+  "apps": [
+   {
+    "title": "Stock and demand planning",
+    "status": "established"
+   },
+   {
+    "title": "Watching a process for drift",
+    "status": "established"
+   },
+   {
+    "title": "Timers on the internet",
+    "status": "established"
+   },
+   {
+    "title": "Training neural networks",
+    "status": "established"
+   },
+   {
+    "title": "Staffing a call centre",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "linear-regression",
+    "type": "same-problem",
+    "why": "Both forecast from past figures. Linear regression fits one straight line to all of the history with every point counting equally, while exponential smoothing lets its level and trend drift and counts recent figures most."
+   },
+   {
+    "to": "kalman-filter",
+    "type": "advanced",
+    "why": "Simple exponential smoothing is what the Kalman filter settles into for a level that drifts by random steps and is measured with noise. The Kalman filter also works out what the smoothing weight should be and how uncertain the estimate is."
+   },
+   {
+    "to": "ab-testing",
+    "type": "related",
+    "why": "When a change cannot be tried on randomly split groups as in an A/B test, an exponential smoothing forecast of what would have happened without the change is the usual stand-in for a control group, and a weaker one."
+   },
+   {
+    "to": "gradient-descent",
+    "type": "related",
+    "why": "One exponential smoothing update is one gradient descent step on the squared miss of the latest forecast. The smoothing weight plays the part of the learning rate."
+   },
+   {
+    "to": "adam",
+    "type": "related",
+    "why": "The Adam optimizer keeps exponentially smoothed averages of the gradient and of its square. It is the recurrence of exponential smoothing applied to gradients in place of demand."
+   },
+   {
+    "to": "fft",
+    "type": "related",
+    "why": "Holt-Winters has to be told how long the season is. The fast Fourier transform can find it, by showing which repeating period accounts for most of the variation in the series."
+   },
+   {
+    "to": "concept:recurrence",
+    "type": "prerequisite",
+    "why": "Exponential smoothing is a recurrence: each new level is computed from the previous level and one new figure, and unrolling it gives the fading weights."
+   },
+   {
+    "to": "concept:learning-rate",
+    "type": "related",
+    "why": "The smoothing weight of exponential smoothing behaves like a learning rate. Too large and the estimate chases noise, too small and it reacts late."
+   },
+   {
+    "to": "concept:overfitting",
+    "type": "related",
+    "why": "Smoothing weights tuned to make past forecasts look good can fit the accidents of that history, which is overfitting, so they must be checked on figures held back from the tuning."
+   },
+   {
+    "to": "discipline:optimization",
+    "type": "application",
+    "why": "Inventory rules that decide when and how much to reorder take a demand forecast as input, and exponential smoothing was developed to provide it."
+   },
+   {
+    "to": "discipline:finance",
+    "type": "application",
+    "why": "In finance, volatility is commonly estimated with the recurrence of exponential smoothing applied to squared price changes, so that recent market moves count most."
+   }
+  ],
+  "analogy": "Your opinion of a restaurant",
+  "takeaway": "Keep a running estimate, move it part of the way toward each new figure, and add a trend and a seasonal pattern when the history shows them.",
+  "describe": "Two charts. The main chart plots units sold against the month. Actual demand is shown as ink dots joined by a faint line, and the forecast made one month before each figure as a terracotta line. In the current month a thick ochre bar joins the forecast to the actual, showing the miss, and a hollow terracotta dot marks the forecast for the month after. At the end a dashed vertical line marks where history ends, the forecast for the months ahead is drawn as a dashed terracotta line, and the figures that actually followed appear as hollow ink dots. The second chart depends on the method. For simple smoothing it is a bar for each past month showing its share of the current level. For Holt's method it is the estimated trend month by month, with a dashed line at the true growth. For Holt-Winters it is twelve bars, one seasonal value per calendar month, with hollow dots at the true seasonal pattern.",
+  "views": [
+   "scene"
+  ],
+  "checks": {
+   "tests": [
+    "worked example: 100, 110, 104, 120 with a weight of one half gives 105, 104.5 and 112.25",
+    "the simple level equals the explicit weighted sum of past figures, with weights that sum to 1",
+    "α = 1 reproduces the last observation: every forecast is the figure of the month before",
+    "a constant series is forecast exactly by all three methods, whatever the weights",
+    "Holt reproduces a straight line exactly, whatever the weights",
+    "Holt-Winters reproduces a straight line plus a fixed season exactly, and recovers the seasonal values",
+    "all three methods agree with the error-correction form of the recurrence, computed independently",
+    "quiz: on growth of 2 a month with no randomness, simple smoothing with α = 0.3 settles 2 / 0.3 behind",
+    "presets: on growing demand the trend term cuts the miss for the year ahead from about 19 to about 5",
+    "presets: on seasonal demand Holt-Winters cuts the miss for the year ahead from about 14 to about 5",
+    "presets: after a jump the fast weight wins, and on steady demand the slow weight wins",
+    "the shape of the forecast: flat, a straight line, and a straight line plus the seasonal values",
+    "histories too short for the method are refused with a reason",
+    "the same seed gives the same figures, and the figures do not depend on the method"
+   ],
+   "runs": 10,
+   "frames": 420,
+   "cost": [
+    {
+     "formula": "n − 1",
+     "series": "Simple",
+     "metric": "Smoothing updates",
+     "sizeLabel": "Months of history (n)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       24,
+       23,
+       23
+      ],
+      [
+       48,
+       47,
+       47
+      ],
+      [
+       96,
+       95,
+       95
+      ],
+      [
+       192,
+       191,
+       191
+      ],
+      [
+       384,
+       383,
+       383
+      ],
+      [
+       768,
+       767,
+       767
+      ]
+     ]
+    },
+    {
+     "formula": "2(n − 2)",
+     "series": "Holt (with trend)",
+     "metric": "Smoothing updates",
+     "sizeLabel": "Months of history (n)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       24,
+       44,
+       44
+      ],
+      [
+       48,
+       92,
+       92
+      ],
+      [
+       96,
+       188,
+       188
+      ],
+      [
+       192,
+       380,
+       380
+      ],
+      [
+       384,
+       764,
+       764
+      ],
+      [
+       768,
+       1532,
+       1532
+      ]
+     ]
+    },
+    {
+     "formula": "3n",
+     "series": "Holt-Winters (with trend and season)",
+     "metric": "Smoothing updates",
+     "sizeLabel": "Months of history (n)",
+     "relation": "exact",
+     "detail": "all 6 sizes agree",
+     "rows": [
+      [
+       24,
+       72,
+       72
+      ],
+      [
+       48,
+       144,
+       144
+      ],
+      [
+       96,
+       288,
+       288
+      ],
+      [
+       192,
+       576,
+       576
+      ],
+      [
+       384,
+       1152,
+       1152
+      ],
+      [
+       768,
+       2304,
+       2304
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 3
+  },
+  "frames": 51
+ },
+ {
   "id": "reservoir-sampling",
   "name": "Reservoir Sampling",
   "aliases": [
@@ -11872,6 +15739,282 @@ export const catalog = [
    "outputLines": 9
   },
   "frames": 62
+ },
+ {
+  "id": "particle-filter",
+  "name": "Particle Filter",
+  "aliases": [
+   "sequential Monte Carlo",
+   "SMC",
+   "bootstrap filter",
+   "sequential importance resampling",
+   "SIR filter",
+   "Monte Carlo localization",
+   "condensation algorithm"
+  ],
+  "kind": "algorithm",
+  "discipline": "robotics",
+  "alsoIn": [
+   {
+    "id": "statistics",
+    "why": "Under the name sequential Monte Carlo it is a general way to compute the beliefs of state-space models that have no formula, one observation at a time."
+   },
+   {
+    "id": "ai",
+    "why": "It carries out probabilistic reasoning over time: a belief about a hidden state is kept as samples and revised by Bayes' rule as evidence arrives."
+   }
+  ],
+  "subfield": "State estimation",
+  "family": "Bayesian filters",
+  "lab": "robotics",
+  "year": 1993,
+  "authors": "Neil Gordon, David Salmond and Adrian Smith",
+  "summary": "Tracks a hidden, changing quantity with a cloud of weighted guesses: move each guess, weigh it against the measurement, resample. Copes with beliefs that have several humps.",
+  "difficulty": "advanced",
+  "order": 745,
+  "paradigms": [
+   "probabilistic-inference",
+   "randomized-sampling"
+  ],
+  "randomized": true,
+  "approximate": true,
+  "time": {
+   "best": "O(N) per step for N particles",
+   "average": "O(N) per step",
+   "worst": "O(N) per step",
+   "class": "linear"
+  },
+  "space": {
+   "worst": "O(N)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "work out where a robot is when it could be in several places",
+    "keep several guesses alive until the evidence decides",
+    "track something when one reading fits more than one position",
+    "locate yourself on a map from imperfect sensors",
+    "follow a moving thing whose motion is not a simple straight rule",
+    "estimate something hidden when the doubt is not bell-shaped"
+   ],
+   "techniques": [
+    "weighted samples",
+    "importance weighting",
+    "resampling",
+    "predict and update",
+    "effective sample size"
+   ],
+   "applications": [
+    "robotics",
+    "navigation",
+    "signal processing",
+    "statistics",
+    "image processing"
+   ]
+  },
+  "prerequisites": [
+   "kalman-filter",
+   "bayesian-updating",
+   "monte-carlo",
+   "concept:bayes-theorem",
+   "concept:sampling",
+   "concept:state-space"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Robot localization",
+    "status": "established"
+   },
+   {
+    "title": "Tracking outlines in video",
+    "status": "established"
+   },
+   {
+    "title": "Tracking from bearings only",
+    "status": "established"
+   },
+   {
+    "title": "Mapping while localizing",
+    "status": "established"
+   },
+   {
+    "title": "Hidden quantities in economic time series",
+    "status": "established"
+   },
+   {
+    "title": "Finding a phone indoors",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "kalman-filter",
+    "type": "prerequisite",
+    "why": "The Kalman filter and the particle filter run the same cycle of predicting and then correcting a belief about a hidden state. The Kalman filter stores the belief as one bell curve, and the particle filter replaces that curve with samples so the belief can take any shape."
+   },
+   {
+    "to": "bayesian-updating",
+    "type": "prerequisite",
+    "why": "Weighing the particles is Bayesian updating carried out on samples: each guess is reweighted by how well it explains the evidence. The particle filter adds a move between updates because the unknown changes."
+   },
+   {
+    "to": "monte-carlo",
+    "type": "prerequisite",
+    "why": "Monte Carlo estimation replaces an average over all possibilities by an average over random samples. A particle filter does that at every time step, for a belief that keeps changing."
+   },
+   {
+    "to": "metropolis-hastings",
+    "type": "related",
+    "why": "Metropolis-Hastings and the particle filter both stand in for a distribution that has no usable formula with samples from it. Metropolis-Hastings walks one sample around a fixed distribution, while the particle filter carries a whole population through a changing one."
+   },
+   {
+    "to": "reservoir-sampling",
+    "type": "related",
+    "why": "Reservoir sampling and the resampling step of a particle filter both pick a fair random selection in one pass using a running total. Reservoir sampling gives every item the same chance, and resampling gives each particle a chance in proportion to its weight."
+   },
+   {
+    "to": "genetic-algorithm",
+    "type": "related",
+    "why": "A genetic algorithm and a particle filter both keep a population, copy the members that score well and perturb the copies. In the particle filter the score is a likelihood and the copying follows Bayes' rule, so the population means something exact: it is a sample of a belief."
+   },
+   {
+    "to": "rrt",
+    "type": "related",
+    "why": "A motion planner such as RRT assumes the robot knows where it is. A particle filter is one way a robot obtains that knowledge from sensors that fit several places at once."
+   },
+   {
+    "to": "viterbi",
+    "type": "related",
+    "why": "The Viterbi algorithm and the particle filter both reason about a hidden state that changes step by step and is seen only through noisy observations. Viterbi finds the single most probable path through a small set of states, and the particle filter tracks the current belief over a continuous one."
+   },
+   {
+    "to": "concept:bayes-theorem",
+    "type": "prerequisite",
+    "why": "The weight of a particle is the likelihood term of Bayes' theorem, and normalising the weights is its division by the total."
+   },
+   {
+    "to": "concept:sampling",
+    "type": "prerequisite",
+    "why": "The filter represents a belief by samples drawn from it, and resampling is drawing a new sample from a weighted one."
+   },
+   {
+    "to": "concept:state-space",
+    "type": "prerequisite",
+    "why": "The method assumes a hidden state that evolves by a rule with noise and is observed through noisy measurements."
+   },
+   {
+    "to": "concept:markov-chain",
+    "type": "related",
+    "why": "The hidden state is a Markov chain: where it goes next depends only on where it is now. That is why the cloud of current particles is all the filter needs to remember."
+   },
+   {
+    "to": "discipline:statistics",
+    "type": "application",
+    "why": "Sequential Monte Carlo is a standard tool for fitting state-space models of time series that are not linear or not Gaussian."
+   },
+   {
+    "to": "discipline:computer-vision",
+    "type": "application",
+    "why": "Tracking an object through cluttered video needs a belief with several humps, one for each plausible match, which particles provide."
+   },
+   {
+    "to": "discipline:ai",
+    "type": "application",
+    "why": "Reasoning under uncertainty over time means keeping a belief about a hidden state up to date, and particles are the general-purpose way to hold such a belief."
+   }
+  ],
+  "analogy": "A search party with one radio",
+  "takeaway": "Scatter many guesses, move them as the thing moves, and after every reading keep copies of the guesses that fit it: the survivors show where the thing is.",
+  "describe": "The main chart shows a hallway running left to right, with time steps stacked from bottom to top. Each time step has a row of forest green dots, one for each particle, at the positions the particles hold. Rows of earlier steps are pale sage. A dashed ink line with an ink dot is the true position, which the filter never sees. Hollow ochre rings are the sensor readings. With the distance sensor each reading is drawn twice, once on each side of a vertical line that marks the beacon, because a distance does not say which side. A terracotta line is the estimate. In the weighing step the dots grow or shrink with their weights. A second chart below draws one vertical line for each particle at its position, as tall as its weight, with dashed lines at the reading and at the true position and a solid terracotta line at the estimate. In the plain case a dashed brick line shows the exact answer from the Kalman filter formulas.",
+  "views": [
+   "scene"
+  ],
+  "checks": {
+   "tests": [
+    "weights sum to 1 after normalising at every step, and resampling keeps the particle count",
+    "resampling copies particle i either ⌊N·w⌋ or ⌈N·w⌉ times, and every new particle is an exact copy of an old one",
+    "the worked example: weights 0.31, 0.07, 0.31, 0.31, estimate 1.77, marks pick particles 1, 3, 4, 4, and the left side falls from 0.38 to 0.07",
+    "plain case with 20,000 particles: the estimate stays within 0.08 m of the exact Kalman filter answer at every step",
+    "the gap to the Kalman answer shrinks like 1/√N: 16 times the particles gives about a quarter of the gap",
+    "hallway with a beacon: 16,000 particles agree with an exact grid computation of the two-humped belief (RMS gap under 0.06 m)",
+    "default run: the true side falls to 4% of the weight at step 5, recovers, and the wrong side is empty at step 7",
+    "quiz and presets: with 12 particles the same readings starve the cloud at step 3 and it ends 10.21 m off; 20 particles starve, 24 recover",
+    "changing the number of particles leaves the robot path and the readings untouched",
+    "plain case presets: 300 particles end 0.02 m from the exact answer; 6 particles end 0.57 m from it and too sure of themselves",
+    "tryThis: with a sensor error of 0.2, only 10 of 150 particles are copied at step 2 and about 5 are effective",
+    "a cloud that is far from the reading still gets weights that sum to 1, and a left-hand start is tracked through the beacon"
+   ],
+   "runs": 8,
+   "frames": 316,
+   "cost": [
+    {
+     "formula": "12 N",
+     "series": "12 steps",
+     "metric": "Weights computed",
+     "sizeLabel": "Number of particles (N)",
+     "relation": "exact",
+     "detail": "all 8 sizes agree",
+     "rows": [
+      [
+       25,
+       300,
+       300
+      ],
+      [
+       50,
+       600,
+       600
+      ],
+      [
+       100,
+       1200,
+       1200
+      ],
+      [
+       200,
+       2400,
+       2400
+      ],
+      [
+       400,
+       4800,
+       4800
+      ],
+      [
+       800,
+       9600,
+       9600
+      ],
+      [
+       1600,
+       19200,
+       19200
+      ],
+      [
+       3200,
+       38400,
+       38400
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 9
+  },
+  "frames": 38
  },
  {
   "id": "rrt",
@@ -12745,6 +16888,285 @@ export const catalog = [
    "outputLines": 3
   },
   "frames": 47
+ },
+ {
+  "id": "byte-pair-encoding",
+  "name": "Byte-Pair Encoding",
+  "aliases": [
+   "BPE",
+   "tokenization",
+   "tokenizer",
+   "subword tokenization",
+   "byte pair encoding",
+   "subword units"
+  ],
+  "kind": "algorithm",
+  "discipline": "nlp",
+  "alsoIn": [
+   {
+    "id": "deep-learning",
+    "why": "Many large language models, including the GPT family, read and write text as tokens from a byte-pair vocabulary, so it fixes what the network's inputs and outputs are."
+   },
+   {
+    "id": "information-theory",
+    "why": "It began as a data compression method: a repeated pair of bytes is replaced by a single unused byte, and a table records the replacement."
+   }
+  ],
+  "subfield": "Tokenization",
+  "family": "Subword vocabularies",
+  "lab": "compression",
+  "year": 1994,
+  "authors": "Philip Gage",
+  "summary": "Builds a vocabulary of word pieces by repeatedly merging the most frequent adjacent pair of tokens in a text, then splits new text by replaying the same merges.",
+  "difficulty": "intermediate",
+  "order": 830,
+  "paradigms": [
+   "greedy"
+  ],
+  "randomized": false,
+  "approximate": false,
+  "time": {
+   "best": "O(n) when no merge is made",
+   "average": "O(n · m)",
+   "worst": "O(n · m)",
+   "class": "quadratic"
+  },
+  "space": {
+   "worst": "O(n + m)",
+   "class": "linear"
+  },
+  "tags": {
+   "problems": [
+    "split text into pieces a language model can read",
+    "how does a chatbot break words into tokens",
+    "handle a word never seen before",
+    "build a vocabulary from text",
+    "why do language models count tokens instead of words",
+    "make data smaller"
+   ],
+   "techniques": [
+    "pair counting",
+    "greedy merging",
+    "merge list",
+    "subword units",
+    "dictionary coding"
+   ],
+   "applications": [
+    "natural language",
+    "machine learning",
+    "data compression"
+   ]
+  },
+  "prerequisites": [
+   "concept:greedy",
+   "concept:array",
+   "concept:hashing"
+  ],
+  "hasExperiment": true,
+  "languages": [
+   "python",
+   "javascript",
+   "cpp"
+  ],
+  "quizCount": 6,
+  "quizAnswerable": 5,
+  "apps": [
+   {
+    "title": "Tokenizers of the GPT models",
+    "status": "established"
+   },
+   {
+    "title": "Neural machine translation",
+    "status": "established"
+   },
+   {
+    "title": "Data compression",
+    "status": "established"
+   },
+   {
+    "title": "Limits and prices stated in tokens",
+    "status": "established"
+   },
+   {
+    "title": "Sequences that are not natural language",
+    "status": "illustrative"
+   }
+  ],
+  "connections": [
+   {
+    "to": "concept:greedy",
+    "type": "prerequisite",
+    "why": "Byte-pair encoding is a greedy method: every round merges the pair that is commonest at that moment and never reconsiders an earlier merge."
+   },
+   {
+    "to": "huffman-coding",
+    "type": "related",
+    "why": "Huffman coding and byte-pair encoding are both greedy, both driven by counts, and both build their result from the bottom up by repeated joining. Huffman coding joins the two rarest symbols to decide code lengths, and byte-pair encoding joins the commonest neighbouring pair to make a new symbol."
+   },
+   {
+    "to": "lz77",
+    "type": "related",
+    "why": "LZ77 and byte-pair encoding both shorten text by reusing repeated strings. LZ77 points back to an earlier copy inside the text, while byte-pair encoding gives a repeated pair a name in a table that is kept apart from the text."
+   },
+   {
+    "to": "run-length-encoding",
+    "type": "related",
+    "why": "Run-length encoding replaces a run of one repeated symbol by a count. Byte-pair encoding replaces any repeated pair of symbols, and by doing so again and again it captures repeated strings of any length."
+   },
+   {
+    "to": "hash-table",
+    "type": "related",
+    "why": "Each round of byte-pair encoding counts pairs, and a hash table keyed by the pair is the usual way to keep those counts, giving one lookup per pair read."
+   },
+   {
+    "to": "attention",
+    "type": "advanced",
+    "why": "Byte-pair encoding turns text into a sequence of tokens, and attention is the step in a transformer that lets each of those tokens draw on the others. The merge list is fixed before the transformer is trained."
+   },
+   {
+    "to": "backpropagation",
+    "type": "related",
+    "why": "Every token in a byte-pair vocabulary is given its own list of weights inside a language model, and backpropagation is what trains those weights. The merges themselves are found by counting, with no gradients involved."
+   },
+   {
+    "to": "viterbi",
+    "type": "related",
+    "why": "A unigram tokenizer, the main alternative to byte-pair encoding, uses the Viterbi algorithm to find the most probable way to split a word. Byte-pair encoding replays its merge list instead and considers only one split."
+   },
+   {
+    "to": "concept:hashing",
+    "type": "related",
+    "why": "Counting how often each pair occurs in byte-pair encoding is a lookup-and-update job, which hashing makes fast."
+   },
+   {
+    "to": "discipline:deep-learning",
+    "type": "application",
+    "why": "Language models are trained on token sequences, and byte-pair encoding is one of the standard ways to produce them."
+   },
+   {
+    "to": "discipline:information-theory",
+    "type": "related",
+    "why": "Byte-pair encoding began as a compression method, and it works for the same reason all compression works: a pair that is predictable can be written more briefly."
+   }
+  ],
+  "analogy": "Inventing shorthand as you go",
+  "takeaway": "Keep gluing together the two neighbouring pieces that occur most often, remember the order you did it in, and replay those steps to split any new text.",
+  "describe": "Strips of labelled cells. The upper strip shows the training text as tokens, one row for each different word, with the number of copies of that word at the left. The end-of-word marker is drawn faintly. When a pair is chosen its cells turn ochre, and when it has been merged the new token is terracotta. The lower strip lists every pair with its count, in the order the pairs are first met, with the highest count in terracotta and any ties in ochre, and below that the merge list as it grows, in forest green. In the second half the upper strip shows one new word being split, and the lower strip shows the merge list being replayed: the rule being tried is terracotta, rules that applied are green, and rules that did not apply are faint. A character that never appeared in the training text is brick red.",
+  "views": [
+   "rows"
+  ],
+  "checks": {
+   "tests": [
+    "pair counts match an independent count at every merge, on the default text",
+    "the same on a sentence with nine merges",
+    "the same on a longer text with twenty merges",
+    "the same when merging runs until no pairs are left",
+    "the same with overlapping pairs and repeated letters",
+    "undoing the merges in reverse order returns the original text",
+    "the number of tokens never rises after a merge",
+    "the default run learns the six merges shown in the code sample",
+    "a tie goes to the pair met first, reading left to right",
+    "the worked example by hand",
+    "overlapping copies: aaaa counts the pair 3 times and replaces it twice",
+    "letters never seen in training are reported and left as single characters",
+    "merging until nothing is left stops after 16 merges, with pairs occurring once from round 11",
+    "the sentence preset splits \"that\" into th and at_",
+    "with no merges the word stays as single characters",
+    "the experiment paragraph: bounds on the tokens left hold at every size"
+   ],
+   "runs": 10,
+   "frames": 251,
+   "cost": [
+    {
+     "formula": "start − merges (never below the number of words)",
+     "series": "Letters shuffled inside each word",
+     "metric": "Tokens in the training text",
+     "sizeLabel": "Number of merges",
+     "relation": "upper",
+     "detail": "reaches at most 100% of the limit",
+     "rows": [
+      [
+       0,
+       239,
+       239
+      ],
+      [
+       5,
+       205,
+       234
+      ],
+      [
+       10,
+       187,
+       229
+      ],
+      [
+       20,
+       158,
+       219
+      ],
+      [
+       40,
+       120,
+       199
+      ],
+      [
+       80,
+       80,
+       159
+      ]
+     ]
+    },
+    {
+     "formula": "number of words",
+     "series": "The paragraph",
+     "metric": "Tokens in the training text",
+     "sizeLabel": "Number of merges",
+     "relation": "lower",
+     "detail": "at least 100% of the limit",
+     "rows": [
+      [
+       0,
+       239,
+       49
+      ],
+      [
+       5,
+       174,
+       49
+      ],
+      [
+       10,
+       139,
+       49
+      ],
+      [
+       20,
+       95,
+       49
+      ],
+      [
+       40,
+       58,
+       49
+      ],
+      [
+       80,
+       49,
+       49
+      ]
+     ]
+    }
+   ],
+   "costNote": "",
+   "languages": [
+    "python",
+    "cpp",
+    "javascript"
+   ],
+   "outputLines": 9
+  },
+  "frames": 27
  },
  {
   "id": "diffie-hellman",
