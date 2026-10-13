@@ -5,7 +5,7 @@
   "description": "An interactive field guide to algorithms. Static site, no build step.",
   "type": "module",
   "scripts": {
-    "start": "serve . -l ${PORT:-3000} --no-clipboard",
+    "start": "sh scripts/serve-site.sh",
     "dev": "python3 -m http.server 8975",
     "check": "python3 tools/build.py --check",
     "build": "python3 tools/build.py"

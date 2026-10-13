@@ -105,5 +105,12 @@ to a component framework later would be a port, not a redesign.
 Search runs in the browser over the generated catalog. At thousands of lessons, replace
 `build()` in `js/core/search.js` with a call to a server-side index and keep `search()` as is.
 
-`package.json` and `serve.json` are there only so the folder can be deployed with the `serve`
-package on a host such as Railway.
+## Deploying
+
+`npm start` runs `scripts/serve-site.sh`, which copies only the public site (`index.html`,
+`assets`, `css`, `js`, `content`) into `dist/` and serves it with the `serve` package. The
+pipeline, the authoring guide and the other tools are not published. On Railway, connect the
+GitHub repository and generate a domain; each push to `main` redeploys.
+
+Once the site has a domain, change the two share-image tags in `index.html` (`og:image` and
+`twitter:image`) to the full address of `assets/og-image.png`. Most services ignore a relative one.
