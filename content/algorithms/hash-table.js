@@ -188,7 +188,7 @@ export default {
   meta: {
     id: 'hash-table',
     name: 'Hash Table with Linear Probing',
-    aliases: ['hash map', 'open addressing', 'linear probing', 'closed hashing', 'dictionary', 'associative array'],
+    aliases: ['hash table', 'hash map', 'open addressing', 'linear probing', 'closed hashing', 'dictionary', 'associative array'],
     kind: 'data-structure',
     discipline: 'algorithms',
     alsoIn: [

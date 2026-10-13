@@ -16,16 +16,19 @@ function run(input, t) {
   const n = array.length;
   let index = -1;
 
+  // i is the position being looked at: -1 before the search starts, n once it has run off the end.
   const views = (i, found) => {
     const roles = {};
     for (let k = 0; k < i; k++) roles[k] = 'dim';
-    if (i < n) roles[i] = found ? 'done' : 'compare';
+    const looking = i >= 0 && i < n;
+    if (looking) roles[i] = found ? 'done' : 'compare';
+    const checked = Math.max(0, found ? i + 1 : i);
     return [
-      { kind: 'bars', values: array.slice(), roles, markers: i < n ? [{ index: i, label: 'i' }] : [],
+      { kind: 'bars', values: array.slice(), roles, markers: looking ? [{ index: i, label: 'i' }] : [],
         legend: [{ label: 'being checked', role: 'compare' }, { label: 'not checked yet', role: 'default' }, { label: 'match', role: 'done' }] },
       { kind: 'rows', rows: [
         { label: 'Looking for', cells: [{ t: target, role: 'target' }] },
-        { label: 'Checked', cells: array.slice(0, found ? i + 1 : i).map((v, k) => ({ t: v, sub: k, role: found && k === i ? 'done' : 'dim' })) },
+        { label: 'Checked', cells: array.slice(0, checked).map((v, k) => ({ t: v, sub: k, role: found && k === i ? 'done' : 'dim' })) },
       ] },
     ];
   };
@@ -470,6 +473,16 @@ int main() {
   },
 
   tests: [
+    { name: 'no value is shown as checked before it has been compared', input: { size: 15, where: 'last', seed: 2, custom: [] },
+      check: (r, c, run) => {
+        for (const [k, f] of run.frames.entries()) {
+          const compared = (f.counters && f.counters.comparisons) || 0;
+          const listed = f.views[1].rows.find((row) => row.label === 'Checked').cells.length;
+          const faded = Object.values(f.views[0].roles).filter((role) => role === 'dim').length;
+          if (listed > compared || faded > compared) return `step ${k + 1} shows ${Math.max(listed, faded)} values as checked after ${compared} comparisons`;
+        }
+        return true;
+      } },
     { name: 'finds a present value at the position a reference lookup gives', input: { size: 40, where: 'random', seed: 11, custom: [] },
       check: (r, c) => (r.index >= 0 && r.index === r.array.indexOf(r.target) && c.comparisons === r.index + 1) || `index ${r.index}, comparisons ${c.comparisons}` },
     { name: 'an absent value costs n comparisons and returns -1', input: { size: 33, where: 'missing', seed: 5, custom: [] },

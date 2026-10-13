@@ -7,9 +7,11 @@ import { h, esc } from '../core/dom.js';
 import * as C from '../core/catalog.js';
 import { CONNECTION_LABELS } from '../core/schema.js';
 
-const TYPE_ORDER = ['prerequisite', 'belongs', 'same-problem', 'variant', 'related', 'advanced', 'application'];
-const TYPE_LABEL = { ...CONNECTION_LABELS, belongs: 'Belongs to' };
-const TYPE_COLOR = { prerequisite: 'ink', belongs: 'forest', 'same-problem': 'ochre', variant: 'moss', related: 'sage', advanced: 'terracotta', application: 'brick' };
+// The first seven are what a lesson says about its neighbours. The last four are how a
+// neighbour's statement reads from this side (see neighbours() in core/catalog.js).
+const TYPE_ORDER = ['prerequisite', 'leads-here', 'belongs', 'member', 'same-problem', 'variant', 'related', 'advanced', 'builds-on', 'application', 'applied-here'];
+const TYPE_LABEL = { ...CONNECTION_LABELS, belongs: 'Belongs to', 'builds-on': 'Builds on this', 'leads-here': 'Leads to this', 'applied-here': 'Applied here', member: 'Lessons in this field' };
+const TYPE_COLOR = { prerequisite: 'ink', 'leads-here': 'ink', belongs: 'forest', member: 'forest', 'same-problem': 'ochre', variant: 'moss', related: 'sage', advanced: 'terracotta', 'builds-on': 'terracotta', application: 'brick', 'applied-here': 'brick' };
 
 function wrap(text, max = 16) {
   const words = text.split(' '); const lines = []; let cur = '';

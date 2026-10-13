@@ -119,18 +119,29 @@ export function graphEdges() {
   return edges;
 }
 
+// How a connection reads from the other end. If Breadth-First Search says "go further:
+// Dijkstra", then from Dijkstra's side Breadth-First Search is something that leads here.
+// It is not something Dijkstra goes further to, and it is not claimed as a prerequisite
+// unless Dijkstra's own lesson says so.
+const FROM_THE_OTHER_END = {
+  prerequisite: 'builds-on', advanced: 'leads-here', application: 'applied-here', belongs: 'member',
+  related: 'related', variant: 'variant', 'same-problem': 'same-problem',
+};
+
+// Everything connected to `ref`, one entry per neighbour. `type` is the connection as it
+// was declared; `role` is the same connection as seen from `ref`, which is what a page
+// centred on `ref` must show. What `ref` says about a neighbour outranks what the
+// neighbour says about `ref`.
 export function neighbours(ref) {
-  const out = [];
-  const seen = new Set();
+  const byRef = new Map();
   for (const e of graphEdges()) {
     let other = null, direction = 'out';
     if (e.from === ref) other = e.to;
     else if (e.to === ref) { other = e.from; direction = 'in'; }
     if (!other || other === ref) continue;
-    const key = other + '|' + e.type;
-    if (seen.has(other)) continue;
-    seen.add(other);
-    out.push({ ref: other, type: e.type, why: e.why, direction, key });
+    const had = byRef.get(other);
+    if (had && (had.direction === 'out' || direction === 'in')) continue;
+    byRef.set(other, { ref: other, type: e.type, role: direction === 'out' ? e.type : FROM_THE_OTHER_END[e.type] || 'related', why: e.why, direction });
   }
-  return out;
+  return [...byRef.values()];
 }

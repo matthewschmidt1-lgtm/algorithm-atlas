@@ -181,7 +181,7 @@ export default {
     time: { best: 'O(n) closed form, one feature', average: 'O(nd) per gradient step', worst: 'O(nd² + d³) normal equations, d features', class: 'linear' },
     space: { worst: 'O(d) for gradient descent, O(d²) for the normal equations', class: 'linear' },
     tags: {
-      problems: ['line of best fit', 'fit a line to data', 'predict a number', 'find a trend', 'estimate a relationship', 'forecast from past data'],
+      problems: ['line of best fit', 'fit a line to data', 'predict a number', 'find a trend', 'estimate a relationship', 'forecast from past data', 'predict a house price from its size'],
       techniques: ['least squares', 'mean squared error', 'gradient descent', 'normal equations'],
       applications: ['machine learning', 'statistics', 'finance', 'scientific computing', 'engineering design'],
     },

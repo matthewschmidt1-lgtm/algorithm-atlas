@@ -218,6 +218,7 @@ a.ref:hover { color: var(--accent); border-color: var(--accent); }
 
 .lesson-article { min-width: 0; }
 .lsec { padding-bottom: clamp(48px, 7vw, 88px); scroll-margin-top: calc(var(--nav-h) + 100px); }
+.subsec[id] { scroll-margin-top: calc(var(--nav-h) + 100px); }
 .lsec + .lsec, .invite-level + .lsec { border-top: 1px solid var(--line); padding-top: clamp(40px, 6vw, 72px); }
 .lsec > h2 { margin-bottom: var(--s-5); }
 .lsec > h2:focus { outline: none; }
@@ -431,6 +432,10 @@ a.ref:hover { color: var(--accent); border-color: var(--accent); }
 .result-group { margin-top: var(--s-6); }
 .result-group h2 { font-size: 1.4rem; padding-bottom: var(--s-2); border-bottom: 1px solid var(--line-2); }
 .result { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: var(--s-4); padding: var(--s-4) 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.result-best { margin-top: var(--s-5); padding: var(--s-4) var(--s-5) 0; border: 1px solid var(--line-2); border-left: 3px solid var(--forest); border-radius: var(--r-2); background: var(--surface); }
+.result-best .result { border-bottom: 0; }
+.result-group.is-broader h2 { font-size: 1.15rem; }
+.result-elsewhere { margin-top: var(--s-6); color: var(--text-2); }
 .result-title { font-family: var(--font-serif); font-size: 1.18rem; font-weight: 600; }
 .result-title:hover { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .result-sub { font-size: 0.84rem; color: var(--text-3); }

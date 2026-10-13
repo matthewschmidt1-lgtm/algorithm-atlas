@@ -3,7 +3,8 @@
 // against this file, so lessons can link to each other before both are written.
 //
 // status 'published' entries must have content/algorithms/<id>.js; 'planned' entries are
-// shown as planned (never as lessons) wherever they are referenced.
+// shown as planned (never as lessons) wherever they are referenced. A planned entry may
+// list aliases so that a search for "SGD" or "PCA" can say the lesson is planned.
 
 export const roster = [
   // Algorithms and data structures
@@ -73,30 +74,30 @@ export const roster = [
   { id: 'grovers-search', name: 'Grover\'s Search', discipline: 'quantum-computing', status: 'published' },
 
   // Planned: referenced by lessons and paths, not yet written. Shown as "planned" everywhere.
-  { id: 'prim', name: 'Prim\'s Algorithm', discipline: 'graph-theory', status: 'planned' },
-  { id: 'floyd-warshall', name: 'Floyd-Warshall Algorithm', discipline: 'graph-theory', status: 'planned' },
-  { id: 'binary-search-tree', name: 'Binary Search Tree', discipline: 'algorithms', status: 'planned' },
-  { id: 'radix-sort', name: 'Radix Sort', discipline: 'algorithms', status: 'planned' },
-  { id: 'minimax', name: 'Minimax with Alpha-Beta Pruning', discipline: 'ai', status: 'planned' },
-  { id: 'q-learning', name: 'Q-Learning', discipline: 'ai', status: 'planned' },
-  { id: 'stochastic-gradient-descent', name: 'Stochastic Gradient Descent', discipline: 'optimization', status: 'planned' },
-  { id: 'adam', name: 'Adam Optimizer', discipline: 'optimization', status: 'planned' },
-  { id: 'simplex', name: 'Simplex Method', discipline: 'optimization', status: 'planned' },
-  { id: 'decision-tree', name: 'Decision Tree Learning', discipline: 'machine-learning', status: 'planned' },
-  { id: 'pca', name: 'Principal Component Analysis', discipline: 'machine-learning', status: 'planned' },
-  { id: 'convolution', name: 'Convolution and Edge Detection', discipline: 'computer-vision', status: 'planned' },
-  { id: 'attention', name: 'Attention and the Transformer', discipline: 'deep-learning', status: 'planned' },
-  { id: 'byte-pair-encoding', name: 'Byte-Pair Encoding', discipline: 'nlp', status: 'planned' },
-  { id: 'viterbi', name: 'Viterbi Algorithm', discipline: 'nlp', status: 'planned' },
-  { id: 'miller-rabin', name: 'Miller-Rabin Primality Test', discipline: 'cryptography', status: 'planned' },
-  { id: 'sha-256', name: 'SHA-256', discipline: 'cryptography', status: 'planned' },
-  { id: 'shors-algorithm', name: 'Shor\'s Algorithm', discipline: 'quantum-computing', status: 'planned' },
-  { id: 'de-casteljau', name: 'De Casteljau\'s Algorithm', discipline: 'computer-graphics', status: 'planned' },
-  { id: 'raft', name: 'Raft Consensus', discipline: 'distributed-systems', status: 'planned' },
-  { id: 'gaussian-elimination', name: 'Gaussian Elimination', discipline: 'mathematics', status: 'planned' },
-  { id: 'binomial-option-pricing', name: 'Binomial Option Pricing', discipline: 'finance', status: 'planned' },
-  { id: 'particle-filter', name: 'Particle Filter', discipline: 'robotics', status: 'planned' },
-  { id: 'graph-neural-network', name: 'Graph Neural Networks', discipline: 'deep-learning', status: 'planned' },
+  { id: 'prim', name: 'Prim\'s Algorithm', discipline: 'graph-theory', status: 'planned', aliases: ['Prim', 'Prim-Jarnik algorithm'] },
+  { id: 'floyd-warshall', name: 'Floyd-Warshall Algorithm', discipline: 'graph-theory', status: 'planned', aliases: ['all-pairs shortest paths'] },
+  { id: 'binary-search-tree', name: 'Binary Search Tree', discipline: 'algorithms', status: 'planned', aliases: ['BST'] },
+  { id: 'radix-sort', name: 'Radix Sort', discipline: 'algorithms', status: 'planned', aliases: ['digit sort'] },
+  { id: 'minimax', name: 'Minimax with Alpha-Beta Pruning', discipline: 'ai', status: 'planned', aliases: ['alpha-beta pruning', 'game tree search'] },
+  { id: 'q-learning', name: 'Q-Learning', discipline: 'ai', status: 'planned', aliases: ['reinforcement learning'] },
+  { id: 'stochastic-gradient-descent', name: 'Stochastic Gradient Descent', discipline: 'optimization', status: 'planned', aliases: ['SGD', 'mini-batch gradient descent'] },
+  { id: 'adam', name: 'Adam Optimizer', discipline: 'optimization', status: 'planned', aliases: ['Adam'] },
+  { id: 'simplex', name: 'Simplex Method', discipline: 'optimization', status: 'planned', aliases: ['linear programming'] },
+  { id: 'decision-tree', name: 'Decision Tree Learning', discipline: 'machine-learning', status: 'planned', aliases: ['decision trees', 'CART'] },
+  { id: 'pca', name: 'Principal Component Analysis', discipline: 'machine-learning', status: 'planned', aliases: ['PCA'] },
+  { id: 'convolution', name: 'Convolution and Edge Detection', discipline: 'computer-vision', status: 'planned', aliases: ['image filter', 'Sobel filter'] },
+  { id: 'attention', name: 'Attention and the Transformer', discipline: 'deep-learning', status: 'planned', aliases: ['transformer', 'self-attention'] },
+  { id: 'byte-pair-encoding', name: 'Byte-Pair Encoding', discipline: 'nlp', status: 'planned', aliases: ['BPE', 'tokenization'] },
+  { id: 'viterbi', name: 'Viterbi Algorithm', discipline: 'nlp', status: 'planned', aliases: ['hidden Markov model decoding'] },
+  { id: 'miller-rabin', name: 'Miller-Rabin Primality Test', discipline: 'cryptography', status: 'planned', aliases: ['primality test'] },
+  { id: 'sha-256', name: 'SHA-256', discipline: 'cryptography', status: 'planned', aliases: ['SHA256', 'SHA-2', 'cryptographic hash'] },
+  { id: 'shors-algorithm', name: 'Shor\'s Algorithm', discipline: 'quantum-computing', status: 'planned', aliases: ['quantum factoring'] },
+  { id: 'de-casteljau', name: 'De Casteljau\'s Algorithm', discipline: 'computer-graphics', status: 'planned', aliases: ['Bezier curve'] },
+  { id: 'raft', name: 'Raft Consensus', discipline: 'distributed-systems', status: 'planned', aliases: ['consensus', 'leader election'] },
+  { id: 'gaussian-elimination', name: 'Gaussian Elimination', discipline: 'mathematics', status: 'planned', aliases: ['row reduction', 'solving linear equations'] },
+  { id: 'binomial-option-pricing', name: 'Binomial Option Pricing', discipline: 'finance', status: 'planned', aliases: ['option pricing'] },
+  { id: 'particle-filter', name: 'Particle Filter', discipline: 'robotics', status: 'planned', aliases: ['sequential Monte Carlo'] },
+  { id: 'graph-neural-network', name: 'Graph Neural Networks', discipline: 'deep-learning', status: 'planned', aliases: ['GNN'] },
 ];
 
 export const rosterById = Object.fromEntries(roster.map((r) => [r.id, r]));

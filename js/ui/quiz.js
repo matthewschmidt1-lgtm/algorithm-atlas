@@ -6,6 +6,11 @@ import { icon } from '../core/icons.js';
 import { store } from '../core/store.js';
 import { highlight } from './highlight.js';
 
+// The page states the verdict itself. An explanation that opens with its own "Correct." would
+// say it twice, so a leading verdict is removed from the explanation before it is shown.
+const VERDICT = /^\s*(correct|right|yes|not quite|not yet|incorrect|wrong)[.!:]\s+(?=\S)/i;
+const withoutVerdict = (text) => { const rest = String(text || '').replace(VERDICT, ''); return rest.charAt(0).toUpperCase() + rest.slice(1); };
+
 const TYPE_LABEL = { choice: 'Question', predict: 'Predict, then check', debug: 'Find the bug', challenge: 'Practical challenge' };
 
 export function createQuiz(lesson, { onTry = null } = {}) {
@@ -42,7 +47,7 @@ export function createQuiz(lesson, { onTry = null } = {}) {
       });
       feedback.hidden = false;
       feedback.className = `quiz-feedback ${right ? 'is-right' : 'is-wrong'}`;
-      feedback.innerHTML = `<p><strong>${right ? 'Correct.' : 'Not quite.'}</strong> ${rich(q.explain[i])}</p>`;
+      feedback.innerHTML = `<p><strong>${right ? 'Correct.' : 'Not quite.'}</strong> ${rich(withoutVerdict(q.explain[i]))}</p>`;
       if (!right) feedback.append(h('p.small.muted', 'Try another answer.'));
       renderMath(feedback);
       if (record) { store.recordAnswer(id, index, right); paintSummary(); }

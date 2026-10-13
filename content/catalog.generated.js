@@ -2,7 +2,7 @@
 // One lightweight record per validated lesson; full lessons load on demand.
 // Each record carries `checks`: what the pipeline verified for that lesson.
 export const buildInfo = {
- "date": "2026-10-12",
+ "date": "2026-10-13",
  "python": "Python 3.9.6",
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
  "browser": "Google Chrome 155.0.8059.40",
@@ -2240,6 +2240,7 @@ export const catalog = [
   "id": "hash-table",
   "name": "Hash Table with Linear Probing",
   "aliases": [
+   "hash table",
    "hash map",
    "open addressing",
    "linear probing",
@@ -6282,6 +6283,7 @@ export const catalog = [
    "greatest common divisor",
    "gcd",
    "highest common factor",
+   "HCF",
    "extended Euclidean algorithm",
    "Bezout coefficients"
   ],
@@ -9189,7 +9191,8 @@ export const catalog = [
     "predict a number",
     "find a trend",
     "estimate a relationship",
-    "forecast from past data"
+    "forecast from past data",
+    "predict a house price from its size"
    ],
    "techniques": [
     "least squares",
@@ -12340,7 +12343,8 @@ export const catalog = [
     "make data smaller",
     "shortest code for a message",
     "variable-length codes",
-    "encode text in fewer bits"
+    "encode text in fewer bits",
+    "give frequent letters shorter codes"
    ],
    "techniques": [
     "greedy choice",

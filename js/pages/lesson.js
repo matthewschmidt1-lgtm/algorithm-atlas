@@ -11,11 +11,11 @@
 //   - Nothing is explained twice. Where another page does a job better (the lab, the comparison
 //     tool, the connection graph), the lesson links to it instead of repeating it.
 
-import { h, clear, rich, richBlock, renderMath, prose } from '../core/dom.js';
+import { h, clear, rich, richBlock, renderMath, prose, prefersReducedMotion } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
-import { replaceQuery } from '../core/router.js';
+import { replaceQuery, href } from '../core/router.js';
 import { KIND_LABELS, PARADIGM_LABELS, LANGUAGE_LABELS } from '../core/schema.js';
 import { createPlayer, assemblePlayer } from '../viz/player.js';
 import { crumbs, levelGlyph, refLink } from '../ui/parts.js';
@@ -35,6 +35,9 @@ const list = (items, cls = 'prose-list') => { const el = h(`ul.${cls}`, (items |
 const para = (text) => prose(text);
 const sub = (title, ...body) => h('div.subsec', h('h3', title), body);
 const fold = (title, ...body) => { const el = h('details.fold', h('summary', title), h('div.fold-body', body)); renderMath(el); return el; };
+
+// Where an element's top rests after scrollIntoView, given its scroll margin.
+const restingTop = (el) => parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
 
 export default async function render({ params, query }) {
   const meta = C.algoById[params.id];
@@ -178,7 +181,7 @@ export default async function render({ params, query }) {
         h('div', h('dt', 'Trade-offs'), h('dd', { html: rich(X.tradeoffs) }))),
       fold('What these bounds assume', list(X.assumptions), X.memory ? h('p.muted', { html: rich(X.memory) }) : null)),
     chart ? chart.el : null,
-    sub('Why it is correct', para(G.correctness), (G.invariants || []).length ? fold('Invariants', list(G.invariants)) : null,
+    h('div.subsec', { id: 'correctness' }, h('h3', 'Why it is correct'), para(G.correctness), (G.invariants || []).length ? fold('Invariants', list(G.invariants)) : null,
       textFold('Derivation', A.derivation), textFold('Proof of correctness', A.proof), textFold('Proof of the complexity bound', A.complexityProof)),
     sub('Compared with the alternatives',
       T.comparison ? h('div.data-table-wrap', h('table.data-table.compare-mini',
@@ -247,7 +250,16 @@ export default async function render({ params, query }) {
   const body = h('article.lesson-article', simple, example, see, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
   const sections = [...body.querySelectorAll('.lsec')];
   const toc = h('nav.lesson-toc', { 'aria-label': 'In this lesson' });
-  const tocLinks = sections.map((s) => h(`a.toc-link.lv${s.dataset.level}`, { href: `#${s.id}`, onclick: (e) => { e.preventDefault(); s.scrollIntoView({ behavior: 'smooth', block: 'start' }); s.querySelector('h2').focus({ preventScroll: true }); } }, s.dataset.title));
+  // Each link is a real address (so it can be copied, bookmarked or opened in a new tab).
+  // Clicking it scrolls in place and puts that address in the address bar.
+  const sectionHref = (s) => href(`/algorithm/${m.id}`, { level: Math.max(depth, Number(s.dataset.level)), at: s.id });
+  const tocLinks = sections.map((s) => h(`a.toc-link.lv${s.dataset.level}`, { href: `#/algorithm/${m.id}?at=${s.id}`, onclick: (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+    e.preventDefault();
+    history.replaceState(null, '', sectionHref(s));
+    s.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    s.querySelector('h2').focus({ preventScroll: true });
+  } }, s.dataset.title));
   sections.forEach((s) => s.querySelector('h2').setAttribute('tabindex', '-1'));
   const closing = ['connections', 'takeaway'];
   const tocGroup = (lv, label) => h(`div.toc-group.lv${lv}`, h('p.toc-cap', label), tocLinks.filter((a, i) => Number(sections[i].dataset.level) === lv && !closing.includes(sections[i].id)));
@@ -276,9 +288,18 @@ export default async function render({ params, query }) {
     afterMount() {
       const target = query.at && body.querySelector(`#${CSS.escape(query.at)}`);
       if (target) {
-        const lv = Number(target.dataset.level) || 1;
+        // a link to a deeper section opens the lesson at that depth, whatever level was saved
+        const lv = Number((target.closest('.lsec') || target).dataset.level) || 1;
         if (lv > depth) setDepth(lv, false);
-        requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+        // The figure, the code and the mathematics above the target finish laying out a moment
+        // after the page appears, which moves it. Keep the target in place until they settle,
+        // and stop the moment the reader scrolls for themselves.
+        let mine = true;
+        const stop = () => { mine = false; };
+        for (const ev of ['wheel', 'touchstart', 'keydown', 'mousedown']) window.addEventListener(ev, stop, { once: true, passive: true });
+        const place = () => { if (mine && target.isConnected && Math.abs(target.getBoundingClientRect().top - restingTop(target)) > 6) target.scrollIntoView({ block: 'start' }); };
+        requestAnimationFrame(place);
+        for (const ms of [120, 400, 900, 1600]) setTimeout(place, ms);
       }
     },
     destroy() { cleanups.forEach((fn) => fn()); },

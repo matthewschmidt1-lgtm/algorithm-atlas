@@ -389,7 +389,7 @@ export default {
     time: { best: 'O(n + k log k)', average: 'O(n + k log k)', worst: 'O(n + k log k)', class: 'linearithmic' },
     space: { worst: 'O(k) for the tree and queue', class: 'linear' },
     tags: {
-      problems: ['compress files', 'make data smaller', 'shortest code for a message', 'variable-length codes', 'encode text in fewer bits'],
+      problems: ['compress files', 'make data smaller', 'shortest code for a message', 'variable-length codes', 'encode text in fewer bits', 'give frequent letters shorter codes'],
       techniques: ['greedy choice', 'priority queue', 'binary tree', 'prefix code', 'entropy coding'],
       applications: ['data compression', 'image processing', 'networking', 'signal processing'],
     },

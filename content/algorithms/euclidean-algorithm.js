@@ -162,7 +162,7 @@ export default {
   meta: {
     id: 'euclidean-algorithm',
     name: 'Euclidean Algorithm',
-    aliases: ['Euclid\'s algorithm', 'greatest common divisor', 'gcd', 'highest common factor', 'extended Euclidean algorithm', 'Bezout coefficients'],
+    aliases: ['Euclid\'s algorithm', 'greatest common divisor', 'gcd', 'highest common factor', 'HCF', 'extended Euclidean algorithm', 'Bezout coefficients'],
     kind: 'algorithm',
     discipline: 'mathematics',
     alsoIn: [

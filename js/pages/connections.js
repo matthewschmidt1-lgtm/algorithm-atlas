@@ -43,7 +43,7 @@ export default async function render({ query }) {
     picker.value = ref;
     replaceQuery({ view: view === 'graph' ? 'graph' : '', at: view === 'graph' ? ref : '' });
     const r = C.resolveRef(ref);
-    const items = C.neighbours(ref).map((n) => ({ ref: n.ref, type: n.type === 'belongs' && n.direction === 'in' ? 'related' : n.type, why: n.why }));
+    const items = C.neighbours(ref).map((n) => ({ ref: n.ref, type: n.role, why: n.why }));
     clear(mapHost).append(
       h('div.graph-head', h('div', h('p.panel-cap', r.kind === 'algorithm' ? 'Lesson' : r.kind), h('h3', r.name), h('p.muted', r.summary)),
         r.href ? h('a.btn.btn-sm', { href: r.href }, 'Open it', h('span', { html: icon('arrow', { size: 14 }) })) : null),

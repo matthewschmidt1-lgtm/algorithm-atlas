@@ -76,14 +76,17 @@ def serve():
     return httpd
 
 
-def run_browser(ids, timeout=240, full=False):
+def run_page(path, timeout=240):
+    """Open a page of this repo in headless Chrome and wait for it to post its report."""
+    Handler.report = None
+    Handler.done.clear()
     httpd = serve()
     port = httpd.server_address[1]
     profile = tempfile.mkdtemp(prefix="atlas-chrome-")
-    url = "http://127.0.0.1:%d/tools/validate.html?ids=%s%s" % (port, ",".join(ids), "&full=1" if full else "")
+    url = "http://127.0.0.1:%d/%s" % (port, path)
     proc = subprocess.Popen(
         [find_chrome(), "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-         "--disable-extensions", "--user-data-dir=" + profile, url],
+         "--disable-extensions", "--window-size=1280,900", "--user-data-dir=" + profile, url],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     ok = Handler.done.wait(timeout)
     proc.terminate()
@@ -94,8 +97,12 @@ def run_browser(ids, timeout=240, full=False):
     httpd.shutdown()
     shutil.rmtree(profile, ignore_errors=True)
     if not ok:
-        sys.exit("Timed out waiting for the browser validator (%ds)." % timeout)
+        sys.exit("Timed out waiting for the browser (%ds): %s" % (timeout, path))
     return Handler.report
+
+
+def run_browser(ids, timeout=240, full=False):
+    return run_page("tools/validate.html?ids=%s%s" % (",".join(ids), "&full=1" if full else ""), timeout)
 
 
 def norm(s):

@@ -10,7 +10,7 @@ import { createSearchBox } from './searchbox.js';
 const NAV = [
   { path: '/explore', label: 'Explore', match: ['/explore'] },
   { path: '/disciplines', label: 'Disciplines', match: ['/disciplines', '/discipline'] },
-  { path: '/library', label: 'Algorithm Library', short: 'Library', match: ['/library', '/algorithm', '/concept', '/search'] },
+  { path: '/library', label: 'Algorithm Library', short: 'Library', match: ['/library', '/algorithm', '/concept', '/problems'] },
   { path: '/lab', label: 'Interactive Lab', short: 'Lab', match: ['/lab', '/compare'] },
   { path: '/paths', label: 'Learning Paths', short: 'Paths', match: ['/paths', '/path'] },
   { path: '/connections', label: 'Connections', match: ['/connections'] },
