@@ -15,8 +15,9 @@ import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
 import { problemIndex, samplePhrases } from '../core/problems.js';
+import { trackLessons } from '../core/tracks.js';
 
-const HOME_DEMOS = ['dijkstra', 'quick-sort', 'gradient-descent', 'ddpm'];
+const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
 
 export default async function render() {
   const cleanups = [];
@@ -52,6 +53,19 @@ export default async function render() {
             h('button.hero-suggest-btn', { type: 'button', onclick: () => openOnboarding({ onDone: (answered) => { if (answered) navigate('#/profile'); } }) }, 'Answer four questions and get a suggestion'), '.')))));
   queueMicrotask(() => requestAnimationFrame(() => cleanups.push(mountHeroNetwork(netHost))));
 
+  /* ---- the two tracks ---- */
+  const trackCard = (t) => {
+    const { published, planned } = trackLessons(t);
+    return h('a.track-card', { href: `#/track/${t.id}` },
+      h('span.track-card-title', t.title, h('span', { html: icon('arrow', { size: 18 }) })),
+      h('span.track-card-blurb', t.blurb),
+      h('span.track-card-groups', t.groups.map((g) => g.title).join(' · ')),
+      h('span.track-card-count', `${plural(published.length, 'lesson')}${planned.length ? `, ${planned.length} more planned` : ''}`));
+  };
+  const tracksSec = C.tracks.length ? h('section.section.home-tracks', { 'aria-labelledby': 'home-tracks-h' }, h('div.wrap',
+    sectionHead({ eyebrow: 'Two ways through', title: 'Where the atlas goes deepest', id: 'home-tracks-h', single: true }),
+    h('div.track-cards', C.tracks.map(trackCard)))) : null;
+
   /* ---- start from a problem ---- */
   const wants = samplePhrases(6);
   const want = wants.length ? h('section.home-want', { 'aria-labelledby': 'home-want-h' }, h('div.wrap.home-want-inner',
@@ -75,7 +89,7 @@ export default async function render() {
     cleanups.push(() => u.destroy());
   }));
   const universe = h('section.section', { id: 'universe' }, h('div.wrap',
-    sectionHead({ eyebrow: 'The map', title: 'The Algorithm Universe', lede: `${C.disciplines.length} disciplines drawn as one landscape. Each hill is a field, each marker a lesson, and each dotted route an idea two fields share.` }),
+    sectionHead({ eyebrow: 'The map', title: 'The Algorithm Universe', lede: `The two tracks sit inside a wider map: ${C.disciplines.length} disciplines drawn as one landscape. Each hill is a field, each marker a lesson, and each dotted route an idea two fields share.` }),
     h('figure.home-map-figure', mapHost,
       h('figcaption.fig-cap', h('b', 'Choose a hill'), 'to open it on the full map, with its subfields, lessons and neighbours.')),
     h('p.sec-more', h('a.text-link', { href: '#/explore' }, 'Open the full map', h('span', { html: icon('arrow', { size: 15 }) })),
@@ -144,6 +158,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, want, trust, universe, levels, featured, ways);
+  const el = h('div.home', hero, tracksSec, want, trust, levels, featured, universe, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

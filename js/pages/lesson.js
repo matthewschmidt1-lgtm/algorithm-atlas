@@ -131,6 +131,16 @@ export default async function render({ params, query }) {
     h('div.lv2.try-this', h('h3', 'Things to try'), h('ol.try-list', L.viz.tryThis.map((t) => h('li', { html: rich(t) }))),
       h('p.small.muted', 'For a larger workspace with the event log and source beside the picture, ', h('a.link', { href: `#/lab/${m.id}` }, 'open this in the lab'), '.')));
 
+  // For someone deciding whether the method fits their problem. The three statements are the
+  // lesson's own (they also fill the comparison table), so nothing is said twice.
+  const K = L.compare || {};
+  const decide = K.useWhen || K.requires || K.limits ? sec('decide', 1, 'Should you use it?', 'If you are deciding',
+    h('dl.decide-dl',
+      K.useWhen ? h('div', h('dt', 'Use it when'), h('dd', { html: rich(K.useWhen) })) : null,
+      K.requires ? h('div', h('dt', 'It needs'), h('dd', { html: rich(K.requires) })) : null,
+      K.limits ? h('div', h('dt', 'It falls short when'), h('dd', { html: rich(K.limits) })) : null)) : null;
+  if (decide) renderMath(decide);
+
   const words = sec('words', 1, 'Words to know', 'Plain definitions',
     h('dl.terms', L.terms.map((t) => h('div', h('dt', t.term), h('dd', { html: rich(t.meaning) })))));
 
@@ -257,7 +267,7 @@ export default async function render({ params, query }) {
       : inPaths.length ? h('p.in-paths', 'This lesson is part of: ', inPaths.map((p, i) => [i ? ', ' : '', h('a.link', { href: `#/path/${p.id}` }, p.title)]), '.') : null);
 
   /* ---------- table of contents ---------- */
-  const body = h('article.lesson-article', simple, example, see, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
+  const body = h('article.lesson-article', simple, example, see, decide, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
   const sections = [...body.querySelectorAll('.lsec')];
   const toc = h('nav.lesson-toc', { 'aria-label': 'In this lesson' });
   // Each link is a real address (so it can be copied, bookmarked or opened in a new tab).

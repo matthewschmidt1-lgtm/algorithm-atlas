@@ -445,8 +445,8 @@ if (on('index')) {
 }
 
 /* ------------------------------------------------------------------ links and relationships */
-const SECTIONS = ['simple', 'example', 'see', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
-const STATIC = ['/', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
+const SECTIONS = ['simple', 'example', 'see', 'decide', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
+const STATIC = ['/', '/track/ai', '/track/business', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
 // Does an internal address lead to something that exists? Written from the content, not from the router.
 function resolves(hrefAttr) {
   const raw = hrefAttr.replace(/^#/, '');
@@ -1104,6 +1104,77 @@ if (on('followups')) {
     try { await sleep(150); assert(p.$('.player-predict input').checked, 'the experiment is not on'); } finally { p.close(); }
     const q = await open('/algorithm/quick-sort?predict=1', '.player-note .note-text');
     try { assert(q.$('.player-predict').hidden, 'a lesson without questions shows the experiment'); } finally { q.close(); }
+  });
+}
+
+/* ------------------------------------------------------------------ the two tracks */
+if (on('tracks')) {
+  suite('Tracks');
+  const T = await import('../js/core/tracks.js');
+  await test('every track names real lessons, once each, and real learning paths', () => {
+    assert(C.tracks.length === 2, `${C.tracks.length} tracks`);
+    for (const t of C.tracks) {
+      const ids = t.groups.flatMap((g) => g.lessons);
+      assert(ids.length === new Set(ids).size, `${t.id}: a lesson is listed twice`);
+      for (const id of ids) assert(C.algoById[id] || C.plannedById[id], `${t.id}: "${id}" is neither a published nor a planned lesson`);
+      for (const g of t.groups) assert(g.lessons.some((id) => C.algoById[id]), `${t.id}: the group "${g.title}" has no published lesson`);
+      for (const pid of t.paths || []) assert(C.pathById[pid], `${t.id}: no learning path "${pid}"`);
+    }
+    return C.tracks.map((t) => { const x = T.trackLessons(t); return `${t.title}: ${x.published.length} written, ${x.planned.length} planned`; }).join('; ');
+  });
+  await test('business track: the decision shown for each lesson is one that lesson itself declares', () => {
+    const t = C.trackById.business; const bad = [];
+    for (const g of t.groups) for (const id of g.lessons) {
+      const a = C.algoById[id]; if (!a) continue;
+      const why = g.why && g.why[id];
+      if (!why) bad.push(`${id} has no decision`);
+      else if (!(a.tags.problems || []).includes(why)) bad.push(`${id} does not declare "${why}"`);
+    }
+    assert(!bad.length, bad.join(' | '));
+  });
+  await test('a track page lists its lessons, marks planned ones, and offers a place to start', async () => {
+    for (const t of C.tracks) {
+      const { published, planned } = T.trackLessons(t);
+      const p = await open(`/track/${t.id}`, '.track-group .lesson-row');
+      try {
+        const live = p.$$('.track-group .lesson-row:not(.is-planned) h3 a').map((a) => a.getAttribute('href').split('/').pop());
+        assert(live.length === published.length && published.every((a) => live.includes(a.id)), `${t.id}: the page lists ${live.length} lessons, the track has ${published.length}`);
+        assert(p.$$('.track-group .lesson-row.is-planned').length === planned.length, `${t.id}: planned lessons are not all shown as planned`);
+        assert(p.$$('.track-group .lesson-row.is-planned a').length === 0, `${t.id}: a planned lesson is a link`);
+        const start = p.$('.track-status .btn');
+        assert(start && C.algoById[start.getAttribute('href').split('/').pop()], `${t.id}: no working place to start`);
+        for (const f of T.trackFoundations(t)) { assert(!published.includes(f.lesson), `${t.id}: ${f.lesson.id} is listed as outside the track but is in it`); assert(f.neededBy.every((a) => (a.prerequisites || []).includes(f.lesson.id) || (a.connections || []).some((c) => c.to === f.lesson.id && c.type === 'prerequisite')), `${t.id}: ${f.lesson.id} is not assumed by the lessons named`); }
+        if (t.id === 'business') assert(/Select projects within a budget\./.test(p.$('.track-page').textContent), 'the business track does not show the decision each lesson helps with');
+      } finally { p.close(); }
+    }
+    const q = await open('/track/nope', '#main h1');
+    try { assert(/no track at this address/i.test(q.$('#main h1').textContent), 'an unknown track does not say so'); } finally { q.close(); }
+  });
+  await test('the home page and the navigation lead with the two tracks, and nothing is removed', async () => {
+    const p = await open('/', '.track-card');
+    try {
+      const cards = p.$$('.track-card').map((a) => a.getAttribute('href'));
+      assert(cards.join() === '#/track/ai,#/track/business', `the home page offers ${cards.join()}`);
+      const sections = [...p.$('.home').children];
+      assert(sections.indexOf(p.$('.home-tracks')) === 1, 'the tracks are not the first thing after the hero');
+      assert(p.$('#universe'), 'the map is gone from the home page');
+      const nav = p.$$('nav.primary a').map((a) => a.getAttribute('href'));
+      assert(nav[0] === '#/track/ai' && nav[1] === '#/track/business', `the navigation starts ${nav.slice(0, 2).join(', ')}`);
+      for (const need of ['#/library', '#/lab', '#/paths', '#/connections', '#/explore', '#/about']) assert(nav.includes(need), `${need} is missing from the navigation`);
+      assert(p.doc.documentElement.scrollWidth <= 1201, 'the navigation overflows the page');
+    } finally { p.close(); }
+    assert(S.search('quick sort')[0].ref === 'quick-sort' && C.algos.length >= 57, 'a lesson outside the tracks can no longer be found');
+  });
+  await test('every lesson says when to use it, what it needs and where it falls short, in its own words', async () => {
+    for (const a of C.algos) { const L = await C.loadLesson(a.id); assert(L.compare && L.compare.useWhen && L.compare.requires && L.compare.limits, `${a.id} is missing one of the three statements`); }
+    const L = await C.loadLesson('k-means');
+    const p = await open('/algorithm/k-means?level=1', '#decide');
+    try {
+      const rows = Object.fromEntries(p.$$('#decide .decide-dl > div').map((d) => [d.querySelector('dt').textContent, d.querySelector('dd').textContent]));
+      const plain = (t) => t.replace(/\*\*|`/g, '');
+      assert(rows['Use it when'] === plain(L.compare.useWhen) && rows['It needs'] === plain(L.compare.requires) && rows['It falls short when'] === plain(L.compare.limits), 'the block does not show the lesson\'s own statements');
+      assert(p.$('#decide').offsetParent !== null, 'the block is hidden at level 1');
+    } finally { p.close(); }
   });
 }
 

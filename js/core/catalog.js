@@ -23,6 +23,8 @@ export let pathById = {};
 export let threads = [];
 export let compareGroups = [];
 export let featured = [];
+export let tracks = [];
+export let trackById = {};
 
 // Optional content files. A missing or broken file must not take the site down.
 export async function loadContent() {
@@ -35,6 +37,7 @@ export async function loadContent() {
     grab('connections.js', (m) => { threads = m.threads || []; }),
     grab('compare-groups.js', (m) => { compareGroups = (m.compareGroups || []).map((g) => ({ ...g, members: g.members.filter((id) => algoById[id]) })).filter((g) => g.members.length >= 2); }),
     grab('featured.js', (m) => { featured = (m.featured || []).filter((f) => algoById[f.id]); }),
+    grab('tracks.js', (m) => { tracks = m.tracks || []; trackById = Object.fromEntries(tracks.map((t) => [t.id, t])); }),
   ]);
 }
 
