@@ -113,7 +113,8 @@ export default async function render({ params, query }) {
       h('p.panel-cap', 'A picture to hold on to'),
       h('h3', B.analogy.title),
       h('p', { html: rich(B.analogy.text) }),
-      h('p.analogy-limits', h('strong', 'Where the picture stops. '), h('span', { html: rich(B.analogy.limits) }))));
+      // one paragraph or several: the label runs into the first, and a blank line starts the next
+      String(B.analogy.limits).split(/\n\s*\n/).map((para, i) => h('p.analogy-limits', i === 0 ? h('strong', 'Where the picture stops. ') : null, h('span', { html: rich(para) })))));
 
   const E = L.example;
   const example = sec('example', 1, 'A worked example', 'By hand',
