@@ -112,5 +112,6 @@ Search runs in the browser over the generated catalog. At thousands of lessons, 
 pipeline, the authoring guide and the other tools are not published. On Railway, connect the
 GitHub repository and generate a domain; each push to `main` redeploys.
 
-Once the site has a domain, change the two share-image tags in `index.html` (`og:image` and
-`twitter:image`) to the full address of `assets/og-image.png`. Most services ignore a relative one.
+The site is live at https://algorithm-atlas-production.up.railway.app. That address is written
+in full in the share tags in `index.html` (`og:url`, `og:image`, `twitter:image` and the canonical
+link), because most services ignore a relative one. Change it there if the domain changes.
