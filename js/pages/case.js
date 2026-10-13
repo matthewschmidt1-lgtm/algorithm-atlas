@@ -8,8 +8,8 @@ import * as C from '../core/catalog.js';
 import { pageHead } from '../ui/parts.js';
 import { createPlayer, assemblePlayer } from '../viz/player.js';
 
-const money = (units, unit) => `£${fmt(units * unit)}`;
-const thousands = (k) => `£${fmt(k * 1000)}`;
+const money = (units, unit) => `$${fmt(units * unit)}`;
+const thousands = (k) => `$${fmt(k * 1000)}`;
 const list = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
 // The shortcut a person might take by hand: go down a ranked list, funding whatever still fits.
@@ -40,10 +40,10 @@ export default async function render({ params }) {
   const names = (idx) => list(idx.map((i) => c.items[i].name));
 
   const table = h('div.data-table-wrap', h('table.data-table.case-table',
-    h('thead', h('tr', h('th', 'Proposal'), h('th', 'Cost'), h('th', 'Benefit over the year'), h('th', 'Benefit per £1 spent'), h('th', 'Funded'))),
+    h('thead', h('tr', h('th', 'Proposal'), h('th', 'Cost'), h('th', 'Benefit over the year'), h('th', 'Benefit per $1 spent'), h('th', 'Funded'))),
     h('tbody', c.items.map((x, i) => h('tr', { class: chosen.includes(i) ? 'is-chosen' : '' },
       h('th', { scope: 'row' }, x.name), h('td.mono', money(x.cost, c.unit)), h('td.mono', thousands(x.benefit)),
-      h('td.mono', `£${((x.benefit * 1000) / (x.cost * c.unit)).toFixed(2)}`), h('td', chosen.includes(i) ? 'Yes' : ''))))));
+      h('td.mono', `$${((x.benefit * 1000) / (x.cost * c.unit)).toFixed(2)}`), h('td', chosen.includes(i) ? 'Yes' : ''))))));
 
   const route = (label, r) => h('div.case-route', h('p.panel-cap', label), h('p.case-route-total', thousands(r.benefit)),
     h('p', `Funds ${names(r.picked)}.`), h('p.small.muted', `Spends ${money(r.spent, c.unit)} of ${money(c.budget, c.unit)}.`));
@@ -56,7 +56,7 @@ export default async function render({ params }) {
       h('p.case-lead', 'Most people would rank the proposals and work down the list. Here are the two obvious rankings, beside the answer found by checking every budget from nothing up to the full amount.'),
       h('div.case-routes',
         route('Biggest benefit first', byBenefit),
-        route('Best benefit per £1 first', byRatio),
+        route('Best benefit per $1 first', byRatio),
         ok ? h('div.case-route.is-best', h('p.panel-cap', 'The best possible'), h('p.case-route-total', thousands(res.result.best)),
           h('p', `Funds ${names(chosen)}.`), h('p.small.muted', `Spends ${money(spent, c.unit)} of ${money(c.budget, c.unit)}.`)) : null),
       ok ? h('p.case-lead', `The best plan brings in ${thousands(res.result.best - Math.max(byBenefit.benefit, byRatio.benefit))} more than the better of the two shortcuts. The difference is not large here. The point is that neither shortcut can be trusted to find it, and nothing about either ranking warns you.`) : null),

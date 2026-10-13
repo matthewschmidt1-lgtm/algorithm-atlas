@@ -1229,10 +1229,10 @@ if (on('tracks')) {
     const byHand = (rank) => { const order = c.items.map((_, i) => i).sort((a, b) => rank(c.items[b]) - rank(c.items[a]) || a - b); let spent = 0, benefit = 0; for (const i of order) if (spent + c.items[i].cost <= c.budget) { spent += c.items[i].cost; benefit += c.items[i].benefit; } return benefit; };
     const p = await open('/case/budget', '.case-route.is-best');
     try {
-      const money = (el) => Number(el.textContent.replace(/[£,]/g, ''));
+      const money = (el) => Number(el.textContent.replace(/[$,]/g, ''));
       const totals = p.$$('.case-route-total').map(money);
-      assert(totals[2] === best.benefit * 1000, `the page says the best is £${totals[2]}, trying every combination gives £${best.benefit * 1000}`);
-      assert(totals[0] === byHand((x) => x.benefit) * 1000 && totals[1] === byHand((x) => x.benefit / x.cost) * 1000, `the two shortcuts read £${totals[0]} and £${totals[1]}`);
+      assert(totals[2] === best.benefit * 1000, `the page says the best is $${totals[2]}, trying every combination gives $${best.benefit * 1000}`);
+      assert(totals[0] === byHand((x) => x.benefit) * 1000 && totals[1] === byHand((x) => x.benefit / x.cost) * 1000, `the two shortcuts read $${totals[0]} and $${totals[1]}`);
       assert(totals[0] < totals[2] && totals[1] < totals[2], 'a shortcut matches the best plan, so the case teaches nothing');
       const funded = p.$$('.case-table tbody tr').map((tr, i) => (tr.children[4].textContent === 'Yes' ? i : -1)).filter((i) => i >= 0);
       assert(funded.join() === best.set.join(), `the page funds ${funded.join()}, the best plan is ${best.set.join()}`);
@@ -1240,7 +1240,7 @@ if (on('tracks')) {
       assert(p.$('.player-stage') && /Step 1 \//.test(p.$('.step-label').textContent), 'the lesson\'s method is not running on the page');
       assert(/invented/.test(p.$('.case-note').textContent), 'the page does not say the figures are invented');
       assert(p.$$('.case-assume li').length === c.assumptions.length && p.$$('.case-assume a').every((a) => C.algoById[a.getAttribute('href').split('/').pop()]), 'the limits of the model are not all stated, or point at a missing lesson');
-      return `best £${best.benefit * 1000} against £${totals[0]} and £${totals[1]} for the shortcuts, out of ${1 << c.items.length} combinations`;
+      return `best $${best.benefit * 1000} against $${totals[0]} and $${totals[1]} for the shortcuts, out of ${1 << c.items.length} combinations`;
     } finally { p.close(); }
   });
   await test('cost is named the same way everywhere, and never confused with approach', async () => {

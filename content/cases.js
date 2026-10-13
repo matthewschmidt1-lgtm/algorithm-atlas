@@ -12,8 +12,8 @@ export const cases = [
     lesson: 'knapsack',
     title: 'Which projects should we fund this year?',
     summary: 'Eight proposals, one budget, and two tempting shortcuts that both leave money on the table.',
-    scenario: 'A company has £160,000 to invest this year and eight proposals on the table. Each proposal has a cost and an estimate of what it will bring in over the year. A proposal is funded in full or not at all, and the budget cannot be exceeded.',
-    // Costs are in units of £10,000 so that the lesson's method can work in whole numbers.
+    scenario: 'A company has $160,000 to invest this year and eight proposals on the table. Each proposal has a cost and an estimate of what it will bring in over the year. A proposal is funded in full or not at all, and the budget cannot be exceeded.',
+    // Costs are in units of $10,000 so that the lesson's method can work in whole numbers.
     unit: 10000,
     budget: 16,
     items: [
