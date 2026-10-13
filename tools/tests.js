@@ -1239,6 +1239,18 @@ if (on('tracks')) {
       for (const name of best.set.map((i) => c.items[i].name)) assert(p.$('.case-route.is-best').textContent.includes(name), `the best plan does not name ${name}`);
       assert(p.$('.player-stage') && /Step 1 \//.test(p.$('.step-label').textContent), 'the lesson\'s method is not running on the page');
       assert(/invented/.test(p.$('.case-note').textContent), 'the page does not say the figures are invented');
+      // "Benefit per $1 spent" is explained, with its formula, a worked example and how to read it
+      const sec = p.$('#per-dollar');
+      assert(sec && sec.querySelector('.case-formula'), 'benefit per $1 spent is never explained');
+      const frac = [...sec.querySelectorAll('.case-frac span')].map((x) => x.textContent);
+      assert(frac.join('/') === 'Estimated benefit/Project cost', `the formula reads ${frac.join(' over ')}`);
+      const first = c.items[0], want = (first.benefit * 1000) / (first.cost * c.unit);
+      assert(sec.textContent.includes(first.name) && sec.textContent.includes(`$${want.toFixed(2)}`), 'the worked example does not use the first proposal\'s real figures');
+      p.$$('.case-table tbody tr').forEach((tr, i) => { const x = c.items[i]; assert(tr.children[3].textContent === `$${((x.benefit * 1000) / (x.cost * c.unit)).toFixed(2)}`, `row ${i + 1}: benefit per $1 reads ${tr.children[3].textContent}`); });
+      assert(/Above \$1\.00/.test(sec.textContent) && /Below \$1\.00/.test(sec.textContent) && /does not settle it/.test(sec.textContent), 'the page does not say how to read the figure, or why it is not enough on its own');
+      const above = c.items.filter((x) => x.benefit * 1000 > x.cost * c.unit).length;
+      assert(sec.textContent.includes(`${above} of the ${c.items.length} do`), 'the count of proposals above $1.00 is wrong');
+      assert([...p.$$('.case-sec')].indexOf(sec) === 1, 'the explanation does not come straight after the table');
       assert(p.$$('.case-assume li').length === c.assumptions.length && p.$$('.case-assume a').every((a) => C.algoById[a.getAttribute('href').split('/').pop()]), 'the limits of the model are not all stated, or point at a missing lesson');
       return `best $${best.benefit * 1000} against $${totals[0]} and $${totals[1]} for the shortcuts, out of ${1 << c.items.length} combinations`;
     } finally { p.close(); }

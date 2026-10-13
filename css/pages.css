@@ -808,3 +808,12 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .case-assume li { padding: var(--s-4) 0; border-bottom: 1px solid var(--line); }
 .case-assume .small { color: var(--text-2); margin-top: 4px; }
 @media (max-width: 760px) { .case-routes { grid-template-columns: minmax(0, 1fr); } }
+
+.case-formula { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: var(--s-4) 0 var(--s-5); padding: var(--s-4) var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-2); background: var(--surface); width: fit-content; max-width: 100%; font-family: var(--font-serif); font-size: 1.15rem; }
+.case-formula-name { font-weight: 600; }
+.case-frac { display: inline-grid; text-align: center; }
+.case-frac span:first-child { padding: 0 10px 4px; border-bottom: 1.5px solid var(--text); }
+.case-frac span:last-child { padding: 4px 10px 0; }
+.case-read { display: grid; gap: 8px; max-width: 68ch; margin-bottom: var(--s-4); color: var(--text-2); }
+.case-read strong { color: var(--text); }
+.case-sec[id] { scroll-margin-top: calc(var(--nav-h) + 20px); }
