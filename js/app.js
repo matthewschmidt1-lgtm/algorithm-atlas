@@ -27,6 +27,7 @@ route('/connections', () => import('./pages/connections.js'));
 route('/search', () => import('./pages/search.js'));
 route('/profile', () => import('./pages/profile.js'));
 route('/about', () => import('./pages/about.js'));
+route('/verification', () => import('./pages/verification.js'));
 route('/404', () => import('./pages/notfound.js'));
 
 start(document.getElementById('main'), { onRoute: setCurrentRoute });

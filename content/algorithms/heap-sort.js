@@ -211,7 +211,7 @@ export default {
       input: (n, variant, seed) => ({ size: n, order: variant, seed, custom: [] }),
       theory: [
         { label: '2n log₂ n (upper bound)', fn: (n) => 2 * n * Math.log2(n) },
-        { label: 'n log₂ n (for scale)', fn: (n) => n * Math.log2(n) },
+        { label: 'n log₂ n (for scale)', fn: (n) => n * Math.log2(n), reference: true },
       ],
     },
   },

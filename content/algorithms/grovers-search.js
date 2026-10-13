@@ -234,7 +234,7 @@ export default {
       input: (N, variant, seed) => ({ qubits: Math.log2(N), marked: 1, iterations: 0, seed }),
       theory: [
         { label: '(π/4)·√N', fn: (N) => (Math.PI / 4) * Math.sqrt(N) },
-        { label: 'classical average, (N + 1)/2', fn: (N) => (N + 1) / 2 },
+        { label: 'classical average, (N + 1)/2', fn: (N) => (N + 1) / 2, reference: true },
       ],
     },
   },

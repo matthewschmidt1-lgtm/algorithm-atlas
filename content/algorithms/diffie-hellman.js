@@ -379,7 +379,7 @@ export default {
       input: (p) => ({ p, g: fullBase(p), a: p - 2, b: 3, attacker: false }),
       theory: [
         { label: 'p − 2 tries', fn: (p) => p - 2 },
-        { label: 'multiplications by one honest party, at most 4 log₂ p + 4', fn: (p) => 4 * Math.log2(p) + 4 },
+        { label: 'multiplications by one honest party, at most 4 log₂ p + 4', fn: (p) => 4 * Math.log2(p) + 4, reference: true },
       ],
     },
   },

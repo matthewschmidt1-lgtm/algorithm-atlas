@@ -53,20 +53,12 @@ export default async function render({ params }) {
     pseudo: () => [h('p.small.muted', 'The highlighted line is the one being carried out at the current step.'), P.pseudo],
     source: () => { if (!codePanel) codePanel = createCodePanel(L, { compact: true }); return [codePanel.el]; },
     perf: () => {
-      if (!L.viz.experiment) return [h('p.muted', 'This lesson does not define a size experiment. Its cost is described under Complexity.')];
+      if (!L.viz.experiment) return [h('p.muted', 'This algorithm has no size experiment.'), h('p', h('a.link', { href: `#/algorithm/${meta.id}?level=3&at=technical` }, 'Read how its cost is analysed in the lesson'))];
       if (!chart) { chart = createExperimentChart(L); cleanups.push(() => chart.destroy()); }
-      return [chart.el];
+      return [chart.el, h('p.small', h('a.link', { href: `#/algorithm/${meta.id}?level=3&at=technical` }, 'The lesson explains what these counts mean and why'))];
     },
-    cost: () => [
-      h('p', { html: rich(L.complexity.summary) }),
-      h('div.data-table-wrap', h('table.data-table', h('thead', h('tr', h('th', 'Case'), h('th', 'Time'), h('th', 'When'))),
-        h('tbody', L.complexity.cases.map((c) => h('tr', h('th', c.case), h('td.mono', c.time), h('td', { html: rich(c.when) })))))),
-      h('p.small', h('strong', 'Memory. '), h('span', { html: rich(L.complexity.space) })),
-      h('p.panel-cap', { style: { marginTop: '12px' } }, 'These bounds assume'),
-      h('ul.prose-list', L.complexity.assumptions.map((t) => h('li', { html: rich(t) }))),
-    ],
   };
-  const tabDefs = [['pseudo', 'Pseudocode'], ['source', 'Source'], ['perf', 'Performance'], ['cost', 'Complexity']];
+  const tabDefs = [['pseudo', 'Pseudocode'], ['source', 'Source'], ['perf', 'Performance']];
   const tabBtns = tabDefs.map(([id, label]) => h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', onclick: () => showTab(id) }, label));
   function showTab(id) {
     tabBtns.forEach((b, i) => b.setAttribute('aria-selected', tabDefs[i][0] === id ? 'true' : 'false'));

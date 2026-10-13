@@ -2,12 +2,12 @@
 // The generated catalog holds one light record per published lesson; full lessons are
 // fetched on demand with loadLesson().
 
-import { catalog } from '../../content/catalog.generated.js';
+import { catalog, buildInfo } from '../../content/catalog.generated.js';
 import { roster, rosterById } from '../../content/roster.js';
 import { disciplines, disciplineById, GROUPS } from '../../content/disciplines.js';
 import { labCategories, labById } from '../../content/lab-categories.js';
 
-export { disciplines, disciplineById, GROUPS, labCategories, labById, roster };
+export { disciplines, disciplineById, GROUPS, labCategories, labById, roster, buildInfo };
 
 export const algos = catalog;
 export const algoById = Object.fromEntries(catalog.map((a) => [a.id, a]));

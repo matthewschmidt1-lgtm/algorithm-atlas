@@ -366,7 +366,7 @@ export default {
       input: (bits) => experimentInput(bits),
       theory: [
         { label: 'about √n = 2^(bits ÷ 2)', fn: (bits) => 2 ** (bits / 2) },
-        { label: 'multiplications to decrypt, at most 2 × bits', fn: (bits) => 2 * bits },
+        { label: 'multiplications to decrypt, at most 2 × bits', fn: (bits) => 2 * bits, reference: true },
       ],
     },
   },

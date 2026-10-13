@@ -430,8 +430,8 @@ export default {
       ],
       input: (n, variant, seed) => ({ servers: n, keys: 2000, vnodes: 32, event: 'add', seed, measure: variant }),
       theory: [
-        { label: '2000 / (n + 1)', fn: (n) => 2000 / (n + 1), variant: 'ring' },
-        { label: '2000 · n / (n + 1)', fn: (n) => (2000 * n) / (n + 1), variant: 'modulo' },
+        { label: '2000 / (n + 1)', fn: (n) => 2000 / (n + 1), variant: 'ring', expected: true },
+        { label: '2000 · n / (n + 1)', fn: (n) => (2000 * n) / (n + 1), variant: 'modulo', expected: true },
       ],
     },
   },

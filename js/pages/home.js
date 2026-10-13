@@ -1,20 +1,25 @@
-// Home: the way in. Hero, the Algorithm Universe, the disciplines, live demonstrations,
-// the three reading levels, threads, paths, and (optionally) personal recommendations.
+// Home has one job: say what the atlas is and point to the ways in.
+// It does not reproduce the other pages. The map here is a signpost to Explore, the
+// demonstrations are a taste of the lab, and each feature gets one line and a link.
 
-import { h, clear, richBlock } from '../core/dom.js';
+import { h, clear, richBlock, fmt } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
+import { navigate } from '../core/router.js';
 import { createSearchBox } from '../ui/searchbox.js';
-import { createExplorer } from '../ui/explorer.js';
+import { createUniverse } from '../art/universe.js';
 import { createPreview } from '../ui/preview.js';
-import { plate, sectionHead, lessonRow, refLink, plural, fact } from '../ui/parts.js';
+import { sectionHead, plural, fact } from '../ui/parts.js';
 import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
-import { recommendLessons, recommendPaths, pathProgress } from '../core/recommend.js';
+import { recommendLessons } from '../core/recommend.js';
+
+const HOME_DEMOS = ['dijkstra', 'quick-sort', 'gradient-descent', 'ddpm'];
 
 export default async function render() {
   const cleanups = [];
+  const info = C.buildInfo;
 
   /* ---- hero ---- */
   const netHost = h('div.hero-net', { 'aria-hidden': 'true' });
@@ -34,50 +39,35 @@ export default async function render() {
             ['shortest route', 'compress files', 'make a neural network learn'].map((q, i) => [i ? ', ' : '', h('a', { href: `#/search?q=${encodeURIComponent(q)}` }, q)]), '.')))));
   queueMicrotask(() => requestAnimationFrame(() => cleanups.push(mountHeroNetwork(netHost))));
 
-  /* ---- ledger ---- */
-  const withLessons = C.disciplines.filter((d) => C.inDiscipline(d.id).length).length;
-  const ledger = h('section.ledger', { 'aria-label': 'What the atlas holds today' }, h('div.wrap.ledger-row',
-    fact(C.algos.length, 'lessons published, each checked in three languages'),
-    fact(C.disciplines.length, `disciplines mapped, ${withLessons} with lessons so far`),
-    fact(C.concepts.length, 'concepts defined in plain words'),
-    fact(3, 'reading levels for every lesson, from simple to rigorous')));
+  /* ---- what was checked ---- */
+  const trust = h('section.ledger', { 'aria-label': 'How the lessons were checked' }, h('div.wrap',
+    h('div.ledger-row',
+      fact(info.lessons, 'lessons, each one checked before it was published'),
+      fact(fmt(info.tests), 'tests passed against independent answers'),
+      fact(info.programs, 'programs run in Python, JavaScript and C++'),
+      fact(info.formulas, 'cost formulas measured against the real code')),
+    h('p.ledger-link', h('a.text-link', { href: '#/verification' }, 'How every lesson is checked', h('span', { html: icon('arrow', { size: 15 }) })))));
 
-  /* ---- universe ---- */
-  const explorer = createExplorer();
-  cleanups.push(() => explorer.destroy());
-  const universe = h('section.section', { id: 'universe' }, h('div.wrap',
-    sectionHead({ eyebrow: 'The map', title: 'The Algorithm Universe', lede: 'Twenty disciplines drawn as one landscape. Select a hill to see its subfields, its foundational lessons, the fields it borders and where its ideas are used.' }),
-    explorer.el));
-
-  /* ---- disciplines ---- */
-  const counts = C.disciplines.map((d) => C.inDiscipline(d.id).length);
-  const sorted = counts.slice().sort((a, b) => b - a);
-  const wideCut = sorted[3] || 0;
-  let wides = 0;
-  const plates = h('div.plate-grid', C.disciplines.map((d, i) => {
-    const wide = counts[i] >= wideCut && counts[i] > 0 && wides < 4 && (wides++, true);
-    return plate(d, i, { wide });
+  /* ---- the map, as a signpost ---- */
+  const mapHost = h('div.universe-map.home-map');
+  queueMicrotask(() => requestAnimationFrame(() => {
+    const u = createUniverse(mapHost, { height: Math.round(Math.max(340, Math.min(520, mapHost.clientWidth * 0.5))), onSelect: (sel) => { if (sel) navigate(`#/explore?${sel.type === 'discipline' ? 'd' : 'a'}=${sel.id}`); } });
+    cleanups.push(() => u.destroy());
   }));
-  const discover = h('section.section', h('div.wrap',
-    sectionHead({ eyebrow: 'Twenty plates', title: 'Explore the Infinite', lede: 'Each discipline has its own plate: a figure drawn from one of its ideas, what it studies, and how much of it is written. Counts are of lessons that exist today.' }),
-    plates,
-    h('p.sec-more', h('a.text-link', { href: '#/disciplines' }, 'All disciplines, grouped', h('span', { html: icon('arrow', { size: 15 }) })))));
-
-  /* ---- featured demonstrations ---- */
-  const previews = C.featured.map((f, i) => createPreview(f, i));
-  previews.forEach((p) => cleanups.push(() => p.destroy()));
-  const featured = previews.length ? h('section.section.tinted', h('div.wrap',
-    sectionHead({ eyebrow: 'Run them here', title: 'Algorithms at work', lede: 'Nothing on this page is a recording. Each figure runs the lesson\'s own implementation in your browser when you press the button, one step at a time.' }),
-    h('div.preview-grid', previews.map((p) => p.el)),
-    h('p.sec-more', h('a.text-link', { href: '#/library' }, `Browse all ${plural(C.algos.length, 'lesson')}`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
+  const universe = h('section.section', { id: 'universe' }, h('div.wrap',
+    sectionHead({ eyebrow: 'The map', title: 'The Algorithm Universe', lede: `${C.disciplines.length} disciplines drawn as one landscape. Each hill is a field, each marker a lesson, and each dotted route an idea two fields share.` }),
+    h('figure.home-map-figure', mapHost,
+      h('figcaption.fig-cap', h('b', 'Choose a hill'), 'to open it on the full map, with its subfields, lessons and neighbours.')),
+    h('p.sec-more', h('a.text-link', { href: '#/explore' }, 'Open the full map', h('span', { html: icon('arrow', { size: 15 }) })),
+      h('a.text-link', { href: '#/disciplines' }, 'Or see all disciplines as a list', h('span', { html: icon('arrow', { size: 15 }) })))));
 
   /* ---- three levels ---- */
   const levelsBody = h('div.levels-demo-body');
   const sampleId = C.algoById.dijkstra ? 'dijkstra' : (C.algos[0] || {}).id;
   const levelTabs = [
-    { n: 1, name: 'Explain it simply', about: 'Everyday language and a small example. No background needed.' },
-    { n: 2, name: 'Help me understand', about: 'Step-by-step logic, pseudocode, code you can run, and the terms you need.' },
-    { n: 3, name: 'Go deeper', about: 'Proofs, complexity analysis, derivations, history and references.' },
+    { n: 1, name: 'Explain it simply', about: 'everyday language and a small example. No background needed.' },
+    { n: 2, name: 'Help me understand', about: 'the steps, the code and the terms you need.' },
+    { n: 3, name: 'Go deeper', about: 'cost, proofs, history and sources.' },
   ];
   let levelBtns = [];
   const showLevel = async (n) => {
@@ -86,69 +76,53 @@ export default async function render() {
       const lesson = await C.loadLesson(sampleId);
       const text = n === 1 ? lesson.bigIdea.simple : n === 2 ? lesson.logic.intuition : lesson.logic.correctness;
       clear(levelsBody).append(
-        h('p.levels-demo-cap', `${lesson.meta.name}, level ${n} of 3: ${levelTabs[n - 1].about}`),
+        h('p.levels-demo-cap', `${lesson.meta.name} at level ${n}: ${levelTabs[n - 1].about}`),
         h('div.prose.levels-demo-text', { html: richBlock(text) }),
-        h('p', h('a.text-link', { href: `#/algorithm/${sampleId}` }, `Read the ${lesson.meta.name} lesson`, h('span', { html: icon('arrow', { size: 15 }) }))));
+        h('p', h('a.text-link', { href: `#/algorithm/${sampleId}?level=${n}` }, 'Read this lesson', h('span', { html: icon('arrow', { size: 15 }) }))));
     } catch { clear(levelsBody).append(h('p.muted', 'The sample lesson could not be loaded.')); }
   };
   levelBtns = levelTabs.map((t) => h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', onclick: () => showLevel(t.n) }, t.name));
-  const levels = sampleId ? h('section.section', h('div.wrap.levels-demo',
+  const levels = sampleId ? h('section.section.tinted', h('div.wrap.levels-demo',
     h('div',
       h('p.eyebrow', 'One idea, three depths'),
       h('h2', 'Start simple. Go as deep as you like.'),
-      h('p.lede', 'Every lesson begins in plain language that needs no background. The same lesson then unfolds into the working details, and finally into the mathematics. The simple version is never a different, easier story. It is the same idea with fewer symbols.')),
+      h('p.lede', 'Every lesson opens in plain language. The same lesson then unfolds into the working details, and finally into the mathematics. Deeper material stays out of the way until you ask for it.')),
     h('div.levels-demo-card', h('div.tabs', { role: 'tablist', 'aria-label': 'Reading level' }, levelBtns), levelsBody))) : null;
   if (sampleId) showLevel(1);
 
-  /* ---- threads ---- */
-  const threadCards = C.threads.slice(0, 4).map((t) => h(`article.thread-card.c-${t.color}`,
-    h('h3', h('a', { href: `#/connections?thread=${t.id}` }, t.title)),
-    h('p', t.principle),
-    h('ol.thread-stops', t.stops.slice(0, 5).map((s) => h('li', refLink(s.ref))))));
-  const threads = C.threads.length ? h('section.section', h('div.wrap',
-    sectionHead({ eyebrow: 'Connections', title: 'Everything Is Connected', lede: 'The same few ideas keep turning up in fields that seem to have nothing in common. A thread follows one idea from place to place and says what is shared.' }),
-    h('div.thread-grid', threadCards),
-    h('p.sec-more', h('a.text-link', { href: '#/connections' }, 'Follow every thread', h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
+  /* ---- a taste of the demonstrations ---- */
+  const demos = HOME_DEMOS.map((id) => C.featured.find((f) => f.id === id)).filter(Boolean);
+  const previews = demos.map((f, i) => createPreview(f, i));
+  previews.forEach((p) => cleanups.push(() => p.destroy()));
+  const featured = previews.length ? h('section.section', h('div.wrap',
+    sectionHead({ eyebrow: 'Run them here', title: 'Algorithms at work', lede: 'None of these is a recording. Each figure runs the lesson\'s own code in your browser, one step at a time, when you press the button.' }),
+    h('div.preview-grid', previews.map((p) => p.el)),
+    h('p.sec-more', h('a.text-link', { href: '#/lab' }, `Run any of the ${plural(C.algos.length, 'demonstration')} in the lab`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
 
-  /* ---- for you ---- */
-  const you = h('section.section.tinted', { id: 'for-you' });
-  const renderYou = () => {
+  /* ---- ways in ---- */
+  const way = (href, title, text) => h('a.way', { href }, h('span.way-title', title, h('span', { html: icon('arrow', { size: 16 }) })), h('span.way-text', text));
+  const you = h('div.home-you');
+  const paintYou = () => {
     clear(you);
-    const p = store.state.profile;
-    const recent = store.state.recents.map((r) => C.algoById[r.id]).filter(Boolean).slice(0, 3);
-    const wrap = h('div.wrap');
-    if (!p) {
-      wrap.append(h('div.invite',
-        h('div', h('p.eyebrow', 'Make it yours'), h('h2', 'Tell the atlas what you are curious about.'),
-          h('p.lede', 'Answer four short questions and the atlas will suggest where to begin. There is no account to create, and you can explore everything without answering.')),
-        h('div.invite-actions',
-          h('button.btn.btn-primary.btn-lg', { type: 'button', onclick: () => openOnboarding({ onDone: renderYou }) }, 'Answer four questions'),
-          h('a.btn.btn-lg', { href: '#/paths' }, 'Or choose a learning path'))));
+    if (!store.state.profile) {
+      you.append(h('p', h('strong', 'Not sure where to start? '), 'Answer four short questions and the atlas will suggest a first lesson. No account is needed.'),
+        h('button.btn', { type: 'button', onclick: () => openOnboarding({ onDone: paintYou }) }, 'Suggest a starting point'));
     } else {
-      const recs = recommendLessons(4);
-      const paths = recommendPaths(2);
-      wrap.append(sectionHead({ eyebrow: 'For you', title: 'Suggested next', lede: 'Based on the answers you gave and the lessons you have opened. Each suggestion says why it is here.' }));
-      wrap.append(h('div.you-grid',
-        h('div', h('h3.you-h', 'Lessons'), recs.length ? h('div.lesson-list', recs.map((r) => lessonRow(r.a, { note: `${r.reason}. ${r.a.summary}` }))) : h('p.muted', 'You have opened every published lesson.')),
-        h('div',
-          h('h3.you-h', 'Paths'),
-          h('ul.you-paths', paths.map(({ path, reason }) => { const pr = pathProgress(path); return h('li', h('a', { href: `#/path/${path.id}` }, path.title), h('span', pr.started ? `${pr.done} of ${pr.total} lessons explored` : reason)); })),
-          recent.length ? [h('h3.you-h', 'Recently opened'), h('ul.you-paths', recent.map((a) => h('li', h('a', { href: `#/algorithm/${a.id}` }, a.name), h('span', C.disciplineById[a.discipline].short))))] : null,
-          h('p', { style: { marginTop: '20px' } }, h('a.text-link', { href: '#/profile' }, 'Open your atlas', h('span', { html: icon('arrow', { size: 15 }) }))))));
+      const rec = recommendLessons(1)[0];
+      you.append(rec ? h('p', h('strong', 'Suggested next for you: '), h('a.link', { href: `#/algorithm/${rec.a.id}` }, rec.a.name), `. ${rec.reason}.`) : h('p', 'You have opened every published lesson.'),
+        h('a.btn', { href: '#/profile' }, 'Open your atlas'));
     }
-    you.append(wrap);
   };
-  renderYou();
+  paintYou();
+  const ways = h('section.section', h('div.wrap',
+    sectionHead({ eyebrow: 'Ways in', title: 'Where would you like to begin?', single: true }),
+    h('div.ways.is-home',
+      way('#/library', 'Find a lesson', `Search and filter all ${plural(C.algos.length, 'lesson')} by field, level or technique.`),
+      way('#/paths', 'Follow a path', `${plural(C.paths.length, 'ordered route')}, from first steps to specialist topics.`),
+      way('#/connections', 'Follow an idea', 'See one idea turn up in fields that seem unrelated.'),
+      way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
+    you));
 
-  /* ---- paths teaser ---- */
-  const pathPick = ['absolute-beginners', 'data-structures-algorithms', 'machine-learning-first-principles', 'optimization-operations-research'].map((id) => C.pathById[id]).filter(Boolean);
-  const pathsSec = pathPick.length ? h('section.section', h('div.wrap',
-    sectionHead({ eyebrow: 'Learning paths', title: 'A route through the territory', lede: 'Paths put lessons in a sensible order for a goal. Each stage says what it is for, and you can skip the stages you already know.' }),
-    h('div.path-teasers', pathPick.map((p) => h(`a.path-teaser.c-${C.GROUPS[p.group] ? C.GROUPS[p.group].color : 'forest'}`, { href: `#/path/${p.id}` },
-      h('span.path-teaser-level', p.level), h('span.path-teaser-title', p.title), h('span.path-teaser-blurb', p.blurb),
-      h('span.path-teaser-meta', plural(p.stages.length, 'stage'), ' · ', plural(p.stages.flatMap((s) => s.modules).filter((m) => C.algoById[m.algo]).length, 'lesson'))))),
-    h('p.sec-more', h('a.text-link', { href: '#/paths' }, `All ${C.paths.length} learning paths`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
-
-  const el = h('div.home', hero, ledger, universe, discover, featured, levels, threads, pathsSec, you);
+  const el = h('div.home', hero, trust, universe, levels, featured, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

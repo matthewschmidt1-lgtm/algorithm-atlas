@@ -339,7 +339,7 @@ export default {
         { id: 'random', label: 'Random letters' },
       ],
       input: (w, variant, seed) => ({ text: variant === 'random' ? randomLetters(PASSAGE.length, seed) : PASSAGE, window: w, lookahead: 16 }),
-      theory: [{ label: `input size (${8 * PASSAGE.length} bits)`, fn: () => 8 * PASSAGE.length }],
+      theory: [{ label: `input size (${8 * PASSAGE.length} bits)`, fn: () => 8 * PASSAGE.length, reference: true }],
     },
   },
 

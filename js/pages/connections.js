@@ -2,6 +2,7 @@
 //   threads, which are written routes that state a shared principle and walk through it;
 //   the graph, where any lesson, concept or discipline can be put at the centre and its
 //   connections traversed, leaving a trail of where you have been.
+// Only one of the two is on the page at a time, so each can be read without the other.
 
 import { h, clear } from '../core/dom.js';
 import { icon } from '../core/icons.js';
@@ -40,7 +41,7 @@ export default async function render({ query }) {
     const at = trail.indexOf(ref);
     trail = at >= 0 ? trail.slice(0, at + 1) : [...trail, ref].slice(-8);
     picker.value = ref;
-    replaceQuery({ at: ref });
+    replaceQuery({ view: view === 'graph' ? 'graph' : '', at: view === 'graph' ? ref : '' });
     const r = C.resolveRef(ref);
     const items = C.neighbours(ref).map((n) => ({ ref: n.ref, type: n.type === 'belongs' && n.direction === 'in' ? 'related' : n.type, why: n.why }));
     clear(mapHost).append(
@@ -48,25 +49,39 @@ export default async function render({ query }) {
         r.href ? h('a.btn.btn-sm', { href: r.href }, 'Open it', h('span', { html: icon('arrow', { size: 14 }) })) : null),
       items.length ? createRelMap(ref, items, { onSelect: (next) => centre(next, false) }) : h('p.muted', 'Nothing is connected to this yet.'));
     clear(trailEl).append(...trail.map((t, i) => h('li', i === trail.length - 1 ? h('span', { 'aria-current': 'step' }, C.resolveRef(t).name) : h('button.link', { type: 'button', onclick: () => centre(t, false) }, C.resolveRef(t).name))));
-    if (scroll) graphSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (scroll) { setView('graph'); graphSec.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }
 
-  const graphSec = h('section.section', { id: 'graph' },
-    h('div.sec-head.single', h('p.eyebrow', 'The graph'), h('h2', 'Follow any idea'), h('p.lede', 'Put a lesson, a concept or a discipline at the centre. Everything around it is connected to it for a stated reason. Choose a neighbour to move there, and the trail keeps track of your route.')),
+  const graphSec = h('section.conn-view', { id: 'graph' },
+    h('p.lede', { style: { marginBottom: '24px' } }, 'Put a lesson, a concept or a discipline at the centre. Everything around it is connected to it for a stated reason. Choose a neighbour to move there, and the trail keeps track of your route.'),
     h('div.graph-bar', h('label.filter', h('span.filter-label', 'At the centre'), picker), h('div.trail-wrap', h('span.panel-cap', 'Trail'), trailEl)),
     mapHost);
 
+  const threadsView = h('section.conn-view',
+    h('nav.thread-index', { 'aria-label': 'Threads' }, C.threads.map((t) => h('a', { href: `#thread-${t.id}`, onclick: (e) => { e.preventDefault(); document.getElementById(`thread-${t.id}`).scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, t.title))),
+    h('div.threads', threadEls));
+  const threadsBtn = h('button', { type: 'button', 'aria-pressed': 'true', onclick: () => setView('threads') }, `${C.threads.length} threads to read`);
+  const graphBtn = h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => setView('graph') }, 'The graph to explore');
+  let view = 'threads';
+  function setView(v) {
+    view = v;
+    threadsBtn.setAttribute('aria-pressed', v === 'threads' ? 'true' : 'false');
+    graphBtn.setAttribute('aria-pressed', v === 'graph' ? 'true' : 'false');
+    threadsView.hidden = v !== 'threads';
+    graphSec.hidden = v !== 'graph';
+    replaceQuery({ view: v === 'graph' ? 'graph' : '', at: v === 'graph' ? trail[trail.length - 1] : '' });
+  }
+
   const el = h('div.page.wrap',
     pageHead({ eyebrow: 'Connections', title: 'Everything Is Connected',
-      lede: 'A handful of ideas explain a surprising share of the subject. Each thread below takes one idea, states the principle behind it, and follows it through fields that rarely share a textbook.' }),
-    h('nav.thread-index', { 'aria-label': 'Threads' }, C.threads.map((t) => h('a', { href: `#thread-${t.id}`, onclick: (e) => { e.preventDefault(); document.getElementById(`thread-${t.id}`).scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, t.title))),
-    h('div.threads', threadEls),
-    graphSec);
+      lede: 'A handful of ideas explain a surprising share of the subject. Read a thread to follow one idea through fields that rarely share a textbook, or explore the graph and find your own route.' }),
+    h('div.seg.conn-switch', { role: 'group', 'aria-label': 'What to show' }, threadsBtn, graphBtn),
+    threadsView, graphSec);
 
   const start = query.at && C.resolveRef(query.at).kind !== 'planned' ? query.at : (C.algoById.dijkstra ? 'dijkstra' : (C.algos[0] || {}).id);
   if (start) centre(start, false);
+  setView(query.view === 'graph' || (query.at && !query.thread) ? 'graph' : 'threads');
   return { el, title: 'Connections', afterMount() {
     if (query.thread) { const t = document.getElementById(`thread-${query.thread}`); if (t) t.scrollIntoView({ block: 'start' }); }
-    else if (query.at) graphSec.scrollIntoView({ block: 'start' });
   } };
 }

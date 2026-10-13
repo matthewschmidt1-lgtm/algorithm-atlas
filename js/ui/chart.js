@@ -78,7 +78,7 @@ export function createExperimentChart(lesson) {
       if (th.scaled && ref && ref.length) { const last = ref[ref.length - 1]; const base = th.fn(last[0]); scale = base ? last[1] / base : 1; }
       const lo = ex.sizes[0], hi = ex.sizes[ex.sizes.length - 1];
       const pts = Array.from({ length: 41 }, (_, j) => { const x = log ? lo * Math.pow(hi / lo, j / 40) : lo + (hi - lo) * (j / 40); return [x, th.fn(x) * scale]; });
-      series.push({ label: `${th.label} (formula)`, color: th.variant ? seriesColor(vi) : `var(${['--text-3', '--text-2'][k % 2]})`, points: pts, dashed: true });
+      series.push({ label: `${th.label} (${th.reference ? 'for reference' : 'formula'})`, color: th.variant ? seriesColor(vi) : `var(${['--text-3', '--text-2'][k % 2]})`, points: pts, dashed: true });
     });
     chartEl.innerHTML = lineChart({ series, xLabel: ex.sizeLabel, yLabel: ex.metricLabel, log });
     clear(legendEl).append(legend(series));

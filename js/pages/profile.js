@@ -34,44 +34,41 @@ export default async function render() {
         ? 'All of this is kept in this browser on this device, and nowhere else. Clearing your browser data will erase it. There is no account and nothing is uploaded.'
         : 'This browser is blocking storage, so nothing on this page will be remembered after you close the tab.')));
 
-    body.append(h('section.profile-sec',
-      h('div.profile-sec-head', h('h2', 'About you'), h('button.btn.btn-sm', { type: 'button', onclick: () => openOnboarding({ onDone: paint }) }, p ? 'Change my answers' : 'Answer four questions')),
-      p ? h('dl.profile-dl',
-        h('div', h('dt', 'Experience'), h('dd', (LEVELS.find((l) => l.id === p.level) || {}).label || 'Not given')),
-        h('div', h('dt', 'Interests'), h('dd', p.interests.length ? p.interests.map((id) => C.disciplineById[id].short).join(', ') : 'None chosen')),
-        h('div', h('dt', 'Goals'), h('dd', p.goals.length ? p.goals.map((id) => (GOALS.find((g) => g.id === id) || {}).label).join('; ') : 'None chosen')),
-        h('div', h('dt', 'Languages'), h('dd', p.languages.length ? p.languages.map((l) => LANGUAGE_LABELS[l]).join(', ') : 'No preference')))
-        : h('p.muted', 'You have not answered the questions. Recommendations below assume you are starting out.')));
-
-    const recs = recommendLessons(5);
+    // What to do next comes first. Records and settings are kept below, closed until wanted.
+    const recs = recommendLessons(4);
     body.append(h('section.profile-sec', h('h2', 'Recommended next'),
       recs.length ? h('div.lesson-list', recs.map((r) => lessonRow(r.a, { note: `${r.reason}. ${r.a.summary}` }))) : h('p.muted', 'You have opened every published lesson.')));
-    const rp = recommendPaths(3);
+    const rp = recommendPaths(2);
     if (rp.length) body.append(h('section.profile-sec', h('h2', 'Paths that fit'), h('div.path-list', rp.map((r) => pathCard(r.path, r.reason)))));
 
-    body.append(h('section.profile-sec', h('h2', 'Favourites'),
-      favs.length ? h('div.lesson-list', favs.map((a) => lessonRow(a))) : h('p.muted', 'Nothing saved yet. Use the heart on any lesson to keep it here.')));
-
     const names = Object.keys(s.collections);
-    body.append(h('section.profile-sec', h('h2', 'Collections'),
-      names.length ? names.map((n) => h('div.collection',
+    const drawer = (title, count, ...content) => h('details.fold', h('summary', h('span', title), count !== null ? h('span.small.faint', String(count)) : null), h('div.fold-body', content));
+    body.append(h('section.profile-sec.profile-records',
+      h('h2', 'Your records'),
+      drawer('Favourites', favs.length, favs.length ? h('div.lesson-list', favs.map((a) => lessonRow(a))) : h('p.muted', 'Nothing saved yet. Use the heart on any lesson to keep it here.')),
+      drawer('Collections', names.length, names.length ? names.map((n) => h('div.collection',
         h('div.profile-sec-head', h('h3', n), h('button.btn.btn-sm.btn-ghost', { type: 'button', onclick: () => { if (confirm(`Delete the collection "${n}"? The lessons themselves are not affected.`)) { store.deleteCollection(n); paint(); } }, html: `${icon('trash', { size: 14 })}<span>Delete</span>` })),
         s.collections[n].filter((id) => C.algoById[id]).length
           ? h('ul.collection-items', s.collections[n].filter((id) => C.algoById[id]).map((id) => h('li', h('a.link', { href: `#/algorithm/${id}` }, C.algoById[id].name),
             h('button.icon-btn', { type: 'button', 'aria-label': `Remove ${C.algoById[id].name} from ${n}`, html: icon('x', { size: 15 }), onclick: () => { store.removeFromCollection(n, id); paint(); } }))))
           : h('p.muted.small', 'This collection is empty.')))
-        : h('p.muted', 'No collections yet. On any lesson, choose "Add to a collection" to start one.')));
-
-    body.append(h('section.profile-sec', h('h2', 'Learning history'),
-      explored.length ? h('ol.history', explored.map(({ a, t }) => {
+        : h('p.muted', 'No collections yet. At the end of any lesson, choose "Add to a collection" to start one.')),
+      drawer('Learning history', explored.length, explored.length ? h('ol.history', explored.map(({ a, t }) => {
         const m = store.mastery(a.id, answerable(a));
         return h('li', h('a.link', { href: `#/algorithm/${a.id}` }, a.name), h('span.small.faint', new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })),
           h('span.small', m.mastered ? 'All questions correct' : m.correct ? `${m.correct} of ${m.total} questions correct` : 'Opened'));
-      })) : h('p.muted', 'Lessons you open will be listed here.')));
-
-    body.append(h('section.profile-sec', h('h2', 'Start over'),
-      h('p.muted', 'This removes your answers, history, favourites, collections and quiz results from this browser. Display settings are kept.'),
-      h('p', h('button.btn', { type: 'button', onclick: () => { if (confirm('Erase all progress stored in this browser?')) { store.reset(); paint(); } } }, 'Erase my progress'))));
+      })) : h('p.muted', 'Lessons you open will be listed here.')),
+      drawer('Your answers to the four questions', null,
+        p ? h('dl.profile-dl',
+          h('div', h('dt', 'Experience'), h('dd', (LEVELS.find((l) => l.id === p.level) || {}).label || 'Not given')),
+          h('div', h('dt', 'Interests'), h('dd', p.interests.length ? p.interests.map((id) => C.disciplineById[id].short).join(', ') : 'None chosen')),
+          h('div', h('dt', 'Goals'), h('dd', p.goals.length ? p.goals.map((id) => (GOALS.find((g) => g.id === id) || {}).label).join('; ') : 'None chosen')),
+          h('div', h('dt', 'Languages'), h('dd', p.languages.length ? p.languages.map((l) => LANGUAGE_LABELS[l]).join(', ') : 'No preference')))
+          : h('p.muted', 'You have not answered them. Recommendations assume you are starting out.'),
+        h('p', h('button.btn.btn-sm', { type: 'button', onclick: () => openOnboarding({ onDone: paint }) }, p ? 'Change my answers' : 'Answer four questions'))),
+      drawer('Start over', null,
+        h('p.muted', 'This removes your answers, history, favourites, collections and quiz results from this browser. Display settings are kept.'),
+        h('p', h('button.btn', { type: 'button', onclick: () => { if (confirm('Erase all progress stored in this browser?')) { store.reset(); paint(); } } }, 'Erase my progress')))));
   }
   paint();
 

@@ -53,9 +53,22 @@ must never be given a version that is easier because it is wrong.
 
 | Level | The reader asks | Built from |
 | --- | --- | --- |
-| 1. Explain it simply | "What is this, in plain words?" | `bigIdea.simple`, `bigIdea.analogy`, `example`, the visualization, `terms`, `takeaway` |
-| 2. Help me understand | "How does it actually work?" | `logic`, `viz.tryThis`, `code`, why it matters (`bigIdea.why/when/where`, `applications`), what could go wrong (`tradeoffs`, `logic.mistakes`, `logic.edgeCases`), `quiz` |
-| 3. Go deeper | "Why is it correct, and what does it cost?" | `complexity`, `logic.correctness`, `logic.invariants`, `advanced` (derivation, proofs, variants, history, references), `tradeoffs.comparison` |
+| 1. Explain it simply | "What is this, in plain words?" | `bigIdea.simple`, `bigIdea.analogy`, `example`, the visualization (picture and notes only), `terms`, `takeaway` |
+| 2. Help me understand | "How does it actually work?" | `logic.intuition`, `logic.steps`, live pseudocode, `viz.tryThis`, `code`, why it matters (`bigIdea.interesting`, `bigIdea.when`, `applications`), what could go wrong (`tradeoffs.misunderstandings`, `tradeoffs.struggles`, `logic.mistakes`), `quiz` |
+| 3. Go deeper | "Why is it correct, and what does it cost?" | `complexity`, the experiment chart, `logic.correctness`, `advanced.history`, references, `tradeoffs.alternatives` and `comparison` |
+
+Three rules shape the lesson page, and they should shape what you write:
+
+1. **Each level shows only what that level is for.** Level 1 has no notation, no pseudocode and no
+   running times on the page at all.
+2. **Depth on demand.** Within a level, secondary detail sits in closed folds: `logic.decisions`,
+   `logic.edgeCases` with `tradeoffs.pitfalls` and `constraints`, `complexity.assumptions` and
+   `memory`, `logic.invariants`, `advanced.derivation`, `proof`, `complexityProof`, `variants`,
+   `implementation`, `benchmarking`, `furtherReading`.
+3. **Say each thing once.** Every field appears in exactly one place. Do not restate the simple
+   explanation in `logic.intuition`, the history in the applications, or the applications in
+   `bigIdea.when`. The fields `bigIdea.what`, `bigIdea.why`, `bigIdea.where` and `tradeoffs.excels`
+   are no longer shown and need not be written.
 
 Simplicity is the entry point and depth is the invitation. Nobody should need jargon
 before they can become curious.
@@ -153,7 +166,7 @@ export default {
     tags: { problems: [], techniques: [], applications: [] },  // plain phrases people search for
     prerequisites: [],                // rostered ids and 'concept:<id>' references
   },
-  bigIdea: { simple, what, why, when, interesting, where, analogy: { title, text, limits } },
+  bigIdea: { simple, when, interesting, analogy: { title, text, limits } },
   example: { setup, steps: [], result, tryInput? },   // a small case worked by hand
   terms: [{ term, meaning }],                         // plain definitions, at least 3
   takeaway,                                           // one sentence
@@ -161,7 +174,7 @@ export default {
   logic: { intuition, steps, pseudocode, decisions, invariants, edgeCases, correctness, mistakes },
   code: { sample: { input, expected }, python: { source, notes }, javascript: { source }, cpp: { source } },
   complexity: { summary, cases: [{ case, time, when }], space, memory, tradeoffs, assumptions },
-  tradeoffs: { excels, struggles, pitfalls, misunderstandings, constraints, alternatives: [{ id?, name, when }], comparison? },
+  tradeoffs: { struggles, pitfalls, misunderstandings, constraints, alternatives: [{ id?, name, when }], comparison? },
   applications: [{ title, text, status }],        // at least 3
   connections: [{ to, type, why }],               // at least 4; why explains the shared principle
   quiz: [ ... ],                                  // at least 4, with one of each type
@@ -362,6 +375,24 @@ experiment: {
 The chart is drawn from real count-only runs in the visitor's browser. The experiment input
 bypasses slider limits, so `run` must work for the largest size (keep it under about a
 second). `sizes` can be any numeric parameter, not only input length.
+
+**The pipeline checks every formula against the code.** It runs the implementation at each
+size and compares the counts with each `theory` entry (`js/core/verify.js`). The result is
+stored with the lesson and shown to readers as part of its check record:
+
+| Relation | Meaning |
+| --- | --- |
+| exact | every count equals the formula |
+| close | counts at the larger sizes are within 15% of it |
+| average | for `expected: true` formulas: single runs scatter around it and average within 20% |
+| growth | counts grow at the same rate (required for `scaled: true` curves) |
+| upper / lower | counts never cross it |
+
+If none of these holds, the lesson fails: the stated cost and the implementation disagree, and
+one of them must be fixed. Give each formula the `variant` it describes (a worst-case formula
+belongs to the worst-case series). Add `expected: true` to an average over random inputs, and
+`reference: true` to a curve drawn only for scale or comparison, which is then not checked and
+is labelled "for reference" on the chart. Prefer an exact formula to a scaled one where you can.
 
 ## Code samples
 

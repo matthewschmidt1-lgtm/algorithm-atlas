@@ -260,7 +260,7 @@ export default {
       ],
       input: (d, variant) => ({ fn: variant, tolerance: Math.pow(10, -d), x0: functionById[variant].x0, maxSteps: 500 }),
       theory: [
-        { label: 'Bisection from a bracket of width 1: 2 + ⌈log₂(10^d)⌉', fn: (d) => 2 + Math.ceil(d * Math.log2(10)) },
+        { label: 'Bisection from a bracket of width 1: 2 + ⌈log₂(10^d)⌉', fn: (d) => 2 + Math.ceil(d * Math.log2(10)), reference: true },
       ],
     },
   },

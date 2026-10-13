@@ -19,7 +19,7 @@ function wrap(text, max = 16) {
 }
 
 // items: [{ ref, type, why }]
-export function createRelMap(centerRef, items, { onSelect = null } = {}) {
+export function createRelMap(centerRef, items, { onSelect = null, map = true } = {}) {
   const center = C.resolveRef(centerRef);
   const sorted = items.slice().sort((a, b) => TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type));
   const n = sorted.length;
@@ -71,5 +71,6 @@ export function createRelMap(centerRef, items, { onSelect = null } = {}) {
         : r.href ? h('a.link.rel-name', { href: r.href }, r.name) : h('span.rel-name.is-planned', r.name, ' ', h('span.planned-tag', 'Planned'));
       return h('li', title, r.kind === 'concept' || r.kind === 'discipline' ? h('span.ref-kind', r.kind) : null, h('p', s.why));
     }))));
-  return h('div.relmap-wrap', figure, key, h('div.rel-list', groups));
+  // map: false gives the reasons alone, for pages where the drawing would compete with the lesson.
+  return h('div.relmap-wrap', map ? figure : null, map ? key : null, h('div.rel-list', groups));
 }

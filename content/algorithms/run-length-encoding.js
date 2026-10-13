@@ -258,7 +258,7 @@ export default {
       input: (len) => ({ text: alternatingRuns(len) }),
       theory: [
         { label: '16 × 512 ÷ run length', fn: (len) => (16 * 512) / len },
-        { label: 'input size (4,096 bits)', fn: () => 4096 },
+        { label: 'input size (4,096 bits)', fn: () => 4096, reference: true },
       ],
     },
   },

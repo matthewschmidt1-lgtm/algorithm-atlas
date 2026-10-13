@@ -12,6 +12,7 @@ import { labCategories } from '../content/lab-categories.js';
 import { validateAlgorithm, validateFrames, catalogEntry } from '../js/core/schema.js';
 import { execute } from '../js/core/tracer.js';
 import { runJavaScript, normalizeOutput } from '../js/run/sandbox.js';
+import { compareToFormula } from '../js/core/verify.js';
 
 const params = new URLSearchParams(location.search);
 const ids = (params.get('ids') || '').split(',').filter(Boolean);
@@ -61,27 +62,50 @@ async function checkOne(id) {
       catch (e) { out.errors.push(`viz.report threw: ${e.message}`); }
     } else out.warnings.push('no viz.report(result, counters): the output panel will fall back to raw JSON');
   }
-  for (const p of mod.viz.presets || []) runAndCheck(`preset "${p.label}"`, p.values);
-  for (const q of mod.quiz || []) if (q.tryInput) runAndCheck('quiz tryInput', q.tryInput);
+  // The record of what was verified, shown to readers on the lesson and on the verification page.
+  const checks = { tests: [], runs: 0, frames: 0, cost: [], costNote: '' };
+  const tally = (r) => { if (r) { checks.runs++; checks.frames += r.frames.length; } };
+  tally(base);
+  for (const p of mod.viz.presets || []) tally(runAndCheck(`preset "${p.label}"`, p.values));
+  for (const q of mod.quiz || []) if (q.tryInput) tally(runAndCheck('quiz tryInput', q.tryInput));
+  if (mod.example && mod.example.tryInput) tally(runAndCheck('worked example', mod.example.tryInput));
   for (const t of mod.tests || []) {
     const r = execute(mod, t.input);
     if (!r.ok) { out.errors.push(`test "${t.name}": run threw "${r.error}"`); continue; }
     let verdict;
     try { verdict = t.check(r.result, r.counters, r); } catch (e) { verdict = `check threw: ${e.message}`; }
     if (verdict !== true) out.errors.push(`test "${t.name}" failed${typeof verdict === 'string' ? `: ${verdict}` : ''}`);
+    else checks.tests.push(t.name);
   }
   const ex = mod.viz.experiment;
   if (ex) {
-    for (const n of [ex.sizes[0], ex.sizes[ex.sizes.length - 1]]) {
-      for (const variant of ex.variants && ex.variants.length ? ex.variants : [{ id: 'default' }]) {
+    // Run the real implementation at every declared size, then compare the counts with each stated formula.
+    const variants = ex.variants && ex.variants.length ? ex.variants : [{ id: 'default', label: 'Measured' }];
+    const measured = {};
+    for (const variant of variants) {
+      measured[variant.id] = [];
+      for (const n of ex.sizes) {
         const t0 = performance.now();
         const r = execute(mod, ex.input(n, variant.id, 7), { record: false, raw: true });
         const ms = performance.now() - t0;
         if (!r.ok) out.errors.push(`experiment n=${n} ${variant.id}: run threw "${r.error}"`);
         else if (typeof r.counters[ex.metric] !== 'number') out.errors.push(`experiment n=${n} ${variant.id}: counter "${ex.metric}" was never counted`);
+        else measured[variant.id].push([n, r.counters[ex.metric]]);
         if (ms > 1500) out.warnings.push(`experiment n=${n} ${variant.id} took ${Math.round(ms)} ms; reduce the largest size`);
       }
     }
+    for (const th of ex.theory || []) {
+      if (th.reference) continue;
+      const variant = variants.find((v) => v.id === th.variant) || variants[0];
+      const cmp = compareToFormula(measured[variant.id] || [], th.fn, { scaled: !!th.scaled, expected: !!th.expected });
+      const round = (x) => (Math.abs(x) >= 100 ? Math.round(x) : Math.round(x * 1000) / 1000);
+      checks.cost.push({ formula: th.label, series: variant.label, metric: ex.metricLabel, sizeLabel: ex.sizeLabel, relation: cmp.relation, detail: cmp.detail,
+        rows: cmp.rows.map((r) => [r.n, round(r.m), th.scaled ? null : round(r.f)]) });
+      if (cmp.relation === 'differs') out.errors.push(`experiment: measured "${ex.metric}" for "${variant.label}" ${cmp.detail}, so it does not support the stated formula "${th.label}". Fix the formula or the implementation, or mark the formula reference: true if it is drawn only for scale.`);
+    }
+    if (!checks.cost.length) checks.costNote = 'This lesson measures its behaviour but states no formula for the pipeline to compare it with.';
+  } else {
+    checks.costNote = 'This lesson has no size experiment, so its cost is argued in the text and was not measured.';
   }
 
   // code samples
@@ -96,8 +120,12 @@ async function checkOne(id) {
     python: c.python && c.python.source ? { source: c.python.source, expected: c.python.expected ?? (c.sample && c.sample.expected) } : null,
     cpp: c.cpp && c.cpp.source ? { source: c.cpp.source, expected: c.cpp.expected ?? (c.sample && c.sample.expected) } : null,
   };
+  checks.languages = Object.keys(out.code).filter((k) => out.code[k]).concat(c.javascript && c.javascript.source ? ['javascript'] : []);
+  checks.outputLines = c.sample && c.sample.expected ? c.sample.expected.split('\n').length : 0;
+  out.checks = checks;
   if (!out.errors.length) {
     out.entry = catalogEntry(mod);
+    out.entry.checks = checks;
     out.entry.views = out.views || [];
     out.entry.frames = out.frames || 0;
   }

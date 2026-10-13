@@ -69,7 +69,12 @@ For each lesson the pipeline:
 3. runs the JavaScript sample in headless Chrome, the Python sample with `python3`, and compiles
    and runs the C++ sample with `clang++ -std=c++17`, and requires all three to print the
    expected output exactly;
-4. rejects em dashes and stock phrases, to keep the writing plain.
+4. runs each lesson's experiment at every size and compares the measured operation counts with
+   the cost formulas the lesson states. A formula the measurements contradict fails the lesson;
+5. rejects em dashes and stock phrases, to keep the writing plain.
+
+What was verified is written into the catalog with each lesson (`checks`) and shown to readers:
+a one-line summary under every lesson title, and the full record on the Verification page.
 
 Only lessons with no errors are written to `content/catalog.generated.js`. Anything in the
 roster without a passing lesson is shown on the site as planned.
@@ -92,6 +97,7 @@ It needs Python 3, Google Chrome and a C++ compiler. It does not need Node.
 - Every visualization is produced by running the algorithm. Nothing is pre-recorded.
 - Measured numbers and formulas are labelled as such and drawn differently.
 - Nothing is published until it has passed the pipeline. Unwritten lessons are marked as planned.
+- One primary purpose per page. Depth on demand. Repeat orientation, not whole explanations.
 - The design is a field guide, not a dashboard: linen, charcoal, forest green, a little terracotta.
 
 ## Notes on the stack

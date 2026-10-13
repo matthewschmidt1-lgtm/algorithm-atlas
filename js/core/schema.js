@@ -5,7 +5,7 @@
 // content/algorithms/<id>.js):
 //
 //   meta          catalog metadata: identity, taxonomy, difficulty, complexity classes, tags
-//   bigIdea       simple (The Simple Explanation) / what / why / when / interesting / where / analogy (+ limits)
+//   bigIdea       simple (The Simple Explanation) / when / interesting / analogy (+ limits)
 //   example       a worked example by hand: setup, steps, result
 //   terms         plain-language definitions of every technical word the lesson relies on
 //   takeaway      one sentence a beginner could repeat
@@ -13,7 +13,7 @@
 //   logic         D. intuition, steps, pseudocode, decisions, invariants, edgeCases, correctness, mistakes
 //   code          E. sample {input, expected} + python / javascript / cpp sources
 //   complexity    F. summary, cases, space, memory, tradeoffs, assumptions
-//   tradeoffs     G. excels, struggles, pitfalls, misunderstandings, constraints, alternatives, comparison
+//   tradeoffs     G. struggles, pitfalls, misunderstandings, constraints, alternatives, comparison
 //   applications  H. [{ title, text, status }]
 //   connections   I. [{ to, type, why }]
 //   quiz          J. [{ type, q, options, answer, explain }]
@@ -25,6 +25,11 @@
 //   1  Explain it simply     bigIdea.simple, analogy, example, the visualization, terms
 //   2  Help me understand    logic, experiments, code, why it matters, what could go wrong, quiz
 //   3  Go deeper             complexity, correctness, derivations, proofs, alternatives, history, references
+// Each field is shown in exactly one place. Do not restate one field's content in another.
+//
+// viz.experiment.theory formulas are compared with measured counts by the pipeline (js/core/verify.js).
+// A formula that the measurements contradict fails the lesson. Mark a curve reference: true if it is
+// drawn for scale only, and expected: true if it is an average over random inputs.
 
 import { ROLES } from '../viz/theme.js';
 
@@ -186,7 +191,9 @@ export function validateAlgorithm(a, ctx, fileId) {
   if (m.variantOf) need(ctx.ids.has(m.variantOf), `meta.variantOf "${m.variantOf}" is not a rostered algorithm id`);
 
   const b = a.bigIdea || {};
-  for (const k of ['simple', 'what', 'why', 'when', 'interesting', 'where']) need(isStr(b[k]), `bigIdea.${k} required`);
+  // what, why and where are no longer shown on the lesson page (the simple explanation, the history and the
+  // applications cover them), so they are optional. Lessons written earlier still carry them.
+  for (const k of ['simple', 'when', 'interesting']) need(isStr(b[k]), `bigIdea.${k} required`);
   need(b.analogy && isStr(b.analogy.title) && isStr(b.analogy.text), 'bigIdea.analogy needs title and text');
   need(b.analogy && isStr(b.analogy.limits), 'bigIdea.analogy.limits required: say where the analogy stops being accurate');
   if (isStr(b.simple)) {
@@ -257,7 +264,7 @@ export function validateAlgorithm(a, ctx, fileId) {
   need(isStr(x.tradeoffs), 'complexity.tradeoffs required');
 
   const g = a.tradeoffs || {};
-  for (const k of ['excels', 'struggles', 'pitfalls', 'misunderstandings']) need(isArr(g[k]) && g[k].length > 0, `tradeoffs.${k} required`);
+  for (const k of ['struggles', 'pitfalls', 'misunderstandings']) need(isArr(g[k]) && g[k].length > 0, `tradeoffs.${k} required`);
   need(isArr(g.alternatives) && g.alternatives.length > 0, 'tradeoffs.alternatives required');
   for (const alt of g.alternatives || []) {
     need(isStr(alt.name) && isStr(alt.when), 'tradeoffs.alternatives need name and when');

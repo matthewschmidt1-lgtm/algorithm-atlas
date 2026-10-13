@@ -91,7 +91,7 @@ export default async function render({ query }) {
     else if (sort === 'order' || (sort === 'relevance' && !rank)) list.sort((x, y) => x.order - y.order);
 
     const anyFilter = ['discipline', 'difficulty', 'paradigm', 'time', 'space', 'random', 'exact', 'app', 'kind', 'lang'].some((k) => f[k]) || q;
-    count.textContent = anyFilter ? `Showing ${list.length} of ${plural(C.algos.length, 'published lesson')}.` : `${plural(C.algos.length, 'published lesson')}. Every one has passed the checks described on the About page.`;
+    count.innerHTML = ''; count.append(anyFilter ? `Showing ${list.length} of ${plural(C.algos.length, 'published lesson')}.` : `${plural(C.algos.length, 'published lesson')}. `, anyFilter ? '' : h('a.link', { href: '#/verification' }, 'Every one was checked before it was published'), anyFilter ? '' : '.');
     if (anyFilter) activeBar.append(h('button.btn.btn-sm.btn-ghost', { type: 'button', onclick: () => { for (const k of Object.keys(f)) if (!['view', 'sort'].includes(k)) f[k] = ''; searchInput.value = ''; for (const s of filters.querySelectorAll('select')) s.value = ''; apply(); }, html: `${icon('x', { size: 14 })}<span>Clear all filters</span>` }));
 
     if (!list.length) {
@@ -122,7 +122,7 @@ export default async function render({ query }) {
       h('div.lib-search', h('span', { html: icon('search', { size: 18 }) }), searchInput),
       h('label.filter.lib-sort', h('span.filter-label', 'Sort by'), sortSel),
       h('div.seg', { role: 'group', 'aria-label': 'View' }, viewBtns)),
-    h('details.lib-filter-fold', { open: window.innerWidth > 760 }, h('summary', h('span', { html: icon('filter', { size: 16 }) }), 'Filters'), filters),
+    h('details.lib-filter-fold', { open: ['discipline', 'difficulty', 'paradigm', 'time', 'space', 'random', 'exact', 'app', 'kind', 'lang'].some((k) => f[k]) }, h('summary', h('span', { html: icon('filter', { size: 16 }) }), 'Filter by field, level, technique or cost'), filters),
     h('div.lib-status', count, activeBar),
     out);
   apply();

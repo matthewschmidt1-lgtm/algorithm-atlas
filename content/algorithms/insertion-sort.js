@@ -185,7 +185,7 @@ export default {
       ],
       input: (n, variant, seed) => ({ size: n, order: variant, seed, custom: [] }),
       theory: [
-        { label: 'about n²/4 (expected, random order)', fn: (n) => (n * (n - 1)) / 4 + n - harmonic(n), variant: 'random' },
+        { label: 'about n²/4 (expected, random order)', fn: (n) => (n * (n - 1)) / 4 + n - harmonic(n), variant: 'random', expected: true },
         { label: 'n − 1 (already sorted)', fn: (n) => n - 1, variant: 'sorted' },
       ],
     },

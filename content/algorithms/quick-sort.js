@@ -171,7 +171,7 @@ export default {
     report: (r, c) => `Sorted ${r.sorted.length} values with ${c.comparisons || 0} comparisons and ${c.writes || 0} array writes. Deepest recursion: ${r.depth}.\n[${r.sorted.join(', ')}]`,
     experiment: {
       title: 'Comparisons as the list grows',
-      note: 'Each point is a real run of this page\'s implementation with the last element as pivot. Sorted input is the worst case for that pivot rule.',
+      note: 'Each point is a real run of this page\'s implementation with the last element as pivot. Sorted input is the worst case for that pivot rule. The expected count, 2(n + 1)Hₙ − 4n, is close to 1.39 n log₂ n for large n; Hₙ is the sum 1 + 1/2 + ... + 1/n.',
       metric: 'comparisons',
       metricLabel: 'Comparisons',
       sizeLabel: 'Number of items (n)',
@@ -182,8 +182,9 @@ export default {
       ],
       input: (n, variant, seed) => ({ size: n, order: variant, seed, pivot: 'last', custom: [] }),
       theory: [
-        { label: '1.39 n log₂ n (expected, random)', fn: (n) => 1.386 * n * Math.log2(n) },
-        { label: 'n² / 2 (worst case)', fn: (n) => (n * (n - 1)) / 2 },
+        { label: '2(n + 1)Hₙ − 4n (expected, random order)', variant: 'random', expected: true,
+          fn: (n) => { let h = 0; for (let k = 1; k <= n; k++) h += 1 / k; return 2 * (n + 1) * h - 4 * n; } },
+        { label: 'n(n − 1) / 2 (worst case)', variant: 'sorted', fn: (n) => (n * (n - 1)) / 2 },
       ],
     },
   },
