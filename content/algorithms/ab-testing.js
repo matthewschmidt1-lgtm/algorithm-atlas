@@ -350,10 +350,14 @@ export default {
       { label: 'Small improvement, too few visitors', values: { rateA: 0.1, rateB: 0.11, visitors: 1000, looks: 20, peek: false, seed: 15 } },
     ],
     tryThis: [
-      'Load "No difference, test once" and step through it. Both versions truly sell to 10% of visitors. Watch the lower chart: at 300 visitors per group the hollow dot climbs above the +1.96 line, then drifts back, and the one real test at the end reports no difference. Now load "No difference, peeking". The visitors are identical, but this time the test stops at that crossing and declares B the winner.',
-      'Keep "No difference, peeking" and press Randomize on the seed a dozen times. Most runs reach the end and correctly find nothing. Roughly one in four stops early with a false win. Switch peeking off and repeat: false wins become rare, about 1 in 20.',
-      'Load "A real improvement" and switch peeking on. The test stops at 1100 visitors per group and correctly names B. That is what makes peeking tempting: when there is a real effect it often reaches the right answer sooner. The price is paid in the experiments where nothing differs.',
-      'Load "Small improvement, too few visitors". B really is one point better, yet the test finds nothing, because luck moves the gap by about 1.4 points at this size. Raise the planned visitors to 5000 and try several seeds. The test starts to catch the improvement, but still only in about a third of runs.',
+      { ask: 'Load "No difference, test once" and step through it. Both versions truly sell to 10% of visitors. The hollow dots in the lower chart are scores the test never uses. One of them climbs above the +1.96 line at 300 visitors per group and then drifts back, and the one real test at the end reports no difference. Now load "No difference, peeking", which sends the same visitors but tests at every check. What will it report?',
+        reveal: 'A winner. It stops at check 6, after 300 visitors per group, with 18 buyers for A against 33 for B: z = 2.20, p = 0.028, "B is better". Only 600 of the 2000 planned visitors were used. The two versions are identical, so this is a false win. Carried on to 1000 per group, the same visitors give z = 0.45. The planned test never saw the crossing. The peeking test stopped at it.' },
+      { ask: 'Keep "No difference, peeking" and press Randomize on the seed a dozen times. Nothing differs between the versions, so every winner is a false win, and the test promises about 1 of those in 20. How many of your dozen runs do you expect to stop early with a winner?',
+        reveal: 'Three or four, far more than the promise. Over seeds 1 to 200, 59 runs stop with a false win, which is more than a quarter. A dozen runs is a small sample, so your own count may be some way off. Switch peeking off and the same 200 seeds give 16 false wins. The visitors are the same in both cases. Testing 20 times and stopping at the first crossing is what breaks the promise.' },
+      { ask: 'Load "A real improvement", where B truly sells to 13% of visitors against 10% for A. The planned test at 2000 visitors per group finds it. Now switch peeking on. Will the verdict change, and how many visitors per group will the test use?',
+        reveal: 'The verdict is the same and it arrives sooner. The test stops at check 11, after 1100 visitors per group, with z = 2.27 and p = 0.023, and names B. It used 2200 of the 4000 planned visitors. That is what makes peeking tempting: when there is a real effect it often reaches the right answer early. The price is paid in the experiments where nothing differs.' },
+      { ask: 'Load "Small improvement, too few visitors". B really is one point better, 11% against 10%. Will a test on 1000 visitors per group find it? Then raise the planned visitors to 5000 and try several seeds. How often does the test catch the improvement now?',
+        reveal: 'At 1000 per group it misses: z = 0.71, p = 0.475, no difference detected. Luck alone moves the gap by about 1.4 points at this size, more than the 1 point the test is looking for. At 5000 per group it still misses most of the time. Over seeds 1 to 200 it found the improvement in 68 runs, about a third. The page works out that catching a gap this small 4 times in 5 takes about 14749 visitors per group.' },
     ],
     run,
     report: (r, c) => {
@@ -443,6 +447,20 @@ export default {
       input: 'First the worked example: 30 buyers of 200 against 50 of 200. Then 1000 simulated experiments in which both versions truly convert 10%, judged once at the end and again by peeking at 10 checks. A small generator gives the same visitors in every language (seed 2024).',
       expected: 'A 30/200, B 50/200: z = 2.500, p = 0.0124\n1000 experiments, both versions truly 10%, 1000 visitors per group\ntested once at the end: 42 false wins\npeeked at 10 checks: 182 false wins',
     },
+    breakIt: [
+      { change: 'In `ab_test`, replace the condition `peeking or k == checks` with true (`True` in Python), so the test runs at every check whatever the setting. What will the line "tested once at the end" report?',
+        find: { python: 'if peeking or k == checks:', javascript: 'if (peeking || k === checks) {' },
+        replace: { python: 'if True:', javascript: 'if (true) {' },
+        reveal: 'It prints "tested once at the end: 182 false wins", the same count as the peeking line below it. The first argument of that call still says not to peek, but the test now runs at all 10 checks and returns at the first crossing, so 18.2% of experiments on identical versions announce a winner where the sound test announced 4.2%. This is the mistake in the debug question: a test inside the loop.' },
+      { change: 'In the standard error, drop the second group: change `1 / n_a + 1 / n_b` to `1 / n_a` alone. What happens to the score for the worked example, and to the count of false wins?',
+        find: { python: '(1 / n_a + 1 / n_b)', javascript: '(1 / nA + 1 / nB)' },
+        replace: { python: '(1 / n_a)', javascript: '(1 / nA)' },
+        reveal: 'The worked example prints "z = 3.536, p = 0.0004" in place of z = 2.500 and p = 0.0124. The gap of 10 points has not changed. It is being divided by a standard error that counts the luck in one group only, which is too small by a factor of √2, about 1.41. Every score is inflated by that factor, so the counts become "tested once at the end: 161 false wins" and "peeked at 10 checks: 514 false wins". A test that promised 5% false wins now delivers 16% before any peeking.' },
+      { change: 'Look more often: in the peeking call, change the number of checks from 10 to 100. The visitors are the same. Will the count of false wins change?',
+        find: { python: 'ab_test(a, b, 10, True)', javascript: 'abTest(a, b, 10, true)' },
+        replace: { python: 'ab_test(a, b, 100, True)', javascript: 'abTest(a, b, 100, true)' },
+        reveal: 'Yes. The last line still says "peeked at 10 checks", but it now reports 362 false wins in place of 182. More than a third of the experiments on two identical versions end with a winner. "tested once at the end" stays at 42, because that test only ever looks at the full 1000 visitors. Each extra look is another chance for luck to carry the score across the line, and stopping at the first crossing keeps every one of those chances.' },
+    ],
     python: {
       source: `import math
 
@@ -748,16 +766,18 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Versions A and B are identical: both truly convert 10%. Tested once after 1000 visitors per group, the result is "no difference detected". Now the same visitors arrive in the same order, but the test runs at each of 20 evenly spaced checks and stops at the first significant result. What does this run report?',
-      options: ['No difference detected, because the visitors are the same', 'A winner, declared early', 'A winner, declared at the last check', 'An error, because identical versions cannot be tested'],
-      answer: 1,
+      q: 'Versions A and B are identical: both truly convert 20%. The plan is 1000 visitors per group, with 10 evenly spaced checks. Tested once at the end, one run reports "no difference detected", with z = −0.33. Along the way its score was inside the band at the first two checks, at −2.55 at the third, and back inside the band from the sixth check on. Now the same visitors arrive in the same order, but the test runs at every check and stops at the first significant result. What does this run report?',
+      options: ['No difference detected, after 1000 visitors per group', 'B is better, declared after 300 visitors per group', 'A is better, declared after 300 visitors per group', 'A is better, declared after 1000 visitors per group'],
+      answer: 2,
       explain: [
-        'The visitors are the same, but the rule for stopping is not. The score crosses the line partway through and comes back by the end. The planned test never saw the crossing, and the peeking test stopped at it.',
-        'The score wanders as visitors arrive. In this run it strays past 1.96 partway through, the peeking rule stops there, and a false win is announced. Not every run does this: about one in four does when there are 20 checks.',
-        'The test at the last check is the planned test, and it found nothing. A peeking run that reaches the last check gives the same answer as the planned one.',
-        'Identical versions can be tested, and it is good practice to do so. The right answer is "no difference detected" 19 times out of 20.',
+        'The visitors are the same, but the rule for stopping is not. The planned test looks only at the end, when the score is back at −0.33. The peeking test also looks at the third check, and stops there.',
+        'The stop is in the right place, but the winner is not. The score is the rate of B minus the rate of A, measured in standard errors, so a score of −2.55 means A is ahead.',
+        'At the third check A has 66 buyers of 300 and B has 42, which gives z = −2.55 and p = 0.011. That is past the line, so the run stops and announces A after using 600 of the 2000 planned visitors. It is a false win: the versions are identical, and by the end the gap has gone. The program in the Code section counts 182 false wins in 1000 experiments that peek at 10 checks.',
+        'A peeking test never gets that far. It stops at the first check where the score is past the line, which is the third. A peeking run that does reach the last check gives the same answer as the planned test, and here that is "no difference detected".',
       ],
-      tryInput: { rateA: 0.1, rateB: 0.1, visitors: 1000, looks: 20, peek: true, seed: 58 },
+      tryInput: { rateA: 0.2, rateB: 0.2, visitors: 1000, looks: 10, peek: true, seed: 7 },
+      check: (r, c) => (r.verdict === 'false win' && r.winner === 'A' && r.stopCheck === 3 && r.stoppedAt === 300 && r.buyA === 66 && r.buyB === 42 && r.z.toFixed(2) === '-2.55' && c.tests === 3 && c.visitors === 600 && !r.full.significant && r.full.z.toFixed(2) === '-0.33')
+        || `${r.verdict}, winner ${r.winner}, stopped at check ${r.stopCheck} with z ${r.z}; carried on, z ${r.full.z}`,
     },
     {
       type: 'debug',
@@ -792,8 +812,9 @@ int main() {
     {
       type: 'challenge',
       title: 'Peek safely',
-      prompt: 'Simulate 2000 experiments in which A and B both truly convert 10%, with 1000 visitors per group and a check after every 100. First confirm that stopping at the first check with |z| ≥ 1.96 gives far more than 5% false wins. Then repair it the simplest way: keep the 10 checks, but demand a higher bar at every one of them. Find, by trial, the single bar that brings the overall rate of false wins back to about 5%. How much higher than 1.96 is it, and what does that cost when B really is better?',
-      hints: ['Dividing 5% equally among 10 checks gives a bar of about 2.81. Try it: it is stricter than necessary, because the checks share most of their visitors.', 'A bar near 2.55 is close. This constant-bar design is the one Pocock proposed.'],
+      prompt: 'Simulate 2000 experiments in which A and B both truly convert 10%, with 1000 visitors per group and a check after every 100. So that your counts can be checked, use the program\'s own generator with seed 2024, and in each experiment draw the 1000 visitors of A first and then the 1000 of B, as the program does. First confirm that stopping at the first check with |z| ≥ 1.96 gives far more than 5% false wins. Then repair it the simplest way: keep the 10 checks, but demand a higher bar at every one of them. Find, by trial, the single bar that brings the overall rate of false wins back to about 5%. How much higher than 1.96 is it? Last, measure what the higher bar costs. Start the generator again from 2024, make B truly convert 13%, and count how many of the 2000 experiments declare a difference with one test at the end at 1.96, and how many with the 10 checks at your bar.',
+      expect: 'With identical versions, one test at the end gives 87 false wins in 2000. Ten checks with a bar of 1.96 give 371, more than 18%. A bar of 2.81 gives 51, stricter than needed. A bar of 2.50 gives 115 and a bar of 2.55 gives 98, which is 4.9%, so the bar has to rise by about 0.6. Other seeds move the counts a little: four more seeds gave between 92 and 108 false wins at a bar of 2.55. The cost shows when B truly converts 13%: one test at the end declares a difference in 1128 of the 2000 experiments, and the 10 checks at 2.55 in only 861. In return, those runs stop early often enough to use 822 visitors per group on average instead of 1000.',
+      hints: ['Dividing 5% equally among 10 checks gives a bar of about 2.81. Try it: it is stricter than necessary, because the checks share most of their visitors.', 'Try bars between 2.4 and 2.7 in steps of 0.05. This constant-bar design is the one Pocock proposed.'],
     },
   ],
 
@@ -894,7 +915,15 @@ int main() {
         }
         return planned > 20 || `only ${planned} planned tests were significant, too few to check anything`;
       } },
-    { name: 'presets and quiz: the same visitors give no difference when tested once, and a false win for B at check 6 when peeking', input: { rateA: 0.1, rateB: 0.1, visitors: 1000, looks: 20, peek: true, seed: 58 },
+    { name: 'the quiz prediction: identical versions at 20%, seed 7, a false win for A at check 3 of 10 that is gone by the end', input: { rateA: 0.2, rateB: 0.2, visitors: 1000, looks: 10, peek: true, seed: 7 },
+      check: (r, c) => {
+        if (r.verdict !== 'false win' || r.winner !== 'A' || r.stopCheck !== 3 || r.stoppedAt !== 300 || c.tests !== 3 || c.visitors !== 600) return `peeking run: ${r.verdict}, winner ${r.winner}, stopped at check ${r.stopCheck}`;
+        const once = run({ rateA: 0.2, rateB: 0.2, visitors: 1000, looks: 10, peek: false, seed: 7 }, QUIET);
+        if (once.significant || once.verdict !== 'correct: no difference' || once.z.toFixed(2) !== '-0.33') return `planned test: ${once.verdict}, z ${once.z}`;
+        const past = once.checks.map((at) => zTest(at.buyA, at.seen, at.buyB, at.seen).significant);
+        return past.join(' ') === 'false false true true true false false false false false' || `checks past the line: ${past.join(' ')}`;
+      } },
+    { name: 'presets: the same visitors give no difference when tested once, and a false win for B at check 6 when peeking', input: { rateA: 0.1, rateB: 0.1, visitors: 1000, looks: 20, peek: true, seed: 58 },
       check: (r, c) => {
         const once = run({ rateA: 0.1, rateB: 0.1, visitors: 1000, looks: 20, peek: false, seed: 58 }, QUIET);
         if (r.verdict !== 'false win' || r.winner !== 'B' || r.stopCheck !== 6 || r.stoppedAt !== 300 || !r.early) return `peeking run: ${r.verdict}, stopped at check ${r.stopCheck}`;
@@ -924,7 +953,7 @@ int main() {
         const share = winShare({ rateA: 0.1, rateB: 0.12, visitors: need, looks: 1, peek: false, seed: 5 }, 600);
         return (share > 0.74 && share < 0.86) || `detected in ${pct(share)} of experiments, expected about 80%`;
       } },
-    { name: 'preset and quiz: a one-point improvement is missed at 1000 per group', input: { rateA: 0.1, rateB: 0.11, visitors: 1000, looks: 20, peek: false, seed: 15 },
+    { name: 'preset: a one-point improvement is missed at 1000 per group', input: { rateA: 0.1, rateB: 0.11, visitors: 1000, looks: 20, peek: false, seed: 15 },
       check: (r) => {
         if (r.verdict !== 'missed difference' || r.significant) return `verdict ${r.verdict}`;
         if (pts(r.se) !== '1.4') return `standard error ${r.se}`;

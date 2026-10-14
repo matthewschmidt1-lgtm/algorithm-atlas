@@ -67,7 +67,19 @@ async function checkOne(id) {
   const tally = (r) => { if (r) { checks.runs++; checks.frames += r.frames.length; } };
   tally(base);
   for (const p of mod.viz.presets || []) tally(runAndCheck(`preset "${p.label}"`, p.values));
-  for (const q of mod.quiz || []) if (q.tryInput) tally(runAndCheck('quiz tryInput', q.tryInput));
+  for (const q of mod.quiz || []) {
+    if (!q.tryInput) continue;
+    const r = runAndCheck('quiz tryInput', q.tryInput);
+    tally(r);
+    // a predict question carries proof that its stated answer is what the run gives
+    if (r && typeof q.check === 'function') {
+      let verdict;
+      try { verdict = q.check(r.result, r.counters, r); } catch (e) { verdict = `check threw: ${e.message}`; }
+      if (verdict !== true) out.errors.push(`quiz predict "${String(q.q).slice(0, 60)}": the run does not give the stated answer${typeof verdict === 'string' ? ` (${verdict})` : ''}`);
+      else checks.tests.push(`the predict question: ${String(q.q).slice(0, 70)}`);
+    }
+  }
+  for (const tt of mod.viz.tryThis || []) if (tt && tt.input) tally(runAndCheck('try-this input', tt.input));
   if (mod.example && mod.example.tryInput) tally(runAndCheck('worked example', mod.example.tryInput));
   for (const t of mod.tests || []) {
     const r = execute(mod, t.input);
@@ -116,11 +128,42 @@ async function checkOne(id) {
     if (!r.ok) out.errors.push(`code.javascript failed to run: ${r.error}`);
     else if (normalizeOutput(r.out) !== expected) out.errors.push(`code.javascript output mismatch.\n      expected: ${JSON.stringify(expected)}\n      actual:   ${JSON.stringify(normalizeOutput(r.out))}`);
   }
+  // Break-it lines: make each change to the JavaScript and confirm the program really behaves
+  // differently. A change that leaves the output as it was teaches nothing.
+  const usable = (b, lang) => b && b.find && typeof b.find[lang] === 'string' && b.replace && typeof b.replace[lang] === 'string' && c[lang] && c[lang].source && c[lang].source.split(b.find[lang]).length === 2;
+  out.broken = [];
+  for (const [i, b] of (c.breakIt || []).entries()) {
+    if (!usable(b, 'javascript') || !c.sample) continue;
+    const r = await runJavaScript(c.javascript.source.replace(b.find.javascript, b.replace.javascript), { timeout: 3000 });
+    const got = r.ok ? normalizeOutput(r.out) : null;
+    out.broken.push({ i, lang: 'javascript', ok: r.ok, out: r.ok ? got : `${r.timedOut ? 'did not finish within the time limit' : r.error}` });
+    if (r.ok && got === normalizeOutput(c.javascript.expected ?? c.sample.expected)) out.errors.push(`code.breakIt[${i}] changes nothing in JavaScript: the program prints the same output. Choose sample inputs that expose the mistake.`);
+    if (!r.ok && r.timedOut && !b.hangs) out.errors.push(`code.breakIt[${i}] makes the JavaScript program run for ever. Say so with hangs: true, or choose a change that finishes.`);
+  }
+  const more = [];
+  for (const [i, x] of (c.more || []).entries()) {
+    if (!x || !x.sample) continue;
+    if (x.javascript && x.javascript.source) {
+      const want = normalizeOutput(x.javascript.expected ?? x.sample.expected);
+      const r = await runJavaScript(x.javascript.source, { timeout: 5000 });
+      if (!r.ok) out.errors.push(`code.more[${i}].javascript failed to run: ${r.error}`);
+      else if (normalizeOutput(r.out) !== want) out.errors.push(`code.more[${i}].javascript output mismatch.\n      expected: ${JSON.stringify(want)}\n      actual:   ${JSON.stringify(normalizeOutput(r.out))}`);
+    }
+    more.push({
+      python: x.python && x.python.source ? { source: x.python.source, expected: x.python.expected ?? x.sample.expected } : null,
+      cpp: x.cpp && x.cpp.source ? { source: x.cpp.source, expected: x.cpp.expected ?? x.sample.expected } : null,
+    });
+  }
   out.code = {
     python: c.python && c.python.source ? { source: c.python.source, expected: c.python.expected ?? (c.sample && c.sample.expected) } : null,
     cpp: c.cpp && c.cpp.source ? { source: c.cpp.source, expected: c.cpp.expected ?? (c.sample && c.sample.expected) } : null,
+    more,
+    // for build.py: the same break-it changes, made to the Python
+    breakIt: (c.breakIt || []).map((b, i) => (usable(b, 'python') ? { i, source: c.python.source.replace(b.find.python, b.replace.python), hangs: !!b.hangs } : null)).filter(Boolean),
   };
-  checks.languages = Object.keys(out.code).filter((k) => out.code[k]).concat(c.javascript && c.javascript.source ? ['javascript'] : []);
+  checks.languages = ['python', 'cpp'].filter((k) => out.code[k]).concat(c.javascript && c.javascript.source ? ['javascript'] : []);
+  checks.morePrograms = more.length * 3;
+  checks.brokenOnPurpose = (c.breakIt || []).length;
   checks.outputLines = c.sample && c.sample.expected ? c.sample.expected.split('\n').length : 0;
   out.checks = checks;
   if (!out.errors.length) {

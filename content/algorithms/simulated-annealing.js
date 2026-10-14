@@ -231,12 +231,18 @@ export default {
       { label: 'Round bowl: the wrong tool', values: { ...DEFAULTS, landscape: 'bowl', temp: 5 } },
     ],
     tryThis: [
-      'Run the default and watch the lower chart. While the dashed temperature line is high, the value jumps up and down. As the temperature falls, the value settles. The run ends in a dip next to the centre with value about 1, far below where it began but not the lowest point on the map. Then load "Almost no heat: downhill only". The point drops into the dip nearest the start and never leaves, which is what [gradient descent](#/algorithm/gradient-descent) does on this surface.',
-      'Load "Cooled too fast: frozen early". The temperature is below 1 after 36 steps, before the walk has travelled far. Compare its best value with the default run, which uses the same seed.',
-      'Keep the default settings and press Randomize several times. The outcome varies a great deal. Over the seeds 1 to 80, only 6 runs end in the central dip, 35 end with a best value under 5, and the median best value is about 5.1. With almost no heat, none of the 80 gets under 5. Load "A lucky seed: the central dip" to see one of the six.',
-      'Raise the step size to 1.5 and load a few seeds with the temperature at its minimum. Proposals now reach from one dip straight into the next, so even a search with no heat can hop between dips. The step size and the temperature both decide how far the search can travel.',
-      'Load "Too hot to settle". The walk never calms down, so its final position is poor. Its best value may still be low, because this map is small enough for a blind random walk to stumble on low ground. With more than a few variables that stops working, and the search has to be steered.',
-      'Load "Round bowl: the wrong tool". Annealing gets near the minimum, but it spends 300 evaluations on a problem gradient descent solves precisely in a few dozen steps.',
+      { ask: 'Run the default and watch the lower chart. While the dashed temperature line is high the value jumps up and down, and as it falls the value settles. The run starts at value 44.4, on the slope of a dip whose floor is about 18. The lowest point on the map is 0, at the centre. Where will the run end: in the dip it started in, at the centre, or somewhere between? Then load "Almost no heat: downhill only", which uses the same seed, and decide again before you play it.',
+        reveal: 'Somewhere between. The default run ends at (-0.017, 0.991) with value 1.059, in a dip next to the centre: far below where it began, but not the lowest point on the map. On the way it accepted 39 of the 238 uphill moves it was offered. With almost no heat it accepts none of 282. The point drops to the floor of the nearest dip, at (-3.015, 2.975) with value 18.104, and never leaves, which is what [gradient descent](#/algorithm/gradient-descent) does on this surface.' },
+      { ask: 'Load "Cooled too fast: frozen early". It multiplies the temperature by 0.9 after every step where the default multiplies by 0.985, and it uses the same seed. The temperature starts at 40. After how many steps will it be below 1? And will the best value be better or worse than the 1.059 of the default run?',
+        reveal: 'After 36 steps, where the default takes 245. By then the walk has not travelled far, and from there on almost every uphill move is refused. It ends at (-2.003, 2.975) with a best value of 12.987, one dip over from where it started, having accepted only 7 of 286 uphill moves. Same seed, same start, same number of steps: the whole difference is how long the heat lasted.' },
+      { ask: 'Keep the default settings and press Randomize several times, noting the best value each time. The default seed ended at 1.059, next to the centre. Out of the seeds 1 to 80, how many would you expect to end in the central dip itself: most, about half, or only a few?',
+        reveal: 'Only 6 of the 80. 35 end with a best value under 5, and the median best value is about 5.1, so the default seed was a better run than most. The heat still earns its place: with almost no heat, none of the 80 gets under 5. Load "A lucky seed: the central dip" to see one of the six, which ends at 0.170. One run tells you little about a method that works by chance.' },
+      { ask: 'Load "Almost no heat: downhill only", which stays in the starting dip at value 18.104. Now raise only the step size, from 0.6 to 1.5. The search still refuses every real rise. Can it get out of the starting dip?',
+        reveal: 'Yes. With the same seed it ends at (-1.108, 0.947) with value 4.883, and it accepted 0 of 219 uphill moves on the way. The dips are 1 apart, so a proposal that can reach 1.5 lands in a neighbouring dip, and when that dip is lower the move counts as downhill. Seeds 1, 2 and 3 end at 1.661, 0.137 and 1.506. The step size and the temperature both decide how far a search can travel.' },
+      { ask: 'Load "Too hot to settle". It starts at temperature 100 and cools so slowly that after 300 steps the temperature is still 74. Where will the walk be standing at the end? And will the best value it saw on the way be good or bad?',
+        reveal: 'It ends at value 26.166, no better than a spot picked at random, because it accepted 133 of the 151 uphill moves it was offered and never calmed down. Its best value is still low, 1.928, seen in passing at step 236. This map is small enough for a blind random walk to stumble on low ground. With more than a few variables that stops working, and the search has to be steered. It also shows why the best point is kept separately from the current one.' },
+      { ask: 'Load "Round bowl: the wrong tool". The bowl has one dip and nothing to escape from. From this same start, gradient descent with a learning rate of 0.1 stops after 40 steps within 0.0005 of the minimum. How close will 300 steps of annealing get?',
+        reveal: 'Its best value is 0.00181, at (0.00964, -0.041), and the walk itself ends at 0.061, still wandering. That took 297 function evaluations and is less exact than what gradient descent reaches in 40 steps. When there is one dip and the slope is available, following the slope wins. Annealing is for surfaces where the slope leads into a trap, or where there is no slope to follow.' },
     ],
     run,
     report: (r, c) => `Best value ${f3(r.bestValue)} at (${f3(r.x)}, ${f3(r.y)}), first reached at step ${r.bestStep} of ${r.steps}.\nThe walk ended at value ${f3(r.finalValue)}. Accepted ${r.accepted} moves (${r.uphillAccepted} of them uphill), refused ${r.rejected}.\n${c['function evaluations'] || 0} function evaluations.`,
@@ -308,6 +314,20 @@ export default {
       input: 'Minimize f(x) = (x² − 1)² + 0.3x from x = 1, which sits in the shallower of two dips. Run 200 steps with heat (T₀ = 1, α = 0.97), then 200 steps with almost none, using a small fixed random number generator so that every language prints the same numbers.',
       expected: 'with heat\nstep  40: T=0.2957 x=-0.6641 f=0.1131 best=-0.1740\nstep  80: T=0.0874 x=-1.1228 f=-0.2689 best=-0.3054\nstep 120: T=0.0259 x=-1.0743 f=-0.2985 best=-0.3054\nstep 160: T=0.0076 x=-1.0651 f=-0.3014 best=-0.3054\nstep 200: T=0.0023 x=-1.1008 f=-0.2854 best=-0.3054\nbest x=-1.0315 f=-0.3054\nwithout heat\nstep  40: T=0.0000 x=0.9701 f=0.2945 best=0.2945\nstep  80: T=0.0000 x=0.9569 f=0.2942 best=0.2942\nstep 120: T=0.0000 x=0.9569 f=0.2942 best=0.2942\nstep 160: T=0.0000 x=0.9569 f=0.2942 best=0.2942\nstep 200: T=0.0000 x=0.9574 f=0.2942 best=0.2942\nbest x=0.9574 f=0.2942',
     },
+    breakIt: [
+      { change: 'In the acceptance test, remove the minus sign in front of `delta`, so that the chance is exp(delta / temp). How will the walk with heat behave once the temperature is low?',
+        find: { python: 'math.exp(-delta / temp)', javascript: 'Math.exp(-delta / temp)' },
+        replace: { python: 'math.exp(delta / temp)', javascript: 'Math.exp(delta / temp)' },
+        reveal: 'It never settles. For an uphill move `delta` is positive, so exp(delta / temp) is above 1, the random draw is always below it, and every proposal is accepted. The walk with heat prints "step 120: T=0.0259 x=1.7450 f=4.7063" and "step 160: T=0.0076 x=1.6529 f=3.4956": far up the side of the curve with the temperature close to zero. JavaScript runs to the end, and its walk "without heat" strays even farther, to "x=-3.5628 f=135.6666" at step 160. Python stops before step 200 of the first run with "OverflowError: math range error", because at a low temperature delta / temp is too large for exp to return. Either way the search has become a random walk. The "best" column still shows −0.3031, a respectable number, which is how this mistake hides.' },
+      { change: 'Compute `delta` against the best point seen so far instead of the current point: change `f(x)` to `f(best)` in that line. The run with heat used to reach the deeper dip near x = −1.03. Will it still get there?',
+        find: { python: 'delta = f(candidate) - f(x)', javascript: 'const delta = f(candidate) - f(x);' },
+        replace: { python: 'delta = f(candidate) - f(best)', javascript: 'const delta = f(candidate) - f(best);' },
+        reveal: 'No. The run with heat now ends "best x=0.9578 f=0.2942", in the shallow dip it started in, where the correct program ended at x=-1.0315 f=-0.3054. The walk does climb: at step 27 it stands at x = 0.088, on top of the ridge, where f is about 1.01. From there the far side is all downhill, and the correct rule would take those steps at once. This version compares them with the best value seen, 0.29, so a step down to 0.9 is treated as a rise of 0.6 and mostly refused. A path to a deeper dip has to pass through points worse than the best one, and this rule punishes every one of them.' },
+      { change: 'Make `anneal` return `x`, the place where the walk stopped, instead of `best`. Which of the two final "best" lines changes, and does it get better or worse?',
+        find: { python: 'return best', javascript: 'return best;' },
+        replace: { python: 'return x', javascript: 'return x;' },
+        reveal: 'The first one, and it gets worse: "best x=-1.1008 f=-0.2854" where the correct program printed "best x=-1.0315 f=-0.3054". The walk passed its lowest point before step 80 and then moved on, because while any heat is left a small step up is still sometimes accepted. The last column of the step lines reads −0.3054 from step 80 to the end: the program knew a better point and handed back a different one. The line after "without heat" is the same as before, since a walk that only goes down ends on its best point. That is why this slip survives a test that uses no heat.' },
+    ],
     python: {
       source: `import math
 
@@ -545,16 +565,18 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'On the rippled surface, the default run starts on the slope of a dip whose floor has value about 18. What happens if the starting temperature is lowered to 0.01 and nothing else changes?',
-      options: ['It still reaches the central dip, only more slowly', 'It stays in the dip it started in, ending near value 18', 'It wanders across the whole map without settling', 'It stops with an error because the temperature is too low'],
+      q: 'On the rippled surface, a starting temperature of 0.01 leaves the search stuck at value 18.104, in the dip nearest the start. The "Four minima" surface has four dips, and the floor of every one of them is at value 0. Run it with a starting temperature of 0.01 from the same start, where the value is 112.566. What does the search end with?',
+      options: ['A value far above 0, as on the ripples: without heat it cannot leave the first dip it meets', 'A value close to 0: it slides into the nearest dip, and here every dip is as low as any other', 'A value close to 0, but only after visiting several of the four dips', 'The starting value, 112.566: without heat no move is accepted'],
       answer: 1,
       explain: [
-        'To leave the dip it would have to accept rises of 10 or more. At temperature 0.01 the chance of that is far too small to happen.',
-        'Correct. Only downhill moves and tiny rises get through, so the point slides to the floor of the nearest dip, near (−3, 3), and stays.',
-        'Wandering is what a very high temperature produces.',
-        'Any temperature above zero is allowed. A low one simply makes the search greedy.',
+        'It does stay in the first dip it meets, the one near (−2.805, 3.131). But the floor of that dip is a lowest point of the whole surface, so staying there costs nothing. The best value is 0.00291.',
+        'It accepts 10 moves, none of them uphill, and ends at (-2.807, 3.123) with value 0.00291. Heat is for leaving a dip that is not the lowest. When every dip is as good as any other, there is nothing to leave.',
+        'Crossing from one dip to another means climbing, and at this temperature it accepts 0 of the 290 uphill moves it is offered. It stays in the dip nearest the start.',
+        'A move that is not worse is always accepted, whatever the temperature. Ten downhill moves take the value from 112.566 to 0.00291.',
       ],
-      tryInput: { ...DEFAULTS, temp: 0.01 },
+      tryInput: { ...DEFAULTS, landscape: 'himmelblau', temp: 0.01 },
+      check: (r) => (r.uphillAccepted === 0 && r.uphillProposed === 290 && r.accepted === 10 && Math.abs(r.bestValue - 0.00291) < 5e-6 && Math.abs(r.startValue - 112.566) < 5e-4 && Math.hypot(r.x + 2.805118, r.y - 3.131312) < 0.02)
+        || `best ${r.bestValue} at (${r.x}, ${r.y}), accepted ${r.accepted}, uphill ${r.uphillAccepted} of ${r.uphillProposed}`,
     },
     {
       type: 'debug',
@@ -588,7 +610,8 @@ temp *= cooling`,
     {
       type: 'challenge',
       title: 'Anneal a travelling salesman tour',
-      prompt: 'Place 30 cities at random in a square. A solution is an order in which to visit them all and return to the start, and its value is the total length of the tour. Use this move: pick two positions in the tour and reverse the stretch between them. First run a downhill-only search that accepts a move only if the tour gets shorter, until 2,000 proposals in a row fail. Then anneal with the same move and the same number of evaluations. Compare the two tour lengths over ten seeds each, and report the spread as well as the best.',
+      prompt: 'Place 30 cities in a square with the generator from the code sample: start `state` at 2024 and call `rand()` twice for each city, x first and then y. A solution is an order in which to visit them all and return to the start, and its value is the total length of the tour. Start from the tour that visits the cities in the order they were generated. Use this move: pick two positions in the tour and reverse the stretch between them, ends included. First run a downhill-only search that accepts a move only if the tour gets shorter, until 2,000 proposals in a row fail. Then anneal with the same move and the same number of proposals. Compare the two tour lengths over ten seeds each, and report the spread as well as the best.',
+      expect: 'Two figures are exact, so check them first. The tour in generated order, which begins at (0.0455, 0.1057) and (0.1377, 0.6212), has length 15.7468. Reversing positions 5 to 12 of it, counting from 0, gives 15.8550. The rest depends on your random draws, so expect the same range and not the same digits. Over ten seeds my downhill-only search gave tours from 4.607 to 5.165, mean 4.832, after about 4,200 proposals each. Annealing with the same number of proposals, cooled geometrically from temperature 0.1 to 0.01, gave 4.631 to 4.961, mean 4.727: a little shorter on average and less spread out. Cooled from 0.1 all the way to 0.001 it was no better than downhill-only, mean 4.882, because much of the run is then too cold to accept any rise. A typical uphill move here lengthens the tour by about 0.2, which is the scale to set the temperature against. With ten times the proposals, annealing averaged 4.649 and found 4.607 three times in ten. That was the shortest tour in any of my runs.',
       hints: ['Reversing a stretch changes only two edges of the tour, so Δ can be computed from four distances without re-measuring the whole tour.', 'Pick the starting temperature by trying a few hundred random moves and looking at the typical size of a positive Δ.'],
     },
   ],
@@ -639,6 +662,31 @@ temp *= cooling`,
       check: (r) => (Math.abs(r.x + 3) < 0.5 && Math.abs(r.y - 3) < 0.5 && r.bestValue > 17.9 && r.bestValue < 21) || `best ${r.bestValue} at (${r.x}, ${r.y})` },
     { name: 'cooling too fast gives a worse result than the default on the same seed', input: { ...DEFAULTS, cooling: 0.9 },
       check: (r) => (r.bestValue > 10 && r.temps[36] < 1 && r.temps[35] >= 1) || `best ${r.bestValue}, T after 36 steps ${r.temps[36]}` },
+    { name: 'Things to try: the default run, as quoted', input: { ...DEFAULTS },
+      check: (r) => (r.bestValue.toFixed(3) === '1.059' && r.x.toFixed(3) === '-0.017' && r.y.toFixed(3) === '0.991' && r.startValue.toFixed(1) === '44.4' && r.uphillAccepted === 39 && r.uphillProposed === 238
+        && r.temps[245] < 1 && r.temps[244] >= 1) || `best ${r.bestValue} at (${r.x}, ${r.y}), uphill ${r.uphillAccepted} of ${r.uphillProposed}` },
+    { name: 'Things to try: almost no heat, cooled too fast, too hot and the lucky seed, as quoted', input: { ...DEFAULTS, temp: 0.01 },
+      check: (r) => {
+        const q = { count() {}, frame() {} };
+        const fast = run({ ...DEFAULTS, cooling: 0.9 }, q), hot = run({ ...DEFAULTS, temp: 100, cooling: 0.999 }, q), lucky = run({ ...DEFAULTS, seed: 16 }, q);
+        return (r.bestValue.toFixed(3) === '18.104' && r.x.toFixed(3) === '-3.015' && r.y.toFixed(3) === '2.975' && r.uphillAccepted === 0 && r.uphillProposed === 282
+          && fast.bestValue.toFixed(3) === '12.987' && fast.x.toFixed(3) === '-2.003' && fast.y.toFixed(3) === '2.975' && fast.uphillAccepted === 7 && fast.uphillProposed === 286
+          && hot.finalValue.toFixed(3) === '26.166' && hot.bestValue.toFixed(3) === '1.928' && hot.bestStep === 236 && hot.uphillAccepted === 133 && hot.uphillProposed === 151 && Math.round(hot.finalTemperature) === 74
+          && lucky.bestValue.toFixed(3) === '0.170') || `cold ${r.bestValue}, fast ${fast.bestValue}, hot ${hot.finalValue} / ${hot.bestValue}, lucky ${lucky.bestValue}`;
+      } },
+    { name: 'Things to try: with almost no heat a step size of 1.5 still leaves the starting dip', input: { ...DEFAULTS, temp: 0.01, stepSize: 1.5 },
+      check: (r) => {
+        const q = { count() {}, frame() {} };
+        const others = [1, 2, 3].map((seed) => run({ ...DEFAULTS, temp: 0.01, stepSize: 1.5, seed }, q).bestValue.toFixed(3)).join(',');
+        return (r.bestValue.toFixed(3) === '4.883' && r.x.toFixed(3) === '-1.108' && r.y.toFixed(3) === '0.947' && r.uphillAccepted === 0 && r.uphillProposed === 219 && others === '1.661,0.137,1.506')
+          || `best ${r.bestValue} at (${r.x}, ${r.y}), uphill ${r.uphillAccepted} of ${r.uphillProposed}, seeds 1 to 3: ${others}`;
+      } },
+    { name: 'Things to try: the round bowl, as quoted', input: { ...DEFAULTS, landscape: 'bowl', temp: 5 },
+      check: (r, c) => (r.bestValue.toFixed(5) === '0.00181' && r.finalValue.toFixed(3) === '0.061' && c['function evaluations'] === 297 && Math.abs(r.x - 0.00964) < 5e-6 && r.y.toFixed(3) === '-0.041')
+        || `best ${r.bestValue} at (${r.x}, ${r.y}), ended at ${r.finalValue}, ${c['function evaluations']} evaluations` },
+    { name: 'quiz prediction: on the four minima a search with almost no heat still ends near value 0', input: { ...DEFAULTS, landscape: 'himmelblau', temp: 0.01 },
+      check: (r) => (r.bestValue < 0.01 && r.bestValue.toFixed(5) === '0.00291' && r.x.toFixed(3) === '-2.807' && r.y.toFixed(3) === '3.123' && r.accepted === 10 && r.uphillAccepted === 0 && r.uphillProposed === 290)
+        || `best ${r.bestValue} at (${r.x}, ${r.y})` },
     { name: 'bookkeeping: best never rises, temperature is geometric, evaluations are counted', input: { ...DEFAULTS, seed: 5, steps: 200 },
       check: (r, c) => {
         for (let i = 1; i < r.bests.length; i++) if (r.bests[i] > r.bests[i - 1]) return `best rose at step ${i}`;

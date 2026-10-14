@@ -184,9 +184,12 @@ export default {
       { label: '4000 points', values: { samples: 4000, seed: 12 } },
     ],
     tryThis: [
-      'Keep 400 points and press Randomize on the seed several times. The estimate changes from run to run, usually by less than 0.1 either way. That spread is the error you should expect at this sample size.',
-      'Load "100 points", then "400 points", then "1600 points", and read the typical error in the output panel each time: about 0.164, then 0.082, then 0.041. Each step uses four times as many points and halves the error, and the sage band at the right-hand end of the lower chart is half as wide.',
-      'Load "4000 points" and watch the lower chart. The estimate swings wildly at first and then settles, but it never stops wobbling. It tends to stay within about twice the width of the band.',
+      { ask: 'Keep 400 points and set the seed to 1, 2, 3, 4 and 5 in turn. The true value is 3.1416. How far from it will the worst of the five estimates land: about 0.001, about 0.01 or about 0.1?',
+        reveal: 'About 0.1. The five estimates are 3.24, 3.18, 3.14, 3.02 and 3.25. The closest is off by 0.0016 and the worst by 0.1216. The output panel gives 0.0821 as the typical error for 400 points, and that spread is what you should expect at this sample size. Some runs do better and some do worse.' },
+      { ask: 'Load "100 points" and read the typical error in the output panel: about 0.164. Now decide before you look: what typical error will "400 points" report, and what will "1600 points" report?',
+        reveal: 'About 0.082, then 0.041. Each step uses four times as many points and halves the typical error, and the sage band at the right-hand end of the lower chart is half as wide. The runs themselves are less tidy. With this seed the actual errors are 0.3784, 0.0984 and 0.0784. The rule describes the typical size of the error, not what one run will do.' },
+      { ask: 'Load "4000 points" and watch the terracotta line in the lower chart. The sage band shows the typical size of the error. Will the line be inside the band once 2,000 points have been thrown? Will it be inside at the end?',
+        reveal: 'Outside, then inside. After 2,000 points this seed has 3.2220, off by 0.0804 when 0.0367 is typical. After 4,000 it has 3.1350, off by only 0.0066 when 0.0260 is typical. The estimate swings wildly at first and then settles, but it never stops wobbling. The band is the typical size of the error and not a limit, so a run can sit outside it for a long time.' },
     ],
     run,
     report: (r, c) => `Estimate of π: ${f4(r.estimate)} from ${r.samples} points (${r.inside} inside the quarter circle).\nError in this run: ${f4(r.error)}. Typical error at this sample size: about ${f4(r.typicalError)}.\n${c.samples || 0} random points drawn.`,
@@ -254,6 +257,20 @@ export default {
       input: 'Estimate π from 100, 10,000 and 1,000,000 random points, using a small generator that behaves identically in every language (seed 2024).',
       expected: 'n=    100: pi is about 3.3200 (error 0.1784)\nn=  10000: pi is about 3.1532 (error 0.0116)\nn=1000000: pi is about 3.1406 (error 0.0010)',
     },
+    breakIt: [
+      { change: 'Use the same random number for both coordinates: replace the second draw, the one that sets `y`, with `y = x`. Which of the three lines will look wrong?',
+        find: { python: 'y = rng.uniform()', javascript: 'const y = rng.uniform();' },
+        replace: { python: 'y = x', javascript: 'const y = x;' },
+        reveal: 'The first line prints "pi is about 3.1600 (error 0.0184)", which is closer than the correct program managed with 100 points. The other two print 2.8392 and 2.8253, and more points only make it worse. Every point now lies on the diagonal of the square, and a point on the diagonal is inside the quarter circle when `x` is at most 0.7071. So the program is estimating 4 × 0.7071 = 2.8284, and it does that well. A small test passed by luck. Only the larger runs showed the answer settling on the wrong number.' },
+      { change: 'Move the two lines that draw `x` and `y` up, so that they sit just before the loop and not inside it. What can the program print now?',
+        find: { python: '    for _ in range(n):\n        x = rng.uniform()\n        y = rng.uniform()', javascript: '  for (let i = 0; i < n; i++) {\n    const x = rng.uniform();\n    const y = rng.uniform();' },
+        replace: { python: '    x = rng.uniform()\n    y = rng.uniform()\n    for _ in range(n):', javascript: '  const x = rng.uniform();\n  const y = rng.uniform();\n  for (let i = 0; i < n; i++) {' },
+        reveal: 'All three lines print "pi is about 4.0000 (error 0.8584)". One point is drawn, at about (0.05, 0.11), and the loop tests that same point n times. It is inside, so every trial counts and the fraction is 1. Had the point been outside, every line would say 0.0000. Those are the only two answers this program can give, whatever n is.' },
+      { change: 'Change the seed from 2024 to 0. What numbers will the generator produce?',
+        find: { python: 'Lcg(2024)', javascript: 'new Lcg(2024)' },
+        replace: { python: 'Lcg(0)', javascript: 'new Lcg(0)' },
+        reveal: 'All three lines print "pi is about 4.0000 (error 0.8584)" again, for a different reason. This generator multiplies its state by a constant, and 0 times anything is 0, so it returns 0 for ever. Every point is the corner (0, 0), which is inside. The sampling loop is correct and the answer is still worthless: a Monte Carlo result is only as good as its random numbers.' },
+    ],
     python: {
       source: `class Lcg:
     """A small random number generator (Park-Miller). Integer arithmetic only,
@@ -455,16 +472,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'With 500 points the typical error of the estimate is about 0.073. How many points are needed to bring the typical error down to about half of that?',
-      options: ['1000', '2000', '5000', '250000'],
+      q: 'With 100 points the output panel reports a typical error of about 0.164. You raise the number of points to 900. What typical error will the panel report now?',
+      options: ['About 0.018, one ninth of 0.164', 'About 0.055, one third of 0.164', 'About 0.082, one half of 0.164', 'About 0.164, because the typical error belongs to the method and not to the number of points'],
       answer: 1,
       explain: [
-        'Doubling the points divides the error by √2, about 1.4, giving roughly 0.052.',
-        'Correct. The error falls like 1/√n, so halving it needs four times as many points. The output panel reports a typical error of about 0.037 for 2000 points.',
-        'Ten times the points divides the error by about 3.2. That is more than was asked for.',
-        'Squaring the sample count is far more than needed. It would divide the error by about 22.',
+        'That would be right if the error fell like 1/n. It falls like 1/√n, so nine times the points divide it by 3, not by 9.',
+        'Correct. Nine times as many points divide the typical error by √9 = 3, and the panel reports 0.0547. The run itself gives 3.2133, which is off by 0.0717: a little worse than typical, as any single run may be.',
+        'Halving the typical error takes four times the points, which is 400. With 900 points it is smaller than that.',
+        'The typical error is 1.64/√n, so it shrinks as points are added. Only the 1.64 is fixed by the method.',
       ],
-      tryInput: { samples: 2000, seed: 12 },
+      tryInput: { samples: 900, seed: 12 },
+      check: (r, c) => (c.samples === 900 && f4(r.typicalError) === '0.0547' && Math.abs(r.typicalError - typicalError(100) / 3) < 1e-12 && f4(r.estimate) === '3.2133' && f4(r.error) === '0.0717') || `typical error ${f4(r.typicalError)}, estimate ${f4(r.estimate)}, error ${f4(r.error)}`,
     },
     {
       type: 'debug',
@@ -499,7 +517,8 @@ print(4 * inside / n)`,
     {
       type: 'challenge',
       title: 'Measure the error, then shrink it',
-      prompt: 'Run the estimator 200 times with different seeds at n = 1000 and compute the root-mean-square error. Compare it with the prediction 1.64/√n. Then change the estimator to stratified sampling: divide the square into a 32 by 32 grid of cells and draw one random point in each cell (1024 points). Measure the error again over 200 runs and explain why it is smaller.',
+      prompt: 'Take the estimator and the generator from the program in this lesson. Run it 200 times at n = 1000, with the seeds 1 to 200, and compute the root-mean-square error of the 200 estimates. Compare it with the prediction 1.64/√n. Then change the estimator to stratified sampling: divide the square into a 32 by 32 grid of cells and draw one random point in each cell (1024 points). Measure the error again over the same 200 seeds. How much smaller is it, and why?',
+      expect: 'With seeds 1 to 200 the plain estimator has a root-mean-square error of 0.0534 at n = 1000. The prediction 1.64/√1000 is 0.0519, so the two agree. The stratified estimator has 0.0101 with 1,024 points: about a fifth of the error for almost the same work. That figure comes from visiting the cells column by column and drawing x before y. Another order or another set of seeds changes the digits a little (two other sets of 200 seeds gave 0.0109 and 0.0108). The error is smaller because only 63 of the 1,024 cells are cut by the arc. A point in any other cell is certain to be inside or certain to be outside, so those cells add no randomness at all.',
       hints: ['The cells that lie entirely inside or entirely outside the quarter circle contribute no randomness at all.', 'Only the cells cut by the arc are uncertain, and there are at most 63 of them out of 1024.'],
     },
   ],
@@ -562,7 +581,7 @@ print(4 * inside / n)`,
         const measured = rmsError(1000, 300), predicted = typicalError(1000);
         return Math.abs(measured / predicted - 1) < 0.2 || `measured ${measured.toFixed(4)}, predicted ${predicted.toFixed(4)}`;
       } },
-    { name: 'quiz and presets: typical error at 2000 points is half that at 500; 0.164, 0.082, 0.041 at 100, 400, 1600', input: { samples: 2000, seed: 12 },
+    { name: 'presets: typical error at 2000 points is half that at 500; 0.164, 0.082, 0.041 at 100, 400, 1600', input: { samples: 2000, seed: 12 },
       check: (r) => (Math.abs(r.typicalError - typicalError(500) / 2) < 1e-12 && f4(typicalError(500)) === '0.0734' && f4(r.typicalError) === '0.0367'
         && typicalError(100).toFixed(3) === '0.164' && typicalError(400).toFixed(3) === '0.082' && typicalError(1600).toFixed(3) === '0.041') || `typical error ${r.typicalError}` },
     { name: 'the same seed reproduces the same run, and one point gives 0 or 4', input: { samples: 400, seed: 77 },
@@ -571,6 +590,20 @@ print(4 * inside / n)`,
         if (again.estimate !== r.estimate) return 'two runs with the same seed disagree';
         const one = run({ samples: 1, seed: 3 }, QUIET);
         return one.estimate === 0 || one.estimate === 4 || `one point gave ${one.estimate}`;
+      } },
+    { name: 'things to try: 400 points with seeds 1 to 5 give 3.24, 3.18, 3.14, 3.02 and 3.25', input: { samples: 400, seed: 4 },
+      check: (r) => {
+        const got = [1, 2, 3, 4, 5].map((seed) => run({ samples: 400, seed }, QUIET));
+        const errors = got.map((g) => g.error);
+        return (got.map((g) => f2(g.estimate)).join(' ') === '3.24 3.18 3.14 3.02 3.25' && f4(Math.min(...errors)) === '0.0016' && f4(Math.max(...errors)) === '0.1216' && f4(r.error) === '0.1216' && f4(r.typicalError) === '0.0821')
+          || `estimates ${got.map((g) => f2(g.estimate)).join(' ')}`;
+      } },
+    { name: 'things to try: with seed 12 the errors are 0.3784, 0.0984, 0.0784 at 100, 400, 1600 points, then 0.0804 at 2,000 and 0.0066 at 4,000', input: { samples: 4000, seed: 12 },
+      check: (r) => {
+        const at = (samples) => run({ samples, seed: 12 }, QUIET);
+        const errors = [100, 400, 1600, 2000].map((n) => f4(at(n).error)).join(' ');
+        return (errors === '0.3784 0.0984 0.0784 0.0804' && f4(at(2000).estimate) === '3.2220' && f4(at(2000).typicalError) === '0.0367'
+          && f4(r.estimate) === '3.1350' && f4(r.error) === '0.0066' && f4(r.typicalError) === '0.0260') || `errors ${errors}, then ${f4(r.estimate)}`;
       } },
   ],
 };

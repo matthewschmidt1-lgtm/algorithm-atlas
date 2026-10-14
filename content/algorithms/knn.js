@@ -152,6 +152,9 @@ function matchesBruteForce(r, counters, ctx) {
 }
 
 const EXAMPLE = [0.3, 0.4, 1, -0.6, 0, 0, 0, -0.8, 0, 0.6, 0.8, 1, 1.2, 0.5, 1, -1.2, -0.9, 0];
+// Eight points for the quiz, four of each class. From (0, 0) they lie at distances 0.4, 0.5, 0.6,
+// 0.7, 1.0, 1.3, 1.5 and about 1.7, with classes 0, 0, 1, 1, 1, 0, 0, 1 in that order.
+const EIGHT = [-0.4, 0, 0, -0.3, 0.4, 0, 0.6, 0, 1, 0.42, -0.56, 1, 0.6, 0.8, 1, -1.2, 0.5, 0, -0.9, -1.2, 0, 1.2, 1.2, 1];
 
 export default {
   meta: {
@@ -250,10 +253,14 @@ export default {
       { label: 'Worked example: six points', values: { custom: EXAMPLE, k: 3, queryX: 0, queryY: 0 } },
     ],
     tryThis: [
-      'Load "k = 1: every point rules its own patch" and go to the last frame. Each training point claims the area around itself, so a single stray point makes an island of its colour inside the other class. Then load "k = 15: a smooth boundary" on the same data. The islands disappear, and the leave-one-out accuracy in the output panel changes. Which k scores better?',
-      'On the default moons, drag the two query sliders so the query sits between the tips of the two moons. Step through the vote. Small moves of the query change which points are nearest, and near the boundary they change the answer.',
-      'Load "XOR corners" and look at the shading in the last frame. The shaded region covers the two class 1 corners and leaves the two class 0 corners clear. No straight line can separate this dataset, which is why [logistic regression](#/algorithm/logistic-regression) and the [perceptron](#/algorithm/perceptron) fail on it, yet nearest neighbours handles it without any change.',
-      'Load the worked example and set k to 1, 3 and then 5. The predicted class flips each time, exactly as worked out by hand.',
+      { ask: 'Load "k = 1: every point rules its own patch" and go to the last frame. Each training point claims the area around itself, so a single stray point makes an island of its colour inside the other class. Then load "k = 15: a smooth boundary" on the same data. Before you read the output panel: which k has the better leave-one-out accuracy, and is the query at the centre labelled the same by both?',
+        reveal: 'k = 15 scores better: 36 of 40 against 30 of 40 for k = 1. The islands are gone, because one stray point can no longer outvote fourteen others. The query changes label too. With k = 1 its single nearest point, 0.05 away, is class 0. With k = 15 the vote is 9 to 6 for class 1.' },
+      { ask: 'Run the default moons. The query at (-0.10, -0.20) is labelled class 0 by 3 votes to 2. Now move the horizontal slider one click to the left, to -0.15. Is a move of 0.05 enough to change the label?',
+        reveal: 'Yes. At (-0.15, -0.20) one class 0 point drops out of the five nearest and a class 1 point takes its place, so the vote becomes 3 to 2 for class 1. Keep going to -0.25 and it is 4 to 1. Near the boundary a small move of the query changes which points are nearest, and that changes the answer.' },
+      { ask: 'Load "XOR corners". The two classes sit in opposite corners, so no straight line can separate them, which is why [logistic regression](#/algorithm/logistic-regression) and the [perceptron](#/algorithm/perceptron) fail on this dataset. How many of the 40 points will nearest neighbours with k = 5 get right when each is classified from the other 39?',
+        reveal: 'All 40. In the last frame the shaded region covers the two class 1 corners and leaves the two class 0 corners clear. Nothing was changed to make this work: the method never assumes a shape for the boundary, so a boundary with a corner in it costs no more than a straight one.' },
+      { ask: 'Load the worked example and set k to 1, 3 and then 5 to confirm the answers worked out by hand. Then try the even values. With k = 2 the vote is one each, and with k = 4 it is two each. What label does the query get?',
+        reveal: 'Class 1 both times. The output panel says "tie broken by the nearest neighbour": when the vote is level, the single closest point decides, and here that is point 1, class 1, at distance 0.5. Every implementation has to choose some rule for this case. An odd k with two classes avoids the question.' },
     ],
     run,
     report: (r, c) => `Query (${f2(r.query[0])}, ${f2(r.query[1])}) is labelled class ${r.prediction}: votes ${r.votes[0]} for class 0, ${r.votes[1]} for class 1${r.tie ? ' (tie broken by the nearest neighbour)' : ''}.\n${c['distance computations'] || 0} distance computations for this one query, and no training.\nLeave-one-out accuracy with k = ${r.k}: ${pct(r.accuracy)} (${r.correct} of ${r.n} training points classified correctly from the others).`,
@@ -320,9 +327,19 @@ export default {
 
   code: {
     sample: {
-      input: 'Classify the query (0, 0) from six labelled points with k = 1, 3 and 5, printing the nearest points with their distances, the vote and the predicted class.',
-      expected: 'k=1: nearest p1(0.50) | votes 0-1 -> class 1\nk=3: nearest p1(0.50) p2(0.60) p3(0.80) | votes 2-1 -> class 0\nk=5: nearest p1(0.50) p2(0.60) p3(0.80) p4(1.00) p5(1.30) | votes 2-3 -> class 1',
+      input: 'Classify the query (0, 0) from six labelled points with k = 1, 3 and 5, printing the nearest points with their distances, the vote and the predicted class. Then score k = 1 and k = 3 by leave-one-out: classify each of the six points from the other five and count how many come out right.',
+      expected: 'k=1: nearest p1(0.50) | votes 0-1 -> class 1\nk=3: nearest p1(0.50) p2(0.60) p3(0.80) | votes 2-1 -> class 0\nk=5: nearest p1(0.50) p2(0.60) p3(0.80) p4(1.00) p5(1.30) | votes 2-3 -> class 1\nleave-one-out, k=1: 5 of 6 correct\nleave-one-out, k=3: 6 of 6 correct',
     },
+    breakIt: [
+      { change: 'In the leave-one-out loop at the bottom, stop leaving the point out: remove the last argument from the call, so that `classify(x, y, k, i)` becomes `classify(x, y, k)`. Which of the two scores changes, and to what?',
+        find: { python: 'if classify(x, y, k, i)[0] == label:', javascript: 'if (classify(x, y, k, i).winner === label) correct++;' },
+        replace: { python: 'if classify(x, y, k)[0] == label:', javascript: 'if (classify(x, y, k).winner === label) correct++;' },
+        reveal: 'The k = 1 line now reads "leave-one-out, k=1: 6 of 6 correct" where it read 5 of 6. Every point is still in the training set when it is classified, so its nearest neighbour is itself, at distance 0, and it votes for its own label. With k = 1 that gives 100 percent on any data at all, so the number says nothing. The k = 3 line still reads 6 of 6, which is why the mistake is easy to miss when you only test one k.' },
+      { change: 'Suppose x had been recorded in centimetres and y in metres, so that every difference in x is 100 times larger. In the distance line, put `10000 *` in front of the squared x difference. Which point becomes the nearest neighbour of the query?',
+        find: { python: 'd = math.sqrt((x - qx) * (x - qx) + (y - qy) * (y - qy))', javascript: 'const d = Math.sqrt((x - qx) * (x - qx) + (y - qy) * (y - qy));' },
+        replace: { python: 'd = math.sqrt(10000 * (x - qx) * (x - qx) + (y - qy) * (y - qy))', javascript: 'const d = Math.sqrt(10000 * (x - qx) * (x - qx) + (y - qy) * (y - qy));' },
+        reveal: 'Point 3. The first line becomes "k=1: nearest p3(0.80) | votes 1-0 -> class 0", so the k = 1 answer flips from class 1 to class 0. The k = 3 line lists "p3(0.80) p1(30.00) p2(60.00)". Point 3 lies straight below the query, with the same x, so it is the only point whose distance did not grow. The neighbours are now ranked by x alone and y has no say. The leave-one-out score for k = 3 drops from 6 of 6 to 5 of 6. Nothing in the program is wrong except the units of its data.' },
+    ],
     python: {
       source: `import math
 
@@ -331,9 +348,11 @@ points = [(0.3, 0.4, 1), (-0.6, 0.0, 0), (0.0, -0.8, 0),
           (0.6, 0.8, 1), (1.2, 0.5, 1), (-1.2, -0.9, 0)]
 
 
-def classify(qx, qy, k):
+def classify(qx, qy, k, skip=-1):
     nearest = []  # (distance, index) pairs, closest first, at most k of them
     for i, (x, y, label) in enumerate(points):
+        if i == skip:
+            continue  # this point is left out of the vote
         d = math.sqrt((x - qx) * (x - qx) + (y - qy) * (y - qy))
         if len(nearest) < k or d < nearest[-1][0]:
             pos = len(nearest)
@@ -355,13 +374,22 @@ def classify(qx, qy, k):
 for k in (1, 3, 5):
     winner, votes, nearest = classify(0.0, 0.0, k)
     listing = " ".join(f"p{i + 1}({d:.2f})" for d, i in nearest)
-    print(f"k={k}: nearest {listing} | votes {votes[0]}-{votes[1]} -> class {winner}")`,
+    print(f"k={k}: nearest {listing} | votes {votes[0]}-{votes[1]} -> class {winner}")
+
+for k in (1, 3):
+    correct = 0
+    for i, (x, y, label) in enumerate(points):
+        if classify(x, y, k, i)[0] == label:
+            correct += 1
+    print(f"leave-one-out, k={k}: {correct} of {len(points)} correct")`,
       notes: [
         { line: 9, text: 'The only state kept during the scan: the k closest points seen so far, in order. There is no model and nothing was computed before the query arrived.' },
-        { line: 11, text: 'Straight-line distance from the query to one stored point. This line runs once for every training point, for every query.' },
-        { line: 12, text: 'A point joins the list only if the list is not yet full or the point is closer than the farthest one on it.' },
-        { line: 18, text: 'Dropping the farthest keeps the list at k entries, so the scan never needs to sort all n distances.' },
-        { line: 22, text: 'The tie rule: when the vote is level, the single nearest neighbour decides.' },
+        { line: 11, text: 'One point can be left out of the scan. The plain classification leaves nothing out. The accuracy check at the bottom leaves out the point being tested.' },
+        { line: 13, text: 'Straight-line distance from the query to one stored point. This line runs once for every training point, for every query.' },
+        { line: 14, text: 'A point joins the list only if the list is not yet full or the point is closer than the farthest one on it.' },
+        { line: 20, text: 'Dropping the farthest keeps the list at k entries, so the scan never needs to sort all n distances.' },
+        { line: 24, text: 'The tie rule: when the vote is level, the single nearest neighbour decides.' },
+        { line: 39, text: 'Leave-one-out: point i is classified from the other five. If it were left in, it would find itself at distance zero and vote for its own label.' },
       ],
     },
     javascript: {
@@ -369,9 +397,10 @@ for k in (1, 3, 5):
 const points = [[0.3, 0.4, 1], [-0.6, 0.0, 0], [0.0, -0.8, 0],
                 [0.6, 0.8, 1], [1.2, 0.5, 1], [-1.2, -0.9, 0]];
 
-function classify(qx, qy, k) {
+function classify(qx, qy, k, skip = -1) {
   const nearest = []; // [distance, index] pairs, closest first, at most k of them
   for (let i = 0; i < points.length; i++) {
+    if (i === skip) continue; // this point is left out of the vote
     const [x, y] = points[i];
     const d = Math.sqrt((x - qx) * (x - qx) + (y - qy) * (y - qy));
     if (nearest.length < k || d < nearest[nearest.length - 1][0]) {
@@ -393,6 +422,15 @@ for (const k of [1, 3, 5]) {
   const { winner, votes, nearest } = classify(0, 0, k);
   const listing = nearest.map(([d, i]) => "p" + (i + 1) + "(" + d.toFixed(2) + ")").join(" ");
   console.log("k=" + k + ": nearest " + listing + " | votes " + votes[0] + "-" + votes[1] + " -> class " + winner);
+}
+
+for (const k of [1, 3]) {
+  let correct = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x, y, label] = points[i];
+    if (classify(x, y, k, i).winner === label) correct++;
+  }
+  console.log("leave-one-out, k=" + k + ": " + correct + " of " + points.length + " correct");
 }`,
     },
     cpp: {
@@ -407,30 +445,42 @@ const std::vector<Point> points = {
     {0.3, 0.4, 1}, {-0.6, 0.0, 0}, {0.0, -0.8, 0},
     {0.6, 0.8, 1}, {1.2, 0.5, 1}, {-1.2, -0.9, 0}};
 
-int main() {
-    const double qx = 0.0, qy = 0.0;
-    for (int k : {1, 3, 5}) {
-        // (distance, index) pairs, closest first, at most k of them
-        std::vector<std::pair<double, int>> nearest;
-        for (int i = 0; i < (int)points.size(); ++i) {
-            double dx = points[i].x - qx, dy = points[i].y - qy;
-            double d = std::sqrt(dx * dx + dy * dy);
-            if ((int)nearest.size() < k || d < nearest.back().first) {
-                int pos = (int)nearest.size();
-                while (pos > 0 && nearest[pos - 1].first > d) --pos;
-                nearest.insert(nearest.begin() + pos, {d, i});
-                if ((int)nearest.size() > k) nearest.pop_back();
-            }
-        }
-        int votes[2] = {0, 0};
-        for (const auto& nb : nearest) ++votes[points[nb.second].label];
-        int winner;
-        if (votes[0] == votes[1]) winner = points[nearest[0].second].label;
-        else winner = votes[0] > votes[1] ? 0 : 1;
+// (distance, index) pairs, closest first, at most k of them
+std::vector<std::pair<double, int>> nearest;
+int votes[2];
 
+int classify(double qx, double qy, int k, int skip = -1) {
+    nearest.clear();
+    for (int i = 0; i < (int)points.size(); ++i) {
+        if (i == skip) continue;  // this point is left out of the vote
+        double dx = points[i].x - qx, dy = points[i].y - qy;
+        double d = std::sqrt(dx * dx + dy * dy);
+        if ((int)nearest.size() < k || d < nearest.back().first) {
+            int pos = (int)nearest.size();
+            while (pos > 0 && nearest[pos - 1].first > d) --pos;
+            nearest.insert(nearest.begin() + pos, {d, i});
+            if ((int)nearest.size() > k) nearest.pop_back();
+        }
+    }
+    votes[0] = votes[1] = 0;
+    for (const auto& nb : nearest) ++votes[points[nb.second].label];
+    if (votes[0] == votes[1]) return points[nearest[0].second].label;
+    return votes[0] > votes[1] ? 0 : 1;
+}
+
+int main() {
+    for (int k : {1, 3, 5}) {
+        int winner = classify(0.0, 0.0, k);
         std::printf("k=%d: nearest", k);
         for (const auto& nb : nearest) std::printf(" p%d(%.2f)", nb.second + 1, nb.first);
         std::printf(" | votes %d-%d -> class %d\\n", votes[0], votes[1], winner);
+    }
+    for (int k : {1, 3}) {
+        int correct = 0;
+        for (int i = 0; i < (int)points.size(); ++i) {
+            if (classify(points[i].x, points[i].y, k, i) == points[i].label) ++correct;
+        }
+        std::printf("leave-one-out, k=%d: %d of %d correct\\n", k, correct, (int)points.size());
     }
     return 0;
 }`,
@@ -543,16 +593,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the six-point worked example, k = 3 labels the query class 0. The points in order of distance have classes 1, 0, 0, 1, 1, 0. What does k = 5 give?',
-      options: ['Class 0, by 3 votes to 2', 'Class 1, by 3 votes to 2', 'A tie', 'Class 0, because the answer cannot change once k is at least 3'],
+      q: 'Eight labelled points, four of each class, surround a query at the centre of the chart. In order of distance from the query their classes are 0, 0, 1, 1, 1, 0, 0, 1. With k = 5 the query is labelled class 1, by 3 votes to 2. What does k = 7 give?',
+      options: ['Class 1, by 4 votes to 3', 'Class 0, by 4 votes to 3', 'A tie, because there are four points of each class', 'Class 1, because more distant neighbours cannot overturn the nearer ones'],
       answer: 1,
       explain: [
-        'Count the first five classes in the list: 1, 0, 0, 1, 1. That is two votes for class 0, not three.',
-        'Correct. The fourth and fifth nearest points are both class 1, so they turn a 2 to 1 defeat into a 3 to 2 win.',
-        'Five voters and two classes cannot tie.',
-        'Each new neighbour adds a vote, so the majority can change at any k.',
+        'Count the first seven classes in the list: 0, 0, 1, 1, 1, 0, 0. That is four votes for class 0 and three for class 1.',
+        'Correct. The sixth and seventh nearest points are both class 0, so they turn a 3 to 2 defeat into a 4 to 3 win. The label has changed twice as k grew: class 0 at k = 3, class 1 at k = 5, class 0 again at k = 7. With seven of the eight points voting, the answer is close to a count of the whole training set, and the query\'s own surroundings matter little.',
+        'All eight points would tie, but k = 7 leaves out the farthest one, which is class 1. Seven voters and two classes cannot tie.',
+        'Every neighbour among the k nearest has one vote, however far away it is. Distance decides who votes and has no effect on how much a vote counts.',
       ],
-      tryInput: { custom: EXAMPLE, k: 5, queryX: 0, queryY: 0 },
+      tryInput: { custom: EIGHT, k: 7, queryX: 0, queryY: 0 },
+      check: (r) => (r.prediction === 0 && r.votes.join() === '4,3' && r.tie === false && r.neighbours.join() === '0,1,2,3,4,5,6') || `prediction ${r.prediction}, votes ${r.votes}, neighbours ${r.neighbours}`,
     },
     {
       type: 'debug',
@@ -587,7 +638,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Choose k honestly, then weight the votes',
-      prompt: 'Using leave-one-out accuracy on the overlapping dataset, find the best k between 1 and 15 for several different seeds. Is the best k the same each time? Then change the vote so that each neighbour counts with weight 1 divided by its distance, and compare the accuracy with the plain vote at large k. Finally, explain why the k you chose should be confirmed on fresh data before you report an accuracy.',
+      prompt: 'First, in the demonstration, choose the overlapping dataset with 40 points and seed 1, and read the leave-one-out accuracy from the output panel for every k from 1 to 15. Which k is best? Repeat with seeds 2 and 3. Is the best k the same each time?\n\nThen change the vote in the code sample so that each neighbour counts with weight 1 divided by its distance. Test it on the sample\'s own six points and query (0, 0), with k = 2, 3, 4 and 5, printing the total weight for each class. Compare the weighted vote with the plain vote on a larger dataset at large k.\n\nFinally, explain why the k you chose should be confirmed on fresh data before you report an accuracy.',
+      expect: 'Leave-one-out on the overlapping dataset with 40 points. Seed 1: 30 of 40 at k = 1, a single best value of 38 at k = 9, and 36 at k = 15. Seed 2: the best is 38, reached by every k from 9 to 15. Seed 3: the best is 36, reached by k = 1 to 6 and by k = 8, and k = 9 gives 34. So the best k is not the same each time, and a k chosen on one sample is partly fitted to that sample.\n\nWeighted vote on the six points with the query at (0, 0), as total weight for class 0 and for class 1. k = 2: 1.667 and 2.000, class 1. k = 3: 2.917 and 2.000, class 0. k = 4: 2.917 and 3.000, class 1. k = 5: 2.917 and 3.769, class 1. The labels match the plain vote at k = 3 and k = 5, and the ties at k = 2 and k = 4 are now settled by the weights with no separate tie rule.',
       hints: [
         'With weighted votes, a tie is almost impossible and far neighbours matter less, so large k does less harm.',
         'Picking the k with the best leave-one-out score uses the data twice: once to choose and once to report. The reported number is then slightly optimistic.',
@@ -641,7 +693,19 @@ int main() {
       check: (r) => (r.prediction === 0 && r.votes.join() === '2,1' && r.neighbours.join() === '0,1,2' && r.distances.map((d) => d.toFixed(1)).join() === '0.5,0.6,0.8') || `prediction ${r.prediction}, votes ${r.votes}, neighbours ${r.neighbours}, distances ${r.distances}` },
     { name: 'the worked example: k = 1 gives class 1', input: { custom: EXAMPLE, k: 1, queryX: 0, queryY: 0 },
       check: (r) => (r.prediction === 1 && r.votes.join() === '0,1') || `prediction ${r.prediction}, votes ${r.votes}` },
-    { name: 'the worked example: k = 5 gives class 1 by 3 votes to 2 (quiz prediction)', input: { custom: EXAMPLE, k: 5, queryX: 0, queryY: 0 },
+    { name: 'eight points, four of each class: k = 7 gives class 0 by 4 votes to 3 (quiz prediction), after class 0 at k = 3 and class 1 at k = 5', input: { custom: EIGHT, k: 7, queryX: 0, queryY: 0 },
+      check: (r, c, ctx) => {
+        const pts = resolvePoints(ctx.input);
+        const three = bruteForce(pts, 0, 0, 3), five = bruteForce(pts, 0, 0, 5);
+        if (r.prediction !== 0 || r.votes.join() !== '4,3' || r.correct !== 0) return `prediction ${r.prediction}, votes ${r.votes}, leave-one-out ${r.correct}`;
+        if (three.label !== 0 || five.label !== 1) return `k = 3 gives ${three.label}, k = 5 gives ${five.label}`;
+        return matchesBruteForce(r, c, ctx);
+      } },
+    { name: 'the code sample: leave-one-out on the six points is 5 of 6 at k = 1', input: { custom: EXAMPLE, k: 1, queryX: 0, queryY: 0 },
+      check: (r) => (r.correct === 5 && r.n === 6) || `${r.correct} of ${r.n}` },
+    { name: 'the code sample: leave-one-out on the six points is 6 of 6 at k = 3', input: { custom: EXAMPLE, k: 3, queryX: 0, queryY: 0 },
+      check: (r) => (r.correct === 6 && r.n === 6) || `${r.correct} of ${r.n}` },
+    { name: 'the worked example: k = 5 gives class 1 by 3 votes to 2', input: { custom: EXAMPLE, k: 5, queryX: 0, queryY: 0 },
       check: (r) => (r.prediction === 1 && r.votes.join() === '2,3') || `prediction ${r.prediction}, votes ${r.votes}` },
     { name: 'a tied vote goes to the nearest neighbour', input: { custom: EXAMPLE, k: 2, queryX: 0, queryY: 0 },
       check: (r) => (r.tie === true && r.prediction === 1 && r.votes.join() === '1,1') || `tie ${r.tie}, prediction ${r.prediction}, votes ${r.votes}` },

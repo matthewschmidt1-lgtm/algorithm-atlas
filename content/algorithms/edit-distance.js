@@ -221,10 +221,14 @@ export default {
       { label: 'Nothing in common', values: { a: 'abc', b: 'xyz' } },
     ],
     tryThis: [
-      'Load "Two letters swapped". A person sees one mistake, but the distance is 2, because plain edit distance has no single edit for swapping neighbours. The Damerau variant adds one.',
-      'Type the same word in both boxes. Every diagonal cell is 0 and the path runs straight down the diagonal. Now change one letter in the middle and watch the diagonal values below that point rise to 1.',
-      'Clear the second box completely. The table collapses to a single column and the distance is the length of the first string: delete everything.',
-      'Swap the two strings (sitting to kitten). The distance stays 3, but every insert becomes a delete and the path is mirrored.',
+      { ask: 'Load "Two letters swapped": recieve to receive. A person sees one mistake here, two neighbouring letters the wrong way round. What distance will the table report?',
+        reveal: '2. Plain edit distance has no single edit for swapping neighbours, so it pays for two: substitute i with e, then substitute e with i. The Damerau variant adds the swap as one edit of its own.' },
+      { ask: 'Type `planet` in both boxes. The distance is 0 and the path runs straight down the diagonal, which holds nothing but zeros. Now change the second box to `plenet`. Which cells on the diagonal will change?',
+        reveal: 'The diagonal now reads 0, 0, 0, 1, 1, 1, 1. It stays at 0 through `pl`, rises to 1 at the changed letter, and stays at 1 to the end, because every later letter matches and copies the diagonal value before it. The distance is 1: substitute a with e.' },
+      { ask: 'Leave `kitten` in the first box and clear the second box completely. What shape will the table be, and what will the distance be?',
+        reveal: 'The table is a single column of 7 cells holding 0 to 6, and the distance is 6, the length of kitten. With nothing to aim for, the only script is to delete every letter. This is the border column the rest of every table is built on.' },
+      { ask: 'Kitten to sitting takes 3 edits: two substitutions and an insertion of g. Swap the two strings, so that sitting is turned into kitten. Will the distance change, and what happens to the insertion?',
+        reveal: 'The distance stays 3. The script becomes substitute s with k, substitute i with e, delete g. Every edit is undone by its opposite, so the insertion turns into a deletion, and the path through the table is mirrored.' },
     ],
     run,
     report: (r, c) => `Edit distance from "${r.a}" to "${r.b}": ${r.distance}\nTable: ${r.rows} rows by ${r.cols} columns, ${c['cells filled'] || 0} cells filled.\nOne cheapest edit script: ${r.edits.length ? r.edits.join(', ') : 'no edits needed'}.`,
@@ -314,9 +318,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The pairs (kitten, sitting) and (tea, eat): the distance, then the edits that cost something.',
-      expected: 'kitten -> sitting: 3\n  substitute k with s\n  substitute e with i\n  insert g\ntea -> eat: 2\n  delete t\n  insert t',
+      input: 'The pairs (kitten, sitting), (tea, eat) and (eat, treat): the distance, then the edits that cost something.',
+      expected: 'kitten -> sitting: 3\n  substitute k with s\n  substitute e with i\n  insert g\ntea -> eat: 2\n  delete t\n  insert t\neat -> treat: 2\n  insert t\n  insert r',
     },
+    breakIt: [
+      { change: 'In the border, change `D[0][j] = j` to `D[0][j] = 0`, so that the first row is left at zero. Which of the three pairs will get a wrong distance?',
+        find: { python: 'D[0][j] = j', javascript: 'D[0][j] = j;' },
+        replace: { python: 'D[0][j] = 0', javascript: 'D[0][j] = 0;' },
+        reveal: 'The third pair. It now prints "eat -> treat: 0", followed by the same two edits as before, "insert t" and "insert r". With the first row at zero, letters inserted at the front look free, so the table claims no edits are needed while the traceback still finds two. The second pair keeps its distance of 2 but lists four edits (insert e, insert a, delete e, delete a), because the path now runs through cells that no longer count what they claim. The first pair is unchanged, which is how this mistake gets through a quick test.' },
+      { change: 'In the function that fills the table, set `cost` to 1 always, whether or not the two letters are equal. Leave the traceback as it is. What will the three distances be?',
+        find: { python: 'cost = 0 if a[i - 1] == b[j - 1] else 1\n            D[i][j]', javascript: 'const cost = a[i - 1] === b[j - 1] ? 0 : 1;\n      D[i][j]' },
+        replace: { python: 'cost = 1\n            D[i][j]', javascript: 'const cost = 1;\n      D[i][j]' },
+        reveal: 'They become 7, 3 and 5: "kitten -> sitting: 7", "tea -> eat: 3" and "eat -> treat: 5". Each is the length of the longer string. Keeping a matching letter now costs as much as replacing it, so nothing is ever free and shared letters stop helping. The edits listed underneath no longer add up either. Kitten to sitting shows 8 edits under a distance of 7, because the traceback still treats a match as free and cannot retrace the steps the table took.' },
+      { change: 'In the function that fills the table, compare `a[i]` with `b[j]` instead of `a[i - 1]` with `b[j - 1]`. What happens when the loop reaches the last row?',
+        find: { python: 'cost = 0 if a[i - 1] == b[j - 1] else 1\n            D[i][j]', javascript: 'const cost = a[i - 1] === b[j - 1] ? 0 : 1;\n      D[i][j]' },
+        replace: { python: 'cost = 0 if a[i] == b[j] else 1\n            D[i][j]', javascript: 'const cost = a[i] === b[j] ? 0 : 1;\n      D[i][j]' },
+        reveal: 'Python stops with "IndexError: string index out of range" and prints nothing. In the last row `a[i]` asks for the letter after the end of the string. JavaScript reads `undefined` there without complaint and prints "kitten -> sitting: 2", a distance that is too small, followed by eight edits. Its other two distances happen to come out right at 2, although tea to eat now lists four edits. Row i of the table belongs to letter `a[i - 1]`, because row 0 stands for no letters at all.' },
+    ],
     python: {
       source: `def edit_table(a, b):
     m, n = len(a), len(b)
@@ -354,7 +372,7 @@ def edit_script(a, b, D):
     return edits[::-1]
 
 
-for a, b in [("kitten", "sitting"), ("tea", "eat")]:
+for a, b in [("kitten", "sitting"), ("tea", "eat"), ("eat", "treat")]:
     D = edit_table(a, b)
     print(a + " -> " + b + ": " + str(D[len(a)][len(b)]))
     for edit in edit_script(a, b, D):
@@ -407,7 +425,7 @@ function editScript(a, b, D) {
   return edits.reverse();
 }
 
-for (const [a, b] of [["kitten", "sitting"], ["tea", "eat"]]) {
+for (const [a, b] of [["kitten", "sitting"], ["tea", "eat"], ["eat", "treat"]]) {
   const D = editTable(a, b);
   console.log(a + " -> " + b + ": " + D[a.length][b.length]);
   for (const edit of editScript(a, b, D)) console.log("  " + edit);
@@ -463,7 +481,7 @@ std::vector<std::string> editScript(const std::string& a, const std::string& b, 
 }
 
 int main() {
-    std::vector<std::pair<std::string, std::string>> pairs = {{"kitten", "sitting"}, {"tea", "eat"}};
+    std::vector<std::pair<std::string, std::string>> pairs = {{"kitten", "sitting"}, {"tea", "eat"}, {"eat", "treat"}};
     for (const auto& [a, b] : pairs) {
         Table D = editTable(a, b);
         std::cout << a << " -> " << b << ": " << D[a.size()][b.size()] << "\\n";
@@ -583,11 +601,12 @@ int main() {
       answer: 1,
       explain: [
         'One edit cannot do it. The strings have the same length, so a single edit would have to be a substitution, and they differ in every position.',
-        'Correct. Delete the f to get "law", then insert n at the end. The middle three letters are kept.',
+        'Delete the f to get "law", then insert n at the end. The three letters in between are kept.',
         'There is a shorter way than three edits: notice that "law" appears in both words.',
         'Four is the position-by-position count, substituting every letter. Insertions and deletions do better.',
       ],
       tryInput: { a: 'flaw', b: 'lawn' },
+      check: (r) => (r.distance === 2 && r.edits.join('; ') === 'delete f; insert n') || `got ${r.distance}: ${r.edits.join('; ')}`,
     },
     {
       type: 'debug',
@@ -626,7 +645,8 @@ int main() {
     {
       type: 'challenge',
       title: 'One row, then swaps',
-      prompt: 'First rewrite the distance function to use a single row of n + 1 numbers plus one saved value for the diagonal, and check that it still returns 3 for kitten and sitting. Then extend the full-table version so that swapping two adjacent characters costs 1: when a[i] = b[j − 1] and a[i − 1] = b[j], also consider D[i − 2][j − 2] + 1. With that rule, "recieve" to "receive" should be distance 1.',
+      prompt: 'First rewrite the distance function to use a single row of n + 1 numbers plus one saved value for the diagonal. Test it on kitten and sitting, and on intention and execution. Then extend the full-table version so that swapping two adjacent characters costs 1: when a[i] = b[j − 1] and a[i − 1] = b[j], also consider D[i − 2][j − 2] + 1. Test that version on "recieve" and "receive", and on "abcd" and "badc".',
+      expect: 'The one-row version gives 3 for kitten and sitting and 5 for intention and execution, the same as the full table. With the swap rule, "recieve" to "receive" is 1 where the plain distance is 2, and "abcd" to "badc" is 2 where the plain distance is 3: swap a with b, then swap c with d. Kitten and sitting stay at 3, because no two neighbouring letters are exchanged.',
       hints: ['In the one-row version, before overwriting position j, save its old value: it is the diagonal for position j + 1.', 'The swap rule gives what is known as the optimal string alignment distance, a restricted form of Damerau-Levenshtein distance.'],
     },
   ],
@@ -687,6 +707,14 @@ int main() {
       check: (r, c) => (r.distance === 2 ? matchesBrute(r, c) : `expected 2, got ${r.distance}`) },
     { name: 'quiz: flaw to lawn is 2', input: { a: 'flaw', b: 'lawn' },
       check: (r) => (r.distance === 2 && r.edits.join('; ') === 'delete f; insert n') || `got ${r.distance}: ${r.edits.join('; ')}` },
+    { name: 'things to try: one changed letter lifts the rest of the diagonal to 1', input: { a: 'planet', b: 'plenet' },
+      check: (r) => (r.distance === 1 && r.table.map((row, k) => row[k]).join(',') === '0,0,0,1,1,1,1' && r.edits.join('; ') === 'substitute a with e') || `got diagonal ${r.table.map((row, k) => row[k]).join(',')}` },
+    { name: 'things to try: clearing the second box leaves one column, distance 6', input: { a: 'kitten', b: '' },
+      check: (r, c) => (r.distance === 6 && r.cols === 1 && r.rows === 7 && c['cells filled'] === 7 && r.table.map((row) => row[0]).join(',') === '0,1,2,3,4,5,6') || `got ${r.distance}` },
+    { name: 'things to try: sitting to kitten is 3 and the insert becomes a delete', input: { a: 'sitting', b: 'kitten' },
+      check: (r) => (r.distance === 3 && r.edits.join('; ') === 'substitute s with k; substitute i with e; delete g') || `got ${r.distance}: ${r.edits.join('; ')}` },
+    { name: 'things to try: the swapped pair is two substitutions', input: { a: 'recieve', b: 'receive' },
+      check: (r) => (r.distance === 2 && r.edits.join('; ') === 'substitute i with e; substitute e with i') || `got ${r.distance}: ${r.edits.join('; ')}` },
     { name: 'empty second string: delete everything', input: { a: 'abc', b: '' },
       check: (r, c) => (r.distance === 3 && r.rows === 4 && r.cols === 1 && c['cells filled'] === 4 && replay(r) === true) || `got ${r.distance}` },
     { name: 'both strings empty', input: { a: '', b: '' },

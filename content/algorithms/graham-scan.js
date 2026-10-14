@@ -349,10 +349,14 @@ export default {
       { label: 'Square with points on its sides', values: { custom: [0, 0, 2, 0, 4, 0, 4, 2, 4, 4, 2, 4, 0, 4, 0, 2, 2, 2] } },
     ],
     tryThis: [
-      'Load "Scattered points" and watch the stack row. Most points are pushed and later popped. Count how often a single new point causes two or three pops in a row: that is the inner loop at work.',
-      'Load "On a circle: nothing is popped". Every turn is a left turn, so every point stays. This is the case with the most corners, and yet the scan does the least work: one turn test per point.',
-      'Load "Square with points on its sides". Points 1, 3, 6 and 7 lie on the edges, between corners. Points 1, 3 and 6 are popped with a turn value of exactly 0, and point 7 by a right turn when the farther corner 8 arrives. This lesson reports corners only.',
-      'Set the spread to "Scattered evenly" and move the number of points from 20 to 60. The number of corners grows only slowly, while the number of popped points grows almost as fast as the number of points.',
+      { ask: 'Load "Scattered points" and watch the stack row. There are 18 points. How many of them will end up popped? And will any single new point pop more than one point in a row?',
+        reveal: '10 points are popped, which leaves 8 corners, and the scan makes 26 turn tests. Three times a new point removes more than one earlier point: twice it pops two in a row, and once three. That is the inner loop at work, and it is why the scan needs `while` where `if` looks tempting. The total still stays under two tests per point, because a point that has been popped can never be popped again.' },
+      { ask: 'Load "On a circle: nothing is popped". With all 16 points as corners, this is the largest hull 16 points can have. Will the scan make more turn tests here than it made on the 18 scattered points, or fewer?',
+        reveal: 'Fewer: 14 turn tests, against 26 for the scattered points. Every turn is a left turn, so every point is tested once as it arrives and stays. The first two points go on without a test, which leaves 16 − 2 = 14. The hull with the most corners is the one the scan works least on, because the extra tests are always the ones that pop.' },
+      { ask: 'Load "Square with points on its sides". Four of the nine points sit halfway along the sides of the square and one is in the centre. A rubber band round the square would touch the four side points. Will the scan keep them in the hull?',
+        reveal: 'No. The hull is the four corners, and the other five points are all popped. Points 1, 3 and 6 are side points popped with a turn value of exactly 0: each lies in a straight line between its neighbours. Point 7, the fourth side point, is pushed after a left turn and then popped by a right turn when the farther corner 8 arrives. Point 4, the centre, is popped by a right turn as well. This lesson reports corners only, so a point on an edge goes the same way as a point inside.' },
+      { ask: 'Load "Scattered points", then move the number of points to 20, 30, 40, 50 and 60, running each. The number of points triples. Will the number of corners triple with it?',
+        reveal: 'No. The corners go 8, 10, 10, 9, 9, while the popped points go 12, 20, 30, 41, 51. Almost every added point lands inside the outline that is already there, so it is pushed, popped and forgotten. For points scattered evenly, the number of corners grows only slowly while the number of popped points grows almost as fast as the number of points.' },
     ],
     run,
     report: (r, c) => `${r.degenerate ? 'All points are in one line: the hull is a segment.' : `Convex hull of ${r.n} points: ${r.hull.length} corners, counter-clockwise from the lowest point.`}\nCorners (labels in sorted order): ${r.hull.join(', ')}\n${c['sort comparisons'] || 0} comparisons to sort, then ${c['orientation tests'] || 0} turn tests and ${r.popped} pops in the scan.`,
@@ -431,9 +435,23 @@ export default {
 
   code: {
     sample: {
-      input: 'Ten points: (1,1) (5,1) (9,1) (7,3) (9,5) (6,7) (3,6) (1,4) (4,3) (5,4). Three of them lie in a line along the bottom edge.',
+      input: 'Ten points: (1,1) (5,1) (9,1) (7,3) (9,5) (6,7) (3,6) (1,4) (4,3) (6,4). Three of them lie in a line along the bottom edge, and two of the inside points, (6,4) and (4,3), are removed by the same new point.',
       expected: 'hull: (1,1) (9,1) (9,5) (6,7) (3,6) (1,4)\n6 corners from 10 points',
     },
+    breakIt: [
+      { change: 'In the scan, change `while` to `if`, so that a new point can remove at most one earlier point. Which point will get into the hull that should not be there?',
+        find: { python: 'while len(stack) >= 2', javascript: 'while (stack.length >= 2' },
+        replace: { python: 'if len(stack) >= 2', javascript: 'if (stack.length >= 2' },
+        reveal: 'It prints "hull: (1,1) (9,1) (9,5) (6,4) (6,7) (3,6) (1,4)" and "7 corners from 10 points". The extra point is (6,4). It lies inside the true hull, so the outline now has a dent there. When (6,7) arrives, both (4,3) and (6,4) have to go. With `if` the scan pops (4,3), pushes (6,7) and moves on, and (6,4) is never tested again. Most new points pop one point or none, which is how this mistake gets through small tests.' },
+      { change: 'Break ties in the sort the wrong way round: change `da - db` to `db - da`, so that of two points in the same direction from the pivot the farther one comes first. The program still prints 6 corners. Which one is wrong?',
+        find: { python: 'return da - db', javascript: 'return da - db;' },
+        replace: { python: 'return db - da', javascript: 'return db - da;' },
+        reveal: 'The second one. It prints "hull: (1,1) (5,1) (9,5) (6,7) (3,6) (1,4)". The true corner (9,1) is gone, and (5,1), a point from the middle of the bottom edge, stands in its place. Both lie in the same direction from the pivot (1,1). With the farther one sorted first, (9,1) is pushed, then (5,1) arrives, the three points are in a straight line, and the scan pops (9,1). The count still says 6 corners, so only a check of the points themselves catches this. The outline printed no longer contains (9,1).' },
+      { change: 'Pop on a right turn only: in the scan, change `<= 0` to `< 0`. How many corners will the program report?',
+        find: { python: ', c) <= 0:', javascript: ', c) <= 0) {' },
+        replace: { python: ', c) < 0:', javascript: ', c) < 0) {' },
+        reveal: 'Seven. It prints "hull: (1,1) (5,1) (9,1) (9,5) (6,7) (3,6) (1,4)" and "7 corners from 10 points". The extra point is (5,1), which lies on the bottom edge between (1,1) and (9,1). Walking from (1,1) through (5,1) to (9,1) makes no turn, the turn value is exactly 0, and with `< 0` that is no longer a reason to pop. The outline has the same shape as before, so whether this counts as wrong depends on what was promised. This lesson promises corners only. Decide which you want, and make the sort and the scan agree with it.' },
+    ],
     python: {
       source: `from functools import cmp_to_key
 
@@ -463,7 +481,7 @@ def graham_scan(points):
     return stack
 
 
-points = [(1, 1), (5, 1), (9, 1), (7, 3), (9, 5), (6, 7), (3, 6), (1, 4), (4, 3), (5, 4)]
+points = [(1, 1), (5, 1), (9, 1), (7, 3), (9, 5), (6, 7), (3, 6), (1, 4), (4, 3), (6, 4)]
 hull = graham_scan(points)
 print("hull: " + " ".join(f"({x},{y})" for x, y in hull))
 print(f"{len(hull)} corners from {len(points)} points")`,
@@ -503,7 +521,7 @@ function grahamScan(points) {
   return stack;
 }
 
-const points = [[1, 1], [5, 1], [9, 1], [7, 3], [9, 5], [6, 7], [3, 6], [1, 4], [4, 3], [5, 4]];
+const points = [[1, 1], [5, 1], [9, 1], [7, 3], [9, 5], [6, 7], [3, 6], [1, 4], [4, 3], [6, 4]];
 const hull = grahamScan(points);
 console.log("hull: " + hull.map(([x, y]) => "(" + x + "," + y + ")").join(" "));
 console.log(hull.length + " corners from " + points.length + " points");`,
@@ -543,7 +561,7 @@ std::vector<Point> grahamScan(std::vector<Point> pts) {
 }
 
 int main() {
-    std::vector<Point> points = {{1, 1}, {5, 1}, {9, 1}, {7, 3}, {9, 5}, {6, 7}, {3, 6}, {1, 4}, {4, 3}, {5, 4}};
+    std::vector<Point> points = {{1, 1}, {5, 1}, {9, 1}, {7, 3}, {9, 5}, {6, 7}, {3, 6}, {1, 4}, {4, 3}, {6, 4}};
     std::vector<Point> hull = grahamScan(points);
     std::cout << "hull:";
     for (const Point& p : hull) std::cout << " (" << p.x << "," << p.y << ")";
@@ -652,16 +670,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Sixteen points are placed evenly around a circle. How many points will the scan pop?',
-      options: ['None', '8', '14', '15'],
-      answer: 0,
+      q: 'Six points: the corners of a triangle at (0, 0), (10, 0) and (5, 9), and three points inside it at (3, 2), (6, 2) and (5, 5). How many points will the scan pop?',
+      options: ['None. A point inside the triangle is never pushed', '3', '5', 'It depends on the order in which the points were typed'],
+      answer: 1,
       explain: [
-        'Correct. Walking round a circle counter-clockwise is a left turn at every point, so every point is a corner and nothing is removed.',
-        'Popping happens only at a right turn or a straight line, and a circle has neither.',
-        '14 would leave a hull of two points. Every point on a circle is a corner.',
-        'The pivot is never popped, and neither is anything else here.',
+        'The scan cannot tell that a point is inside until a later point shows it up. Every point is pushed when its turn comes.',
+        'Every point is pushed once, and each of the three inside points is popped once. (6, 2) and (3, 2) are both pushed, and both are popped when (5, 5) arrives. Then (5, 5) is popped when (5, 9) arrives. The scan pops exactly the points that are not corners.',
+        'Five pops would leave one point. The pivot is never popped, and the other two corners of the triangle survive every test.',
+        'The points are sorted by direction from the pivot before the scan starts, so the order in which they were typed makes no difference.',
       ],
-      tryInput: { n: 16, distribution: 'circle', seed: 2, custom: [] },
+      tryInput: { custom: [0, 0, 10, 0, 5, 9, 3, 2, 6, 2, 5, 5] },
+      check: (r, c) => (r.popped === 3 && r.hull.length === 3 && r.hullPoints.map((p) => p.join(' ')).join(', ') === '0 0, 10 0, 5 9' && c['orientation tests'] === 7) || `${r.popped} pops, hull ${r.hullPoints.map((p) => p.join(' ')).join(', ')}`,
     },
     {
       type: 'debug',
@@ -682,16 +701,17 @@ for c in rest:
     },
     {
       type: 'predict',
-      q: 'Nine points: the four corners of a square, the midpoint of each side, and the centre. How many points are in the hull this page reports?',
-      options: ['4', '8', '9', '5'],
+      q: 'Seven points: (0, 0), (2, 0), (4, 0), (6, 0), (6, 3), (6, 6) and (3, 3). They outline a triangle, with extra points along all three of its sides. How many points are in the hull this page reports?',
+      options: ['3', '4', '7', '6'],
       answer: 0,
       explain: [
-        'Correct. The four side midpoints are popped, three of them with a turn value of exactly 0, and the centre is inside. Only the corners remain.',
-        'The band would touch all eight boundary points, but this version reports corners only and drops points that lie along an edge.',
-        'The centre is strictly inside the square and can never be on the hull.',
-        'The centre is not a corner. The four corners are the whole answer.',
+        'The corners are (0, 0), (6, 0) and (6, 6). The other four points lie along the sides, between corners. (2, 0), (4, 0) and (6, 3) are popped with a turn value of exactly 0, and (3, 3) is popped by a right turn when the farther point (6, 6) arrives.',
+        'That would be right if (3, 3) survived. It lies in exactly the same direction from the pivot as (6, 6). The sort puts the nearer of the two first, so that the farther one can pop it.',
+        'The band would touch all seven points, but this version reports corners only and drops points that lie along an edge.',
+        'Six would mean that only one point is dropped. All four of the points that lie along a side are dropped.',
       ],
-      tryInput: { custom: [0, 0, 2, 0, 4, 0, 4, 2, 4, 4, 2, 4, 0, 4, 0, 2, 2, 2] },
+      tryInput: { custom: [0, 0, 2, 0, 4, 0, 6, 0, 6, 3, 6, 6, 3, 3] },
+      check: (r) => (r.hull.length === 3 && r.popped === 4 && r.hullPoints.map((p) => p.join(' ')).join(', ') === '0 0, 6 0, 6 6') || `${r.hull.length} corners, ${r.popped} pops, hull ${r.hullPoints.map((p) => p.join(' ')).join(', ')}`,
     },
     {
       type: 'choice',
@@ -708,7 +728,8 @@ for c in rest:
     {
       type: 'challenge',
       title: 'Monotone chain',
-      prompt: 'Write a second hull function that avoids the angular sort. Sort the points by x, breaking ties by y. Sweep left to right, keeping a stack and popping while the last three points do not make a left turn: this gives the lower half of the hull. Sweep right to left in the same way to get the upper half, and join the two. Check on random whole-number points that it returns exactly the same corners as the Graham scan, including when many points are collinear.',
+      prompt: 'Write a second hull function that avoids the angular sort. Sort the points by x, breaking ties by y. Sweep left to right, keeping a stack and popping while the last three points do not make a left turn: this gives the lower half of the hull. Sweep right to left in the same way to get the upper half, and join the two. Test it on the ten points of the code sample above, and on the nine points of the square with points on its sides: 0 0, 2 0, 4 0, 4 2, 4 4, 2 4, 0 4, 0 2, 2 2. Then check on random whole-number points that it returns exactly the same corners as the Graham scan, including when many points are collinear.',
+      expect: 'On the ten points of the code sample it returns the same six corners as the Graham scan, in the same order: (1,1) (9,1) (9,5) (6,7) (3,6) (1,4). On the square it returns (0,0) (4,0) (4,4) (0,4). The four side points and the centre are dropped. Both lists already start where the Graham scan starts, because in these two inputs the lowest point is also the leftmost. In our own check on 1,989 random sets of 3 to 40 points, many of them full of collinear points, the two functions agreed every time once the lists were rotated to start at the same point.',
       hints: ['The leftmost and rightmost points appear at the end of one half and the start of the other. Remove the repeats when joining.', 'The same turn test and the same `<= 0` rule give corners only.', 'To compare the two results, rotate one list so that both start at the same point.'],
     },
   ],
@@ -766,6 +787,12 @@ for c in rest:
       } },
     { name: 'the worked example: hull 0, 1, 3, 4 with 4 turn tests and 1 pop', input: { custom: [0, 0, 4, 1, 3, 2, 4, 4, 1, 3] },
       check: (r, c) => (r.hull.join(',') === '0,1,3,4' && r.hullPoints.map((p) => p.join(' ')).join(', ') === '0 0, 4 1, 4 4, 1 3' && c['orientation tests'] === 4 && r.popped === 1) || `hull ${r.hull.join(',')}, ${c['orientation tests']} tests, ${r.popped} pops` },
+    { name: 'the quiz prediction: a triangle with three points inside pops exactly those three', input: { custom: [0, 0, 10, 0, 5, 9, 3, 2, 6, 2, 5, 5] },
+      check: (r, c) => (r.popped === 3 && r.hullPoints.map((p) => p.join(' ')).join(', ') === '0 0, 10 0, 5 9' && c['orientation tests'] === 7 && checkHull(r) === true) || `${r.popped} pops, hull ${r.hullPoints.map((p) => p.join(' ')).join(', ')}` },
+    { name: 'the quiz prediction: a triangle with points along all three sides has 3 corners', input: { custom: [0, 0, 2, 0, 4, 0, 6, 0, 6, 3, 6, 6, 3, 3] },
+      check: (r) => (r.popped === 4 && r.hullPoints.map((p) => p.join(' ')).join(', ') === '0 0, 6 0, 6 6' && checkHull(r) === true) || `${r.popped} pops, hull ${r.hullPoints.map((p) => p.join(' ')).join(', ')}` },
+    { name: 'the scattered preset: 8 corners, 10 pops and 26 turn tests', input: { n: 18, distribution: 'uniform', seed: 7, custom: [] },
+      check: (r, c) => (r.hull.length === 8 && r.popped === 10 && c['orientation tests'] === 26 && checkHull(r) === true) || `${r.hull.length} corners, ${r.popped} pops, ${c['orientation tests']} tests` },
     { name: 'points on a circle are all corners: no pops and n − 2 turn tests', input: { n: 16, distribution: 'circle', seed: 2, custom: [] },
       check: (r, c) => (r.hull.length === 16 && r.popped === 0 && c['orientation tests'] === 14 && checkHull(r) === true) || `${r.hull.length} corners, ${r.popped} pops, ${c['orientation tests']} tests` },
     { name: 'sixty points on a circle are still all corners', input: { n: 60, distribution: 'circle', seed: 9, custom: [] },

@@ -241,12 +241,18 @@ export default {
       { label: 'Curved valley', values: { ...DEFAULTS, landscape: 'rosenbrock' } },
     ],
     tryThis: [
-      'Run the default and watch the two lines in the lower chart. The average falls quickly in the first generations as poor members fail to become parents. The best value falls in steps. Notice the counter: this run uses 900 function evaluations, three times the default budget of the simulated annealing lesson.',
-      'Load "An unlucky seed: stuck one dip away". The population gathers in a dip next to the centre and stays there. This is premature convergence: selection has removed the variety that crossover would need to get out. Over the seeds 1 to 60, the default settings end in the central dip 48 times and somewhere else, usually one dip away, the other 12 times.',
-      'Load "Tiny population, many generations". Six members cannot cover the map, and they become near copies of each other within a few generations. Running for 100 generations does not rescue them. Over the seeds 1 to 60, only 11 runs end in the central dip.',
-      'Load "No mutation: the population collapses". Crossover can only blend what is already there. The members draw together until they are all on the same spot, every child lands on that spot too, and the search is over.',
-      'Load "Too much mutation". Children are thrown so far from their parents that the average value never improves, and the method has turned into blind random search. On this small map blind search still stumbles on fairly good points. With many variables it would not.',
-      'Load "No elitism: the best can be lost" and watch the dark line in the chart. It goes up as well as down, because the best member is not protected from being replaced by worse children.',
+      { ask: 'Run the default: 30 members for 30 generations, with the best member copied across each time. Before you look at the counter, how many times will the function have been evaluated by the end? And one of the two lines in the lower chart never goes up. Which one, and why?',
+        reveal: '900 evaluations: 30 for the first population, then 29 new children in each of the 30 generations, since the copied member needs no new evaluation. That is three times the 300 steps of the default run in the simulated annealing lesson, so compare the two methods by evaluations, not by generations. The line that never goes up is the best value, because the best member is always carried over. It falls in steps: 2.003 for four generations, then 1.950, 0.134 and 0.012, and in the end 0.00002. The average falls from 31.873 to 4.099 but not steadily. It rises from 19.203 to 20.025 in generation 3, because children are random blends and some land badly.' },
+      { ask: 'Load "An unlucky seed: stuck one dip away". Nothing has changed but the seed, and this run ends at value 0.995, in the dip next to the centre. Is that a rare accident? Out of the seeds 1 to 60 with the default settings, how many would you expect to end in the central dip?',
+        reveal: '48 of the 60. The other 12 end somewhere else, usually one dip away, so about one run in five goes the way this one does. Here the population gathers at (0.995, 0.00130) and stays, with its members a typical 0.242 from the best one. This is premature convergence: selection has removed the variety that crossover would need to get out.' },
+      { ask: 'Load "Tiny population, many generations": 6 members for 100 generations. That costs 506 evaluations against the default\'s 900. With the default settings 48 of the seeds 1 to 60 ended in the central dip. How many of the 60 will this setting manage: about as many, about half as many, or fewer still?',
+        reveal: 'Only 11. Six members cannot cover the map, and they draw together almost at once: by generation 5 they are a typical 0.089 from the best one, where the 30 members of the default run are still 1.269 apart. After that crossover has little to work with, and progress waits on a lucky child. The seed in this preset is one of the 11, and its chart shows how. The best value sits near 3.98 from generation 18 to generation 40. Then three lucky children carry it from dip to dip, to 2.468, to 0.962, and into the central dip at generation 55. Most seeds get no such run of luck in 100 generations.' },
+      { ask: 'Load "No mutation: the population collapses". Crossover can only blend what is already there. After 30 generations, how far apart will the 30 members be? And will the place they end up be the centre?',
+        reveal: 'They are a typical 0.00026 from the best member, which is to say all on one spot, and the average value equals the best to three decimals: 0.995. The spot is (0.995, -0.00000), the floor of the dip next to the centre. Once the members coincide, every child lands on that spot too, and the search is over. Where the collapse happens is settled early by which members win: with the default seed and the same settings it happens on the centre itself.' },
+      { ask: 'Load "Too much mutation". Every coordinate of every child now gets a nudge of typical length 1.5, on a map 8 units wide. In the default run the average value fell from 31.873 to 4.099. Where will the average end up here?',
+        reveal: 'At 30.159, about where it started. Children are thrown so far from their parents that whatever selection gained is undone at once, and the method has turned into blind random search: the members end a typical 3.231 from the best one. The best value, 1.338, was found in generation 4 and never improved. On this small map blind search still stumbles on fairly good points. With many variables it would not.' },
+      { ask: 'Load "No elitism: the best can be lost" and watch the dark line in the chart. It uses the default seed, whose run with elitism ended at 0.00002. Will the best member of the final population be as good as the best point this run ever saw?',
+        reveal: 'No. The best point it ever saw was (-0.050, 0.027) with value 0.647, in generation 8, already in the central dip. The children that replaced it were worse, and the best member of the final population has value 2.133. The dark line goes up as well as down: 2.003, then 2.816, then 1.006, then 1.960. This run also uses 930 evaluations, not 900, because all 30 members are new in every generation.' },
     ],
     run,
     report: (r, c) => `Best value ${f3(r.bestValue)} at (${f3(r.x)}, ${f3(r.y)}), first seen in generation ${r.foundAt} of ${r.generations}.\nFinal population: best ${f3(r.finalBest)}, average ${f3(r.finalMean)}, typical distance from the best member ${f3(r.spread)}.\n${c['function evaluations'] || 0} function evaluations.`,
@@ -310,6 +316,20 @@ export default {
       input: 'Minimize f(x) = (x² − 1)² + 0.3x, the two-dip curve from the simulated annealing lesson, with 8 members for 12 generations. A small fixed random number generator makes every language print the same numbers.',
       expected: 'gen  0: best x=-0.7557 f=-0.0428 mean f=1.7555\ngen  3: best x=-0.9624 f=-0.2833 mean f=0.5125\ngen  6: best x=-1.0489 f=-0.3046 mean f=-0.1811\ngen  9: best x=-1.0370 f=-0.3054 mean f=-0.3045\ngen 12: best x=-1.0370 f=-0.3054 mean f=-0.0095',
     },
+    breakIt: [
+      { change: 'In `tournament`, turn the comparison round so that the member with the larger value wins: change `<=` to `>=`. What will happen to the "mean f" column over the 12 generations?',
+        find: { python: 'return a if f(a) <= f(b) else b', javascript: 'return f(a) <= f(b) ? a : b;' },
+        replace: { python: 'return a if f(a) >= f(b) else b', javascript: 'return f(a) >= f(b) ? a : b;' },
+        reveal: 'It climbs and keeps climbing: 1.7555, 19.0436, 65.4081, 78.5050, 102.0490. Each tournament now makes a parent of the worse of its two members, so the population breeds its way out along the steep sides of the curve. The "best" column hardly moves, and even improves a little to −0.1962, but only because the best member is still copied across unchanged in every generation. A steady best beside a soaring average is the mark of selection running backwards.' },
+      { change: 'Start each new generation empty instead of with a copy of the best member: remove `best_of(pop)` from the line that creates `children`, leaving an empty list. Will the "best" column still only ever improve?',
+        find: { python: 'children = [best_of(pop)]', javascript: 'const children = [bestOf(pop)];' },
+        replace: { python: 'children = []', javascript: 'const children = [];' },
+        reveal: 'No. The line for generation 3 reads "best x=-1.3382 f=0.2239", which is worse than the −0.0428 the population began with. Without the copy, the best member survives only if a child happens to land as well as it did, and children are random blends with mutations on top. This run recovers to −0.3054 by generation 9 and then slips back to −0.3048 at generation 12, where the correct program held −0.3054. A program without elitism has to remember the best point it has seen separately, because the final population may no longer contain it.' },
+      { change: 'Switch mutation off by changing the rate passed to `mutate` from `0.3` to `0.0`. Watch the gap between "best f" and "mean f". Will the population still reach the floor of the deeper dip, where f is −0.3054?',
+        find: { python: 'mutate(child, 0.3, 0.2)', javascript: 'mutate(blend(a, b), 0.3, 0.2)' },
+        replace: { python: 'mutate(child, 0.0, 0.2)', javascript: 'mutate(blend(a, b), 0.0, 0.2)' },
+        reveal: 'It stops short. The last line reads "gen 12: best x=-1.0642 f=-0.3017 mean f=-0.3013", where the correct program had reached f=-0.3054 by generation 9. Best and mean are 0.0004 apart, so all eight members are on almost the same spot, a little to one side of the floor of the dip. Blending two nearly identical parents gives nearly the same point again, and each three generations gain less than the last: 0.0050, then 0.0012, then 0.0006. This is premature convergence in miniature. Selection has used up the variety and nothing puts it back.' },
+    ],
     python: {
       source: `import math
 
@@ -618,16 +638,18 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The mutation rate is set to 0 and the algorithm runs for 30 generations on the rippled surface (the "No mutation" preset). What does the final population look like?',
-      options: ['Spread evenly over the map, as at the start', 'All 30 members sit on practically the same spot', 'Split into several groups, one in each dip', 'It keeps drifting and never settles'],
-      answer: 1,
+      q: 'On the rippled surface, set the mutation rate to 0 and the population to 6, and keep the default seed. The six members start scattered over the map. Where are they after 30 generations?',
+      options: ['All on one spot in the central dip, with a value close to 0', 'All on one spot on the floor of some other dip, with a value close to a whole number', 'All on exactly one spot partway up the side of a dip, which they reached within the first few generations', 'Still scattered, because with no mutation nothing moves them'],
+      answer: 2,
       explain: [
-        'Selection removes poor members every generation, so the spread cannot survive.',
-        'Correct. Selection keeps removing variety and nothing puts it back. By the end the members lie within a thousandth of a unit of each other, and blending two nearly identical parents gives nearly the same point again. In this run they collapse in a dip next to the centre, with value about 0.995, and cannot leave.',
-        'Several groups can coexist for a while, but tournaments between them keep removing the weaker until one is left.',
-        'Drift needs a source of change. With no mutation and identical members there is none.',
+        'Reaching the centre takes variety to blend, and six members lose theirs almost at once. The best value stops improving in generation 4, at 7.308.',
+        'A larger population with no mutation does shrink onto the floor of a dip, as the "No mutation" preset shows. Six members run out of variety before they get that far. They stop at (0.161, -1.086) with value 7.308, where the floor of that dip is about 0.995.',
+        'The best value goes 15.503, 15.076, 11.379, 7.308 and never changes after generation 4. By generation 8 all six members are the same point, (0.161, -1.086). When both tournaments pick the same member the child is an exact copy, and with six members that happens often. Blending a point with itself gives that point again, so the search is over, on a slope and nowhere near a minimum.',
+        'Crossover moves them: each child lands somewhere around its two parents. What is missing is anything to put variety back once selection has removed it.',
       ],
-      tryInput: { ...DEFAULTS, seed: 2, mutationRate: 0 },
+      tryInput: { ...DEFAULTS, population: 6, mutationRate: 0 },
+      check: (r) => (r.spread === 0 && r.foundAt === 4 && Math.abs(r.bestValue - 7.308) < 5e-4 && r.finalMean === r.finalBest && Math.abs(r.x - 0.161) < 5e-4 && Math.abs(r.y + 1.086) < 5e-4
+        && r.bestHistory.slice(0, 5).map((v) => v.toFixed(3)).join(',') === '15.503,15.076,15.076,11.379,7.308') || `best ${r.bestValue} at (${r.x}, ${r.y}), found in generation ${r.foundAt}, spread ${r.spread}`,
     },
     {
       type: 'debug',
@@ -660,7 +682,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Evolve a packing list',
-      prompt: 'Take a 0/1 knapsack problem with 24 items of random weight and value and a capacity of half the total weight. Encode a candidate as 24 bits, one per item. Write a genetic algorithm with tournament selection, one-point crossover (the child takes the first k bits from one parent and the rest from the other) and bit-flip mutation. Decide how to treat candidates that exceed the capacity. Compare the best value found with the exact optimum from dynamic programming over 30 seeds, and report how often the optimum is reached and how many evaluations were used.',
+      prompt: 'Take a 0/1 knapsack problem with 24 items. Make them with the generator from the code sample: start `state` at 2024, and for each item draw a weight of 1 + int(rand() × 20) and then a value of 1 + int(rand() × 30). The capacity is half the total weight. Encode a candidate as 24 bits, one per item. Write a genetic algorithm with tournament selection, one-point crossover (the child takes the first k bits from one parent and the rest from the other) and bit-flip mutation. Decide how to treat candidates that exceed the capacity. Compare the best value found with the exact optimum from dynamic programming over 30 seeds, and report how often the optimum is reached and how many evaluations were used.',
+      expect: 'Three figures are exact, so check them first. The items begin (weight 1, value 4), (3, 19), (3, 28). Their total weight is 196, so the capacity is 98, and dynamic programming gives an optimum value of 278. The rest depends on your design and your random draws. Mine used 40 members for 60 generations with the best member copied across, a mutation chance of 1/24 for each bit, and 2,380 evaluations for each run. When an overweight candidate simply scored 0, it reached 278 on 25 of 30 seeds, and its worst result was 272. When overweight candidates were repaired by removing packed items at random until they fitted, it reached 278 on 26 of 30, with a worst result of 268. For comparison, dynamic programming finds the exact answer here with about 2,200 table updates, so on a problem this small the exact method is the better tool.',
       hints: ['Two common ways to handle overweight candidates: give them a penalized score, or repair them by removing items until they fit.', 'A mutation probability of about one divided by the number of bits is a common starting point.'],
     },
   ],
@@ -723,6 +746,43 @@ int main() {
         const ok = [1, 4, 10, 12].map(score).join() === '36,9,9,25' && score(5.5) === 2.25 && score(6) === 1 && 5.5 >= 4 - 3 && 5.5 <= 10 + 3;
         const n = 30, pBest = (2 * n - 1) / (n * n);
         return (ok && pBest === 59 / 900 && Math.round(pBest * 1000) === 66 && Math.round(Math.log2(n)) === 5) || 'a quoted number is wrong';
+      } },
+    { name: 'Things to try: the default run, as quoted', input: { ...DEFAULTS },
+      check: (r, c) => {
+        const b = r.bestHistory.map((v) => v.toFixed(3)), m = r.meanHistory.map((v) => v.toFixed(3));
+        return (c['function evaluations'] === 900 && b.slice(1, 5).every((v) => v === '2.003') && b[5] === '1.950' && b[6] === '0.134' && b[7] === '0.012' && r.bestValue.toFixed(5) === '0.00002' && m[0] === '31.873' && m[30] === '4.099' && m[2] === '19.203' && m[3] === '20.025'
+          && r.bestHistory.every((v, i) => i === 0 || v <= r.bestHistory[i - 1])) || `best ${b.slice(0, 8)}, mean ${m.slice(0, 4)} to ${m[30]}`;
+      } },
+    { name: 'Things to try: the unlucky seed and the tiny population, as quoted', input: { ...DEFAULTS, population: 6, generations: 100 },
+      check: (r, c) => {
+        const q = { count() {}, frame() {} };
+        const early = run({ ...DEFAULTS, population: 6, generations: 5 }, q).spread.toFixed(3), wide = run({ ...DEFAULTS, generations: 5 }, q).spread.toFixed(3);
+        if (early !== '0.089' || wide !== '1.269') return `spread at generation 5: ${early} with 6 members, ${wide} with 30`;
+        const unlucky = run({ ...DEFAULTS, seed: 3 }, q), b = r.bestHistory.map((v) => v.toFixed(3));
+        return (c['function evaluations'] === 506 && b.slice(18, 27).every((v) => v === '3.981') && b.slice(27, 41).every((v) => v === '3.980') && b[41] === '2.468' && b[50] === '0.962' && r.bestHistory.findIndex((v) => v < 0.9) === 55
+          && Math.abs(r.x) < 0.5 && Math.abs(r.y) < 0.5 && unlucky.x.toFixed(3) === '0.995' && unlucky.y.toFixed(5) === '0.00130' && unlucky.spread.toFixed(3) === '0.242' && unlucky.bestValue.toFixed(3) === '0.995')
+          || `tiny: ${b.slice(16, 56)}; unlucky (${unlucky.x}, ${unlucky.y}) spread ${unlucky.spread}`;
+      } },
+    { name: 'Things to try: no mutation, too much mutation and no elitism, as quoted', input: { ...DEFAULTS, seed: 2, mutationRate: 0 },
+      check: (r) => {
+        const q = { count() {}, frame() {} };
+        const centre = run({ ...DEFAULTS, mutationRate: 0 }, q), wild = run({ ...DEFAULTS, mutationRate: 1, mutationSize: 1.5 }, q);
+        let evals = 0;
+        const loose = run({ ...DEFAULTS, elitism: false }, { count: (k) => { if (k === 'function evaluations') evals++; }, frame() {} });
+        return (r.spread.toFixed(5) === '0.00026' && r.finalMean.toFixed(3) === '0.995' && r.finalBest.toFixed(3) === '0.995' && r.x.toFixed(3) === '0.995' && Math.abs(r.y) < 5e-6
+          && Math.hypot(centre.x, centre.y) < 1e-4 && centre.spread < 1e-4
+          && wild.finalMean.toFixed(3) === '30.159' && wild.spread.toFixed(3) === '3.231' && wild.bestValue.toFixed(3) === '1.338' && wild.foundAt === 4
+          && loose.bestValue.toFixed(3) === '0.647' && loose.foundAt === 8 && loose.x.toFixed(3) === '-0.050' && loose.y.toFixed(3) === '0.027' && loose.finalBest.toFixed(3) === '2.133' && evals === 930
+          && loose.bestHistory.slice(1, 6).map((v) => v.toFixed(3)).join(',') === '2.003,2.816,2.816,1.006,1.960')
+          || `collapse ${r.spread} at (${r.x}, ${r.y}); wild ${wild.finalMean}; loose ${loose.bestValue} then ${loose.finalBest}, ${evals} evaluations`;
+      } },
+    { name: 'quiz prediction: six members with no mutation become one point on a slope by generation 8', input: { ...DEFAULTS, population: 6, mutationRate: 0 },
+      check: (r) => {
+        const q = { count() {}, frame() {} };
+        const at8 = run({ ...DEFAULTS, population: 6, mutationRate: 0, generations: 8 }, q), at6 = run({ ...DEFAULTS, population: 6, mutationRate: 0, generations: 6 }, q);
+        const L = landscapeById.rastrigin, g = L.grad(r.x, r.y);
+        return (r.spread === 0 && at8.spread === 0 && at6.spread > 0 && r.foundAt === 4 && r.bestValue.toFixed(3) === '7.308' && Math.hypot(g[0], g[1]) > 10 && Math.abs(L.f(0, -0.995) - 0.995) < 0.001)
+          || `spread ${r.spread}, at 8: ${at8.spread}, best ${r.bestValue}, slope ${Math.hypot(g[0], g[1])}`;
       } },
     { name: 'the seed statistics quoted in Try this', input: {},
       check: () => {

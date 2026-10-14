@@ -309,11 +309,18 @@ export default {
       { label: 'Decay, step too large: unstable', values: { system: 'decay', dt: 3, duration: 30 } },
     ],
     tryThis: [
-      'Run "Decay, five large steps". It spends 20 derivative evaluations and its largest error is 0.0071. Now open Euler\'s method on the same system with a step of 0.25: also 20 evaluations, but the largest error is 0.051, about seven times worse.',
-      'On decay with a duration of 5, set the step to 0.5 and note the largest error, then set it to 0.25. The error falls from about 0.00029 to 0.000015, a factor near 20 here and closer to 16 as the steps get smaller. Halving the step doubles the work and buys more than one extra digit.',
-      'Load "Oscillator, step 0.5" and then the same system in Euler\'s method. Euler\'s swing grows quickly. RK4 stays close to the exact curve, and its energy creeps down very slowly instead of up.',
-      'Load "Decay, step too large: unstable". With a step of 3 the computed values grow instead of fading. Slide the step down: below about 2.78 they fade again. RK4 has a stability limit too; it is only somewhat larger than Euler\'s limit of 2.',
-      'Load "Moving target" and step through the first few steps. Here the rule depends on the time as well as the value, so the samples at the middle and end of the step see a target that has moved.',
+      { ask: 'Load "Decay, five large steps". Five steps of 1 cost 20 derivative evaluations. Euler\'s method can spend the same 20 evaluations on this problem by taking steps of 0.25, and its largest error is then 0.0515. Steps of 1 are four times as long. Will RK4\'s largest error be bigger or smaller than Euler\'s?',
+        reveal: 'Smaller, by about seven times: 0.00712 against 0.0515. Both runs evaluate the rule of change 20 times. RK4 spends its four evaluations per step on looking ahead within the step, and that is worth more here than taking four short steps.' },
+      { ask: 'On decay with a duration of 5, set the step to 0.5 and note the largest error. Halving the step to 0.25 doubles the work. By what factor will the error fall: about 2, about 4, or more than 10?',
+        input: { system: 'decay', dt: 0.25, duration: 5 },
+        reveal: 'More than 10. The error falls from 0.000291 to 0.0000148, a factor near 20. Halve the step again, to 0.125, and it falls to 0.000000831, a factor near 18. The factor closes in on 16 as the steps get smaller. Each halving doubles the work and buys more than one extra digit.' },
+      { ask: 'Load "Oscillator, step 0.5". The exact motion keeps its energy at 0.5 for ever. Euler\'s method with this step drives the energy up to 3,762 by time 20. What will RK4 do to the energy over the same 40 steps: raise it, lower it, or keep it exactly at 0.5?',
+        reveal: 'It lowers it, very slowly: from 0.5 to 0.495813. RK4 stays close to the exact curve, with a largest error of 0.0104, and its swing shrinks a little where Euler\'s grows. Neither method keeps the energy exactly. RK4 loses a tiny fraction of it at every step.' },
+      { ask: 'Load "Decay, step too large: unstable". With a step of 3 the computed values grow when they should fade: 1, 1.375, 1.891, 2.6. Euler\'s method on this equation goes wrong for any step above 2. Set the step to 2.5. Will RK4\'s values grow or fade?',
+        input: { system: 'decay', dt: 2.5, duration: 30 },
+        reveal: 'They fade: 1, 0.6484, 0.4205, 0.2726 and on down to 0.005526 after 12 steps. RK4 has a stability limit too, but it lies at about 2.78: at a step of 2.78 the values still shrink, and at 2.79 they grow. That is only somewhat larger than Euler\'s limit of 2. Fading is not the same as accurate, though. The largest error of the run at 2.5 is 0.566.' },
+      { ask: 'Load "Moving target" and step through the first step. The rule is y′ = cos(t) − y and the start is y = 0, so the first slope k1 is cos(0) − 0 = 1. The last sample, k4, is taken at the end of the step, at time 1. Will k4 be positive or negative?',
+        reveal: 'Negative: k4 = −0.14849. The four slopes are 1, 0.37758, 0.68879 and −0.14849. By time 1 the target cos(t) has dropped to about 0.54, while the trial value has climbed to 0.68879. The trial point is above the target, so the rule pulls it back down. Here the rule depends on the time as well as the value, so the samples at the middle and the end of the step see a target that has moved.' },
     ],
     run,
     report: (r, c) => `${r.status === 'blew-up' ? `Stopped after ${r.steps} steps: the computed solution blew up. The step size is too large for this system.` : `${r.steps} steps of ${num(r.dt)} reached time ${tnum(r.tEnd)}.${r.runaway ? ' The error exceeds the solution itself and was still growing at the end: unstable at this step size.' : ''}`}\nLargest error against the exact solution: ${r.status === 'blew-up' ? 'beyond one million' : `${num(r.maxError, 3)} (at time ${tnum(r.maxErrorAt)})`}.\n${c['derivative evaluations'] || 0} derivative evaluations, four per step.`,
@@ -390,6 +397,20 @@ export default {
       input: 'Solve y′ = −y with y(0) = 1 up to t = 1, using 5, 10 and 20 steps, and compare with the exact value e⁻¹.',
       expected: 'dt = 0.20: y(1) = 0.3678852381, error = 0.0000057970\ndt = 0.10: y(1) = 0.3678797744, error = 0.0000003332\ndt = 0.05: y(1) = 0.3678794611, error = 0.0000000200',
     },
+    breakIt: [
+      { change: 'Average the four slopes equally: change the update to `dt / 4 * (k1 + k2 + k3 + k4)`. The correct program cuts its error about 16-fold each time the step is halved. What will the factor be now?',
+        find: { python: 'dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)', javascript: 'dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)' },
+        replace: { python: 'dt / 4 * (k1 + k2 + k3 + k4)', javascript: 'dt / 4 * (k1 + k2 + k3 + k4)' },
+        reveal: 'About 4. The three errors are now 0.0002936619, 0.0000758915 and 0.0000191152. Nothing looks broken: every answer rounds to 0.368, and the answers improve as the step shrinks. But the weights 1, 2, 2, 1 are what make the lower error terms cancel. Without them the method is second order, not fourth. The only way to see this is to do what the program does: halve the step and measure how much the error falls.' },
+      { change: 'In the line for k2, follow k1 for a whole step and not for half of one: change `y + dt / 2 * k1` to `y + dt * k1`. Will halving the step still cut the error 16-fold?',
+        find: { python: 'y + dt / 2 * k1', javascript: 'y + dt / 2 * k1' },
+        replace: { python: 'y + dt * k1', javascript: 'y + dt * k1' },
+        reveal: 'No. The errors are 0.0138391053, 0.0065058281 and 0.0031571033, so halving the step only halves the error. That is first order, the same as Euler\'s method, at four times the cost per step. The second sample is meant to be the slope at the middle of the step. Taken a whole step ahead it describes the wrong place, and the average built from it is spoiled.' },
+      { change: 'Build the third trial point from the second trial point and not from the start of the step: in the line for k3, change `y + dt / 2 * k2` to `y + dt / 2 * k1 + dt / 2 * k2`. How good will y(1) be at the smallest step?',
+        find: { python: 'y + dt / 2 * k2', javascript: 'y + dt / 2 * k2' },
+        replace: { python: 'y + dt / 2 * k1 + dt / 2 * k2', javascript: 'y + dt / 2 * k1 + dt / 2 * k2' },
+        reveal: 'It prints "dt = 0.05: y(1) = 0.3710345138, error = 0.0031550727", which is right to two decimals where the correct program is right to seven. The three errors, 0.0136848631, 0.0064886187 and 0.0031550727, halve each time: first order again. Every trial move must begin at `y`. Chained like this, the third sample is taken about a whole step ahead while the formula still treats it as a slope at the middle.' },
+    ],
     python: {
       source: `import math
 
@@ -575,16 +596,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The rule is "the value falls at a rate equal to the value", starting from 1, and one step of length 1 is taken. Euler\'s method lands on 1 − 1 × 1 = 0. The true value is about 0.368. Where does RK4 land?',
-      options: ['0, the same as Euler', '0.375', '0.5', '−0.25'],
+      q: 'The rule is "the value falls at a rate equal to the value", starting from 1, and one step of length 2 is taken. Euler\'s method lands on 1 − 2 × 1 = −1. The true value is about 0.135. Where does RK4 land?',
+      options: ['−1, the same as Euler', '0.3333', '0', '−0.3333'],
       answer: 1,
       explain: [
-        'RK4 uses three more slope samples, and they are all less steep than the first.',
-        'Correct. The slopes are −1, −0.5, −0.75 and −0.25. Their weighted average is (−1 − 1 − 1.5 − 0.25) ÷ 6 = −0.625, and 1 − 0.625 = 0.375.',
-        '0.5 is the first trial point at the middle of the step, not the result.',
-        '−0.25 is the fourth slope, not the new value.',
+        'RK4 uses three more slope samples, and none of them is steeper than the first.',
+        'Correct. The slopes are −1, 0, −1 and 1. Their weighted average is (−1 + 0 − 2 + 1) ÷ 6 = −0.3333, and 1 + 2 × (−0.3333) = 0.3333. That is still 0.198 from the true value. A step of 2 is far too long for accuracy here, but RK4 keeps the right sign where Euler does not.',
+        '0 is the first trial point, at the middle of the step: 1 + 1 × (−1) = 0. The slope k2 is sampled there. It is not the result.',
+        '−0.3333 is the weighted average of the four slopes. The new value is the old value plus the step length times that average.',
       ],
-      tryInput: { system: 'decay', dt: 1, duration: 1 },
+      tryInput: { system: 'decay', dt: 2, duration: 2 },
+      check: (r, c) => (r.steps === 1 && r.lastStep.k.map((v) => v[0] + 0).join(',') === '-1,0,-1,1' && Math.abs(r.ys[1][0] - 1 / 3) < 1e-15 && num(r.maxError, 3) === '0.198' && c['derivative evaluations'] === 4) || `slopes ${r.lastStep.k.map((v) => v[0]).join(', ')}, value ${r.ys[1][0]}`,
     },
     {
       type: 'debug',
@@ -619,7 +641,8 @@ t = t + dt`,
     {
       type: 'challenge',
       title: 'Let the method choose its own step',
-      prompt: 'Write a function that advances one RK4 step of size dt, and use it to build step doubling: from the same state take one step of size dt and, separately, two steps of size dt/2. The difference between the two results estimates the error of the step. If it is above a tolerance, halve dt and retry; if it is far below, double dt for the next step. Run it on the "moving target" equation y′ = cos(t) − y from y(0) = 0 to t = 12 with a tolerance of 10⁻⁶. Record how the step size changes along the way and count the derivative evaluations, then compare with fixed-step RK4 reaching the same accuracy.',
+      prompt: 'Write a function that advances one RK4 step of size dt, and use it to build step doubling: from the same state take one step of size dt and, separately, two steps of size dt/2. The size of the difference between the two results estimates the error of the step. If it is above the tolerance, halve dt and retry. Otherwise keep the result of the two half steps, and if the difference was below one thirty-second of the tolerance, double dt for the next step. Never step past the end time. Run it on the "moving target" equation y′ = cos(t) − y from y(0) = 0 to t = 12 with a tolerance of 10⁻⁶, starting with dt = 1. Record how the step size changes along the way and count the derivative evaluations. The exact solution is y = (cos t + sin t − e^(−t)) / 2. Use it to find the largest error at the accepted steps, then find how many evaluations fixed-step RK4 needs to reach the same largest error.',
+      expect: 'The first step is rejected at 1, 0.5 and 0.25 and accepted at 0.125. After that the step hardly moves: 88 of the 92 accepted steps have size 0.125. Four times it doubles to 0.25 for one step, and the next attempt at 0.25 is rejected. That makes 92 accepted steps and 7 rejected ones, 99 attempts in all. Each attempt costs 11 evaluations if the first slope is shared, so the total is 1,089 (or 1,188 at 12 each). The largest error at an accepted step is about 0.00000009 and the value at t = 12 is 0.15363743, off by about 0.00000002. Fixed-step RK4 reaches the same largest error with 192 steps of 0.0625, which is 768 evaluations. So here the adaptive run costs more. This equation changes at the same pace from start to finish, so there is nothing for the step to adapt to, and every step still pays for its error estimate. Step control earns its cost on problems whose pace changes along the way.',
       hints: ['For a fourth-order method the error of the two half steps is about the difference divided by 15.', 'Count honestly: a trial that is rejected still cost its evaluations. The first slope of the big step and of the first half step are the same evaluation and can be shared.'],
     },
   ],
@@ -672,7 +695,7 @@ t = t + dt`,
         if (Math.abs(fourEuler - 2.44140625) > 1e-12) return 'four Euler steps of 0.25 should give 2.44';
         return c['derivative evaluations'] === 4 || `${c['derivative evaluations']} evaluations`;
       } },
-    { name: 'the quiz prediction: one step of 1 on decay gives slopes −1, −0.5, −0.75, −0.25 and the value 0.375', input: { system: 'decay', dt: 1, duration: 1 },
+    { name: 'one step of 1 on decay gives slopes −1, −0.5, −0.75, −0.25 and the value 0.375', input: { system: 'decay', dt: 1, duration: 1 },
       check: (r) => (r.lastStep.k.map((v) => v[0]).join(',') === '-1,-0.5,-0.75,-0.25' && Math.abs(r.ys[1][0] - 0.375) < 1e-15) || `value ${r.ys[1][0]}` },
     { name: 'matches the closed form (1 − h + h²/2 − h³/6 + h⁴/24)^n on decay', input: { system: 'decay', dt: 0.5, duration: 5 },
       check: (r) => {
@@ -724,6 +747,31 @@ t = t + dt`,
         if (r.ys[1][0] !== 1.375 || !(Math.abs(r.ys[10][0]) > 20)) return `dt = 3: first value ${r.ys[1][0]}, tenth ${r.ys[10][0]}`;
         const ok = run({ system: 'decay', dt: 2.7, duration: 27 }, quiet);
         return Math.abs(ok.ys[10][0]) < 1 || `dt = 2.7: tenth value ${ok.ys[10][0]}`;
+      } },
+    { name: 'things to try: equal budgets on decay, and the errors at steps 0.5, 0.25 and 0.125', input: { system: 'decay', dt: 0.125, duration: 5 },
+      check: (r) => {
+        const rk = (dt) => num(run({ system: 'decay', dt, duration: 5 }, quiet).maxError, 3);
+        const euler = num(run({ system: 'decay', dt: 0.25, duration: 5, method: 'euler' }, quiet).maxError, 3);
+        const got = [rk(1), euler, rk(0.5), rk(0.25), num(r.maxError, 3)].join(' ');
+        return got === '0.00712 0.0515 0.000291 0.0000148 0.000000831' || `errors ${got}`;
+      } },
+    { name: 'things to try: oscillator energy falls to 0.495813 with dt 0.5, where Euler would reach 3,762', input: { system: 'oscillator', dt: 0.5, duration: 20 },
+      check: (r) => {
+        const E = odeById.oscillator.energy;
+        return (num(E(r.ys[40]), 6) === '0.495813' && num(r.maxError, 3) === '0.0104' && Math.round(0.5 * Math.pow(1.25, 40)) === 3762) || `energy ${num(E(r.ys[r.steps]), 6)}, largest error ${num(r.maxError, 3)}`;
+      } },
+    { name: 'things to try: decay fades at dt 2.5 and 2.78, and grows at 2.79 and 3', input: { system: 'decay', dt: 2.5, duration: 30 },
+      check: (r) => {
+        const first = (dt) => run({ system: 'decay', dt, duration: 30 }, quiet).ys.slice(0, 4).map((y) => num(y[0])).join(' ');
+        const second = (dt) => run({ system: 'decay', dt, duration: 30 }, quiet).ys[1][0];
+        return (first(2.5) === '1 0.6484 0.4205 0.2726' && first(3) === '1 1.375 1.891 2.6' && r.steps === 12 && num(r.ys[12][0]) === '0.005526' && num(r.maxError, 3) === '0.566' && second(2.78) < 1 && second(2.79) > 1)
+          || `dt 2.5: ${first(2.5)}; dt 3: ${first(3)}; multipliers ${second(2.78)} and ${second(2.79)}`;
+      } },
+    { name: 'things to try: the first step on the moving target has slopes 1, 0.37758, 0.68879, −0.14849', input: { system: 'driven', dt: 1, duration: 12 },
+      check: (r) => {
+        const one = run({ system: 'driven', dt: 1, duration: 1 }, quiet).lastStep;
+        const k = one.k.map((v) => num(v[0], 5)).join(' ');
+        return (k === '1 0.37758 0.68879 −0.14849' && num(one.P[3][1][0], 5) === '0.68879' && r.ys[1][0] === one.yNew[0]) || `slopes ${k}`;
       } },
   ],
 };

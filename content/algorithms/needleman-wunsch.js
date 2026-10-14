@@ -245,10 +245,15 @@ export default {
       { label: 'Scores that give edit distance', values: { a: 'GATTACA', b: 'GCATGCG', match: 0, mismatch: -1, gap: -1 } },
     ],
     tryThis: [
-      'Load "Two DNA fragments" and note the alignment at the end: it has two gaps. Then load "Same fragments, costly gaps". With each gap costing 3, the best alignment has no gaps at all and accepts more mismatches. The sequences did not change. Only the scoring did.',
-      'Load "Scores that count matches only". With mismatches and gaps free, the best score is the number of matching columns, which is the length of the longest common subsequence of the two sequences: 4.',
-      'Load "Scores that give edit distance". With match 0 and everything else −1, the best score is −4, the edit distance with a minus sign. Maximizing this score and minimizing the number of edits are the same thing.',
-      'Type a short sequence against a long one that contains it, such as ACGT and TTACGTTT. Global alignment must account for every letter, so the extra letters at both ends are paid for as gaps. Local alignment was invented for this case.',
+      { ask: 'Load "Two DNA fragments" and note the alignment at the end: it has two gaps and scores 0. Then load "Same fragments, costly gaps", where a gap costs 3 instead of 1. How many gaps will the best alignment have now?',
+        reveal: 'None. The best alignment sets GATTACA straight above GCATGCG and accepts 4 mismatches against 3 matches, for a score of −1. The old alignment, with its 4 matches, 2 mismatches and 2 gaps, would now score 4 − 2 − 6 = −4. The sequences did not change. Only the scoring did.' },
+      { ask: 'Load "Scores that count matches only": a match scores 1, and mismatches and gaps are free. The best score is then the largest number of letters that can be lined up as matches. How many will that be for GATTACA and GCATGCG?',
+        reveal: '4. Matched letters keep their order in both sequences, so with these scores the best score is the length of the longest common subsequence. The alignment shown is the same G-ATTACA above GCA-TGCG as with the default scores, and its 4 matches are that subsequence.' },
+      { ask: 'Load "Scores that give edit distance": a match scores 0, and every mismatch and every gap scores −1. The best score can no longer be positive. What will it be, and what is it counting?',
+        reveal: '−4. Each mismatch is a substitution and each gap is an insertion or a deletion, so the score is the edit distance between the two fragments with a minus sign. Here the best alignment has 4 mismatches and no gaps. Maximizing this score and minimizing the number of edits are the same thing.' },
+      { ask: 'Type `ACGT` as the first sequence and `TTACGTTT` as the second, with match +1, mismatch −1 and gap −1. All of ACGT sits in one piece inside the longer sequence. What will the best score be?',
+        input: { a: 'ACGT', b: 'TTACGTTT', match: 1, mismatch: -1, gap: -1 },
+        reveal: '0. The four matches earn 4, and the four letters of the longer sequence that are left without a partner cost 4 as gaps. Global alignment must account for every letter of both sequences. The page shows --ACG--T above TTACGTTT. Keeping ACGT in one piece scores the same, so the traceback is free to choose. Local alignment was invented for this case.' },
     ],
     run,
     report: (r, c) => `Best global alignment score: ${num(r.score)}   (match ${signed(r.params.match)}, mismatch ${signed(r.params.mismatch)}, gap ${signed(r.params.gap)})\n  ${r.alignedA}\n  ${r.alignedB}\n${plural(r.matches, 'match', 'matches')}, ${plural(r.mismatches, 'mismatch', 'mismatches')}, ${plural(r.gaps, 'gap')}. Table: ${r.rows} rows by ${r.cols} columns, ${c['cells filled'] || 0} cells filled.`,
@@ -339,9 +344,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The pairs (GATTACA, GCATGCG) and (GAT, GT) with match +1, mismatch −1 and gap −1: the best score, then the two aligned rows.',
-      expected: 'GATTACA / GCATGCG: score 0\n  G-ATTACA\n  GCA-TGCG\nGAT / GT: score 1\n  GAT\n  G-T',
+      input: 'The pairs (GATTACA, GCATGCG), (GAT, GT) and (ACGT, TTACGT) with match +1, mismatch −1 and gap −1: the best score, then the two aligned rows.',
+      expected: 'GATTACA / GCATGCG: score 0\n  G-ATTACA\n  GCA-TGCG\nGAT / GT: score 1\n  GAT\n  G-T\nACGT / TTACGT: score 2\n  --ACGT\n  TTACGT',
     },
+    breakIt: [
+      { change: 'Store the gap penalty as a positive number: at the top, change the third score from −1 to 1, and leave the rest of the code adding `GAP` as before. What will the alignment of GATTACA and GCATGCG look like?',
+        find: { python: 'MATCH, MISMATCH, GAP = 1, -1, -1', javascript: 'const MATCH = 1, MISMATCH = -1, GAP = -1;' },
+        replace: { python: 'MATCH, MISMATCH, GAP = 1, -1, 1', javascript: 'const MATCH = 1, MISMATCH = -1, GAP = 1;' },
+        reveal: 'It prints "GATTACA / GCATGCG: score 14", with -------GATTACA above GCATGCG-------. No letter is paired with another. All 14 letters sit opposite gaps, and each gap now adds 1. The other two pairs go the same way, with scores 5 and 10. The code adds `GAP` wherever a gap is used, so a positive value rewards gaps: two letters set against gaps earn 2, more than the 1 they would earn as a match. Store the penalty as a negative number and add it, or as a positive number and subtract it, but never one of each.' },
+      { change: 'In the border, leave the top row at zero: change `S[0][j] = j * GAP` to `S[0][j] = 0`. Which of the three scores will be wrong?',
+        find: { python: 'S[0][j] = j * GAP', javascript: 'S[0][j] = j * GAP;' },
+        replace: { python: 'S[0][j] = 0', javascript: 'S[0][j] = 0;' },
+        reveal: 'The third. It prints "ACGT / TTACGT: score 4" above the same alignment as before, --ACGT over TTACGT. That alignment has four matches and two gaps, which add up to 2, not 4. With the top row at zero, gaps at the start of the first sequence are free, so the table is no longer scoring a global alignment. The first two pairs are unchanged, because their best alignments do not begin with such a gap. That is how this mistake stays hidden.' },
+      { change: 'In the function that fills the table, take the smallest of the three options instead of the largest, as edit distance does. What will the score for GAT and GT be?',
+        find: { python: 'S[i][j] = max(', javascript: 'S[i][j] = Math.max(' },
+        replace: { python: 'S[i][j] = min(', javascript: 'S[i][j] = Math.min(' },
+        reveal: 'It prints "GAT / GT: score -5", with --GAT above GT---. These scores are similarities, so the minimum finds the worst alignment there is: every letter opposite a gap, at −1 each. The other pairs come out at −14 and −10 in the same way. Edit distance takes the minimum because it counts costs. Whether to take the smallest or the largest depends on whether a large number is bad or good.' },
+    ],
     python: {
       source: `MATCH, MISMATCH, GAP = 1, -1, -1
 
@@ -384,7 +403,7 @@ def traceback(a, b, S):
     return "".join(reversed(top)), "".join(reversed(bottom))
 
 
-for a, b in [("GATTACA", "GCATGCG"), ("GAT", "GT")]:
+for a, b in [("GATTACA", "GCATGCG"), ("GAT", "GT"), ("ACGT", "TTACGT")]:
     S = score_table(a, b)
     top, bottom = traceback(a, b, S)
     print(a + " / " + b + ": score " + str(S[len(a)][len(b)]))
@@ -443,7 +462,7 @@ function traceback(a, b, S) {
   return [top.reverse().join(""), bottom.reverse().join("")];
 }
 
-for (const [a, b] of [["GATTACA", "GCATGCG"], ["GAT", "GT"]]) {
+for (const [a, b] of [["GATTACA", "GCATGCG"], ["GAT", "GT"], ["ACGT", "TTACGT"]]) {
   const S = scoreTable(a, b);
   const [top, bottom] = traceback(a, b, S);
   console.log(a + " / " + b + ": score " + S[a.length][b.length]);
@@ -506,7 +525,7 @@ std::pair<std::string, std::string> traceback(const std::string& a, const std::s
 }
 
 int main() {
-    std::vector<std::pair<std::string, std::string>> pairs = {{"GATTACA", "GCATGCG"}, {"GAT", "GT"}};
+    std::vector<std::pair<std::string, std::string>> pairs = {{"GATTACA", "GCATGCG"}, {"GAT", "GT"}, {"ACGT", "TTACGT"}};
     for (const auto& [a, b] : pairs) {
         Table S = scoreTable(a, b);
         auto [top, bottom] = traceback(a, b, S);
@@ -626,11 +645,12 @@ int main() {
       answer: 1,
       explain: [
         '−1 is what you get by pairing A with G: 1 − 3 + 1. There is a better way to handle that position.',
-        'Correct. Pairing A with G would cost 3. It is cheaper to put A opposite a gap and G opposite a gap, at 1 each: 1 − 1 − 1 + 1 = 0.',
+        'Pairing A with G would cost 3. It is cheaper to put A opposite a gap and G opposite a gap, at 1 each: 1 − 1 − 1 + 1 = 0.',
         '1 would be the score if the mismatch cost only 1. Here it costs 3.',
         'Only C and T can match, which gives at most 2 before the middle letters are paid for.',
       ],
       tryInput: { a: 'CAT', b: 'CGT', match: 1, mismatch: -3, gap: -1 },
+      check: (r) => (r.score === 0 && r.gaps === 2 && r.matches === 2 && r.mismatches === 0) || `got score ${r.score} with ${r.gaps} gaps and ${r.mismatches} mismatches`,
     },
     {
       type: 'debug',
@@ -675,7 +695,8 @@ def score_table(a, b):
     {
       type: 'challenge',
       title: 'From global to local',
-      prompt: 'Turn the global aligner into Smith-Waterman local alignment. Three changes are needed: set the whole border to 0, add 0 as a fourth option in the maximum for every cell, and start the traceback from the largest cell in the table, stopping when it reaches a cell holding 0. Test it on ACGT against TTACGTTT with match +2, mismatch −1 and gap −2: the local alignment should be ACGT against ACGT with score 8, while the global score is 0.',
+      prompt: 'Turn the global aligner into Smith-Waterman local alignment. Three changes are needed: set the whole border to 0, add 0 as a fourth option in the maximum for every cell, and start the traceback from the largest cell in the table, stopping when it reaches a cell holding 0. Test it on ACGT against TTACGTTT with match +2, mismatch −1 and gap −2, and compare the local score with the global score for the same input. Then try GATTACA against GCATGCG with the same scores.',
+      expect: 'For ACGT against TTACGTTT the largest cell holds 8, and the traceback from it gives ACGT above ACGT: four matches at 2 each and nothing else. The global score for the same input is 0, because the four matches are cancelled by four gaps at −2 each. For GATTACA against GCATGCG the best local score is 4, while the global score is 2. Two cells hold that 4, one ending the shared AT and one ending the shared CA, so either two-letter alignment is a correct answer.',
       hints: ['Keep track of the position of the maximum while filling the table.', 'The 0 option means "start a fresh alignment here". That is why a local alignment score can never be negative.'],
     },
   ],
@@ -740,6 +761,17 @@ def score_table(a, b):
       check: (r, c) => (r.gaps === 4 && r.matches === 4 && r.score === 0 ? matchesBrute(r, c) : `got score ${r.score} with ${r.gaps} gaps`) },
     { name: 'challenge numbers: global score of ACGT and TTACGTTT with +2, -1, -2 is 0', input: { a: 'ACGT', b: 'TTACGTTT', match: 2, mismatch: -1, gap: -2 },
       check: (r, c) => (r.score === 0 ? matchesBrute(r, c) : `got ${r.score}`) },
+    { name: 'code sample: ACGT and TTACGT score 2 with two leading gaps', input: { a: 'ACGT', b: 'TTACGT', match: 1, mismatch: -1, gap: -1 },
+      check: (r, c) => (r.score === 2 && r.alignedA === '--ACGT' && r.alignedB === 'TTACGT' ? matchesBrute(r, c) : `got ${r.score}: ${r.alignedA} / ${r.alignedB}`) },
+    { name: 'things to try: the alignments the reveals quote', input: { a: 'ACGT', b: 'TTACGTTT', match: 1, mismatch: -1, gap: -1 },
+      check: (r) => {
+        const silent = { count() {}, frame() {} };
+        const lcsScores = run({ a: 'GATTACA', b: 'GCATGCG', match: 1, mismatch: 0, gap: 0 }, silent);
+        const editScores = run({ a: 'GATTACA', b: 'GCATGCG', match: 0, mismatch: -1, gap: -1 }, silent);
+        const challenge = run({ a: 'GATTACA', b: 'GCATGCG', match: 2, mismatch: -1, gap: -2 }, silent);
+        return (r.alignedA === '--ACG--T' && r.alignedB === 'TTACGTTT' && lcsScores.alignedA === 'G-ATTACA' && lcsScores.alignedB === 'GCA-TGCG' && lcsScores.matches === 4
+          && editScores.score === -4 && editScores.mismatches === 4 && editScores.gaps === 0 && challenge.score === 2) || `got ${r.alignedA} / ${r.alignedB}`;
+      } },
     { name: 'one empty sequence: all gaps', input: { a: '', b: 'ACG', match: 1, mismatch: -1, gap: -2 },
       check: (r, c) => (r.score === -6 && r.alignedA === '---' && r.alignedB === 'ACG' && c['cells filled'] === 4) || `got ${r.score}` },
     { name: 'identical sequences align on the diagonal', input: { a: 'ACGTACGT', b: 'ACGTACGT', match: 2, mismatch: -1, gap: -1 },

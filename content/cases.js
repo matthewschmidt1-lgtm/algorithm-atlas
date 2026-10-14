@@ -28,7 +28,7 @@ export const cases = [
     ],
     assumptions: [
       { text: 'Each proposal is all or nothing. Half a website rebuild is not on offer.', then: { lesson: 'simplex', say: 'When things can be bought in any quantity, the Simplex Method fits better.' } },
-      { text: 'There is one limit: money. Staff time, floor space and deadlines are ignored.', then: { lesson: 'simplex', say: 'Several limits at once are what the Simplex Method is for.' } },
+      { text: 'There is one limit: money. Staff time, floor space and deadlines are ignored.', then: { lesson: 'simplex', say: 'Several limits at once, with proposals still funded whole, make this an integer program. Solvers for those are built on the Simplex Method, which on its own would hand back fractions of a proposal.' } },
       { text: 'The benefits simply add up. In reality the customer app may be worth more once the booking system exists.', then: { lesson: 'simulated-annealing', say: 'When choices affect each other, a search such as Simulated Annealing can score whole plans.' } },
       { text: 'Every benefit figure is treated as certain. They are estimates, and some are shakier than others.', then: { lesson: 'monte-carlo', say: 'Monte Carlo simulation shows how the answer moves when the estimates do.' } },
     ],

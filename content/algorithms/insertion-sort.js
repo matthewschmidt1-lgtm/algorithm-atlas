@@ -165,9 +165,12 @@ export default {
       { label: 'Reversed: worst case', values: { order: 'reversed', custom: [] } },
     ],
     tryThis: [
-      'Load "Already sorted", then "Nearly sorted", then "Random list", and compare the comparison counts. With 10 items a sorted list costs exactly 9 comparisons. The count rises with the amount of disorder, not with the length alone.',
-      'Load "Reversed: worst case". Every key has to travel all the way to the front, so every comparison is followed by a shift.',
-      'Type the values 2, 3, 4, 5, 6, 7, 8, 1. One value is far from home, and it costs 7 shifts. Then try 8, 1, 2, 3, 4, 5, 6, 7, which also needs 7 shifts, one for each key. Insertion sort does not care in which direction the misplaced value has to travel.',
+      { ask: 'Load "Already sorted", then "Nearly sorted", then "Random list", each with 10 items. The length is the same every time. Which list will need the most comparisons, and roughly how many times as many as the sorted one?',
+        reveal: 'The random list needs the most: 26 comparisons, nearly three times the 9 that the sorted list costs. The nearly sorted list costs 10. The shifts tell the same story: none for the sorted list, 1 for the nearly sorted one and 17 for the random one. The count rises with the amount of disorder, not with the length alone.' },
+      { ask: 'Load "Reversed: worst case" with 10 items. How many comparisons will it make, and how many of them will be followed by a shift?',
+        reveal: 'It makes 45 comparisons and 45 shifts. Every key is smaller than everything before it, so it has to travel all the way to the front, and every comparison is followed by a shift. 45 is 1 + 2 + 3 and so on up to 9, the most comparisons insertion sort can make on 10 values.' },
+      { ask: 'Type the values 2, 3, 4, 5, 6, 7, 8, 1 and note the shifts. Then type 8, 1, 2, 3, 4, 5, 6, 7. In the first list a small value has to travel left. In the second a large value has to travel right. Will one of them cost insertion sort more than the other?',
+        reveal: 'No. Both cost 13 comparisons and 7 shifts. In the first list the key 1 is shifted past seven values in a single round. In the second, each of the seven keys after the 8 pushes the 8 one place to the right. Insertion sort does not care in which direction a misplaced value has to travel. [Bubble sort](#/algorithm/bubble-sort) does: it needs 28 comparisons for the first list and 13 for the second.' },
     ],
     run,
     report: (r, c) => `Sorted ${r.sorted.length} values with ${c.comparisons || 0} comparisons and ${r.shifts} shifts (${c.writes || 0} array writes).\n[${r.sorted.join(', ')}]`,
@@ -241,9 +244,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The list [29, 10, 14, 37, 13, 5, 31, 22]. Prints the sorted list and the number of shifts used.',
-      expected: '5 10 13 14 22 29 31 37\nshifts: 14',
+      input: 'The list [29, 10, 14, 37, 13, 5, 29, 22], which holds the value 29 twice. Prints the sorted list and the number of shifts used.',
+      expected: '5 10 13 14 22 29 29 37\nshifts: 14',
     },
+    breakIt: [
+      { change: 'In the line that writes the key into the gap, write `a[i]` instead of `key`, as if the key had never been saved. What is in `a[i]` by the time that line runs?',
+        find: { python: 'a[j + 1] = key', javascript: 'a[j + 1] = key;' },
+        replace: { python: 'a[j + 1] = a[i]', javascript: 'a[j + 1] = a[i];' },
+        reveal: 'The value that was shifted into it. The program prints "37 37 37 29 29 29 37 37" and "shifts: 20". In the first round the key is 10. The 29 is shifted into position 1, which is `a[i]`, and the last line then copies that 29 into position 0. The list starts 29, 29 and the 10 is gone. Every round that makes a shift loses its key the same way, until only 29s and 37s are left. The first shift of a round always writes to position `i`, which is why the key has to be copied out before the loop.' },
+      { change: 'Change the comparison `a[j] > key` to `a[j] >= key`. The list holds 29 twice. Will the sorted list change, and will the number of shifts?',
+        find: { python: 'a[j] > key', javascript: 'a[j] > key' },
+        replace: { python: 'a[j] >= key', javascript: 'a[j] >= key' },
+        reveal: 'The sorted list is unchanged, "5 10 13 14 22 29 29 37", but the program prints "shifts: 15" instead of 14. The extra shift is the first 29 being moved to the right of the second one. Two equal numbers look alike, so the printed list cannot show that they have changed places. If these were records sorted by this number, such as two orders with the same price, they would come out in the opposite order from the one they went in. The sort is no longer stable, and it does more work as well.' },
+      { change: 'After the inner loop, write the key to `a[j]` instead of `a[j + 1]`. Where does the first key, 10, end up?',
+        find: { python: 'a[j + 1] = key', javascript: 'a[j + 1] = key;' },
+        replace: { python: 'a[j] = key', javascript: 'a[j] = key;' },
+        reveal: 'When the loop ends, `j` is one place to the left of the gap, so the gap is at `j + 1`. In the first round the 29 is shifted right and `j` is -1. Python reads `a[-1]` as the last position, so the 10 is written on top of the 22 at the far end of the list, and it prints "29 29 29 29 29 37 37 5". In JavaScript `a[-1]` is not a position in the list at all, so the 10 is stored outside it and never seen again, and it prints "29 29 29 29 29 37 37 37". Both print "shifts: 21". Either way the gap keeps the stale copy left by the last shift, and the key lands on a value that should have been kept.' },
+    ],
     python: {
       source: `def insertion_sort(a):
     shifts = 0
@@ -258,7 +275,7 @@ export default {
     return shifts
 
 
-data = [29, 10, 14, 37, 13, 5, 31, 22]
+data = [29, 10, 14, 37, 13, 5, 29, 22]
 shifts = insertion_sort(data)
 print(" ".join(str(x) for x in data))
 print("shifts:", shifts)`,
@@ -285,7 +302,7 @@ print("shifts:", shifts)`,
   return shifts;
 }
 
-const data = [29, 10, 14, 37, 13, 5, 31, 22];
+const data = [29, 10, 14, 37, 13, 5, 29, 22];
 const shifts = insertionSort(data);
 console.log(data.join(" "));
 console.log("shifts: " + shifts);`,
@@ -310,7 +327,7 @@ int insertionSort(std::vector<int>& a) {
 }
 
 int main() {
-    std::vector<int> data = {29, 10, 14, 37, 13, 5, 31, 22};
+    std::vector<int> data = {29, 10, 14, 37, 13, 5, 29, 22};
     int shifts = insertionSort(data);
     for (std::size_t k = 0; k < data.size(); ++k) {
         std::cout << data[k] << (k + 1 < data.size() ? " " : "\\n");
@@ -430,6 +447,7 @@ int main() {
         '28 is the worst case for eight values, reached only by a reversed list.',
       ],
       tryInput: { custom: [1, 2, 4, 3, 5, 6, 7, 8] },
+      check: (r, c) => (c.comparisons === 8 && r.shifts === 1) || `${c.comparisons} comparisons, ${r.shifts} shifts`,
     },
     {
       type: 'debug',
@@ -465,7 +483,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Binary insertion sort',
-      prompt: 'Replace the right-to-left search with a binary search over the ordered group to find where the key belongs, then shift the larger values and write the key. Take care to keep the sort stable when the key equals values already in the group. Count comparisons and shifts separately on a reversed list of 64 distinct values and on a sorted list of 64 values, and compare with plain insertion sort.',
+      prompt: 'Replace the right-to-left search with a binary search over the ordered group to find where the key belongs, then shift the larger values and write the key. Take care to keep the sort stable when the key equals values already in the group. Count comparisons and shifts separately on the reversed list 64, 63, 62 and so on down to 1, and on the sorted list 1, 2, 3 and so on up to 64, and compare with plain insertion sort.',
+      expect: 'On the reversed list the binary version makes 321 comparisons and 2016 shifts, where plain insertion sort makes 2016 comparisons and 2016 shifts. On the sorted list the binary version makes 264 comparisons and no shifts, where plain insertion sort makes 63 comparisons and no shifts. These counts are for a search that starts with `lo = 0` and `hi = i`, probes `(lo + hi) // 2` and looks for the first value greater than the key. A search written differently can differ by a few comparisons, but not in the shifts. Binary search cuts the comparisons on the reversed list to under a sixth, but every larger value still has to be shifted, so the work stays quadratic. On the sorted list it is more than four times worse: it cannot notice with one comparison that the key is already in place.',
       hints: ['To stay stable, search for the first position whose value is strictly greater than the key.', 'Look closely at the sorted input. Plain insertion sort needs 63 comparisons there. Does the binary version need more or fewer?'],
     },
   ],
@@ -522,6 +541,18 @@ int main() {
       check: (r) => r.shifts === 7 || `got ${r.shifts} shifts` },
     { name: 'a large value at the front also costs 7 shifts', input: { custom: [8, 1, 2, 3, 4, 5, 6, 7] },
       check: (r) => r.shifts === 7 || `got ${r.shifts} shifts` },
+    { name: 'ten nearly sorted values cost 10 comparisons and 1 shift', input: { size: 10, order: 'nearly', seed: 7 },
+      check: (r, c) => (c.comparisons === 10 && r.shifts === 1) || `got ${c.comparisons} comparisons and ${r.shifts} shifts` },
+    { name: 'ten random values cost 26 comparisons and 17 shifts', input: { size: 10, order: 'random', seed: 7 },
+      check: (r, c) => (c.comparisons === 26 && r.shifts === 17) || `got ${c.comparisons} comparisons and ${r.shifts} shifts` },
+    { name: 'ten reversed values cost 45 comparisons and 45 shifts', input: { size: 10, order: 'reversed', seed: 7 },
+      check: (r, c) => (c.comparisons === 45 && r.shifts === 45) || `got ${c.comparisons} comparisons and ${r.shifts} shifts` },
+    { name: 'one misplaced value costs 13 comparisons whichever way it travels', input: { custom: [8, 1, 2, 3, 4, 5, 6, 7] },
+      check: (r, c) => (c.comparisons === 13 && r.shifts === 7) || `got ${c.comparisons} comparisons and ${r.shifts} shifts` },
+    { name: 'the same from the other end: 13 comparisons', input: { custom: [2, 3, 4, 5, 6, 7, 8, 1] },
+      check: (r, c) => (c.comparisons === 13 && r.shifts === 7) || `got ${c.comparisons} comparisons and ${r.shifts} shifts` },
+    { name: 'the code sample input, with its two 29s, costs 14 shifts', input: { custom: [29, 10, 14, 37, 13, 5, 29, 22] },
+      check: (r, c) => (r.shifts === 14 && r.sorted.join(' ') === '5 10 13 14 22 29 29 37' && checkRun(r, c) === true) || `got ${r.shifts} shifts` },
     { name: 'handles duplicates and negatives', input: { custom: [3, -1, 3, 0, -7, 3] },
       check: (r, c) => (r.sorted.join(',') === '-7,-1,0,3,3,3' && checkRun(r, c) === true) || `got ${r.sorted.join(',')}` },
     { name: 'a single value needs no comparisons', input: { custom: [42] },

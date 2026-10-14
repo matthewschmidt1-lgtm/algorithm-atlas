@@ -861,7 +861,7 @@ export const paths = [
       brief: "Combine a routing problem, a packing problem and a sequencing problem into one small plan, solving each exactly where you can and heuristically where you must.",
       steps: [
         "Invent a depot and six delivery stops. Write down a travel time between every pair that is directly connected.",
-        "Name the depot A, enter the network into the Dijkstra lesson and record the quickest time from the depot to each stop. Then, starting from the code sample on that page, compute the quickest time between every pair of stops.",
+        "Name the depot A, enter the network into the Dijkstra lesson and record the quickest time from the depot to each stop. Then, starting from the code sample on that page, compute the quickest time between every pair of stops. The sample stores each connection one way, so enter every road in both directions.",
         "Give each parcel a weight and a value, set a van capacity that cannot hold them all, and use the 0/1 Knapsack lesson to choose what to load.",
         "For the stops you will visit, write a program that tries every visiting order and reports the shortest round trip.",
         "Write a second program that starts from a random order and swaps two stops whenever that shortens the trip. Compare its answer, and the number of orders it examined, with the exhaustive search.",

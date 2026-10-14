@@ -266,11 +266,16 @@ export default {
       { label: 'Too few iterations', values: { layout: 'walls', step: 0.8, bias: 0.1, maxIter: 50, seed: 7 } },
     ],
     tryThis: [
-      'Load "Two walls" and press Randomize on the seed several times. Every run finds a different path, and none of them is the shortest. Compare the reported path length with the straight-line distance.',
-      'Load "Open space, no goal bias" and watch the early iterations. The tree sends long arms toward the corners before filling in. Then raise the goal bias to 0.3: with nothing in the way, the tree heads almost straight for the goal.',
-      'Load "Two walls", note the number of iterations, then load "Heavy goal bias", which uses the same seed. Half of the iterations now pull the node nearest the goal straight toward it, into a wall, and are wasted. A little bias helps; a lot of it makes the planner stubborn.',
-      'Load "Goal walled in". The tree fills everything it can reach and then stops at the iteration limit. Read the final note: the planner reports failure, and it has no way of knowing that the failure is permanent.',
-      'Load "Narrow passage" and try several seeds. The tree fills the left half quickly and then waits for a lucky branch through the gap. Narrow passages are the classic weakness of sampling-based planners.',
+      { ask: 'Load "Two walls" and note the path length it reports. Then set the seed to 1, to 2 and to 4, running each. Will the four runs find the same path? And how will their lengths compare with the straight-line distance of 11.31?',
+        reveal: 'Every seed finds a different path. Seed 7 gives a length of 17.39, seed 1 gives 25.60, seed 2 gives 22.04 and seed 4 gives 24.73. All are far above 11.31, which no path here can match because the walls are in the way. At least three of the four cannot be the shortest route, since seed 7 found a shorter one. RRT keeps the first route its tree happens to reach and never tries to improve it.' },
+      { ask: 'Load "Open space, no goal bias" and watch the early iterations. The tree sends long arms toward the corners before it fills in, and it needs 82 iterations to reach the goal. Then raise the goal bias to 0.3. With nothing in the way, how many iterations will it need now?',
+        reveal: 'It needs 25, and the path shortens from 13.89 to 12.42. With a bias of 0.3, about three iterations in ten pull the node nearest the goal one step straight toward it, and in open space nothing stops those steps. Without bias the tree reaches the goal only when its even spread happens to arrive there.' },
+      { ask: 'Load "Two walls" and note the number of iterations. Then load "Heavy goal bias", which uses the same seed but aims half of all iterations straight at the goal. Will it reach the goal sooner or later than before?',
+        reveal: 'Much later: 478 iterations instead of 129, and 319 rejected branches instead of 41. Each biased iteration pulls the node nearest the goal straight toward it. While a wall stands between that node and the goal, the branch runs into the wall and the iteration is wasted. A little bias helps. A lot of it makes the planner stubborn.' },
+      { ask: 'Load "Goal walled in". The tree fills what it can reach and stops at its limit of 300 iterations. Now raise the maximum iterations to 1000 and run it again. Will the report be any different?',
+        reveal: 'No. After 300 iterations the tree has 257 nodes and 44 rejected branches. After 1000 it has 842 nodes and 159 rejected branches, and the report is the same sentence with a larger number: no path found within the limit, which is not proof that none exists. No branch gets inside, because every branch is checked along its whole length. You can see that the goal is sealed off. The planner cannot. It would say exactly the same on a map where a path existed and had not been found yet.' },
+      { ask: 'Load "Narrow passage" and set the seed to 3, then 4, then 5, running each. All three get the same 1000 iterations. Will all three find the way through the gap?',
+        reveal: 'No. Seed 4 gets through after 62 iterations and seed 5 after 100. Seed 3 fails: it uses all 1000 iterations, and 585 of its branches are rejected at the walls. The tree fills the left half quickly and then waits for a branch that happens to line up with the gap. Narrow passages are the classic weakness of sampling-based planners.' },
     ],
     run,
     report: (r, c) => `${r.found ? `Path found after ${r.iterations} iterations: ${r.path.length - 1} branches, length ${f2(r.pathLength)} (straight line ${f2(r.straight)}).` : `No path found within ${r.iterations} iterations. This is not proof that none exists.`}\nTree: ${r.nodes.length} nodes. ${r.rejected} branches rejected for hitting obstacles.\n${c['distance computations'] || 0} distance computations, ${c['collision checks'] || 0} collision checks.`,
@@ -345,13 +350,27 @@ export default {
 
   code: {
     sample: {
-      input: 'A 10 by 10 world with one wall (x from 4 to 5, y from 0 to 7). Plan from (1, 1) to (9, 1) with step 1 and goal bias 0.1, using a small generator that behaves identically in every language (seed 2024).',
-      expected: 'iterations: 89, tree nodes: 58\npath: 20 branches, length 18.97\nhighest point on the path: y = 7.63',
+      input: 'A 10 by 10 world with one wall, half a unit thick (x from 4 to 4.5, y from 0 to 7). Plan from (1, 1) to (9, 1) with step 1 and goal bias 0.1, using a small generator that behaves identically in every language (seed 2024).',
+      expected: 'iterations: 89, tree nodes: 60\npath: 20 branches, length 18.86\nhighest point on the path: y = 7.39',
     },
+    breakIt: [
+      { change: 'Test only the end of each new branch: in the line that rejects a branch, pass the new point as both ends of the segment, so the test no longer covers the way there. The wall is half a unit thick and a branch can be a whole unit long. What will the last line of the output show?',
+        find: { python: 'if d == 0 or hits_wall(nodes[near], new):', javascript: 'if (d === 0 || hitsWall(nodes[near], fresh)) continue;' },
+        replace: { python: 'if d == 0 or hits_wall(new, new):', javascript: 'if (d === 0 || hitsWall(fresh, fresh)) continue;' },
+        reveal: 'The last line reads "highest point on the path: y = 5.11". The wall runs from the bottom of the map up to y = 7, so a path that never rises above 5.11 has gone through it. The first two lines look like an improvement: "iterations: 49, tree nodes: 48" and "path: 14 branches, length 13.93", against 89 iterations and a length of 18.86 before. A branch that starts on one side of the wall and ends on the other has both ends in free space, and a test of the end point alone accepts it. From the outside, this mistake looks like a shorter path found sooner.' },
+      { change: 'Extend the newest node instead of the nearest: replace the search for the nearest node by the position of the last node added. In JavaScript, make the loop set `near = i` every time. How many branches will the path have?',
+        find: { python: 'near = min(range(len(nodes)), key=lambda i: distance(nodes[i], target))', javascript: 'if (distance(nodes[i], target) < distance(nodes[near], target)) near = i;' },
+        replace: { python: 'near = len(nodes) - 1', javascript: 'near = i;' },
+        reveal: 'It prints "iterations: 524, tree nodes: 380" and "path: 379 branches, length 373.22". The path uses every node there is, so the tree is a single chain: each new node was hung on the one before it and nothing ever branched. The correct program needs 20 branches and a length of 18.86. Each step still heads for a random target, but it starts from wherever the last step ended, so the chain wanders like a random walk and reaches the goal by luck, after nearly six times as many iterations.' },
+      { change: 'Cut the limit in the call to `rrt` from 2000 iterations to 50. The correct run needed 89. What does the program print?',
+        find: { python: '1.0, 0.1, 2000, Lcg(2024)', javascript: '1.0, 0.1, 2000, new Lcg(2024)' },
+        replace: { python: '1.0, 0.1, 50, Lcg(2024)', javascript: '1.0, 0.1, 50, new Lcg(2024)' },
+        reveal: 'JavaScript prints "iterations: 50, tree nodes: 27", then "path: -1 branches, length 0.00" and "highest point on the path: y = -Infinity". Python prints the same first two lines and then stops with "ValueError: max() arg is an empty sequence". The planner ran out of iterations and returned an empty path, and the lines that print never ask whether a path came back. Nothing in this output shows that no path exists. With 39 more iterations the same seed finds one. A caller has to check for failure, and has to read failure as "not found yet".' },
+    ],
     python: {
       source: `import math
 
-WALL = (4.0, 0.0, 5.0, 7.0)   # one obstacle: x from 4 to 5, y from 0 to 7
+WALL = (4.0, 0.0, 4.5, 7.0)   # one obstacle: x from 4 to 4.5, y from 0 to 7
 
 
 class Lcg:
@@ -434,7 +453,7 @@ print("highest point on the path: y = " + f"{max(p[1] for p in path):.2f}")`,
       ],
     },
     javascript: {
-      source: `const WALL = [4.0, 0.0, 5.0, 7.0];   // one obstacle: x from 4 to 5, y from 0 to 7
+      source: `const WALL = [4.0, 0.0, 4.5, 7.0];   // one obstacle: x from 4 to 4.5, y from 0 to 7
 
 // A small random number generator (Park-Miller). Integer arithmetic only,
 // so it produces the same numbers in every language.
@@ -514,7 +533,7 @@ console.log("highest point on the path: y = " + Math.max(...path.map((p) => p[1]
 #include <vector>
 
 struct Point { double x, y; };
-const double WALL[4] = {4.0, 0.0, 5.0, 7.0};   // one obstacle: x from 4 to 5, y from 0 to 7
+const double WALL[4] = {4.0, 0.0, 4.5, 7.0};   // one obstacle: x from 4 to 4.5, y from 0 to 7
 
 // A small random number generator (Park-Miller). Integer arithmetic only,
 // so it produces the same numbers in every language.
@@ -701,16 +720,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The goal is completely enclosed by walls. The planner is given 300 iterations. What does it report?',
-      options: ['A path that passes through the thinnest wall', 'That no path exists', 'Failure after 300 iterations, with no conclusion about whether a path exists', 'A path to the point nearest the goal'],
-      answer: 2,
+      q: 'On the "Two walls" map with seed 12, a run limited to 50 iterations reports failure. The limit is raised to 500 and nothing else is changed, the seed included. What does the planner report now?',
+      options: ['Failure again. The seed is the same, so the random targets are the same and nothing can change', 'A path, found after more than 50 iterations. The first 50 iterations are the same as before', 'A path, found within the first 50 iterations this time', 'That no path exists, because it has now searched ten times as long'],
+      answer: 1,
       explain: [
-        'Every branch is checked along its whole length, so no branch can pass through a wall, however thin.',
-        'The algorithm has no way of establishing that. It can only run out of iterations.',
-        'Correct. The tree fills the reachable area and the limit is reached. The honest report is "not found within the limit".',
-        'This implementation returns a path only when the goal itself is connected. Returning the nearest node is a possible extension, but it is not a solution.',
+        'The targets are the same, and so are the first 50 iterations. But the short run did not fail because of its targets. It was stopped while the tree was still growing.',
+        'The same seed gives the same targets in the same order, so after 50 iterations the tree is the one that failed before, with 42 nodes. This time the loop carries on, and the goal is reached at iteration 106. The earlier failure meant "not found yet", which is all a failure can mean for this planner.',
+        'The same seed replays the same 50 iterations exactly, so the goal cannot be reached any earlier than before.',
+        'The planner can never report that. It stops with a path, or it runs out of iterations.',
       ],
-      tryInput: { layout: 'sealed', step: 0.8, bias: 0.1, maxIter: 300, seed: 7 },
+      tryInput: { layout: 'walls', step: 0.8, bias: 0.1, maxIter: 500, seed: 12 },
+      check: (r) => {
+        const short = run({ layout: 'walls', step: 0.8, bias: 0.1, maxIter: 50, seed: 12 }, QUIET);
+        const same = short.log.length === 50 && short.log.every((e, k) => e.ok === r.log[k].ok && e.new[0] === r.log[k].new[0] && e.new[1] === r.log[k].new[1]);
+        return (r.found && r.iterations === 106 && !short.found && short.nodes.length === 42 && same) || `found ${r.found} after ${r.iterations}; with a limit of 50: found ${short.found}, ${short.nodes.length} nodes, same first 50 iterations ${same}`;
+      },
     },
     {
       type: 'debug',
@@ -744,7 +768,8 @@ parent.append(near)`,
     {
       type: 'challenge',
       title: 'Shorten the path, then grow two trees',
-      prompt: 'First add shortcutting: repeatedly pick two random points on the returned path, and if the straight segment between them is collision-free, replace the part of the path between them with that segment. Measure how much shorter the "Two walls" path becomes after 200 attempts. Then implement RRT-Connect: grow one tree from the start and one from the goal, and after each extension let the other tree try to grow all the way to the new node. Compare the number of iterations with plain RRT over 50 seeds.',
+      prompt: 'Start from the code sample above. First add shortcutting. After the path is returned, make 200 attempts with the same generator. In each attempt draw two positions on the path, `i` and then `j`, each as the whole part of `rng.uniform()` times the number of points on the path, and swap them if `i` is the larger. If they are at least two apart and the straight segment between those two points misses the wall, drop the points between them. Print the number of branches and the length at the end. Then implement RRT-Connect: grow one tree from the start and one from the goal, and after each extension let the other tree try to grow all the way to the new node. Count the random targets each planner needs on seeds 1 to 50 and compare the averages.',
+      expect: 'Shortcutting turns the path of 20 branches and length 18.86 into one of 4 branches and length 16.58. Eight shortcuts are accepted, and the path has stopped changing by the 50th attempt. The shortest path there could be goes round the two top corners of the wall and is 14.71 long, so whatever pairs you draw, your length must lie between 14.71 and 18.86. For the second part, the plain RRT of the sample solves all of seeds 1 to 50 and needs 96.9 iterations on average, with a median of 97.5. Our RRT-Connect, with no goal bias and the two trees taking turns, also solved all 50 and needed 60.3 random targets on average, with a median of 53. Yours will differ a little with choices such as which tree goes first, but it should come out clearly below the plain figure.',
       hints: ['Shortcutting needs only the segment collision test you already have.', 'In RRT-Connect the "connect" move repeats the extend step toward the same target until it reaches it or hits an obstacle.'],
     },
   ],
@@ -834,11 +859,20 @@ parent.append(near)`,
         const endFree = !r.rects.some((q) => pointInRect(last.new[0], last.new[1], q));
         return (wall.x === 3 && wall.w === 0.4 && wall.h === 5.5 && !last.ok && Math.abs(last.new[0] - 3.6) < 1e-9 && Math.abs(last.new[1] - 2.8) < 1e-9 && Math.abs(last.near[0] - 2.6) < 1e-9 && endFree) || `fourth branch: ${JSON.stringify(last)}`;
       } },
-    { name: 'quiz: a walled-in goal gives an honest failure after exactly 300 iterations', input: { layout: 'sealed', step: 0.8, bias: 0.1, maxIter: 300, seed: 7 },
+    { name: 'preset: a walled-in goal gives an honest failure after exactly 300 iterations', input: { layout: 'sealed', step: 0.8, bias: 0.1, maxIter: 300, seed: 7 },
       check: (r, c) => {
         if (r.found || r.path.length !== 0 || r.iterations !== 300 || c.iterations !== 300) return `found ${r.found}, iterations ${r.iterations}`;
         if (r.nodes.some((n) => n.x > 7.9 && n.y > 7.9)) return 'a node got inside the sealed room';
         return checkTree(r);
+      } },
+    { name: 'the quiz prediction: seed 12 fails within 50 iterations and succeeds at iteration 106 when allowed 500, after the same first 50', input: { layout: 'walls', step: 0.8, bias: 0.1, maxIter: 500, seed: 12 },
+      check: (r) => {
+        const short = run({ layout: 'walls', step: 0.8, bias: 0.1, maxIter: 50, seed: 12 }, QUIET);
+        if (short.found || short.iterations !== 50 || short.nodes.length !== 42) return `with a limit of 50: found ${short.found}, ${short.nodes.length} nodes`;
+        if (!short.log.every((e, k) => e.ok === r.log[k].ok && e.target[0] === r.log[k].target[0] && e.target[1] === r.log[k].target[1])) return 'the first 50 iterations differ between the two runs';
+        const path = checkPath(r);
+        if (path !== true) return path;
+        return (r.found && r.iterations === 106) || `found ${r.found} after ${r.iterations}`;
       } },
     { name: 'preset: 50 iterations are too few for the two walls, and failure is reported', input: { layout: 'walls', step: 0.8, bias: 0.1, maxIter: 50, seed: 7 },
       check: (r) => (!r.found && r.path.length === 0 && r.iterations === 50) || `found ${r.found} after ${r.iterations}` },

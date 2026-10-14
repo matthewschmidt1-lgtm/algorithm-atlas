@@ -434,13 +434,20 @@ export default {
       { label: 'Many local minima: both are trapped', values: { ...DEFAULTS, landscape: 'rastrigin', gdRate: 0.002, startX: -0.85, startY: 0.7, steps: 100 } },
     ],
     tryThis: [
-      'Play the default run and watch the first step in the table. The slopes are −2 and 20, yet both coordinates move by 0.1. Then follow the ink path of plain gradient descent: it bounces across the ravine in y and creeps along it in x, because one learning rate has to serve both.',
-      'Raise the plain gradient descent learning rate a little at a time to help it along. Just above 0.02 it diverges, because y is 100 times more curved than x and the limit is 2 divided by 100. That limit is what holds plain descent back here. No single rate is both safe for y and useful for x.',
-      'Load "Bias correction off" and read step 1. The step is 3.162 times as long as with the correction, because m starts at 10 percent of the slope and the square root of v at about 3.2 percent. Turn the correction back on and compare the first few positions.',
-      'Load "The same ravine turned 45°". Nothing about the surface has changed except its orientation, and plain gradient descent behaves as it did before. Adam now needs 177 steps to stop where it needed 131, and for the first 45 steps plain gradient descent has the lower loss. Each coordinate now sees a mixture of the steep and the gentle direction, so separate step sizes cannot treat them differently. The experiment below shows the gap widening as the valley narrows.',
-      'Load "No momentum (β₁ = 0)". On this smooth ravine Adam now stops after 85 steps instead of 131 and no longer overshoots in x. With exact slopes and a valley that lines up with the axes, the separate step sizes do the work and the averaged direction only adds overshoot. Then load "Turned ravine, no momentum": the path zig-zags across the valley and has not settled after 200 steps. The averaged direction earns its place when the valley does not line up with the axes.',
-      'In "No momentum (β₁ = 0)", watch y between steps 50 and 62. It has been resting on the valley floor, then leaps to about 0.27 and comes back. While y sat still its slopes were tiny, so v slowly forgot the large early ones, √v̂ shrank, and the y step grew until it overshot. The large slopes that followed refilled v. Adam\'s step sizes can grow as well as shrink.',
-      'Load "Round bowl: plain descent wins" and "Mild valley: plain descent is quicker". When the directions do not differ much in steepness there is little for Adam to fix, and a well chosen single rate settles first. Adam also overshoots the minimum and has to come back, which is the price of its momentum.',
+      { ask: 'Play the default run. At the start the slope is −2 in x and 20 in y. Plain gradient descent has one learning rate, 0.019, and moves each coordinate by that rate times its slope. After 60 steps, which coordinate will plain gradient descent have nearly finished with, and which will still be a long way from 0? Where will Adam be by then?',
+        reveal: 'Plain gradient descent finishes y and not x. Its first step moves y by 0.38, right across the ravine to −0.18, and x by only 0.038. After 60 steps y is at 0.0004, but x has only gone from −2 to −0.6327 and the loss is 0.2001. Adam is at (−0.0429, 0.0022) with loss 0.00117. The rate of 0.019 had to be small enough for the steep y direction, and that same small rate was all x had to move with.' },
+      { ask: 'Try to help plain gradient descent along by raising its learning rate. The slope in y is 100 × y, so one step multiplies y by (1 − 100 × rate). At 0.019 that multiplier is −0.9. Before you move the slider: what is the largest rate at which y still shrinks? Then set 0.02 and 0.021 and see what y does.',
+        reveal: 'The limit is 0.02, where the multiplier reaches −1. At 0.02 y jumps between 0.2 and −0.2 for ever, so the loss cannot fall below 2: it is 2.177 after 60 steps. At 0.021 the multiplier is −1.1 and y grows on every step: after 60 steps it is at 60.9 and the loss is 1.85e+5. Meanwhile x is multiplied by (1 − rate), which is 0.98 at the limit, so in 60 steps it only gets from −2 to about −0.6. No single rate is both safe for y and useful for x.' },
+      { ask: 'Load "Bias correction off". Both running averages start at zero, so after one step m holds only a tenth of the slope. With the correction the first step moved each coordinate by 0.1. Without it, will the first step be shorter than 0.1, the same, or longer?',
+        reveal: 'Longer: 0.3162 in each coordinate, which is 3.162 times the corrected step. x goes from −2 to −1.6838, and y goes from 0.2 straight past the valley floor to −0.1162. m starts at 10 percent of the slope, but the square root of v starts at about 3.2 percent of its size, and the step divides one by the other. Later in the run a single step reaches 4.991 × α. With the correction on, no step is longer than 1 × α.' },
+      { ask: 'Load "The same ravine turned 45°". The surface has the same shape as before and has only been turned. On the straight ravine Adam stopped after 131 steps and had the lower loss at every step on the way. Will it need the same number of steps here, and will it stay ahead of plain gradient descent all the way?',
+        reveal: 'No to both. Adam now needs 177 steps, and from step 9 to step 45 plain gradient descent has the lower loss. Each coordinate now sees a mixture of the steep and the gentle direction, so separate step sizes cannot treat the two differently. Adam still finishes first on this surface, but what put it so far ahead before was the valley lining up with the axes. The experiment below shows Adam\'s step count growing as the turned valley narrows.' },
+      { ask: 'Load "No momentum (β₁ = 0)", which steps along the newest slope instead of an average of recent ones. With momentum Adam needed 131 steps on this ravine. Will it need more without it, or fewer? Then load "Turned ravine, no momentum" and ask the same question against the 177 steps it needed there.',
+        reveal: 'Fewer on the straight ravine: 85 steps. With momentum, x runs past the minimum to +0.26 at step 36 and has to come back. Without it, x never crosses 0. With exact slopes and a valley that lines up with the axes, the separate step sizes do the work and the averaged direction only adds overshoot. On the turned ravine it is the other way round. Without momentum the path zig-zags across the valley and is still moving after 200 steps, with loss 0.00532. The averaged direction earns its place when the valley does not line up with the axes.' },
+      { ask: 'In "No momentum (β₁ = 0)", y reaches the valley floor within five steps and rests there while x is still travelling. Will y stay on the floor for the rest of the run?',
+        reveal: 'No. Around step 50 it begins to twitch, each swing more than twice the last, and at step 59 it is out at 0.271 before the swings die away again. While y sat still its slopes were tiny, so v slowly forgot the large early ones. The size Adam remembers for y, √v̂, fell from 20 at the first step to about 3 by step 56. The y step is 0.1 × slope ÷ √v̂, and with a slope of 100 × y that had become more than 3 times y: enough to throw y to the far side, farther out than it started. The large slopes that followed refilled v, √v̂ was back above 6 by step 62, and the swings shrank. Adam\'s step sizes can grow as well as shrink.' },
+      { ask: 'Load "Round bowl: plain descent wins". The bowl is equally steep in every direction, and plain gradient descent has been given a rate of 0.4 that suits it. Adam keeps its 0.1. How many steps will each need to settle? Then load "Mild valley: plain descent is quicker", where one direction is 12 times as curved as the other, and ask again.',
+        reveal: 'On the bowl plain gradient descent stops after 6 steps. Adam is still moving after 60, at (0.0864, 0.0226) with loss 0.007979: it has run past the minimum in x and is on its way back, which is the price of its momentum. On the mild valley plain descent stops after 49 steps and Adam is still moving after 100, with loss 2.12e−5. When the directions do not differ much in steepness there is little for Adam to fix, and a well chosen single rate settles first.' },
     ],
     run,
     report: (r) => {
@@ -532,6 +539,20 @@ export default {
       input: 'Minimize f(x, y) = ½x² + 50y² from (−2, 0.2) with Adam at α = 0.1, printing the first three steps and every twentieth, then run plain gradient descent from the same point with learning rate 0.019 for comparison.',
       expected: 'adam  step  1: x=-1.9000 y=0.1000 loss=2.3050\nadam  step  2: x=-1.8002 y=0.0068 loss=1.6226\nadam  step  3: x=-1.7006 y=-0.0672 loss=1.6717\nadam  step 20: x=-0.2225 y=-0.0477 loss=0.1386\nadam  step 40: x=0.2338 y=-0.0001 loss=0.0273\nadam  step 60: x=-0.0429 y=0.0022 loss=0.0012\nplain step 20: x=-1.3627 y=0.0243 loss=0.9581\nplain step 40: x=-0.9285 y=0.0030 loss=0.4315\nplain step 60: x=-0.6327 y=0.0004 loss=0.2001',
     },
+    breakIt: [
+      { change: 'In the line that updates y, divide by `vy_hat` itself instead of its square root. The first slope in y is 20. How far will the first step move y now?',
+        find: { python: 'math.sqrt(vy_hat)', javascript: 'Math.sqrt(vyHat)' },
+        replace: { python: 'vy_hat', javascript: 'vyHat' },
+        reveal: 'The first line now reads "adam  step  1: x=-1.9000 y=0.1950 loss=3.7063". y has moved 0.005 where it should have moved 0.1. `vy_hat` is the slope squared, 400, so the step is 0.1 × 20 ÷ 400. Dividing by the square root, 20, is what cancels the size of the slope. Dividing by the square leaves a step that gets shorter as the slope gets larger, so the steep coordinate crawls: y is still at 0.0913 after 20 steps, where the correct run had crossed the valley floor by step 3. The x values are the same as before, because the line that updates x was not touched.' },
+      { change: 'In the line that works out `filled1` and `filled2`, change both powers to products: `beta1 * t` and `beta2 * t`. The first step is unaffected. Why, and what happens at the second?',
+        find: { python: '1 - beta1 ** t, 1 - beta2 ** t', javascript: '1 - beta1 ** t, filled2 = 1 - beta2 ** t' },
+        replace: { python: '1 - beta1 * t, 1 - beta2 * t', javascript: '1 - beta1 * t, filled2 = 1 - beta2 * t' },
+        reveal: 'The first line is unchanged, "adam  step  1: x=-1.9000 y=0.1000 loss=2.3050", because β × 1 and β to the power 1 are the same number. At step 2, 1 − 0.999 × 2 is −0.998, so the corrected v is negative and has no square root. Python stops there with "ValueError: math domain error". JavaScript carries on and prints "x=NaN y=NaN loss=NaN" for every later Adam line, then the three plain lines as usual. A slip that is invisible on the first step and fatal on the second is a reason to check more than one step by hand.' },
+      { change: 'Replace the right-hand side of the line that updates `vy` with the square of the average slope, `my * my`, in place of an average of squared slopes. y started 0.2 from the valley floor. Will it settle there?',
+        find: { python: 'vy = beta2 * vy + (1 - beta2) * gy * gy', javascript: 'vy = beta2 * vy + (1 - beta2) * gy * gy;' },
+        replace: { python: 'vy = my * my', javascript: 'vy = my * my;' },
+        reveal: 'No. The output goes on to "adam  step 40: x=0.2338 y=0.0577 loss=0.1935" and "adam  step 60: x=-0.0429 y=-0.0281 loss=0.0403", where the correct run had y at −0.0001 by step 40 and a loss of 0.0012 at step 60. With v equal to m squared, the size of m cancels out of m ÷ √v and only its sign is left. So y takes a step of a set length, about 0.024 by step 60, towards the floor and then past it, however small the slope has become. An average of squares stays large while the slopes keep changing sign, and that is what shortens the step. The square of an average shrinks along with the average, and shortens nothing.' },
+    ],
     python: {
       source: `import math
 
@@ -547,17 +568,15 @@ def grad(x, y):
 alpha, beta1, beta2, eps = 0.1, 0.9, 0.999, 1e-8
 x, y = -2.0, 0.2
 mx = my = vx = vy = 0.0
-power1 = power2 = 1.0
 for t in range(1, 61):
     gx, gy = grad(x, y)
     mx = beta1 * mx + (1 - beta1) * gx
     my = beta1 * my + (1 - beta1) * gy
     vx = beta2 * vx + (1 - beta2) * gx * gx
     vy = beta2 * vy + (1 - beta2) * gy * gy
-    power1 *= beta1
-    power2 *= beta2
-    mx_hat, my_hat = mx / (1 - power1), my / (1 - power1)
-    vx_hat, vy_hat = vx / (1 - power2), vy / (1 - power2)
+    filled1, filled2 = 1 - beta1 ** t, 1 - beta2 ** t
+    mx_hat, my_hat = mx / filled1, my / filled1
+    vx_hat, vy_hat = vx / filled2, vy / filled2
     x -= alpha * mx_hat / (math.sqrt(vx_hat) + eps)
     y -= alpha * my_hat / (math.sqrt(vy_hat) + eps)
     if t <= 3 or t % 20 == 0:
@@ -572,12 +591,12 @@ for t in range(1, 61):
         print(f"plain step {t:2d}: x={x:.4f} y={y:.4f} loss={loss(x, y):.4f}")`,
       notes: [
         { line: 9, text: 'The slope in y is 100 times y, against x for the slope in x. This difference in scale is what a single learning rate cannot serve.' },
-        { line: 18, text: 'The first running average, kept separately for x and y. Slopes of opposite sign cancel here.' },
-        { line: 20, text: 'The second running average, of the squared slope. Squares are never negative, so this records size and cannot cancel.' },
-        { line: 22, text: 'power1 holds β₁ to the power t and power2 holds β₂ to the power t, built up by one multiplication per step.' },
-        { line: 24, text: 'Bias correction: divide each average by the fraction of it that has been filled since it started at zero.' },
-        { line: 26, text: 'The update. Each coordinate is divided by its own typical slope size before stepping.' },
-        { line: 34, text: 'Plain gradient descent for comparison: one learning rate for both coordinates, kept just under the limit of 0.02 that the steep y direction imposes.' },
+        { line: 17, text: 'The first running average, kept separately for x and y. Slopes of opposite sign cancel here.' },
+        { line: 19, text: 'The second running average, of the squared slope. Squares are never negative, so this records size and cannot cancel.' },
+        { line: 21, text: '`beta1 ** t` is β₁ to the power t. Each average started at zero, and after t steps only the fraction 1 − βᵗ of it has been filled: 0.1 of m and 0.001 of v after the first step.' },
+        { line: 22, text: 'Bias correction: divide each average by the fraction of it that has been filled.' },
+        { line: 24, text: 'The update. Each coordinate is divided by its own typical slope size before stepping.' },
+        { line: 32, text: 'Plain gradient descent for comparison: one learning rate for both coordinates, kept just under the limit of 0.02 that the steep y direction imposes.' },
       ],
     },
     javascript: {
@@ -589,17 +608,15 @@ const show = (name, t, x, y) =>
 const alpha = 0.1, beta1 = 0.9, beta2 = 0.999, eps = 1e-8;
 let x = -2.0, y = 0.2;
 let mx = 0, my = 0, vx = 0, vy = 0;
-let power1 = 1, power2 = 1;
 for (let t = 1; t <= 60; t++) {
   const [gx, gy] = grad(x, y);
   mx = beta1 * mx + (1 - beta1) * gx;
   my = beta1 * my + (1 - beta1) * gy;
   vx = beta2 * vx + (1 - beta2) * gx * gx;
   vy = beta2 * vy + (1 - beta2) * gy * gy;
-  power1 *= beta1;
-  power2 *= beta2;
-  const mxHat = mx / (1 - power1), myHat = my / (1 - power1);
-  const vxHat = vx / (1 - power2), vyHat = vy / (1 - power2);
+  const filled1 = 1 - beta1 ** t, filled2 = 1 - beta2 ** t;
+  const mxHat = mx / filled1, myHat = my / filled1;
+  const vxHat = vx / filled2, vyHat = vy / filled2;
   x -= alpha * mxHat / (Math.sqrt(vxHat) + eps);
   y -= alpha * myHat / (Math.sqrt(vyHat) + eps);
   if (t <= 3 || t % 20 === 0) console.log(show("adam ", t, x, y));
@@ -624,17 +641,15 @@ int main() {
     const double alpha = 0.1, beta1 = 0.9, beta2 = 0.999, eps = 1e-8;
     double x = -2.0, y = 0.2;
     double mx = 0.0, my = 0.0, vx = 0.0, vy = 0.0;
-    double power1 = 1.0, power2 = 1.0;
     for (int t = 1; t <= 60; ++t) {
         double gx = x, gy = 100 * y;
         mx = beta1 * mx + (1 - beta1) * gx;
         my = beta1 * my + (1 - beta1) * gy;
         vx = beta2 * vx + (1 - beta2) * gx * gx;
         vy = beta2 * vy + (1 - beta2) * gy * gy;
-        power1 *= beta1;
-        power2 *= beta2;
-        double mxHat = mx / (1 - power1), myHat = my / (1 - power1);
-        double vxHat = vx / (1 - power2), vyHat = vy / (1 - power2);
+        double filled1 = 1 - std::pow(beta1, t), filled2 = 1 - std::pow(beta2, t);
+        double mxHat = mx / filled1, myHat = my / filled1;
+        double vxHat = vx / filled2, vyHat = vy / filled2;
         x -= alpha * mxHat / (std::sqrt(vxHat) + eps);
         y -= alpha * myHat / (std::sqrt(vyHat) + eps);
         if (t <= 3 || t % 20 == 0) {
@@ -757,16 +772,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'On the steep ravine the starting slope is −2 in x and 20 in y, and α is 0.1. How far does Adam\'s first step move each coordinate?',
-      options: ['x by 0.2 and y by 2, in proportion to the slopes', 'x by 0.1 and y by 0.1', 'x by 0.1 and y by 0.01, because the steep coordinate is held back', 'Neither moves until the averages have filled up'],
+      q: 'On the steep ravine Adam starts at x = −2, y = 0.2, and the minimum is at (0, 0). With α = 0.1 it is within 0.05 of the minimum in x after 60 steps. Lower α to 0.01 and give it the same 60 steps. Where is x at the end?',
+      options: ['Close to 0. Adam sets its own step lengths, so α only changes the route', 'About −1.43. Each step moves x by about α, so 60 steps cover a little under 0.6', 'About −1.09, where plain gradient descent with a learning rate of 0.01 would be', 'Still at −2.00. Steps this small vanish when they are divided by √v̂'],
       answer: 1,
       explain: [
-        'That is what plain gradient descent would do with a learning rate of 0.1, and in y it would overshoot badly.',
-        'After bias correction m̂ is the slope and √v̂ is its size, so their ratio is −1 for x and +1 for y. Each coordinate moves by α.',
-        'The steep coordinate is scaled down to the same step as the gentle one, not below it.',
-        'Bias correction exists so that the first step is already full length.',
+        'Adam sets how long each coordinate\'s step is compared with the others. How long the steps are in absolute terms is still α. Even with 300 steps at α = 0.01, x only gets to −0.1790.',
+        'The slopes in x keep the same sign and change slowly, so m̂ ÷ √v̂ stays close to −1 and every step moves x by nearly 0.01. Sixty of them take x from −2 to −1.4270. A learning rate that suits one problem can be ten times too small for another.',
+        'Plain gradient descent moves by rate × slope, so its steps depend on how steep x is: it would multiply x by 0.99 each step and reach −1.0943. Adam divides the slope\'s size out, so its steps in x are about α whatever the slope.',
+        'Dividing by √v̂ removes the size of the slope and leaves a ratio close to −1. The step is α times that ratio, about 0.01: small, but far from nothing.',
       ],
-      tryInput: { ...DEFAULTS, show: 'adam' },
+      tryInput: { ...DEFAULTS, show: 'adam', rate: 0.01 },
+      check: (r) => (r.method === 'adam' && r.steps === 60 && r.status === 'budget' && near(r.x, -1.4270, 5e-5) && near(r.y, 0.0043, 5e-5)) || `ended at (${r.x}, ${r.y}) after ${r.steps} steps, ${r.status}`,
     },
     {
       type: 'debug',
@@ -800,7 +816,8 @@ x -= alpha * m_hat / (v_hat + eps)`,
     {
       type: 'challenge',
       title: 'Find what Adam is and is not indifferent to',
-      prompt: 'Start from the code sample. First multiply the loss, and therefore both slopes, by 1000 and show that Adam visits the same positions while plain gradient descent now needs its learning rate divided by 1000. Then turn the ravine by 45°: use u = (x + y)/√2 and v = (x − y)/√2 with loss ½u² + 50v², and start from the point where u = −2 and v = 0.2. Count the steps Adam needs to get within 0.01 of the minimum in both orientations, and explain the difference from the slopes each coordinate sees.',
+      prompt: 'Start from the code sample. First multiply the loss, and therefore both slopes, by 1000 and show that Adam visits the same positions while plain gradient descent now needs its learning rate divided by 1000. Then go back to the original loss and turn the ravine by 45°: use u = (x + y)/√2 and v = (x − y)/√2 with loss ½u² + 50v², and start from the point where u = −2 and v = 0.2. In both orientations, with α = 0.1, count the steps until Adam first comes within 0.01 of the minimum, and explain the difference from the slopes each coordinate sees.',
+      expect: 'Scaled by 1000, Adam\'s 60 positions agree with the original run to within 0.00000001, and step 60 is still x=-0.0429 y=0.0022. The tiny difference comes from ε, which is not scaled. Plain gradient descent at 0.019 now jumps to (36, −379.8) on its first step and diverges. At 0.000019 it retraces its old path to x=-0.6327 y=0.0004 at step 60. The turned start is x = −1.2728, y = −1.5556, where the slopes are 12.73 and −15.56. Adam first comes within 0.01 of the minimum at step 55 in the original orientation and at step 110 when turned. Plain gradient descent at 0.019 takes 277 steps either way. In the turned ravine both coordinates see slopes of nearly the same size, each dominated by the steep direction, so dividing by √v̂ gives them the same step length and the gentle direction gets no help.',
       hints: ['In the turned ravine the slope in x is (u + 100v)/√2 and the slope in y is (u − 100v)/√2.', 'Scaling the loss changes m̂ and √v̂ by the same factor. Check what happens to their ratio.', 'Plain gradient descent takes the same number of steps in both orientations. Why does it not care?'],
     },
   ],
@@ -846,6 +863,57 @@ x -= alpha * m_hat / (v_hat + eps)`,
   },
 
   tests: [
+    { name: 'Things to try: plain descent after 60 steps, and its first step', input: { ...DEFAULTS },
+      check: (r) => {
+        const g = r.gd, p = g.path[1];
+        return (near(p[0], -1.962, 1e-9) && near(p[1], -0.18, 1e-9) && near(g.x, -0.6327, 5e-5) && near(g.y, 0.0004, 5e-5) && near(g.bestValue, 0.2001, 5e-5)
+          && near(r.x, -0.0429, 5e-5) && near(r.y, 0.0022, 5e-5) && near(r.bestValue, 0.00117, 5e-6)) || `plain at (${g.x}, ${g.y}) loss ${g.bestValue}, Adam at (${r.x}, ${r.y}) loss ${r.bestValue}`;
+      } },
+    { name: 'Things to try: at plain rate 0.02 y bounces between 0.2 and −0.2, at 0.021 it grows to 60.9', input: { ...DEFAULTS, gdRate: 0.02 },
+      check: (r) => {
+        const over = run({ ...DEFAULTS, gdRate: 0.021 }, quiet).gd;
+        const ys = r.gd.path.map((p) => p[1]);
+        return (ys.every((y, k) => near(y, k % 2 ? -0.2 : 0.2, 1e-9)) && near(r.gd.bestValue, 2.177, 5e-4) && near(r.gd.x, -0.5951, 5e-5) && Math.min(...r.gd.losses) > 2
+          && near(over.y, 60.8963, 5e-5) && near(over.bestValue / 1e5, 1.85, 5e-3)) || `0.02: y ${r.gd.y}, loss ${r.gd.bestValue}; 0.021: y ${over.y}, loss ${over.bestValue}`;
+      } },
+    { name: 'Things to try: without bias correction the first step lands on (−1.6838, −0.1162) and the longest step is 4.991 × α', input: { ...DEFAULTS, show: 'adam', correct: false },
+      check: (r) => (near(r.path[1][0], -1.6838, 5e-5) && near(r.path[1][1], -0.1162, 5e-5) && near(r.maxRatio, 4.991, 5e-4) && run({ ...DEFAULTS, show: 'adam' }, quiet).maxRatio <= 1 + 1e-9) || `first position ${r.path[1]}, longest step ${r.maxRatio}` },
+    { name: 'Things to try: straight ravine 131 steps and always ahead; turned ravine 177 steps, plain descent lower from step 9 to step 45', input: { ...DEFAULTS, landscape: 'ravine-turned', startX: -0.4, startY: -0.5, steps: 200 },
+      check: (r) => {
+        const behind = (res) => { const out = []; for (let k = 1; k < Math.min(res.losses.length, res.gd.losses.length); k++) if (res.gd.losses[k] < res.losses[k]) out.push(k); return out; };
+        const straight = run({ ...DEFAULTS, steps: 200 }, quiet);
+        const b = behind(r);
+        return (r.steps === 177 && r.status === 'converged' && straight.steps === 131 && straight.status === 'converged' && behind(straight).length === 0
+          && b.join(',') === [4, 5, ...Array.from({ length: 37 }, (_, i) => i + 9)].join(',') && r.gd.status !== 'converged') || `turned ${r.steps} steps, behind at ${b.join(',')}; straight ${straight.steps} steps`;
+      } },
+    { name: 'Things to try: with momentum x overshoots to +0.26 at step 36; without it Adam stops after 85 steps and x never crosses 0', input: { ...DEFAULTS, show: 'adam', beta1: 0, steps: 100 },
+      check: (r) => {
+        const withM = run({ ...DEFAULTS, show: 'adam', steps: 200 }, quiet);
+        const xs = withM.path.map((p) => p[0]), top = Math.max(...xs);
+        const turned = run({ ...DEFAULTS, landscape: 'ravine-turned', show: 'adam', beta1: 0, startX: -0.4, startY: -0.5, steps: 200 }, quiet);
+        return (r.steps === 85 && r.status === 'converged' && r.path.every((p) => p[0] < 0) && near(top, 0.26, 5e-3) && xs.indexOf(top) === 36
+          && turned.status === 'budget' && turned.steps === 200 && near(turned.bestValue, 0.00532, 5e-6)) || `no momentum: ${r.steps} steps; overshoot ${top} at ${xs.indexOf(top)}; turned ${turned.status} ${turned.bestValue}`;
+      } },
+    { name: 'Things to try: without momentum y rests, then swings out to 0.271 at step 59 as √v̂ falls to about 3', input: { ...DEFAULTS, show: 'adam', beta1: 0, steps: 100 },
+      check: (r) => {
+        const ys = r.path.map((p) => p[1]), size = (t) => Math.sqrt(r.trace[t - 1].vh[1]);
+        const far = Math.max(...ys.slice(1).map(Math.abs));
+        return (Math.abs(ys[5]) < 1e-4 && ys.slice(5, 48).every((y) => Math.abs(y) < 1e-4) && near(ys[59], 0.271, 5e-4) && near(far, Math.abs(ys[59]), 1e-12)
+          && near(size(1), 20, 1e-6) && near(size(56), 2.997, 5e-4) && size(62) > 6 && Math.abs(ys[55] / ys[54]) > 2 && Math.abs(ys[70]) < 0.002) || `y at 59 ${ys[59]}, largest ${far}, sizes ${size(1)}, ${size(56)}, ${size(62)}`;
+      } },
+    { name: 'Things to try: round bowl, plain descent stops after 6 steps and Adam is still moving after 60; mild valley 49 against 100', input: { ...DEFAULTS, landscape: 'bowl', gdRate: 0.4, startX: -0.85, startY: 0.7 },
+      check: (r) => {
+        const mild = run({ ...DEFAULTS, landscape: 'valley', gdRate: 0.15, startX: -0.85, startY: 0.7, steps: 100 }, quiet);
+        return (r.gd.steps === 6 && r.gd.status === 'converged' && r.status === 'budget' && near(r.x, 0.0864, 5e-5) && near(r.y, 0.0226, 5e-5) && near(r.bestValue, 0.007979, 5e-7) && r.path[0][0] < 0
+          && mild.gd.steps === 49 && mild.gd.status === 'converged' && mild.status === 'budget' && near(mild.bestValue / 1e-5, 2.12, 5e-3)) || `bowl: plain ${r.gd.steps}, Adam (${r.x}, ${r.y}) ${r.bestValue}; mild: plain ${mild.gd.steps}, Adam ${mild.bestValue}`;
+      } },
+    { name: 'quiz prediction: at α = 0.01 Adam covers under 0.6 in x in 60 steps, and is still short after 300', input: { ...DEFAULTS, show: 'adam', rate: 0.01 },
+      check: (r) => {
+        const long = run({ ...DEFAULTS, show: 'adam', rate: 0.01, steps: 300 }, quiet), plain = run({ ...DEFAULTS, show: 'gd', gdRate: 0.01 }, quiet);
+        const fast = run({ ...DEFAULTS, show: 'adam' }, quiet);
+        return (near(r.x, -1.4270, 5e-5) && r.trace.every((s) => s.d[0] > 0 && s.d[0] <= 0.01 + 1e-12) && near(long.x, -0.1790, 5e-5) && long.status === 'budget' && near(plain.x, -1.0943, 5e-5) && Math.abs(fast.x) < 0.05)
+          || `x ${r.x}; after 300 steps ${long.x}; plain ${plain.x}`;
+      } },
     { name: 'the first step moves each coordinate by the learning rate, whatever its slope', input: { ...DEFAULTS, show: 'adam' },
       check: (r) => {
         const [x0, y0] = r.path[0], [x1, y1] = r.path[1];

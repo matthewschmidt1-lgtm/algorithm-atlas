@@ -239,10 +239,15 @@ export default {
       { label: 'Ties: slope exactly one half', values: { x0: 3, y0: 4, x1: 19, y1: 12 } },
     ],
     tryThis: [
-      'Load "Gentle slope" and step through it. Each time the error term goes above zero, the line climbs a row and the error term drops by 2 × 19 = 38. Watch the brick red ticks in the lower picture: none is ever longer than half a pixel.',
-      'Load "Steep: walks row by row". The line now covers more rows than columns, so the algorithm steps along y and only sometimes along x. Set the end point back to a gentle slope and compare which direction gets a step for every pixel.',
-      'Load "Ties: slope exactly one half". In every second column the true line passes exactly halfway between two pixels and the error term is exactly 0. Now swap the two endpoints by hand and run it again: the tied pixels land on the other side, so the two drawings differ.',
-      'Move the end point until the line is an exact diagonal, then make it horizontal. Count the lit pixels each time. Both use one pixel per column, although the diagonal line is about 1.4 times as long, which is why diagonal lines look fainter on a real screen.',
+      { ask: 'Load "Gentle slope" and step through it. The line climbs 8 rows over 19 columns. How many times will the error term go above zero on the way, and how long will the longest brick red tick in the lower picture be?',
+        reveal: 'The error term goes above zero 8 times, once for each row the line climbs. Each time it drops by 2 × 19 = 38 before the usual 2 × 8 = 16 is added. The longest tick is 0.47 of a pixel. No tick can be longer than half a pixel, because every step takes the nearer of two pixels that are one pixel apart.' },
+      { ask: 'Load "Steep: walks row by row". The line covers 5 columns and 13 rows. Which direction gets a step for every pixel now, and how many times does the line step sideways?',
+        reveal: 'It steps along y for every pixel, 13 times, and sideways along x only 5 times, each time the error term is above zero. A loop that stepped along x would take only 5 steps and could not light a pixel in every one of the rows the line crosses. Set the end point back to a gentle slope and the roles swap again: x gets a step for every pixel.' },
+      { ask: 'Load "Ties: slope exactly one half". In every second column the true line passes exactly halfway between two pixels, and the error term is exactly 0. Now swap the two endpoints, so that the line runs from (19, 12) back to (3, 4), and run it again. How many of the 17 pixels will be different?',
+        input: { x0: 19, y0: 12, x1: 3, y1: 4 },
+        reveal: '8 of the 17. In columns 4, 6, 8 and so on up to 18, the first drawing lights the lower of the two tied pixels and the second lights the upper one: (4, 4) becomes (4, 5), and (18, 11) becomes (18, 12). On a tie the rule keeps the straight step, and which pixel the straight step lands on depends on the direction of travel. The other 9 pixels, where there is no tie, are the same both ways.' },
+      { ask: 'Load "Exact diagonal" and note how many pixels are lit. Then set the end point\'s y to 2, which makes the line horizontal across the same columns. The diagonal line is about 1.4 times as long as the horizontal one. Will it light about 1.4 times as many pixels?',
+        reveal: 'No. Both light 12 pixels, one per column. The diagonal spreads the same number of pixels along a line about 1.4 times as long, which is why diagonal lines look fainter than horizontal ones on a real screen. The diagonal does cost more arithmetic: 44 additions against 22, because every one of its steps is a sideways step as well.' },
     ],
     run,
     report: (r, c) => `Lit ${r.pixels.length} pixels from (${r.x0}, ${r.y0}) to (${r.x1}, ${r.y1}), stepping along ${r.steep ? 'y' : 'x'}.\n${c.comparisons || 0} comparisons and ${c.additions || 0} whole-number additions, with no multiplication or division inside the loop.\nLargest distance from the true line: ${f2(r.maxOffset)} of a pixel.\n${r.pixels.map((p) => `(${p[0]},${p[1]})`).join(' ')}`,
@@ -329,6 +334,20 @@ export default {
       input: 'Three lines: gentle from (0, 0) to (5, 2), steep from (0, 0) to (2, 5), and right to left from (6, 1) to (0, 4).',
       expected: '(0,0) (1,0) (2,1) (3,1) (4,2) (5,2)\n(0,0) (0,1) (1,2) (1,3) (2,4) (2,5)\n(6,1) (5,1) (4,2) (3,2) (2,3) (1,3) (0,4)',
     },
+    breakIt: [
+      { change: 'Treat every line as gentle: replace the test that sets `steep` by a plain false. Which of the three lines will come out wrong?',
+        find: { python: 'steep = dy > dx', javascript: 'const steep = dy > dx;' },
+        replace: { python: 'steep = False', javascript: 'const steep = false;' },
+        reveal: 'The second, the steep line from (0, 0) to (2, 5). It prints as "(0,0) (1,1) (2,2)": three pixels where six are needed, stopping at (2,2) and never reaching (2,5). The loop now always steps along x, and this line has only 2 columns to step through, so it takes 2 steps and cannot climb more than one row in each. The other two lines are gentle and print exactly as before, which is why a test that uses only gentle lines never sees this.' },
+      { change: 'Mix up the two updates: where the error term is pulled back down after a sideways step, subtract twice the minor change instead of twice the major change. Where will the first line end?',
+        find: { python: 'error -= 2 * major', javascript: 'error -= 2 * major;' },
+        replace: { python: 'error -= 2 * minor', javascript: 'error -= 2 * minor;' },
+        reveal: 'At (5,4) instead of (5,2). The first line prints "(0,0) (1,0) (2,1) (3,2) (4,3) (5,4)", the second ends at (4,5) instead of (2,5), and the third ends at (0,6) instead of (0,4). The subtraction is now cancelled exactly by the addition on the next line. Once the error term has gone above zero it stays there, every step from then on is a sideways step as well, and the line runs off at 45 degrees.' },
+      { change: 'Loop one time too few: make the loop run `major - 1` times. What will be missing from each line?',
+        find: { python: 'for _ in range(major):', javascript: 'i < major;' },
+        replace: { python: 'for _ in range(major - 1):', javascript: 'i < major - 1;' },
+        reveal: 'The far endpoint. The three lines now end at (4,2), (2,4) and (1,3), one pixel short of (5,2), (2,5) and (0,4). A line that takes `major` steps has `major + 1` pixels, because the starting pixel is lit before the loop begins. Every other pixel is right, so the mistake shows only as lines that stop one pixel short of where they should meet the next one.' },
+    ],
     python: {
       source: `def bresenham(x0, y0, x1, y1):
     dx, dy = abs(x1 - x0), abs(y1 - y0)
@@ -529,16 +548,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The line from (2, 3) to (21, 11) covers 19 pixels across and 8 up. How many pixels will be lit?',
-      options: ['20', '21', '27', '28'],
-      answer: 0,
+      q: 'A line is drawn from (3, 14) to (10, 2). It covers 7 pixels across and 12 down. How many pixels will be lit?',
+      options: ['8', '13', '14', '20'],
+      answer: 1,
       explain: [
-        'Correct. One pixel per step along x: 19 steps plus the starting pixel.',
-        '21 is the straight-line length, about 20.6, rounded up. The count depends only on the longer of the two changes.',
-        '27 is 19 + 8. That would be the count if across and up moves were separate steps, but a diagonal step does both at once.',
-        '28 counts across and up moves separately and adds the starting pixel. Diagonal steps make it far fewer.',
+        '8 would be one pixel per column. This line covers more rows than columns, so it steps along y. One pixel per column would leave rows with nothing lit.',
+        'One pixel per step along y: 12 steps plus the starting pixel. The count depends only on the longer of the two changes.',
+        '14 is the straight-line length, about 13.9, rounded up. The count depends on the longer of the two changes, not on the length.',
+        '20 is 7 + 12 plus the starting pixel. That would be the count if across and down moves were separate steps, but a diagonal step does both at once.',
       ],
-      tryInput: { x0: 2, y0: 3, x1: 21, y1: 11 },
+      tryInput: { x0: 3, y0: 14, x1: 10, y1: 2 },
+      check: (r, c) => (r.pixels.length === 13 && r.steep && r.major === 12 && c.pixels === 13) || `${r.pixels.length} pixels, stepping along ${r.steep ? 'y' : 'x'}`,
     },
     {
       type: 'debug',
@@ -579,11 +599,16 @@ int main() {
         'Both endpoints are always lit.',
       ],
       tryInput: { x0: 4, y0: 2, x1: 0, y1: 0 },
+      check: (r) => {
+        const back = r.pixels.map(key).join(' '), fwd = trace(0, 0, 4, 2).pixels.map(key).join(' ');
+        return (back === '4,2 3,2 2,1 1,1 0,0' && fwd === '0,0 1,0 2,1 3,1 4,2') || `forward ${fwd}; backward ${back}`;
+      },
     },
     {
       type: 'challenge',
       title: 'A circle with the same trick',
-      prompt: 'Write a function that lights the pixels of a circle of whole-number radius r centred on a pixel, using only integer addition, subtraction and comparison inside the loop. Start at the top of the circle and walk one eighth of the way round. At each step choose between moving right and moving right and down, by tracking the sign of x² + y² − r² at the midpoint between the two candidates. Use symmetry to light the other seven eighths.',
+      prompt: 'Write a function that lights the pixels of a circle of whole-number radius r centred on a pixel, using only integer addition, subtraction and comparison inside the loop. Start at the top of the circle and walk one eighth of the way round. At each step choose between moving right and moving right and down, by tracking the sign of x² + y² − r² at the midpoint between the two candidates. Use symmetry to light the other seven eighths. Test it with radius 5 and with radius 8, centred on (0, 0): list the pixels of the first eighth and count the different pixels lit in all.',
+      expect: 'For radius 5 the first eighth is (0,5) (1,5) (2,5) (3,4), and symmetry turns those into 28 different pixels. For radius 8 the first eighth is (0,8) (1,8) (2,8) (3,7) (4,7) (5,6), and there are 44 pixels in all. In each column of the first eighth, the row chosen is the true height of the circle rounded to the nearest whole number. You can check that with a square root outside the loop: our solution agrees with it for every radius from 1 to 199.',
       hints: ['You never need to recompute x² + y². Work out how it changes when x grows by one, and when y shrinks by one.', 'The first eighth ends when x becomes larger than y.', 'Each point (x, y) gives eight pixels: swap x and y, and change the sign of either or both.'],
     },
   ],
@@ -633,6 +658,14 @@ int main() {
       check: (r) => r.pixels.map(key).join(' ') === '0,0 1,0 2,1 3,1 4,2 5,2' || `got ${r.pixels.map(key).join(' ')}` },
     { name: 'the default line has max(19, 8) + 1 = 20 pixels', input: { x0: 2, y0: 3, x1: 21, y1: 11 },
       check: (r, c) => (r.pixels.length === 20 && c.comparisons === 19 && c.additions === 2 * (19 + 8)) || `got ${r.pixels.length} pixels, ${c.additions} additions` },
+    { name: 'the quiz prediction: the steep line from (3,14) to (10,2) has max(7, 12) + 1 = 13 pixels', input: { x0: 3, y0: 14, x1: 10, y1: 2 },
+      check: (r) => (checkLine(r) === true && r.pixels.length === 13 && r.steep) || `${checkLine(r)}; ${r.pixels.length} pixels` },
+    { name: 'the tie preset drawn both ways differs in 8 of its 17 pixels, all in the even columns', input: { x0: 19, y0: 12, x1: 3, y1: 4 },
+      check: (r) => {
+        const fwd = new Set(trace(3, 4, 19, 12).pixels.map(key));
+        const odd = r.pixels.filter((p) => !fwd.has(key(p)));
+        return (r.pixels.length === 17 && odd.length === 8 && odd.every((p) => p[0] % 2 === 0 && p[0] >= 4 && p[0] <= 18)) || `${odd.length} pixels differ: ${odd.map(key).join(' ')}`;
+      } },
     { name: 'every pair of endpoints on a 9 by 7 grid, in all eight octants', input: {},
       check: () => allPairs(9, 7, (ax, ay, bx, by) => checkLine(trace(ax, ay, bx, by))) },
     { name: 'mirror images of a line are mirror images pixel for pixel', input: {},

@@ -390,11 +390,16 @@ export default {
       { label: 'Plain case with 6 particles', values: { scenario: 'linear', particles: 6, measNoise: 1, steps: 12, seed: 4 } },
     ],
     tryThis: [
-      'Load "Two sides, 150 particles" and step through it. The first five readings happen to favour the wrong side: by step 5 the particles right of the beacon, where the robot really is, hold only 4% of the weight. The cloud still keeps a few particles there. At step 6 the reading fits them far better, they are copied many times, and by step 7 the left side is empty.',
-      'Now load "Starved: the same readings, 12 particles". The robot and the readings are exactly the same. At step 3 the right side holds 3% of the weight, which is less than one particle\'s share out of 12, and this time it gets no copy. From then on no particle is near the robot, and the run ends 10.21 m away with a cloud only 0.17 m wide.',
-      'Keep the seed at 47 and move the particle slider up from 12. With 20 particles the cloud still starves at step 3. With 24 it survives. There is no sharp safe number: the more particles, the smaller the share of weight that can still earn a copy.',
-      'Load "Plain case, beside the exact answer". Here a Kalman filter gives the exact answer, drawn as the dashed brick line, and with 300 particles the terracotta estimate stays within 0.1 m of it. Then load "Plain case with 6 particles": the estimate strays about 1 m from the exact line, and the last step reports a cloud that is too sure of itself.',
-      'With the default run, set the sensor error to 0.2. A sharp sensor rules out almost every guess: at step 2 only 10 of the 150 particles are copied, and the count of effective particles drops below 6. A precise sensor needs more particles, not fewer.',
+      { ask: 'Load "Two sides, 150 particles" and step through it. The robot is right of the beacon, but the first five readings happen to favour the left. By step 5 the particles on the right hold only 4% of the weight. Can the filter still come back to the right side, and if it can, how many more readings will it need?',
+        reveal: 'It can, and it needs one. 4% of 150 particles is still about six particles, so the cloud keeps a few guesses on the right. At step 6 the reading fits them far better than the ones on the left. They take 69% of the weight and are copied many times: only 35 of the 150 particles get any copy at that step. By step 7 the left side is empty, and the run ends 0.50 m from the robot.' },
+      { ask: 'Now load "Starved: the same readings, 12 particles". The robot and the readings are exactly the same. At step 3 the right side is down to 3% of the weight. One particle out of 12 stands for 8% of the cloud. How many of the 12 new particles will be copied from the right side at step 3?',
+        reveal: 'None. 3% is less than half of one particle\'s share, and this time no copy goes to the right. From then on no particle is near the robot, and nudges of about 0.3 m cannot carry one back. The run ends 10.21 m away with a cloud only 0.17 m wide. A starved cloud is tight and confident, and it is wrong.' },
+      { ask: 'Keep the seed at 47 and move the particle slider up from 12. With 20 particles the cloud still starves, and with 24 it survives. Does that make every number above 24 safe? Decide, then try 35, 46 and 64.',
+        reveal: 'No. With 30, 40 and 50 particles the cloud survives, but with 35, 46 and 64 it starves again: at step 5 with 35, and at step 3 with the other two. Each particle count draws different random nudges and resampling marks, so each run has its own luck. More particles make starvation less likely, because a smaller share of the weight can still earn a copy. There is no sharp safe number.' },
+      { ask: 'Load "Plain case, beside the exact answer". Here a Kalman filter gives the exact answer, drawn as the dashed brick line. With 300 particles, how far will the terracotta estimate stray from that line at its worst: about 0.1 m, about 0.5 m or more than 1 m? Then load "Plain case with 6 particles" and decide again.',
+        reveal: 'With 300 particles the estimate is never more than 0.1 m from the exact line, and it ends 0.02 m from it. With 6 particles it is 1.42 m away at step 3 and ends 0.57 m away. The last step also reports a cloud only 0.28 m wide while the estimate is 1.13 m from the robot, which is 4.1 spreads. Too few particles make the filter less accurate and too sure of itself at the same time.' },
+      { ask: 'With the default run, set the sensor error to 0.2. Sharper readings tell the filter more. Will more of the 150 particles be copied at each resampling, or fewer?',
+        reveal: 'Fewer. A sharp sensor rules out almost every guess: at step 2 only 10 of the 150 particles are copied, and the count of effective particles drops to 5.5. With a sensor error of 1, step 2 copies 100. The run survives and ends 0.15 m from the robot, but for a moment the whole belief rested on a handful of guesses. A precise sensor needs more particles, not fewer.' },
     ],
     run,
     report: (r, c) => {
@@ -484,9 +489,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The hallway with a beacon. The robot starts about 4 m from the beacon on an unknown side and drives 0.5 m to the right each step. Eight distance readings are tracked with 200 particles, using a small random number generator that behaves identically in every language (seed 2024). Each line shows the estimate and the share of the weight that lies right of the beacon.',
-      expected: 'step  reading  estimate  weight on right\n   1      4.2      0.64             0.54\n   2      5.4      3.59             0.84\n   3      5.1      4.76             0.93\n   4      6.6      6.12             1.00\n   5      6.3      6.55             1.00\n   6      7.2      7.07             1.00\n   7      7.4      7.50             1.00\n   8      8.3      8.08             1.00',
+      input: 'The hallway with a beacon. The robot starts about 4 m from the beacon on an unknown side and drives 0.5 m to the right each step. Eight distance readings are tracked with 200 particles, using a small random number generator that behaves identically in every language (seed 2024). Each line shows the estimate, the share of the weight that lies right of the beacon, and how many different particles the resampling kept.',
+      expected: 'step  reading  estimate  weight on right  kept\n   1      4.2      0.64             0.54   173\n   2      5.4      3.59             0.84   127\n   3      5.1      4.76             0.93   161\n   4      6.6      6.12             1.00   158\n   5      6.3      6.55             1.00   182\n   6      7.2      7.07             1.00   185\n   7      7.4      7.50             1.00   192\n   8      8.3      8.08             1.00   183',
     },
+    breakIt: [
+      { change: 'In the resampling loop, copy particle `j` and not particle `i`: every mark then takes the particle with its own number, so each particle gets exactly one copy whatever its weight. Look at the last column first. What will it show?',
+        find: { python: 'chosen.append(xs[i])', javascript: 'chosen.push(xs[i]);' },
+        replace: { python: 'chosen.append(xs[j])', javascript: 'chosen.push(xs[j]);' },
+        reveal: 'It shows 200 on every line. Every particle survives every step, so the resampling selects nothing and the readings never change the cloud. The estimate column hides this well: it prints 3.76 at step 2 where the correct program prints 3.59, and 8.11 at the end where the correct one prints 8.08. Each line still weighs the cloud against its own reading, and here one reading is enough to pick out the right-hand group. But the weights are thrown away straight afterwards. The group that started left of the beacon is still there at step 8, and nothing the filter has seen is remembered from one step to the next.' },
+      { change: 'Take the random nudge out of the move: change its size from 0.3 to 0.0, so that every particle moves exactly 0.5 m. What happens to the number of different particles from step to step?',
+        find: { python: 'rng.normal(0.0, 0.3)', javascript: 'rng.normal(0.0, 0.3)' },
+        replace: { python: 'rng.normal(0.0, 0.0)', javascript: 'rng.normal(0.0, 0.0)' },
+        reveal: 'It only goes down: 168, 118, 98, 86, 79, 76, 73, 71. The correct program keeps between 127 and 192 different particles at every step. Resampling makes exact copies, and the nudge is the only thing that ever separates them again. Without it every step can lose positions and none can gain any. The estimates still look fine, 8.05 at the end against 8.08, because eight steps are too few to do damage. A longer run would shrink the cloud to a handful of points, and those could not follow the robot when its wheels slip.' },
+      { change: 'Change the first reading from 4.2 to 60, a distance no particle is anywhere near. What will the weights be?',
+        find: { python: 'readings = [4.2,', javascript: 'const readings = [4.2,' },
+        replace: { python: 'readings = [60.0,', javascript: 'const readings = [60.0,' },
+        reveal: 'They are all zero. A particle scores exp(−0.5 × miss²), and with a miss of more than 50 m that is too small for the computer to tell from 0. So the total is 0 as well. Python prints the header and then stops at the division with "ZeroDivisionError: float division by zero". JavaScript divides 0 by 0, gets NaN, and carries on. Its first line shows NaN for the estimate and for the weight on the right, and 1 in the last column: no mark can be compared with NaN, so the loop copies the first particle 200 times. That particle is on the left, and the rest of the run follows the wrong side, ending at −3.03 with 0.00 of the weight on the right. Real filters work with logarithms of the scores, or divide every score by the largest one before adding them up.' },
+    ],
     python: {
       source: `import math
 
@@ -531,7 +550,6 @@ def particle_filter(readings, n, rng):
             estimate += share
             if x > 0:
                 right += w
-        print(f"{step:4d}  {z:7.1f}  {estimate:8.2f}  {right:15.2f}")
         # Resample: n evenly spaced marks along the weights laid end to end.
         first = rng.uniform()
         chosen = []
@@ -544,10 +562,11 @@ def particle_filter(readings, n, rng):
                 reach += ws[i]
             chosen.append(xs[i])
         xs = chosen
+        print(f"{step:4d}  {z:7.1f}  {estimate:8.2f}  {right:15.2f}  {len(set(xs)):4d}")
 
 
 readings = [4.2, 5.4, 5.1, 6.6, 6.3, 7.2, 7.4, 8.3]
-print("step  reading  estimate  weight on right")
+print("step  reading  estimate  weight on right  kept")
 particle_filter(readings, 200, Lcg(2024))`,
       notes: [
         { line: 18, text: 'Two uniform random numbers are turned into one bell-shaped random number (the Box-Muller method). The steps are written on separate lines so that every language rounds them the same way.' },
@@ -555,8 +574,9 @@ particle_filter(readings, 200, Lcg(2024))`,
         { line: 34, text: 'The score of one particle: large when the distance it would expect, abs(x), is close to the reading z. The sensor error is 1 m here, so no division by it is needed.' },
         { line: 36, text: 'Dividing by the total turns the scores into weights that sum to 1.' },
         { line: 41, text: 'The estimate is the weighted average of the positions, taken before resampling while the exact weights are still available.' },
-        { line: 51, text: 'Systematic resampling: the marks are 1/n apart, and one random number shifts them all.' },
-        { line: 52, text: 'Walk along the weights until the running total reaches the mark. Particle i is the one the mark lands on, so it is copied.' },
+        { line: 50, text: 'Systematic resampling: the marks are 1/n apart, and one random number shifts them all.' },
+        { line: 51, text: 'Walk along the weights until the running total reaches the mark. Particle i is the one the mark lands on, so it is copied.' },
+        { line: 56, text: 'The last column counts the different positions left after resampling. That is the number of particles that were copied at least once.' },
       ],
     },
     javascript: {
@@ -600,8 +620,6 @@ function particleFilter(readings, n, rng) {
       estimate += share;
       if (xs[i] > 0) right += ws[i];
     }
-    console.log(String(index + 1).padStart(4, " ") + "  " + z.toFixed(1).padStart(7, " ") + "  " +
-      estimate.toFixed(2).padStart(8, " ") + "  " + right.toFixed(2).padStart(15, " "));
     // Resample: n evenly spaced marks along the weights laid end to end.
     const first = rng.uniform();
     const chosen = [];
@@ -616,16 +634,20 @@ function particleFilter(readings, n, rng) {
       chosen.push(xs[i]);
     }
     xs = chosen;
+    console.log(String(index + 1).padStart(4, " ") + "  " + z.toFixed(1).padStart(7, " ") + "  " +
+      estimate.toFixed(2).padStart(8, " ") + "  " + right.toFixed(2).padStart(15, " ") + "  " +
+      String(new Set(xs).size).padStart(4, " "));
   });
 }
 
 const readings = [4.2, 5.4, 5.1, 6.6, 6.3, 7.2, 7.4, 8.3];
-console.log("step  reading  estimate  weight on right");
+console.log("step  reading  estimate  weight on right  kept");
 particleFilter(readings, 200, new Lcg(2024));`,
     },
     cpp: {
       source: `#include <cmath>
 #include <cstdio>
+#include <set>
 #include <vector>
 
 // A small random number generator (Park-Miller). It gives the same
@@ -671,7 +693,6 @@ void particle_filter(const std::vector<double>& readings, int n, Lcg rng) {
             estimate += share;
             if (xs[i] > 0) right += ws[i];
         }
-        std::printf("%4d  %7.1f  %8.2f  %15.2f\\n", step, z, estimate, right);
         // Resample: n evenly spaced marks along the weights laid end to end.
         double first = rng.uniform();
         std::vector<double> chosen(n);
@@ -686,12 +707,14 @@ void particle_filter(const std::vector<double>& readings, int n, Lcg rng) {
             chosen[j] = xs[i];
         }
         xs = chosen;
+        int kept = static_cast<int>(std::set<double>(xs.begin(), xs.end()).size());
+        std::printf("%4d  %7.1f  %8.2f  %15.2f  %4d\\n", step, z, estimate, right, kept);
     }
 }
 
 int main() {
     const std::vector<double> readings = {4.2, 5.4, 5.1, 6.6, 6.3, 7.2, 7.4, 8.3};
-    std::printf("step  reading  estimate  weight on right\\n");
+    std::printf("step  reading  estimate  weight on right  kept\\n");
     particle_filter(readings, 200, Lcg{2024});
     return 0;
 }`,
@@ -805,16 +828,18 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'With 150 particles the default run recovers from five misleading readings and ends 0.50 m from the robot. Keep the same robot and the same readings, and use 12 particles. What happens?',
-      options: ['It ends about as close, because the readings are the same', 'It ends a metre or two off, because fewer particles give a rougher average', 'It ends about 10 m off, on the wrong side of the beacon, with a tight cloud', 'It refuses to run with so few particles'],
+      q: 'With 12 particles the default run starves at step 3 and ends on the wrong side of the beacon. Now take "An easier run" (seed 42), where the readings favour the side the robot is on from the first step, and track it with the same 12 particles. What happens?',
+      options: ['It starves again, because 12 particles are too few for a belief with two humps', 'It ends several metres off, because 12 particles give a rough average', 'It settles on the correct side and ends well under 1 m from the robot', 'It never settles on a side, and the estimate stays near the beacon'],
       answer: 2,
       explain: [
-        'The readings are the same, but the cloud is not. With 12 particles, a side that holds 3% of the weight can easily get no copy at all.',
-        'That is what fewer particles do when the cloud stays healthy. Here something worse happens: the cloud loses the true side altogether.',
-        'At step 3 the side where the robot really is holds 3% of the weight, less than one particle\'s share of 12, and it is not copied. No particle is ever near the robot again, and the run ends 10.21 m off with a cloud only 0.17 m wide.',
-        'It runs with any number of particles from two up. It just cannot be trusted with so few.',
+        'The particle count alone does not starve a cloud. Starvation needs the true side to fall below about one particle\'s share of the weight, and in this run the true side never holds less than 60%.',
+        'Fewer particles do make the estimate rougher, but not by metres while the cloud is healthy. This run ends 0.25 m from the robot, against 0.09 m with 150 particles.',
+        'The right side, where the robot is, holds 60% of the weight after the first reading, 89% after the second and nearly all of it after the third. The left side is empty at step 3 and the run ends 0.25 m from the robot. The same 12 particles failed on the default run only because its early readings pushed the true side down to 3% of the weight.',
+        'Driving to the right makes the distance grow on one side of the beacon and shrink on the other, so every reading separates the two sides a little more. Here the left side is empty by step 3.',
       ],
-      tryInput: { scenario: 'two-sides', particles: 12, measNoise: 1, steps: 12, seed: 47 },
+      tryInput: { scenario: 'two-sides', particles: 12, measNoise: 1, steps: 12, seed: 42 },
+      check: (r, c) => (!r.lost && r.starvedAt === 0 && r.decidedAt === 3 && r.consistent && r.truth[12] > 0 && r.final.every((x) => x > 0) && num(Math.abs(r.error)) === '0.25'
+        && r.rightShare.slice(0, 3).map(pct).join(' ') === '60% 89% 100%' && Math.min(...r.rightShare) > 0.6 && c['weights computed'] === 144) || `lost ${r.lost}, decided at ${r.decidedAt}, error ${num(Math.abs(r.error))}, right shares ${r.rightShare.slice(0, 3).map(pct).join(' ')}`,
     },
     {
       type: 'debug',
@@ -861,7 +886,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Resample only when it is needed, and bring a lost cloud back',
-      prompt: 'Change the filter so that it carries its weights from step to step, multiplying each weight by the new likelihood, and resamples only when the effective number of particles, 1 / (sum of squared weights), drops below N/2. Compare the error of the estimate with resampling at every step, averaged over 200 seeds. Then attack starvation: at every step replace 5 of the particles with fresh ones drawn from the whole hallway. Run the starved case from this page (12 particles, seed 47) and see whether the cloud now finds its way back to the robot, and what the fresh particles cost in accuracy when the cloud was healthy.',
+      prompt: 'Start from the program in this lesson. First, change it so that it carries its weights from step to step, multiplying each weight by the new likelihood, and resamples only when the effective number of particles, 1 / (sum of squared weights), drops below N/2. On the program\'s own eight readings, with 200 particles and seed 2024, at which steps does it resample? Run both versions with seeds 1 to 200 and compare how much the final estimate varies from seed to seed. Then attack starvation. Go back to resampling at every step and track the twelve readings of the default run on this page, where the robot is right of the beacon and ends at 7.62: 2.26, 4.25, 1.89, 3.73, 2.74, 4.90, 6.06, 8.03, 5.41, 7.43, 6.92, 8.63. With 12 particles and seeds 1 to 200, count the runs whose final estimate is left of the beacon. Now replace 5 of the particles after every resampling with fresh ones drawn evenly from −12 m to 12 m, and count again. What do the fresh particles cost when the cloud was healthy?',
+      expect: 'Resampling on demand: with seed 2024 the filter resamples once, at step 3, and its eight estimates are 0.64, 3.68, 4.81, 6.08, 6.53, 7.06, 7.57 and 8.14. Over seeds 1 to 200 it resamples exactly once in every run. The final estimate averages 8.10 in both versions, with a standard deviation of 0.034 when resampling at every step and 0.040 on demand. So on these readings, resampling on demand skips seven of the eight resamplings and changes the answer very little. Starvation: with 12 particles, 135 of the 200 runs end left of the beacon. With 5 fresh particles after each resampling, 34 do. The fresh particles rescue most of the lost clouds, but not for free. Among the runs that end on the right, the final estimate has a standard deviation of 1.83 with fresh particles and 1.37 without. On the program\'s own readings with 200 particles it rises from 0.034 to 0.071. A fresh particle that lands near the mirror position on the wrong side fits a distance reading just as well as a good one, and it takes weight it does not deserve. Exact counts depend on the order in which you draw random numbers. These come from drawing the resampling number only when resampling, and from replacing the first 5 particles.',
       hints: ['When you skip resampling, do not reset the weights. When you do resample, reset them all to 1/N.', 'A fresh particle that lands near the robot gets a large weight at the next reading and is copied many times. That is how a lost cloud recovers.'],
     },
   ],
@@ -1003,7 +1029,7 @@ int main() {
           && num(Math.abs(r.error)) === '0.50' && r.final.every((x) => x > 0);
         return ok || `right shares ${r.rightShare.map((v) => v.toFixed(2)).join(' ')}, decided at ${r.decidedAt}, error ${r.error}`;
       } },
-    { name: 'quiz and presets: with 12 particles the same readings starve the cloud at step 3 and it ends 10.21 m off; 20 particles starve, 24 recover', input: { scenario: 'two-sides', particles: 12, measNoise: 1, steps: 12, seed: 47 },
+    { name: 'presets: with 12 particles the same readings starve the cloud at step 3 and it ends 10.21 m off; 20 particles starve, 24 recover', input: { scenario: 'two-sides', particles: 12, measNoise: 1, steps: 12, seed: 47 },
       check: (r) => {
         if (!(r.lost && r.starvedAt === 3 && !r.consistent && num(Math.abs(r.error)) === '10.21' && num(r.spreads[12]) === '0.17' && r.error < 0)) return `lost ${r.lost} at ${r.starvedAt}, error ${r.error}, spread ${r.spreads[12]}`;
         if (!(pct(r.rightShare[2]) === '3%' && r.rightShare[2] < 1 / 12 && r.final.every((x) => x < 0))) return `right share at step 3 was ${r.rightShare[2]}`;
@@ -1036,5 +1062,23 @@ int main() {
         if (!(w.every((v) => Number.isFinite(v)) && Math.abs(w[0] + w[1] + w[2] - 1) < 1e-12 && w[0] > w[1] && w[1] >= w[2])) return `far-off weights ${w.join(' ')}`;
         return (r.truth[0] < 0 && r.truth[16] > 0 && !r.lost && r.consistent && Math.abs(r.error) < 1) || `error ${r.error}, lost ${r.lost}`;
       } },
+    { name: 'things to try: at step 6 of the default run the right side takes 69% of the weight and only 35 particles are copied', input: { scenario: 'two-sides', particles: 150, measNoise: 1, steps: 12, seed: 47 },
+      check: (r) => (pct(r.rightShare[4]) === '4%' && pct(r.rightShare[5]) === '69%' && r.survivors[5] === 35 && r.survivors[1] === 100 && r.decidedAt === 7 && num(Math.abs(r.error)) === '0.50')
+        || `right share at step 6 ${pct(r.rightShare[5])}, copied ${r.survivors[5]}, decided at ${r.decidedAt}` },
+    { name: 'things to try: with seed 47 the cloud survives with 24, 30, 40 and 50 particles and starves with 20, 35, 46 and 64', input: { scenario: 'two-sides', particles: 35, measNoise: 1, steps: 12, seed: 47 },
+      check: (r) => {
+        const at = (n) => run({ scenario: 'two-sides', particles: n, measNoise: 1, steps: 12, seed: 47 }, QUIET);
+        const got = [20, 24, 30, 35, 40, 46, 50, 64].map((n) => { const q = at(n); return `${n}:${q.lost ? q.starvedAt : 'ok'}`; }).join(' ');
+        return (got === '20:3 24:ok 30:ok 35:5 40:ok 46:3 50:ok 64:3' && r.lost && r.starvedAt === 5) || got;
+      } },
+    { name: 'things to try: the plain case with 6 particles is 1.42 m from the exact line at step 3 and ends 4.1 spreads from the robot', input: { scenario: 'linear', particles: 6, measNoise: 1, steps: 12, seed: 4 },
+      check: (r) => {
+        const gaps = r.estimates.map((v, k) => Math.abs(v - r.exact[k]));
+        const worst = gaps.indexOf(Math.max(...gaps));
+        return (worst === 3 && num(gaps[3]) === '1.42' && num(gaps[12]) === '0.57' && num(r.spreads[12]) === '0.28' && num(Math.abs(r.error)) === '1.13' && (Math.abs(r.error) / r.spreads[12]).toFixed(1) === '4.1')
+          || `worst gap ${num(gaps[worst])} at step ${worst}, spread ${num(r.spreads[12])}, error ${num(Math.abs(r.error))}`;
+      } },
+    { name: 'things to try: a sensor error of 0.2 leaves 5.5 effective particles at step 2 and the run ends 0.15 m off', input: { scenario: 'two-sides', particles: 150, measNoise: 0.2, steps: 12, seed: 47 },
+      check: (r) => (r.survivors[1] === 10 && r.neffs[2].toFixed(1) === '5.5' && !r.lost && num(Math.abs(r.error)) === '0.15') || `copied ${r.survivors[1]}, effective ${r.neffs[2]}, error ${num(Math.abs(r.error))}` },
   ],
 };

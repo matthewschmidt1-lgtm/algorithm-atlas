@@ -1367,6 +1367,169 @@ if (on('tracks')) {
   });
 }
 
+/* ------------------------------------------------------------------ practice */
+// A lesson should ask before it tells: the learner commits to an answer, then sees the outcome.
+if (on('practice')) {
+  suite('Asking before telling');
+  const { execute, resolveInput } = await import('../js/core/tracer.js');
+  const { runJavaScript, normalizeOutput } = await import('../js/run/sandbox.js');
+  const lessons = [];
+  for (const a of C.algos) lessons.push(await C.loadLesson(a.id));
+  const sameInput = (L, x, y) => JSON.stringify(resolveInput(L, x)) === JSON.stringify(resolveInput(L, y));
+
+  await test('Things to try: every prompt puts a question, and its outcome stays closed until asked for', async () => {
+    let n = 0;
+    for (const L of lessons) for (const t of L.viz.tryThis) {
+      assert(t && typeof t.ask === 'string' && t.ask.includes('?'), `${L.meta.id}: a prompt asks nothing: "${String(t.ask || t).slice(0, 60)}"`);
+      assert(typeof t.reveal === 'string' && t.reveal.length > 20, `${L.meta.id}: a prompt has no outcome to reveal`);
+      n++;
+    }
+    const L = await C.loadLesson('binary-search');
+    const p = await open('/algorithm/binary-search?level=2', '.try-this');
+    try {
+      const items = p.$$('.try-this .try-list > li');
+      assert(items.length === L.viz.tryThis.length, `the page shows ${items.length} prompts, the lesson has ${L.viz.tryThis.length}`);
+      for (const li of items) {
+        const d = li.querySelector('details.try-reveal');
+        assert(d && !d.open, 'an outcome is open before the reader asked for it');
+        assert(!d.querySelector('p').checkVisibility(), 'the outcome can be read while its fold is closed');
+      }
+      const first = items[0].querySelector('details.try-reveal');
+      first.querySelector('summary').click();
+      await until(() => first.open && first.querySelector('p').checkVisibility(), 1500, 'opening the fold did not show the outcome');
+    } finally { p.close(); }
+    return `${n} prompts`;
+  });
+
+  await test('Predict questions: the case is one the page shows nowhere else, and the stated answer is what the run gives', () => {
+    let n = 0;
+    for (const L of lessons) for (const q of L.quiz.filter((x) => x.type === 'predict')) {
+      const id = L.meta.id, what = `${id}: "${q.q.slice(0, 50)}"`;
+      assert(q.tryInput && typeof q.check === 'function', `${what} cannot be run or has no proof of its answer`);
+      assert(!sameInput(L, q.tryInput, {}), `${what} asks about the input the page opens with`);
+      for (const pr of L.viz.presets || []) assert(!sameInput(L, q.tryInput, pr.values), `${what} asks about the preset "${pr.label}"`);
+      if (L.example.tryInput) assert(!sameInput(L, q.tryInput, L.example.tryInput), `${what} asks about the worked example`);
+      for (const t of L.viz.tryThis) if (t.input) assert(!sameInput(L, q.tryInput, t.input), `${what} asks about a case from "Things to try"`);
+      const r = execute(L, q.tryInput);
+      assert(r.ok, `${what} does not run: ${r.error}`);
+      const verdict = q.check(r.result, r.counters, r);
+      assert(verdict === true, `${what}: the run does not give the stated answer (${verdict})`);
+      n++;
+    }
+    return `${n} questions`;
+  });
+
+  await test('Break it: every change is to text found once in the program, and really changes what it prints', async () => {
+    let n = 0;
+    for (const L of lessons) {
+      const c = L.code, id = L.meta.id;
+      assert(Array.isArray(c.breakIt) && c.breakIt.length >= 2, `${id} offers fewer than two changes`);
+      for (const b of c.breakIt) {
+        for (const lang of ['python', 'javascript']) assert(c[lang].source.split(b.find[lang]).length === 2, `${id}: "${b.find[lang]}" is not found exactly once in the ${lang}`);
+        assert(b.change.includes('?'), `${id}: a change asks nothing: "${b.change.slice(0, 50)}"`);
+        if (b.hangs) continue;
+        const r = await runJavaScript(c.javascript.source.replace(b.find.javascript, b.replace.javascript), { timeout: 3000 });
+        assert(!r.ok || normalizeOutput(r.out) !== normalizeOutput(c.javascript.expected ?? c.sample.expected), `${id}: "${b.change.slice(0, 50)}" leaves the output as it was`);
+        n++;
+      }
+    }
+    return `${n} changes run`;
+  });
+
+  await test('Break it, as a reader would: edit Binary Search on the page, run it, and the named mistake shows', async () => {
+    const L = await C.loadLesson('binary-search');
+    const b = L.code.breakIt[0];
+    const p = await open('/algorithm/binary-search?level=2', '.break-it');
+    try {
+      const items = p.$$('.break-it .try-list > li');
+      assert(items.length === L.code.breakIt.length, 'the page does not list the lesson\'s changes');
+      for (const li of items) assert(!li.querySelector('details').open, 'an outcome is open before the reader asked for it');
+      const panel = p.$('#code .code-panel');
+      panel.querySelector('.tabs button[data-lang="javascript"]').click();
+      const buttons = [...panel.querySelectorAll('.code-run-buttons button')];
+      buttons.find((x) => /Edit the code/.test(x.textContent)).click();
+      const ed = panel.querySelector('textarea.code-editor');
+      assert(ed.value.includes(b.find.javascript), 'the text to change is not in the editor');
+      ed.value = ed.value.replace(b.find.javascript, b.replace.javascript);
+      buttons.find((x) => /Run/.test(x.textContent)).click();
+      const out = await until(() => panel.querySelector('.code-output pre.code-out'), 6000, 'the edited program never printed anything');
+      assert(/2 not found/.test(out.textContent), `the broken search did not lose the first value: ${out.textContent}`);
+      assert(items[0].querySelector('details p').textContent.includes('2 not found'), 'the outcome on the page does not say what the program printed');
+    } finally { p.close(); }
+  });
+
+  await test('A challenge can be checked: what a correct answer gives sits behind a closed fold', async () => {
+    for (const L of lessons) for (const q of L.quiz.filter((x) => x.type === 'challenge')) assert(typeof q.expect === 'string' && q.expect.length > 15, `${L.meta.id}: the challenge "${q.title}" gives nothing to check against`);
+    const p = await open('/algorithm/binary-search?level=2', '.quiz-item.is-challenge');
+    try {
+      const folds = [...p.$$('.quiz-item.is-challenge details')];
+      const fold = folds.find((d) => d.querySelector('summary').textContent === 'Check your answer');
+      assert(fold && !fold.open, 'the answer is missing, or open before the reader asked for it');
+    } finally { p.close(); }
+  });
+
+  await test('"Should you use it?" also says what to reach for when it does not fit', async () => {
+    for (const L of lessons) assert((L.tradeoffs.alternatives || []).length >= 1, `${L.meta.id} names no alternative`);
+    const p = await open('/algorithm/binary-search?level=1', '#decide');
+    try {
+      const row = p.$$('#decide .decide-dl > div').find((d) => d.querySelector('dt').textContent === 'If it does not fit');
+      assert(row, 'the row is missing');
+      const links = [...row.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+      assert(links.includes('#/algorithm/linear-search'), `it does not point to Linear Search: ${links.join()}`);
+      for (const h of links) assert(C.algoById[h.replace('#/algorithm/', '')], `${h} is not a published lesson`);
+      assert(!/planned/i.test(row.textContent), 'the row advertises a lesson that does not exist');
+    } finally { p.close(); }
+  });
+
+  await test('Budget case: the method is told in proposals, cost and benefit, not bags and items', async () => {
+    const c = C.caseById.budget;
+    const p = await open('/case/budget', '.case-page .player-note');
+    try {
+      const fig = p.$('.case-page .player');
+      // every step of the run, not only the first: the notes change as it goes
+      const run = execute(await C.loadLesson('knapsack'), { weights: c.items.map((x) => x.cost), values: c.items.map((x) => x.benefit), capacity: c.budget, wording: 'budget' });
+      const told = fig.textContent + ' ' + run.frames.map((f) => `${f.note} ${Object.keys(f.vars || {}).join(' ')} ${JSON.stringify(f.views.map((v) => [v.title, v.corner, v.rowLabels, v.legend, (v.rows || []).map((r) => r.label)]))}`).join(' ');
+      assert(/proposal/.test(told) && /budget/.test(told), 'the demonstration does not speak of proposals and a budget');
+      const stray = told.match(/\b(bag|items?|weighs?|weight|capacity)\b/i);
+      assert(!stray, `the demonstration still says "${stray && stray[0]}"`);
+      const rows = p.$$('.case-table tbody tr');
+      rows.forEach((tr, i) => assert(tr.children[0].textContent.startsWith(String(i + 1)), `proposal ${i + 1} is not numbered, so the demonstration's "proposal ${i + 1}" cannot be matched to it`));
+    } finally { p.close(); }
+    const several = c.assumptions.find((a) => /one limit/.test(a.text));
+    assert(several && /integer program/.test(several.then.say) && !/are what the Simplex Method is for/.test(several.then.say), 'the case still sends all-or-nothing proposals with several limits to plain Simplex');
+    const K = await C.loadLesson('knapsack');
+    const r = execute(K, {});
+    assert(/bag/.test(r.frames[0].note) && !/proposal/.test(r.frames[0].note), 'the Knapsack lesson no longer opens with its own picture, the bag');
+  });
+
+  await test('Gradient Descent: momentum is compared fairly, on the same valley at the same rate, and it is faster', async () => {
+    const L = await C.loadLesson('gradient-descent');
+    const plain = L.viz.presets.find((x) => /Zig-zag/.test(x.label)), mom = L.viz.presets.find((x) => /with momentum/.test(x.label));
+    assert(plain && mom, 'one of the two presets is gone');
+    assert(plain.values.landscape === mom.values.landscape && plain.values.rate === mom.values.rate && mom.values.momentum > 0 && plain.values.momentum === 0, 'the two presets differ in more than momentum');
+    const a = execute(L, plain.values), b = execute(L, mom.values);
+    assert(a.result.status === 'converged' && b.result.status === 'converged', 'one of the two runs does not converge');
+    assert(b.result.steps < a.result.steps, `momentum takes ${b.result.steps} steps against ${a.result.steps} without it`);
+    return `${a.result.steps} steps without, ${b.result.steps} with`;
+  });
+
+  await test('A lesson that shows a mechanism with hand-set numbers also shows those numbers being learned', async () => {
+    const need = ['attention', 'ddpm', 'graph-neural-network', 'convolution'];
+    let n = 0;
+    for (const L of lessons) for (const x of L.code.more || []) {
+      const r = await runJavaScript(x.javascript.source, { timeout: 5000 });
+      assert(r.ok && normalizeOutput(r.out) === normalizeOutput(x.javascript.expected ?? x.sample.expected), `${L.meta.id}: "${x.title}" does not print what the page says it prints`);
+      n++;
+    }
+    for (const id of need) assert(((await C.loadLesson(id)).code.more || []).length >= 1, `${id} has no second program`);
+    const p = await open('/algorithm/attention?level=2', '.code-more');
+    try {
+      assert(p.$('.code-more h3') && p.$('.code-more .code-panel pre.code-pre').textContent.length > 200, 'the second program is not shown');
+    } finally { p.close(); }
+    return `${n} further programs`;
+  });
+}
+
 /* ------------------------------------------------------------------ report */
 const payload = { results, bench };
 document.getElementById('out').textContent = results.map((r) => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.suite}: ${r.name}${r.ok ? '' : '\n      ' + r.detail}`).join('\n');

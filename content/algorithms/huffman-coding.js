@@ -452,9 +452,12 @@ export default {
       { label: 'Many different symbols', values: { text: 'the quick brown fox jumps over the lazy dog' } },
     ],
     tryThis: [
-      'Load "Equal counts: no symbol is favoured". Every code comes out 3 bits long, exactly what a fixed-length code for 8 symbols would use. Huffman coding gains nothing when all symbols are equally common. Now change one letter so that another appears twice and see which codes change length.',
-      'Load "One symbol dominates" and read the last step. A costs 1 bit, the least any symbol can cost, yet the entropy is well under 1 bit per symbol. That gap is the price of using a whole number of bits for each symbol.',
-      'Type a sentence of your own and, before running it, guess which symbol will get the shortest code. In English sentences it is often the space.',
+      { ask: 'Load "Equal counts: no symbol is favoured": eight symbols, each appearing once. A fixed-length code for eight symbols spends 3 bits on each. Will Huffman coding do any better? Then change the H to a second A, so the text reads `ABCDEFGA`. Which codes change length?',
+        reveal: 'No. Every code comes out 3 bits long, 24 bits in all, which is exactly the fixed-length code. When eight symbols are equally common the tree is perfectly balanced and there is nothing to gain. With `ABCDEFGA` only A changes: its code shortens to 2 bits (00), the other six stay at 3 bits, and the total drops to 22 bits.' },
+      { ask: 'Load "One symbol dominates". A is 24 of the 28 symbols, and the entropy of the text is 0.806 bits per symbol. Will the Huffman code average less than 1 bit per symbol?',
+        reveal: 'No. It averages 1.214 bits per symbol, 34 bits in all. A costs 1 bit, the least any symbol can cost, and B, C and D cost 2, 3 and 3 bits. The gap above the entropy is the price of using a whole number of bits for each symbol.' },
+      { ask: 'Type `it was the best of times`, or a sentence of your own. Before you run it: which symbol will get the shortest code?',
+        reveal: 'In `it was the best of times` it is the space, with the 2-bit code 00. The space appears 5 times, more than any letter. The letter t appears 4 times and e and s 3 times each, and those three get 3-bit codes. In English sentences the space is often the most common symbol.' },
     ],
     run,
     report: (r, c) => `${r.distinct} different ${r.distinct === 1 ? 'symbol' : 'symbols'} in ${r.text.length}.\nInput:  ${r.text.length} × 8 bits = ${r.inputBits} bits\nOutput: ${r.outputBits} bits (sum of the code lengths; the code table is not counted)\nAverage ${f3(r.averageLength)} bits per symbol. Entropy of this text: ${f3(r.entropy)} bits per symbol.\nCodes: ${Object.entries(r.codes).sort((a, b) => a[1].length - b[1].length || (a[0] < b[0] ? -1 : 1)).map(([s, code]) => `${show(s)}=${code}`).join('  ')}\nEncoded: ${r.encoded}\n${c['heap comparisons'] || 0} priority-queue comparisons, ${c.merges || 0} joins.`,
@@ -538,9 +541,19 @@ export default {
 
   code: {
     sample: {
-      input: 'The text "she sells sea shells". Print each symbol with its count and code, the total size, and the text decoded from the bits.',
-      expected: "' ' x3 -> 110\n'a' x1 -> 1110\n'e' x4 -> 00\n'h' x2 -> 1111\n'l' x4 -> 01\n's' x6 -> 10\n49 bits instead of 160\nshe sells sea shells",
+      input: 'Two texts: "she sells sea shells", and "aaaa", which has only one kind of symbol. For each, print every symbol with its count and code, the total size, and the text decoded from the bits.',
+      expected: "' ' x3 -> 110\n'a' x1 -> 1110\n'e' x4 -> 00\n'h' x2 -> 1111\n'l' x4 -> 01\n's' x6 -> 10\n49 bits instead of 160\nshe sells sea shells\n'a' x4 -> 0\n4 bits instead of 32\naaaa",
     },
+    breakIt: [
+      { change: 'Where two nodes are joined, give the new node the larger of the two counts instead of their sum (`max(count_a, count_b)` in Python). Will the first text still come to 49 bits?',
+        find: { python: '(count_a + count_b, age, Node(count_a + count_b, None, a, b))', javascript: 'count: a.count + b.count,' },
+        replace: { python: '(max(count_a, count_b), age, Node(max(count_a, count_b), None, a, b))', javascript: 'count: Math.max(a.count, b.count),' },
+        reveal: 'The first text now prints "53 bits instead of 160", and every code has changed: `s` gets the 1-bit code 1, while `a` and `h` are pushed down to 5 bits (01000 and 01001). A joined node stands for every symbol beneath it. Given only the larger count it looks rarer than it is, so it is picked and joined again on the next round, and the tree grows into one long chain. The text still decodes correctly, and "aaaa" is untouched because it has nothing to join. The code is valid, it is just not the shortest, which is why this mistake is easy to miss.' },
+      { change: 'Remove the fallback that gives a lone symbol the code "0", so that a leaf is given exactly the path that led to it. What will the program print for "aaaa"?',
+        find: { python: 'table[node.symbol] = code or "0"', javascript: 'table.set(node.symbol, code || "0");' },
+        replace: { python: 'table[node.symbol] = code', javascript: 'table.set(node.symbol, code);' },
+        reveal: 'The first text is unchanged. The last three lines become `\'a\' x4 ->` with no code after the arrow, then "0 bits instead of 32", then an empty line where "aaaa" should be. With one kind of symbol the tree is a single leaf, the path to it is empty, and so is its code. Four empty codes make zero bits, and nothing can be decoded from zero bits: the text is lost. Python and JavaScript print the same thing.' },
+    ],
     python: {
       source: `import heapq
 from collections import Counter
@@ -584,15 +597,15 @@ def decode(bits, root):
     return "".join(out)
 
 
-text = "she sells sea shells"
-root = build_tree(text)
-table = {}
-assign(root, "", table)
-bits = "".join(table[s] for s in text)
-for s in sorted(table):
-    print(f"'{s}' x{text.count(s)} -> {table[s]}")
-print(f"{len(bits)} bits instead of {8 * len(text)}")
-print(decode(bits, root))`,
+for text in ("she sells sea shells", "aaaa"):
+    root = build_tree(text)
+    table = {}
+    assign(root, "", table)
+    bits = "".join(table[s] for s in text)
+    for s in sorted(table):
+        print(f"'{s}' x{text.count(s)} -> {table[s]}")
+    print(f"{len(bits)} bits instead of {8 * len(text)}")
+    print(decode(bits, root))`,
       notes: [
         { line: 13, text: 'One leaf per symbol. Each queue entry carries an age so that equal counts are ordered by who entered first, and Python never has to compare two Node objects.' },
         { line: 17, text: 'The greedy step: the two smallest counts come out of the heap.' },
@@ -679,16 +692,17 @@ function decode(bits, root) {
   return out;
 }
 
-const text = "she sells sea shells";
-const { root, counts } = buildTree(text);
-const table = new Map();
-assign(root, "", table);
-const bits = [...text].map((s) => table.get(s)).join("");
-for (const s of [...table.keys()].sort()) {
-  console.log("'" + s + "' x" + counts.get(s) + " -> " + table.get(s));
-}
-console.log(bits.length + " bits instead of " + 8 * text.length);
-console.log(decode(bits, root));`,
+for (const text of ["she sells sea shells", "aaaa"]) {
+  const { root, counts } = buildTree(text);
+  const table = new Map();
+  assign(root, "", table);
+  const bits = [...text].map((s) => table.get(s)).join("");
+  for (const s of [...table.keys()].sort()) {
+    console.log("'" + s + "' x" + counts.get(s) + " -> " + table.get(s));
+  }
+  console.log(bits.length + " bits instead of " + 8 * text.length);
+  console.log(decode(bits, root));
+}`,
     },
     cpp: {
       source: `#include <functional>
@@ -747,19 +761,21 @@ std::string decode(const std::string& bits, int root) {
 }
 
 int main() {
-    const std::string text = "she sells sea shells";
-    std::map<char, int> counts;  // std::map keeps symbols in character order
-    for (char s : text) ++counts[s];
-    int root = buildTree(counts);
-    std::map<char, std::string> table;
-    assign(root, "", table);
-    std::string bits;
-    for (char s : text) bits += table[s];
-    for (const auto& [symbol, code] : table) {
-        std::cout << "'" << symbol << "' x" << counts[symbol] << " -> " << code << "\\n";
+    for (const std::string text : {"she sells sea shells", "aaaa"}) {
+        nodes.clear();
+        std::map<char, int> counts;  // std::map keeps symbols in character order
+        for (char s : text) ++counts[s];
+        int root = buildTree(counts);
+        std::map<char, std::string> table;
+        assign(root, "", table);
+        std::string bits;
+        for (char s : text) bits += table[s];
+        for (const auto& [symbol, code] : table) {
+            std::cout << "'" << symbol << "' x" << counts[symbol] << " -> " << code << "\\n";
+        }
+        std::cout << bits.size() << " bits instead of " << 8 * text.size() << "\\n";
+        std::cout << decode(bits, root) << "\\n";
     }
-    std::cout << bits.size() << " bits instead of " << 8 * text.size() << "\\n";
-    std::cout << decode(bits, root) << "\\n";
     return 0;
 }`,
     },
@@ -792,7 +808,7 @@ int main() {
     ],
     struggles: [
       'Sources where one symbol has probability close to 1: each symbol still costs at least one bit.',
-      'Symbols that are all about equally common, where it reduces to a fixed-length code.',
+      'Symbols that are all about equally common, where it saves little or nothing over a fixed-length code. With eight equally common symbols it is exactly the 3-bit fixed-length code.',
       'Short messages, where the code table costs more than the bits saved.',
       'Data whose statistics change along the way, unless the code is rebuilt for each block.',
     ],
@@ -864,16 +880,20 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The text ABCDEFGH has eight different symbols, each appearing once. How many bits will its Huffman encoding take (not counting the code table)?',
-      options: ['8', '16', '24', '64'],
-      answer: 2,
+      q: 'The text ABCDEF has six different symbols, each appearing once. How many bits will its Huffman encoding take (not counting the code table)?',
+      options: ['12', '16', '18', '48'],
+      answer: 1,
       explain: [
-        '8 bits would be one bit per symbol, but one bit can only tell two symbols apart.',
-        '16 bits would be two bits per symbol, enough for only four different symbols.',
-        'Correct. With equal counts the tree is perfectly balanced, every code is 3 bits long, and 8 × 3 = 24. That is exactly a fixed-length code for eight symbols.',
-        '64 bits is the size of the plain 8-bit input.',
+        '12 bits would be 2 bits for every symbol, but 2 bits can tell only four symbols apart.',
+        'Six is not a power of two, so the tree cannot be perfectly balanced. Two symbols end up one level higher than the rest: two codes are 2 bits long and four are 3 bits long, and 2 × 2 + 4 × 3 = 16.',
+        '18 bits is the fixed-length code, 3 bits for each of the six symbols. Three bits can name eight symbols, so two patterns would go unused. The Huffman tree uses that spare room to shorten two of the codes to 2 bits.',
+        '48 bits is the size of the plain 8-bit input.',
       ],
-      tryInput: { text: 'ABCDEFGH' },
+      tryInput: { text: 'ABCDEF' },
+      check: (r) => {
+        const lengths = Object.values(r.codes).map((code) => code.length).sort().join('');
+        return (r.outputBits === 16 && lengths === '223333') || `got ${r.outputBits} bits, code lengths ${lengths}`;
+      },
     },
     {
       type: 'debug',
@@ -908,7 +928,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Canonical codes: send only the lengths',
-      prompt: 'A decoder does not need the tree, only the code length of every symbol. Write a function that takes the code lengths produced by Huffman\'s algorithm and assigns codes by this rule: sort symbols by length and then by character, give the first symbol a code of all zeros, and for each next symbol add 1 to the previous code and append zeros if the length grew. Show that the result is prefix-free and has the same total size, then encode and decode a text using only the list of lengths.',
+      prompt: 'A decoder does not need the tree, only the code length of every symbol. Write a function that takes the code lengths produced by Huffman\'s algorithm and assigns codes by this rule: sort symbols by length and then by character, give the first symbol a code of all zeros, and for each next symbol add 1 to the previous code and append zeros if the length grew. Show that the result is prefix-free and has the same total size, then encode and decode a text using only the list of lengths. Test it on the worked example: the lengths are 1 for A, 2 for B, 3 for C and 3 for D, and the text is ABACABADA.',
+      expect: 'The lengths 1, 2, 3, 3 give the codes A = 0, B = 10, C = 110 and D = 111. No code is the beginning of another. ABACABADA encodes to 010011001001110, which is 15 bits, the same total as the code read off the tree in the worked example, although the bit patterns are different. Decoding those 15 bits with the four codes gives ABACABADA back.',
       hints: [
         'Treat the code as a number: next = (previous + 1) shifted left by the increase in length.',
         'The total size depends only on the lengths, and the lengths have not changed.',
@@ -969,5 +990,11 @@ int main() {
       check: (r) => (sound(r) === true && r.codes.A.length === 1 && r.entropy < 0.9 && r.averageLength >= 1) || `average ${r.averageLength}, entropy ${r.entropy}` },
     { name: 'a pangram with many symbols is still sound', input: { text: 'the quick brown fox jumps over the lazy dog' }, check: sound },
     { name: 'digits, punctuation and markup characters', input: { text: '$1.50 * 2 = $3.00 `ok`' }, check: sound },
+    { name: 'things to try: a second A shortens only the code for A, 22 bits', input: { text: 'ABCDEFGA' },
+      check: (r) => (sound(r) === true && r.outputBits === 22 && r.codes.A === '00' && 'BCDEFG'.split('').every((ch) => r.codes[ch].length === 3)) || `got ${r.outputBits} bits, ${JSON.stringify(r.codes)}` },
+    { name: 'things to try: the dominant-symbol preset takes 34 bits, 1.214 per symbol against an entropy of 0.806', input: { text: 'AAAAAAAAAAAAAAAAAAAAAAAABBCD' },
+      check: (r) => (r.outputBits === 34 && f3(r.averageLength) === '1.214' && f3(r.entropy) === '0.806' && [r.codes.B, r.codes.C, r.codes.D].map((code) => code.length).join('') === '233') || `got ${r.outputBits} bits, average ${r.averageLength}, entropy ${r.entropy}` },
+    { name: 'things to try: the space gets the only 2-bit code in a short English sentence', input: { text: 'it was the best of times' },
+      check: (r) => (sound(r) === true && r.codes[' '] === '00' && [r.codes.t, r.codes.e, r.codes.s].every((code) => code.length === 3) && Object.values(r.codes).filter((code) => code.length <= 2).length === 1) || `got ${JSON.stringify(r.codes)}` },
   ],
 };

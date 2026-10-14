@@ -217,10 +217,14 @@ export default {
       { label: 'Long run', values: { width: 2.5, steps: 3000, start: -2, seed: 36 } },
     ],
     tryThis: [
-      'Load "Too small: stuck in one bump". Nearly every proposal is accepted, yet the trace never leaves the left bump and the histogram misses 70% of the distribution. Then look at the trace for "Reasonable width": it hops between the bumps.',
-      'Load "Too large: mostly rejections". The trace is a staircase of long flat stretches, because most proposals land far out where the curve is nearly zero. Each flat stretch is the same sample recorded again and again.',
-      'Load "Long run" and compare the histogram with the curve. Then change the seed a few times and watch the share of samples in the left bump. It should stay near 30%, and it varies less than it does over 250 steps.',
-      'Load "Starting far out in the tail". The first stretch of the trace is the chain climbing toward the bump. Those early samples describe the starting point, not the target, which is why the beginning of a chain is usually discarded.',
+      { ask: 'Load "Reasonable width" (2.5) and note how many of the 250 proposals are accepted. Then load "Too small: stuck in one bump" (0.15). This second run samples the target far worse. Will it accept more of its proposals than the first run, or fewer?',
+        reveal: 'More, by a long way. At width 2.5 the chain accepts 92 of 250 proposals (36.8%) and crosses between the bumps 20 times. At width 0.15 it accepts 242 (96.8%) and crosses 0 times, so every sample lies in the left bump and the histogram misses the 70% of the target on the right. A tiny step barely changes the height, so it is almost always accepted. A high acceptance rate says the steps are small. It does not say the sampling is good.' },
+      { ask: 'Load "Too large: mostly rejections" (width 40). The run records 250 samples. How many different positions do you expect to find among them: about 250, about 100, or fewer than 10?',
+        reveal: 'Fewer than 10. Only 8 proposals are accepted (3.2%), so the 250 samples hold just 9 different positions: the start and the 8 places the chain moved to. Most proposals land far out where the curve is nearly zero, and each rejection records the current position again. That is why the trace is a staircase of long flat stretches.' },
+      { ask: 'Load "Long run" (3,000 steps) and compare the histogram with the curve. The exact share of the left bump is 30%. Now set the seed to each of 1 to 10 in turn and note the share each run reports. How far from 30% will the ten shares stray? Decide on a range, then do the same with 250 steps.',
+        reveal: 'With 3,000 steps the ten seeds give shares from 26.2% to 32.5%. With 250 steps the same seeds give 20.8% to 47.2%. Twelve times as many steps narrowed the spread from about 26 points to about 6. That is roughly what the square-root rule for averages predicts: the square root of 12 is about 3.5. More steps help, but slowly.' },
+      { ask: 'Load "Starting far out in the tail". The chain starts at x = 5, where the curve is almost on the floor, and the nearest bump is centred at 2. Will the mean of the 250 samples come out above 2, below it, or about equal to it?',
+        reveal: 'Above: the samples average 2.53. The trace spends its first stretch travelling from 5 toward the bump and first comes within 1 of the centre at step 21. Those early samples describe the starting point, not the target, and they pull the mean upward. This is why the beginning of a chain is usually discarded.' },
     ],
     run,
     report: (r, c) => `${r.steps} samples. Accepted ${r.accepted} proposals (${pct(r.acceptanceRate)}). Crossed between the bumps ${r.switches} ${r.switches === 1 ? 'time' : 'times'}.\nMean of samples: ${f2(r.mean)} (exact ${f2(r.exactMean)}). Share in the left bump: ${pct(r.leftMass)} (exact ${pct(r.exactLeft)}).\n${c['density evaluations'] || 0} evaluations of the target.`,
@@ -292,6 +296,20 @@ export default {
       input: 'Sample the two-bump target for 50,000 steps from x = −2 with three proposal widths, using a small generator that behaves identically in every language (seed 2024).',
       expected: 'width  0.1: accepted 94.8%  mean -0.13  left bump  53.1%\nwidth  2.5: accepted 36.3%  mean  0.77  left bump  30.7%\nwidth 40.0: accepted  3.4%  mean  0.74  left bump  31.8%\nexact target:                mean  0.80  left bump  30.0%',
     },
+    breakIt: [
+      { change: 'Move the line that records `x` inside the `if`, so that a sample is recorded only when a proposal is accepted. The width 40 run rejects almost everything. Which way will its mean move, toward the taller right bump or away from it?',
+        find: { python: '        samples.append(x)               # record x, whether or not it moved', javascript: '    }\n    samples.push(x);                    // record x, whether or not it moved' },
+        replace: { python: '            samples.append(x)           # record x, only when it moved', javascript: '      samples.push(x);                  // record x, only when it moved\n    }' },
+        reveal: 'Away from it. The width 40 line now prints "mean  0.41  left bump  40.1%" where it printed 0.74 and 31.8%, and the width 2.5 line prints "mean  0.60  left bump  34.7%". The acceptance rates do not change, because the chain itself is the same. What changed is the count: a chain sitting on a peak rejects most proposals, and each rejection should record the peak again. Drop those repeats and the highest places are under-counted, so the taller right bump loses the most. The width 0.1 run accepts 94.8% of its proposals and barely notices: its left share moves from 53.1% to 53.0%.' },
+      { change: 'Make the proposal lopsided: change `width * rng.normal()` to `width * (rng.normal() + 0.5)`, so that every jump is pushed to the right. The acceptance test stays as it is. Will the test cancel the push?',
+        find: { python: 'proposal = x + width * rng.normal()', javascript: 'const proposal = x + width * rng.normal();' },
+        replace: { python: 'proposal = x + width * (rng.normal() + 0.5)', javascript: 'const proposal = x + width * (rng.normal() + 0.5);' },
+        reveal: 'No. The width 0.1 line prints "accepted 61.9%  mean  5.54  left bump   0.1%": the chain is pushed off to the right of both bumps, out to where the curve is nearly zero. The width 2.5 line prints "mean  1.81  left bump   8.1%" and the width 40 line "mean  0.90  left bump  27.4%". The test `u < ratio` is only correct when a jump and its reverse are equally likely to be proposed. With a lopsided proposal the ratio must also be multiplied by how likely the reverse jump is compared with the forward one. That factor is the Hastings correction, and leaving it out gives samples of some other distribution with no warning.' },
+      { change: 'Start every chain at x = 30 instead of −2, far out where the target is too small for the computer to tell from zero. What will the first ratio be?',
+        find: { python: 'metropolis(-2.0, width, 50000, Lcg(2024))', javascript: 'metropolis(-2.0, width, 50000, new Lcg(2024))' },
+        replace: { python: 'metropolis(30.0, width, 50000, Lcg(2024))', javascript: 'metropolis(30.0, width, 50000, new Lcg(2024))' },
+        reveal: 'It is 0 divided by 0. At x = 30 both bumps are so far away that `height` returns exactly 0. Python stops at once with "ZeroDivisionError: float division by zero". JavaScript makes the ratio NaN and carries on, and no number is ever below NaN, so the width 0.1 line prints "accepted  0.0%  mean 30.00  left bump   0.0%": the chain never moved. The two wider runs escape by luck, when a proposal lands close enough to the bumps for the height to be above zero, and they print "mean  0.80  left bump  30.5%" and "mean  0.77  left bump  31.4%". Real samplers avoid this by working with the logarithm of the height and subtracting.' },
+    ],
     python: {
       source: `import math
 
@@ -321,19 +339,18 @@ def height(x):
 
 
 def metropolis(x, width, steps, rng):
+    samples = []
     accepted = 0
-    total = 0.0
-    left = 0
     for _ in range(steps):
         proposal = x + width * rng.normal()
         ratio = height(proposal) / height(x)
         if rng.uniform() < ratio:
             x = proposal
             accepted += 1
-        total += x                      # record x, whether or not it moved
-        if x < 0:
-            left += 1
-    return accepted / steps, total / steps, left / steps
+        samples.append(x)               # record x, whether or not it moved
+    mean = sum(samples) / len(samples)
+    left = sum(1 for s in samples if s < 0) / len(samples)
+    return accepted / steps, mean, left
 
 
 for width in [0.1, 2.5, 40.0]:
@@ -343,9 +360,9 @@ print("exact target:                mean  0.80  left bump  30.0%")`,
       notes: [
         { line: 18, text: 'The Box-Muller method turns two uniform random numbers into one standard normal number. It supplies the random jump.' },
         { line: 25, text: 'The target is never normalized. Multiplying this function by any constant would leave every ratio, and so the whole run, unchanged.' },
-        { line: 34, text: 'The only place the target enters: a ratio of heights at the proposed and current points.' },
-        { line: 35, text: 'A uniform number is below the ratio with probability min(1, ratio). When the ratio is 1 or more the test always passes.' },
-        { line: 38, text: 'This line sits outside the `if`. A rejected proposal still contributes the current position as a sample.' },
+        { line: 33, text: 'The only place the target enters: a ratio of heights at the proposed and current points.' },
+        { line: 34, text: 'A uniform number is below the ratio with probability min(1, ratio). When the ratio is 1 or more the test always passes.' },
+        { line: 37, text: 'This line sits outside the `if`. A rejected proposal still contributes the current position as a sample.' },
       ],
     },
     javascript: {
@@ -372,7 +389,8 @@ function height(x) {
 }
 
 function metropolis(x, width, steps, rng) {
-  let accepted = 0, total = 0, left = 0;
+  const samples = [];
+  let accepted = 0;
   for (let s = 0; s < steps; s++) {
     const proposal = x + width * rng.normal();
     const ratio = height(proposal) / height(x);
@@ -380,10 +398,11 @@ function metropolis(x, width, steps, rng) {
       x = proposal;
       accepted += 1;
     }
-    total += x;                         // record x, whether or not it moved
-    if (x < 0) left += 1;
+    samples.push(x);                    // record x, whether or not it moved
   }
-  return [accepted / steps, total / steps, left / steps];
+  const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+  const left = samples.filter((v) => v < 0).length / samples.length;
+  return [accepted / steps, mean, left];
 }
 
 for (const width of [0.1, 2.5, 40.0]) {
@@ -396,6 +415,7 @@ console.log("exact target:                mean  0.80  left bump  30.0%");`,
     cpp: {
       source: `#include <cmath>
 #include <cstdio>
+#include <vector>
 
 // A small random number generator (Park-Miller). Integer arithmetic only,
 // so it produces the same numbers in every language.
@@ -426,8 +446,9 @@ int main() {
     const int steps = 50000;
     for (double width : widths) {
         Lcg rng{2024};
-        double x = -2.0, total = 0.0;
-        int accepted = 0, left = 0;
+        std::vector<double> samples;
+        double x = -2.0;
+        int accepted = 0;
         for (int s = 0; s < steps; ++s) {
             double jump = width * rng.normal();
             double proposal = x + jump;
@@ -436,11 +457,16 @@ int main() {
                 x = proposal;
                 accepted += 1;
             }
-            total += x;                 // record x, whether or not it moved
-            if (x < 0) left += 1;
+            samples.push_back(x);       // record x, whether or not it moved
+        }
+        double total = 0.0;
+        int left = 0;
+        for (double v : samples) {
+            total += v;
+            if (v < 0) left += 1;
         }
         std::printf("width %4.1f: accepted %4.1f%%  mean %5.2f  left bump %5.1f%%\\n",
-                    width, 100.0 * accepted / steps, total / steps, 100.0 * left / steps);
+                    width, 100.0 * accepted / steps, total / samples.size(), 100.0 * left / samples.size());
     }
     std::printf("exact target:                mean  0.80  left bump  30.0%%\\n");
     return 0;
@@ -549,16 +575,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The chain starts in the left bump and uses a proposal width of 0.15 for 250 steps. What will the samples show?',
-      options: ['Both bumps, in the right proportions', 'Only the left bump, with most proposals accepted', 'Only the left bump, with most proposals rejected', 'Only the right bump, because it is higher'],
+      q: 'This time the chain starts at x = 2, the centre of the right bump, and uses a proposal width of 0.15 for 250 steps with seed 7. The exact mean of the target is 0.8 and the left bump holds 30% of it. What will the run report?',
+      options: ['A mean near 0.8 and about 30% of the samples in the left bump', 'A mean near 2 and no samples in the left bump, with most proposals accepted', 'A mean near 2 and no samples in the left bump, with most proposals rejected', 'A mean near −2, because the chain is pulled toward the bump it has not sampled yet'],
       answer: 1,
       explain: [
-        'To reach the right bump the chain must cross a valley where the target is very low. With steps of about 0.15 that almost never happens within 250 steps.',
-        'Correct. Small steps barely change the height, so nearly all are accepted, yet the chain never leaves the bump it started in. The run reports a mean near −2 when the true mean is 0.8.',
-        'Rejections are the signature of proposals that are too wide, not too narrow.',
-        'The chain has no knowledge of the right bump. It can only compare the heights of places it proposes.',
+        'That is what a chain that mixes well would report. To reach the left bump this one must cross a valley where the target is very low, and with steps of about 0.15 it does not manage that in 250 steps.',
+        'Correct. The run accepts 230 of 250 proposals (92.0%), never crosses, and reports a mean of 1.94 with 0.0% of the samples in the left bump. The same sampler started at −2 reports the opposite. With a width this small the answer describes the starting point, not the target.',
+        'The chain does stay in the right bump, but rejections are the signature of proposals that are too wide. A step of about 0.15 barely changes the height, so 92.0% of the proposals are accepted.',
+        'The chain has no knowledge of the left bump. It can only compare the heights of the places it proposes, and all of those are close to where it already stands.',
       ],
-      tryInput: { width: 0.15, steps: 250, start: -2, seed: 36 },
+      tryInput: { width: 0.15, steps: 250, start: 2, seed: 7 },
+      check: (r, c) => (r.leftMass === 0 && r.switches === 0 && r.accepted === 230 && f2(r.mean) === '1.94' && c['mode switches'] === 0) || `mean ${f2(r.mean)}, left share ${pct(r.leftMass)}, accepted ${r.accepted}, crossings ${r.switches}`,
     },
     {
       type: 'debug',
@@ -592,8 +619,9 @@ int main() {
     {
       type: 'challenge',
       title: 'Measure what the samples are worth',
-      prompt: 'Run the sampler on the two-bump target for 100,000 steps at each of the widths 0.5, 1, 2.5, 5 and 10. For each run, estimate the integrated autocorrelation time of x (1 plus twice the sum of the autocorrelations at lags 1, 2, 3 and so on, stopping when they become noise) and report the effective sample size, the number of steps divided by that time. Which width gives the most effective samples per step, and what is its acceptance rate? Then run four chains from different starting points at width 0.5 and compare their means.',
-      hints: ['A simple stopping rule: add up autocorrelations until the first one that is negative.', 'With width 0.5 the chains started in different bumps may disagree badly. That disagreement is the basis of standard convergence diagnostics.'],
+      prompt: 'Take the sampler and the generator from the program in this lesson. Run it on the two-bump target for 100,000 steps from x = −2 with seed 2024 at each of the widths 0.5, 1, 2.5, 5 and 10. For each run, estimate the integrated autocorrelation time of x: 1 plus twice the sum of the autocorrelations at lags 1, 2, 3 and so on, stopping at the first lag whose autocorrelation is negative. Then report the effective sample size, the number of steps divided by that time. Which width gives the most effective samples per step, and what is its acceptance rate? Last, run four chains at width 0.5 from the starting points −4, −2, 2 and 4, with seeds 1, 2, 3 and 4, and compare their means.',
+      expect: 'With seed 2024 the autocorrelation times come out near 1,340 steps at width 0.5, 138 at width 1, 12.2 at width 2.5, 9.7 at width 5 and 15.8 at width 10. The effective sample sizes are then about 74, 720, 8,200, 10,300 and 6,300 out of 100,000 steps. Width 5 is the best of the five, and it accepts only 24.0% of its proposals. Width 0.5 accepts 75.2% and is worth the least. The four chains at width 0.5 report means of 0.81, 0.85, 0.65 and 1.26 against an exact 0.80, so after 100,000 steps each they still differ by 0.6. If you use a different generator, expect numbers of similar size and not these digits.',
+      hints: ['The autocorrelation at lag k is the sum of (x[t] − mean) × (x[t + k] − mean) over every t, divided by the sum of (x[t] − mean)². Add these up until the first one that is negative.', 'With width 0.5 the chains started in different bumps may disagree badly. That disagreement is the basis of standard convergence diagnostics.'],
     },
   ],
 
@@ -684,7 +712,7 @@ int main() {
         const scaled = run({ width: 2.5, steps: 250, start: -2, seed: 36, scale: 1024 }, QUIET);
         return (scaled.accepted === r.accepted && scaled.final === r.final && scaled.mean === r.mean) || 'the scaled target gave a different run';
       } },
-    { name: 'quiz and preset: width 0.15 stays in the left bump although over 90% of proposals are accepted', input: { width: 0.15, steps: 250, start: -2, seed: 36 },
+    { name: 'preset: width 0.15 stays in the left bump although over 90% of proposals are accepted', input: { width: 0.15, steps: 250, start: -2, seed: 36 },
       check: (r) => (r.leftMass === 1 && r.switches === 0 && r.acceptanceRate > 0.9 && r.mean < -1.5) || `left share ${r.leftMass}, crossings ${r.switches}, acceptance ${r.acceptanceRate}` },
     { name: 'preset: width 40 rejects more than 90% of proposals', input: { width: 40, steps: 250, start: -2, seed: 9 },
       check: (r) => (r.acceptanceRate < 0.1 && r.accepted >= 1) || `acceptance ${r.acceptanceRate}` },
@@ -696,6 +724,29 @@ int main() {
         const medium = run({ width: 3, steps: 5000, start: -2, seed: 7 }, QUIET).switches;
         const wide = run({ width: 40, steps: 5000, start: -2, seed: 7 }, QUIET).switches;
         return (narrow <= 2 && medium > 150 && wide < medium / 2) || `crossings: ${narrow} narrow, ${medium} medium, ${wide} wide`;
+      } },
+    { name: 'things to try: width 2.5 accepts 92 and crosses 20 times, width 0.15 accepts 242 and never crosses', input: { width: 2.5, steps: 250, start: -2, seed: 36 },
+      check: (r) => {
+        const small = run({ width: 0.15, steps: 250, start: -2, seed: 36 }, QUIET);
+        return (r.accepted === 92 && r.switches === 20 && small.accepted === 242 && small.switches === 0 && small.leftMass === 1) || `${r.accepted} accepted and ${r.switches} crossings, then ${small.accepted} and ${small.switches}`;
+      } },
+    { name: 'things to try: width 40 accepts 8 proposals, so the samples hold 9 different positions', input: { width: 40, steps: 250, start: -2, seed: 9 },
+      check: (r) => {
+        const distinct = new Set(r.log.map((e) => e.x)).size;
+        return (r.accepted === 8 && distinct === 9) || `${r.accepted} accepted, ${distinct} different positions`;
+      } },
+    { name: 'things to try: over seeds 1 to 10 the left share spans 26.2% to 32.5% at 3,000 steps and 20.8% to 47.2% at 250', input: { width: 2.5, steps: 3000, start: -2, seed: 1 },
+      check: () => {
+        const span = (steps) => {
+          const shares = Array.from({ length: 10 }, (_, i) => run({ width: 2.5, steps, start: -2, seed: i + 1 }, QUIET).leftMass);
+          return `${pct(Math.min(...shares))} to ${pct(Math.max(...shares))}`;
+        };
+        return (span(3000) === '26.2% to 32.5%' && span(250) === '20.8% to 47.2%') || `${span(3000)} and ${span(250)}`;
+      } },
+    { name: 'things to try: from x = 5 the mean is 2.53 and the chain is first within 1 of the bump centre at step 21', input: { width: 0.2, steps: 250, start: 5, seed: 36 },
+      check: (r) => {
+        const first = r.log.findIndex((e) => Math.abs(e.x - RIGHT) < 1) + 1;
+        return (f2(r.mean) === '2.53' && first === 21) || `mean ${f2(r.mean)}, first within 1 at step ${first}`;
       } },
   ],
 };

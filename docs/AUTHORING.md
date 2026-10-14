@@ -15,6 +15,8 @@ tone and structure:
 
 ```bash
 python3 tools/build.py --only my-id,other-id   # validate just your lessons (writes nothing)
+python3 tools/build.py --only my-id --broken   # also print what each break-it change makes the program do
+python3 tools/run.py my-id '{"size": 15}'      # what the page's own implementation does on an input
 python3 tools/shot.py my-id --step mid --out /some/path.png   # screenshot one frame; then look at it
 python3 tools/build.py                          # full build: validate all, write the catalog
 ```
@@ -24,7 +26,9 @@ python3 tools/build.py                          # full build: validate all, writ
 `tryInput` and every test, validates the recorded frames, exercises the experiment, runs the
 JavaScript sample in the sandbox, runs the Python sample with `python3`, and compiles and
 runs the C++ sample with `clang++ -std=c++17`. Output of all three must equal
-`code.sample.expected`. A lesson with any error is not published.
+`code.sample.expected`. It also runs each predict question's `check` against its `tryInput`,
+and makes every `code.breakIt` change to the Python and JavaScript samples to confirm the
+output really changes. A lesson with any error is not published.
 
 A lesson is done when `build.py --only <id>` prints `ok` with no errors, and you have looked
 at at least two screenshots of it (a middle frame and the final frame) and the picture is
@@ -260,16 +264,29 @@ other lesson uses, and do not name the algorithm in it.
 
 ```js
 { type: 'choice',  q, options: [..], answer: index, explain: [one string per option] }
-{ type: 'predict', q, options, answer, explain, tryInput: { ...viz inputs } }   // learner predicts, then runs it
+{ type: 'predict', q, options, answer, explain, tryInput: { ...viz inputs }, check: (result, counters) => true || 'why not' }
 { type: 'debug',   q, code: `...`, options, answer, explain }
-{ type: 'challenge', title, prompt, hints: [] }
+{ type: 'challenge', title, prompt, hints: [], expect: 'what a correct solution gives' }
 ```
 
 `explain` gives feedback for every option, right and wrong, saying why. The page adds
 "Correct." or "Not quite." itself, so an explanation need not begin with a verdict (one
 that does has it removed). `tryInput` loads
-that input into the lesson's visualization so the learner can check the prediction; the
-stated answer must be what the visualization actually shows (add a test that proves it).
+that input into the lesson's visualization so the learner can check the prediction.
+
+**A prediction must be a prediction.** The page must not have shown the outcome already.
+
+- A predict question needs a `tryInput` that is used nowhere else on the page: not the
+  default input, not a preset, not the worked example, not a "Things to try" prompt, and not
+  the input of the code sample. The build refuses the first four; the last is on you.
+- It needs a `check(result, counters)` that returns `true` only when the run gives the stated
+  answer. The build runs it. Find the answer with `tools/run.py`, never by reasoning alone.
+- No preset label, prompt or note elsewhere on the page may state the answer in passing.
+
+**A challenge must be checkable.** `expect` states what a correct solution produces on a
+stated input: a number, a list, a line of output. It sits behind a "Check your answer" fold,
+so the prompt itself should say which input to test on and should not give the result. Only
+write a figure you obtained by writing the solution and running it.
 
 ## The visualization
 
@@ -278,7 +295,7 @@ viz: {
   describe: 'Text alternative: what the picture shows and what the colours mean.',
   inputs: [ ... ],            // controls; see below
   presets: [{ label, values: { inputId: value } }],
-  tryThis: ['...', '...'],    // at least two guided experiments, each naming what to change and what to watch
+  tryThis: [{ ask, reveal, input? }],   // at least two; see "Things to try" below
   run(input, t) { ... return result; },
   report: (result, counters, input) => 'plain text for the output panel',
   experiment: { ... },        // optional, see below
@@ -462,6 +479,21 @@ belongs to the worst-case series). Add `expected: true` to an average over rando
 `reference: true` to a curve drawn only for scale or comparison, which is then not checked and
 is labelled "for reference" on the chart. Prefer an exact formula to a scaled one where you can.
 
+### Things to try (`viz.tryThis`)
+
+Each prompt is `{ ask, reveal }`. `ask` says what to set up and then puts a question the
+learner must answer before running it: how many, which one, will it, what happens to. It
+contains a question mark and does not contain the outcome. `reveal` gives the outcome with
+its numbers and the reason for it, and is closed until the learner opens it.
+
+```js
+{ ask: 'Set "Search for" to the first value. Linear search would find it in one comparison. Will binary search find it quickly too?',
+  reveal: 'No. On 20 values it takes 4 checks, because the first position is one of the last places the halving reaches.' }
+```
+
+Get every number in `reveal` from `tools/run.py`. An optional `input: { ...viz inputs }`
+adds a "Set this up" button; use it when the set-up takes more than one control.
+
 ## Code samples
 
 - Three complete programs (Python 3.9-compatible standard library only, modern JavaScript,
@@ -473,6 +505,45 @@ is labelled "for reference" on the chart. Prefer an exact formula to a scaled on
 - `code.python.notes`: at least two `{ line, text }` explanations of the important lines
   (1-based line numbers). Notes for the other languages are optional.
 - Spaces only, no tabs. In C++ sources inside template strings, write `\\n` for a newline escape.
+
+### Break it on purpose (`code.breakIt`)
+
+Two or three changes the learner is invited to make to the program, each one a mistake the
+lesson names in `logic.mistakes` or `tradeoffs.pitfalls`.
+
+```js
+breakIt: [
+  { change: 'In the loop condition, change `lo <= hi` to `lo < hi`. Which of the three searches will now give a wrong answer?',
+    find:    { python: 'while lo <= hi:', javascript: 'while (lo <= hi) {' },
+    replace: { python: 'while lo < hi:',  javascript: 'while (lo < hi) {' },
+    reveal: 'The search for 2 now prints "2 not found after 2 probes" ...and why.' },
+]
+```
+
+- `change` describes the edit in words that fit all three languages, and ends with a
+  question. `reveal` quotes what the changed program prints and explains it.
+- `find` must occur exactly once in that language's source. The build makes the change in
+  Python and JavaScript and fails the lesson if the output is the same as before. If a
+  mistake does not show on the sample's inputs, change the inputs (in all three languages,
+  and in `sample.input` and `sample.expected`) until it does. A sample that cannot catch the
+  lesson's own named mistake is a weak sample.
+- Run `build.py --only <id> --broken` and copy the printed output into `reveal`. The two
+  languages may fail differently (an exception in one, a wrong number in the other); say
+  what the learner sees in each when they differ.
+- A change that makes the program run for ever needs `hangs: true`. Use at most one, and
+  only when the endless loop is the mistake being taught.
+
+### A second program (`code.more`)
+
+A lesson may carry further complete programs, held to the same standard as the first:
+
+```js
+more: [{ title: 'Training it', lead: 'One or two sentences on what this program adds.',
+         sample: { input, expected }, python: { source }, javascript: { source }, cpp: { source } }]
+```
+
+Use it where the main sample shows a mechanism with hand-set numbers and the reader would
+otherwise never see those numbers being learned.
 
 ## Tests
 

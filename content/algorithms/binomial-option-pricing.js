@@ -315,11 +315,16 @@ export default {
       { label: 'A tree too coarse for its inputs', values: { kind: 'put', style: 'european', spot: 100, strike: 100, vol: 10, rate: 12, years: 3, steps: 2, up: 0 } },
     ],
     tryThis: [
-      'Load "American put" and step to the backward pass. At the node with the share at 74.08, holding is worth 24.68 and exercising now pays 25.92, so the node turns brick: exercise early. Three nodes end up brick, and the option is worth 5.88 today.',
-      'Load "The same put, European". The node at 74.08 is now valued at 24.68, less than the 25.92 that exercising would pay, because the owner is not allowed to exercise yet. Today\'s value falls to 5.09. The difference, 0.79, is what the right to exercise early is worth on this tree.',
-      'Load "American put, no interest". No node turns brick, and the American and European values are the same, 7.49. Early exercise of a put pays only because the strike arrives sooner and can earn interest. With no interest there is no reason to hurry.',
-      'With the American put, move the number of steps from 3 to 4 to 5: the value goes 6.50, 5.88, 6.37. It zigzags around the value that a 500-step tree gives, 6.09, and the swings shrink as steps are added. A tree with few steps is a rough sketch.',
-      'Load "A tree too coarse for its inputs". The weight p comes out as 1.27, which is not a probability, and one node is valued at −4.95, a negative price for a right nobody is forced to use. The tree says 1.13 where a 500-step tree says 0.10. The last step explains the cure.',
+      { ask: 'Load "American put" and step to the backward pass. Watch the node with the share at 74.08, one step before expiry. Exercising there pays 100 − 74.08 = 25.92 at once. Will holding the option be worth more than that, or less?',
+        reveal: 'Less. Holding is worth 24.68, so the node turns brick and takes the exercise value, 25.92. Three nodes end up brick, the ones with the share at 74.08, 90.48 and 81.87, and the option is worth 5.88 today.' },
+      { ask: 'Load "The same put, European". Its owner may not exercise before expiry. What value will the node at 74.08 get now, and will the option be worth more or less today than the American put\'s 5.88?',
+        reveal: 'The node is valued at 24.68, less than the 25.92 that exercising would pay, because the owner is not allowed to take it. Today\'s value falls to 5.09. The difference, 0.79, is what the right to exercise early is worth on this tree.' },
+      { ask: 'Load "American put, no interest". With interest at 5%, three nodes preferred to exercise early. How many will prefer it now that cash earns nothing?',
+        reveal: 'None. No node turns brick, and the American and European values are the same, 7.49. Early exercise of a put pays only because the strike arrives sooner and can earn interest. With no interest there is no reason to hurry.' },
+      { ask: 'With the American put, set the number of steps to 3, then 4, then 5, then 6, and note the value each time. A 500-step tree gives 6.09. Will the four values close in on it from one side?',
+        reveal: 'No. They go 6.50, 5.88, 6.37, 5.95: above, below, above, below. The value zigzags around 6.09, and each swing is smaller than the one before. A tree with few steps is a rough sketch, and comparing an odd tree with an even one mostly shows the zigzag.' },
+      { ask: 'Load "A tree too coarse for its inputs". In one step of this tree cash grows by a factor of 1.1972, more than the up-move of 1.1303. What will that do to the weight p, and can a node\'s value come out below zero?',
+        reveal: 'The weight p comes out as 1.27, which is not a probability, and one node is valued at −4.95, a negative price for a right nobody is forced to use. The tree says 1.13 where a 500-step tree says 0.10. Raise the steps to 6 and p falls to 0.92, back inside the range. The value is then 0.01: no longer nonsense, though six steps are still a rough sketch.' },
     ],
     run,
     report: (r, c) => {
@@ -417,6 +422,20 @@ export default {
       input: 'First the two-step tree worked by hand: a share at 60 that doubles or halves, no interest, a call with strike 60. Then a share at 100, strike 100, interest 5% a year, volatility 20% a year and one year to expiry, on trees of 1 to 256 steps. The Black-Scholes values that the European columns approach are 5.5735 for the put and 10.4506 for the call.',
       expected: 'two steps by hand: 20.0000\nsteps  European put  American put  European call\n    1        7.2852        7.2852        12.1623\n    2        4.6634        5.7377         9.5405\n    4        5.0935        5.8828         9.9705\n   16        5.4496        6.0374        10.3267\n   64        5.5423        6.0775        10.4194\n  256        5.5657        6.0873        10.4428',
     },
+    breakIt: [
+      { change: 'Make the inner loop of the backward pass run `j` downward, from `i` to 0, where it now runs upward from 0 to `i`. What will the two-step tree worked by hand come to?',
+        find: { python: 'for j in range(i + 1):', javascript: 'for (let j = 0; j <= i; j++) {' },
+        replace: { python: 'for j in range(i, -1, -1):', javascript: 'for (let j = i; j >= 0; j--) {' },
+        reveal: 'The first line becomes "two steps by hand: 33.3333" where the answer is 20. Entry `j` needs the old entries `j` and `j + 1`, which belong to the later column. Running `j` downward replaces entry `j + 1` first, so each value is blended with a number from its own column. The fault grows with the tree: at 256 steps the table shows a European put worth 0.0000 and a European call worth 1510.5893, on a share that costs 100. The row for 1 step is unchanged, because a column with one entry has no order to get wrong.' },
+      { change: 'In the line that works out `hold`, delete the division by `growth`. The first line of output does not change. Why not, and which way do the numbers in the table move?',
+        find: { python: 'hold = (up_part + down_part) / growth', javascript: 'const hold = (upPart + downPart) / growth;' },
+        replace: { python: 'hold = up_part + down_part', javascript: 'const hold = upPart + downPart;' },
+        reveal: 'The first line stays at 20.0000 because that tree has no interest: its `growth` is 1, and dividing by 1 changes nothing. A test with no interest cannot catch this mistake. Every number in the table rises. At 256 steps the European put shows 5.8511 where it was 5.5657, and the European call 10.9782 where it was 10.4428. Both are too high by the factor 1.0513, which is one year of interest at 5%. The money is paid at expiry, and without the division it is counted as if it were paid today.' },
+      { change: 'In the early-exercise test, pass today\'s price `spot` to `payoff` in place of the price at the node. What happens to the American put column?',
+        find: { python: 'values[j] = max(hold, payoff(prices[j]))', javascript: 'values[j] = Math.max(hold, payoff(prices[j]));' },
+        replace: { python: 'values[j] = max(hold, payoff(spot))', javascript: 'values[j] = Math.max(hold, payoff(spot));' },
+        reveal: 'It becomes a copy of the European put column: 4.6634 at 2 steps where it was 5.7377, and 5.5657 at 256 steps where it was 6.0873. The share is at 100 today and the strike is 100, so exercising at today\'s price pays nothing, and holding always beats nothing. The test never fires, and the right to exercise early is valued at zero. It has to ask what exercising would pay at the node being valued, where the share may have fallen a long way.' },
+    ],
     python: {
       source: `import math
 
@@ -699,16 +718,18 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The default American put shows three nodes where exercising early beats holding. Set the interest rate to 0 and leave everything else alone. How many nodes show early exercise now?',
-      options: ['Three, as before', 'More than three', 'One', 'None'],
+      q: 'The default American put, with interest at 5% a year, shows three nodes where exercising early beats holding. Raise the interest rate to 10% and leave everything else alone. How many nodes show early exercise now?',
+      options: ['None', 'Fewer than three, but at least one', 'Three, as before', 'More than three'],
       answer: 3,
       explain: [
-        'The interest rate is the reason those nodes preferred exercising. Take it away and the reason goes with it.',
-        'A lower interest rate makes early exercise less attractive, not more.',
-        'Not even one. With no interest, holding is never worth less than exercising.',
-        'Exercising a put early brings in the strike sooner, and that helps only if cash earns interest. At a rate of 0 the American and European puts are both worth 7.49 on this tree.',
+        'No interest at all is what removes every early exercise. This change goes the other way.',
+        'A higher interest rate makes early exercise more attractive, not less. The strike collected early earns more while it waits.',
+        'The share prices in the tree are the same as before, but the values are not. The interest rate changes both the weights and the worth of cash received early, so the comparison at each node comes out differently.',
+        'Four nodes now prefer to exercise. The three from before are joined by the node after a single fall, with the share at 90.48, where exercising pays 9.52. Exercising a put brings in the strike sooner, and the more that cash can earn, the more often it is worth taking. The right to exercise early is now worth 4.54 − 3.25 = 1.29, up from 0.79.',
       ],
-      tryInput: { kind: 'put', style: 'american', spot: 100, strike: 100, vol: 20, rate: 0, years: 1, steps: 4, up: 0 },
+      tryInput: { kind: 'put', style: 'american', spot: 100, strike: 100, vol: 20, rate: 10, years: 1, steps: 4, up: 0 },
+      check: (r, c) => (r.exercisedAt.length === 4 && r.exercisedAt.some(([i, j]) => i === 1 && j === 0) && money(r.prices[1][0]) === '90.48' && money(r.value) === '4.54' && money(r.european) === '3.25')
+        || `exercise at ${JSON.stringify(r.exercisedAt)}, value ${r.value}, European ${r.european}`,
     },
     {
       type: 'debug',
@@ -755,7 +776,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Smooth the zigzag',
-      prompt: 'Using the code on this page, price the European put (share 100, strike 100, 5% interest, 20% volatility, one year) for every number of steps from 10 to 200 and plot the error against the Black-Scholes value 5.5735. You should see two interleaved curves, one for even and one for odd numbers of steps. Now plot the average of the prices for n and n + 1 steps. How much smaller is its error at n = 100? Then move the strike to 110 and look again: the pattern of the zigzag changes, because the strike no longer sits on a node.',
+      prompt: 'Using the code on this page, price the European put (share 100, strike 100, 5% interest, 20% volatility, one year) for every number of steps from 10 to 200 and plot the error against the Black-Scholes value 5.5735. What pattern do the errors make? Now plot the average of the prices for n and n + 1 steps. How much smaller is its error at n = 100? Then move the strike to 110, where the Black-Scholes value is 10.6753, and look again. What has happened to the pattern?',
+      expect: 'With the strike at 100 there are two interleaved curves: every even n from 10 to 200 gives a price below 5.5735 and every odd n a price above it. The 100-step tree gives 5.5536, an error of −0.0200, and the 101-step tree gives 5.5909, an error of +0.0174. Their average is 5.5722, an error of −0.0013, about 15 times smaller than the error at 100 steps. With the strike at 110 the neat alternation is gone, because the strike no longer sits on a node. The errors at 100 and 101 steps are +0.0131 and −0.0090, and there are runs of n where the error stays positive for several steps in a row. Averaging neighbours still helps, but less: at n = 100 the error falls to +0.0021, about 6 times smaller.',
       hints: ['For this option the error at n steps is close to −2/n for even n and close to +1.75/n for odd n, so averaging two neighbours cancels most of it.', 'When the strike is not on a node, how far it lies from the nearest node changes with n, and the error wanders instead of alternating neatly.'],
     },
   ],
@@ -876,7 +898,10 @@ int main() {
         const zig = [3, 4, 5].map((steps) => money(price({ steps }).value)).join(' ');
         return (money(r.value) === '5.09' && money(r.values[3][0]) === '24.68' && r.values[3][0] < 100 - r.prices[3][0] && r.exercisedAt.length === 0 && zig === '6.50 5.88 6.37') || `European ${r.value}, node ${r.values[3][0]}, steps 3 to 5: ${zig}`;
       } },
-    { name: 'quiz: with no interest no node prefers early exercise, and both puts are worth 7.49', input: { kind: 'put', style: 'american', spot: 100, strike: 100, vol: 20, rate: 0, years: 1, steps: 4, up: 0 },
+    { name: 'the quiz prediction: at 10% interest a fourth node, the one at 90.48, prefers early exercise', input: { kind: 'put', style: 'american', spot: 100, strike: 100, vol: 20, rate: 10, years: 1, steps: 4, up: 0 },
+      check: (r) => (JSON.stringify(r.exercisedAt) === '[[3,1],[3,0],[2,0],[1,0]]' && money(r.prices[1][0]) === '90.48' && money(r.values[1][0]) === '9.52' && money(r.value) === '4.54' && money(r.european) === '3.25' && money(r.value - r.european) === '1.29')
+        || `exercise at ${JSON.stringify(r.exercisedAt)}, value ${r.value}, European ${r.european}` },
+    { name: 'tryThis: with no interest no node prefers early exercise, and both puts are worth 7.49', input: { kind: 'put', style: 'american', spot: 100, strike: 100, vol: 20, rate: 0, years: 1, steps: 4, up: 0 },
       check: (r) => (r.exercisedAt.length === 0 && money(r.value) === '7.49' && Math.abs(r.value - r.european) < 1e-9 && r.growth === 1) || `exercise at ${JSON.stringify(r.exercisedAt)}, value ${r.value}, European ${r.european}` },
     { name: 'quiz: the in-place update in the wrong direction turns the hand-worked 20 into 33.33', input: { kind: 'call', style: 'european', spot: 60, strike: 60, rate: 0, years: 1, steps: 2, up: 2 },
       check: (r) => {

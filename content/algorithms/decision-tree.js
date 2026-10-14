@@ -463,11 +463,16 @@ export default {
       { label: 'Worked example: eight customers', values: { custom: EXAMPLE, depth: 3 } },
     ],
     tryThis: [
-      'Run the default and stop at the first step that says "Feature 1 (x)". The small chart shows the score of every threshold on x for all 40 points. The lowest point of that curve is the split drawn as a dashed line on the plot. Step on to see the same search on y, then the choice between the two.',
-      'Go to the last frame of the default and read the two accuracies: 39 of 40 training points, and 349 of 400 fresh points. Now load "Fully grown: every training point right". The tree needs only one more level of questions to get all 40 training points right, and on the fresh points it drops to 331 of 400. Look at the plot to see why: the new boxes are small and each is drawn around one or two points.',
-      'Load "One question only". A tree this small is called a decision stump. Its single split is the same as the first split of every deeper tree on this data, because a greedy choice is never revisited.',
-      'Load "XOR corners: the first split looks useless" and look at the chart of scores at node 1. The curve hardly dips below the dashed line: no single question separates opposite corners. The tree takes the best of a poor lot, and the reward only shows a level or two further down. Compare the accuracy chart in the last frame with the one from the overlapping groups.',
-      'Load "Moons: a curve built from steps". The true border is curved, and the tree can only split parallel to the axes, so it builds a staircase. Here the deeper questions help on fresh points too. More depth is not always overfitting. It depends on whether the detail being fitted is real.',
+      { ask: 'Run the default and stop at the first step that says "Feature 1 (x)". The small chart shows the score of every threshold on x for all 40 points, and the lowest point of that curve is the split drawn as a dashed line on the plot. Before you step on to the same search on y: will the best split on y beat the best split on x?',
+        reveal: 'No. The best split on x is x ≤ 0.186 with a score of 0.212. The best on y is y ≤ 0.018 with a score of 0.245. The two are close because these groups differ along both axes, but the lower score wins, so the first question is about x. All 76 thresholds were scored to find it.' },
+      { ask: 'Go to the last frame of the default and write down its two accuracies, on the training points and on the fresh points. Now load "Fully grown: every training point right". The training score can only go up. Which way will the score on the 400 fresh points go, and by roughly how much?',
+        reveal: 'Down. The default gets 39 of 40 training points and 349 of 400 fresh points. The fully grown tree needs only one more level of questions to get 40 of 40, and on the fresh points it drops to 331 of 400. Look at the plot to see why: the new boxes are small and each is drawn around one or two points.' },
+      { ask: 'Load "One question only". A tree this small is called a decision stump. Knowing that it gets only one question, will it choose a different split from the first split of the deeper default tree?',
+        reveal: 'No. It asks x ≤ 0.186, the same first question as every deeper tree on this data, and gets 35 of 40 training points and 324 of 400 fresh points. The split is chosen by its score alone, without regard to how many questions may follow, and a greedy choice is never revisited.' },
+      { ask: 'Load "XOR corners: the first split looks useless" and stop at node 1. All 40 points together score 0.500. How far below 0.500 will the best single split get, and how many levels of questions will the tree need before the fresh points score clearly better than a coin toss?',
+        reveal: 'The best split, y ≤ 0.763, scores 0.459, and the best on x scores 0.461. The curve hardly dips below the dashed line, because no single question separates opposite corners. The tree takes the best of a poor lot. After one question it gets 193 of 400 fresh points and after two it gets 194, both slightly worse than guessing. The reward shows at the third level (266) and the fourth (347). Compare that accuracy chart with the one from the overlapping groups.' },
+      { ask: 'Load "Moons: a curve built from steps". The true border is curved and the tree can only split parallel to the axes, so it builds a staircase six questions deep. On the overlapping groups the deepest questions hurt the fresh points. Will they hurt here too?',
+        reveal: 'No. The fully grown tree gets 383 of 400 fresh points, its best score at any depth. Stopped at depth 2 it would get 357. More depth is not always overfitting. It depends on whether the detail being fitted is real, and here the curve is real.' },
     ],
     run,
     report: (r, c) => `${r.questions} question${r.questions === 1 ? '' : 's'}, ${r.leaves} ${r.leaves === 1 ? 'leaf' : 'leaves'}, deepest leaf ${r.depth} below the top${Number.isFinite(r.limit) ? ` (limit ${r.limit})` : ''}. ${r.pure ? 'Every leaf holds a single class.' : 'Some leaves are still mixed.'}\nTraining accuracy: ${pct(r.accuracy)} (${r.correct} of ${r.n}).${r.freshN ? `\nAccuracy on ${r.freshN} fresh points from the same source: ${pct(r.freshAccuracy)} (${r.freshCorrect} of ${r.freshN}).` : ''}\n${c['splits scored'] || 0} splits scored.`,
@@ -546,9 +551,19 @@ export default {
 
   code: {
     sample: {
-      input: 'Grow a tree on the eight customers of the worked example (calls to the help line, years as a customer, left or stayed), print it, and use it to predict for three new customers.',
-      expected: 'all 8 customers: Gini 0.500\ncalls <= 2.5? (score 0.200)\n  yes: years <= 2.0? (score 0.000)\n    yes: predict leave (1 of 1)\n    no: predict stay (4 of 4)\n  no: predict leave (3 of 3)\ncalls 1, years 6: stay\ncalls 4, years 9: leave\ncalls 0, years 1: leave',
+      input: 'Grow a tree on the eight customers of the worked example (calls to the help line, years as a customer, left or stayed), print it, and use it to predict for three new customers. The third has been a customer for exactly 2 years, the value the second question compares against.',
+      expected: 'all 8 customers: Gini 0.500\ncalls <= 2.5? (score 0.200)\n  yes: years <= 2.0? (score 0.000)\n    yes: predict leave (1 of 1)\n    no: predict stay (4 of 4)\n  no: predict leave (3 of 3)\ncalls 1, years 6: stay\ncalls 4, years 9: leave\ncalls 1, years 2: leave',
     },
+    breakIt: [
+      { change: 'In `predict`, change the comparison from "at most" to "less than": `<=` becomes `<`. Training still uses "at most". Which of the three new customers gets a different prediction?',
+        find: { python: 'node = node["yes"] if p[node["f"]] <= node["t"] else node["no"]', javascript: 'node = p[node.f] <= node.t ? node.yes : node.no;' },
+        replace: { python: 'node = node["yes"] if p[node["f"]] < node["t"] else node["no"]', javascript: 'node = p[node.f] < node.t ? node.yes : node.no;' },
+        reveal: 'The last line changes from "calls 1, years 2: leave" to "calls 1, years 2: stay". The printed tree is the same, because training was not touched. The third customer has exactly 2 years, and the second question is "years <= 2.0?". Training put that value on the yes side. The changed `predict` sends it to the no side, into a leaf of four customers who stayed. The other two customers sit on no threshold, so they are unaffected, which is how this mistake gets through a quick test.' },
+      { change: 'In the line that scores a split, replace the weighted sum by a plain average of the two sides: `(gini(yes) + gini(no)) / 2`. Will the program grow a different tree on these eight customers?',
+        find: { python: 'score = (len(yes) * gini(yes) + len(no) * gini(no)) / len(group)', javascript: 'const score = (yes.length * gini(yes) + no.length * gini(no)) / group.length;' },
+        replace: { python: 'score = (gini(yes) + gini(no)) / 2', javascript: 'const score = (gini(yes) + gini(no)) / 2;' },
+        reveal: 'Not on these eight. The only line that changes is the first question, which now reads "calls <= 2.5? (score 0.160)" where it read 0.200. The pure side of three customers scores 0 and now counts for half the result, when it holds only three of the eight. The same split still wins, so the tree and the predictions are right by luck. To see the fault bite, also add a ninth customer `(6, 2, 0)` to the list: six calls, two years, stayed. The correct program still asks "calls <= 2.5?" first (score 0.344). The averaged one asks "years <= 1.5? (score 0.234)", a question that cuts off a single customer, and its answer for the third new customer turns from leave to stay.' },
+    ],
     python: {
       source: `points = [(5, 2, 1), (4, 6, 1), (3, 4, 1), (1, 1, 1), (0, 3, 0), (1, 5, 0), (2, 7, 0), (0, 8, 0)]
 features = ["calls", "years"]
@@ -604,7 +619,7 @@ def predict(node, p):
 print(f"all {len(points)} customers: Gini {gini(points):.3f}")
 tree = grow(points, 0, 3)
 show(tree, "", "")
-for p in [(1, 6), (4, 9), (0, 1)]:
+for p in [(1, 6), (4, 9), (1, 2)]:
     print(f"calls {p[0]}, years {p[1]}: {predict(tree, p)}")`,
       notes: [
         { line: 8, text: 'Gini impurity for two classes: one minus the squared share of each class. It is 0 when the group is all one class and 0.5 when it is an even mix.' },
@@ -672,7 +687,7 @@ function predict(node, p) {
 console.log("all " + points.length + " customers: Gini " + gini(points).toFixed(3));
 const tree = grow(points, 0, 3);
 show(tree, "", "");
-for (const p of [[1, 6], [4, 9], [0, 1]]) {
+for (const p of [[1, 6], [4, 9], [1, 2]]) {
   console.log("calls " + p[0] + ", years " + p[1] + ": " + predict(tree, p));
 }`,
     },
@@ -763,7 +778,7 @@ int main() {
     std::printf("all %d customers: Gini %.3f\\n", (int)points.size(), gini(points));
     int root = grow(points, 0, 3);
     show(root, "", "");
-    const double fresh[3][2] = {{1, 6}, {4, 9}, {0, 1}};
+    const double fresh[3][2] = {{1, 6}, {4, 9}, {1, 2}};
     for (const auto& p : fresh) std::printf("calls %d, years %d: %s\\n", (int)p[0], (int)p[1], predict(root, p));
     return 0;
 }`,
@@ -890,6 +905,7 @@ int main() {
         'There are only two possible first splits, x ≤ 0.5 and y ≤ 0.5, and both score 0.5.',
       ],
       tryInput: { custom: XOR4, depth: 2 },
+      check: (r) => (Math.abs(r.splits[0].score - 0.5) < 1e-12 && Math.abs(r.splits[0].parentGini - 0.5) < 1e-12 && r.correct === 4 && r.n === 4 && r.questions === 3) || `first split scores ${r.splits[0].score}, ${r.correct} of ${r.n} right`,
     },
     {
       type: 'debug',
@@ -920,7 +936,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Prune with points held back',
-      prompt: 'Split a dataset into three parts: one to grow a tree, one to prune it and one to test it. Grow the tree fully on the first part. Then, working from the bottom up, replace a question by a leaf whenever doing so does not lower the accuracy on the second part. Report the accuracy of the full tree and of the pruned tree on the third part, and the number of leaves in each. Repeat with ten different random divisions of the data.',
+      prompt: 'Split a dataset into three parts: one to grow a tree, one to prune it and one to test it. Grow the tree fully on the first part. Then, working from the bottom up, replace a question by a leaf whenever doing so does not lower the accuracy on the second part. Report the accuracy of the full tree and of the pruned tree on the third part, and the number of leaves in each.\n\nTest it on this division first, written as (calls, years, class) with class 1 for a customer who left. Grow on the eight customers of the worked example. Prune with (0, 2, 0), (2, 1, 0), (4, 3, 1), (1, 6, 0) and (5, 5, 1). Test on (2, 2, 0), (0, 1, 0), (3, 8, 1), (1, 4, 0), (6, 1, 1) and (1, 2, 1). Then repeat on a larger dataset with ten different random divisions.',
+      expect: 'On the division given, the full tree has 3 leaves and gets 4 of the 6 test customers right. Pruning removes the question "years <= 2.0?": on the pruning part the tree gets 3 of 5 with that question and 5 of 5 with a leaf in its place. The top question stays, because turning it into a leaf would drop the pruning part from 5 of 5 to 3 of 5. The pruned tree has 2 leaves and gets 5 of the 6 test customers right. It now gets (1, 2, 1) wrong, the one test customer the removed question was right about, and gets (2, 2, 0) and (0, 1, 0) right.',
       hints: [
         'Store in every node the majority class of its training points, so that any question can be turned into a leaf without regrowing.',
         'The third part must play no role in growing or pruning. If it does, its accuracy is no longer a fair test.',
@@ -1007,7 +1024,7 @@ int main() {
         if (b.feature !== 1 || b.threshold !== 2 || !near(b.score, 0) || !near(b.parentGini, 0.32)) return `second split ${JSON.stringify(b)}`;
         if (r.accuracy !== 1 || r.leaves !== 3 || c['splits scored'] !== 18) return `accuracy ${r.accuracy}, leaves ${r.leaves}, ${c['splits scored']} splits scored`;
         const says = (x, y) => walk(r.tree, { x, y }).majority;
-        return (says(1, 6) === 0 && says(4, 9) === 1 && says(0, 1) === 1 && splitsAreBest(r) === true) || 'predictions for the three new customers differ from the code sample';
+        return (says(1, 6) === 0 && says(4, 9) === 1 && says(1, 2) === 1 && splitsAreBest(r) === true) || 'predictions for the three new customers differ from the code sample';
       } },
     { name: 'exact XOR: the first split gains nothing, and two levels still get all four right (quiz prediction)', input: { custom: XOR4, depth: 2 },
       check: (r) => {

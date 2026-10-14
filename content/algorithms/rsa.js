@@ -192,9 +192,11 @@ function run(input, t) {
   put('receiver', 'gotc', 'received c', c);
   const plainPower = m >= 2 && m ** e < n;
   const fixed = c === m;
+  // how many messages encrypt to themselves: (1 + gcd(e − 1, p − 1)) × (1 + gcd(e − 1, q − 1))
+  const selfSame = (1 + gcd(e - 1, p - 1)) * (1 + gcd(e - 1, q - 1));
   t.frame(() => ({
     line: 15,
-    note: `The ciphertext is **c = ${fmt(c)}**. The sender transmits it, and anyone may see it.${fixed ? ` Notice that c equals m. The messages 0, 1 and n − 1 always encrypt to themselves, because 0, 1 and −1 are unchanged by an odd power and e is always odd. That is one of several reasons real systems never encrypt a raw message.` : ''}${plainPower ? ` Notice that ${m}^${e} = ${fmt(m ** e)} is smaller than n, so no remainder was ever taken. The ciphertext is an ordinary power, and anyone can undo it with an ordinary root. Small messages are one reason padding is essential.` : ''}`,
+    note: `The ciphertext is **c = ${fmt(c)}**. The sender transmits it, and anyone may see it.${fixed ? ` Notice that c equals m. ${m <= 1 || m === n - 1 ? `The messages 0, 1 and n − 1 always encrypt to themselves, because 0, 1 and −1 are unchanged by an odd power and e is always odd.` : `This message is one of ${selfSame} that encrypt to themselves under this key. The messages 0, 1 and n − 1 do so under every key; the others depend on p, q and e.`} That is one of several reasons real systems never encrypt a raw message.` : ''}${plainPower ? ` Notice that ${m}^${e} = ${fmt(m ** e)} is smaller than n, so no remainder was ever taken. The ciphertext is an ordinary power, and anyone can undo it with an ordinary root. Small messages are one reason padding is essential.` : ''}`,
     views: picture(['c', 'gotc'], { m: 'done' }),
     vars: { m, c },
   }));
@@ -349,9 +351,12 @@ export default {
       { label: 'Another key', values: { p: 47, q: 59, e: 17, m: 1234 } },
     ],
     tryThis: [
-      'Load "A classic toy key" and change only the message from 65 to 66. The ciphertext changes completely. Then run 65 again: you get exactly the same ciphertext as before. An eavesdropper who suspects the message is 65 can check that guess with the public key.',
-      'Set p = 61, q = 53 and choose e = 3 or e = 5. The run stops with an error, because φ = 3120 is divisible by both. Read the message, then pick an e that works.',
-      'Load "A small message that never wraps around". The ciphertext 128 is just 2 to the power 7. Raise the message until m to the power e first exceeds n and watch the ciphertext stop being an ordinary power.',
+      { ask: 'Load "A classic toy key" and note the ciphertext. Now change only the message, from 65 to 66. Will the new ciphertext be close to the old one? Then set the message back to 65 and run it once more. Will you get the first ciphertext again?',
+        reveal: '66 encrypts to 524, nowhere near the 2790 that 65 gives. A change of one in the message sends the ciphertext somewhere unrelated. But 65 gives 2790 again, and will every time, because nothing random goes into the calculation. An eavesdropper who suspects the message is 65 can encrypt 65 with the public key and compare.' },
+      { ask: 'Set p = 61 and q = 53, so that φ = 3120. The page offers eight public exponents: 3, 5, 7, 11, 13, 17, 19 and 23. Which of them will the run refuse?',
+        reveal: '3, 5 and 13. φ = 3120 is divisible by each of them, so no decryption exponent d exists, and the run stops with an error that says so. The other five work, and each gives a different d: 1783 for e = 7, 851 for 11, 2753 for 17, 2299 for 19 and 407 for 23.' },
+      { ask: 'Load "A small message that never wraps around". With e = 7 the message 2 encrypts to an ordinary power of 2. Raise the message by one at a time. Which message is the first whose ciphertext is not simply m to the power 7?',
+        reveal: 'The message 4. 2 to the power 7 is 128 and 3 to the power 7 is 2187. Both are below n = 3233, so no remainder is taken, and a seventh root undoes them without any key. 4 to the power 7 is 16,384, which is above n, so the ciphertext is the remainder after dividing by 3233. That is 219.' },
     ],
     run,
     report: (r, c) => `Keys: n = ${r.p} × ${r.q} = ${r.n}, φ = ${r.phi}, public exponent e = ${r.e}, private exponent d = ${r.d}.\nEncrypt: ${r.m}^${r.e} mod ${r.n} = ${r.c}\nDecrypt: ${r.c}^${r.d} mod ${r.n} = ${r.decrypted}\n${c['modular multiplications'] || 0} modular multiplications to encrypt and decrypt. ${c['division steps'] || 0} division steps to find d.\nAttacker: factored n = ${r.attack.factor} × ${r.attack.other} after ${r.attack.trials} trial divisions.\nTEXTBOOK RSA WITH TOY PRIMES: insecure, for learning only.`,
@@ -424,7 +429,7 @@ export default {
       'p = q: n is a perfect square, its square root reveals p, and the formula for φ used here is wrong.',
       'e shares a factor with φ: no inverse d exists, and encryption is not reversible.',
       'm ≥ n: the message is reduced mod n and information is lost. Messages must be smaller than n.',
-      'm = 0, 1 or n − 1: the ciphertext equals the message.',
+      'm = 0, 1 or n − 1: the ciphertext equals the message, under every key. A few other messages do the same under a given key: 25 of the 3,233 when p = 61, q = 53 and e = 17.',
       'm^e < n: no reduction happens and the ciphertext is an ordinary power, undone by an ordinary root.',
       'm shares a factor with n: decryption still works, but such a ciphertext reveals a factor of n through a greatest common divisor. With real key sizes the chance of meeting one by accident is negligible.',
     ],
@@ -444,6 +449,20 @@ export default {
       input: 'The toy key p = 61, q = 53, e = 17 and the message 65. Textbook RSA with insecure parameters, for illustration only.',
       expected: 'n = 3233, phi = 3120\npublic key (n, e) = (3233, 17)\nprivate key d = 2753\n65 encrypts to 2790\n2790 decrypts to 65',
     },
+    breakIt: [
+      { change: 'In the line that computes d, pass `n` to `inverse` instead of `phi`. The program will still run. Will 2790 still decrypt to 65?',
+        find: { python: 'd = inverse(e, phi)', javascript: 'const d = inverse(e, phi);' },
+        replace: { python: 'd = inverse(e, n)', javascript: 'const d = inverse(e, n);' },
+        reveal: 'It prints "private key d = 2092" and "2790 decrypts to 2699". 2092 is a genuine inverse of 17, but modulo the wrong number: 17 × 2092 = 35,564 = 11 × 3233 + 1. Exponents repeat mod φ = 3120, not mod n, so this d does not undo e. No error is raised. The program runs to the end and hands back a wrong message.' },
+      { change: 'At the end of `inverse`, return `t0` as it stands, without reducing it mod phi. What will the private key be, and what will 2790 decrypt to?',
+        find: { python: 'return t0 % phi', javascript: 'return ((t0 % phi) + phi) % phi;' },
+        replace: { python: 'return t0', javascript: 'return t0;' },
+        reveal: 'It prints "private key d = -367" and "2790 decrypts to 1144". The coefficient −367 is correct as far as it goes: 17 × (−367) = −6239, which is 1 − 2 × 3120. But `power` reads the exponent bit by bit and has no way to raise to a negative power. It skips the minus sign and computes 2790 to the power 367, which leaves 1144. Adding φ to −367 gives 2753, the same exponent written as a positive number.' },
+      { change: 'Change the message from 65 to 3298, which is larger than n. Will the receiver get 3298 back?',
+        find: { python: 'message = 65', javascript: 'const message = 65;' },
+        replace: { python: 'message = 3298', javascript: 'const message = 3298;' },
+        reveal: 'No. It prints "3298 encrypts to 2790" and "2790 decrypts to 65". 3298 is 65 + 3233, and the arithmetic keeps only remainders mod n, so to RSA the two messages are the same number. The ciphertext is the one 65 had, and 65 is what comes back. Nothing fails or warns. The information was lost before encryption began, which is why a message must be smaller than n.' },
+    ],
     python: {
       source: `def inverse(e, phi):
     """Extended Euclid: the d with e * d = 1 (mod phi)."""
@@ -688,16 +707,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'With p = 61, q = 53 (so n = 3233) and e = 7, the message m = 2 is encrypted. What is the ciphertext?',
-      options: ['2', '14', '128', 'A number with no obvious relation to 2'],
+      q: 'With p = 47, q = 59 (so n = 2773) and e = 3, the message m = 14 is encrypted. What is the ciphertext?',
+      options: ['14', '42', '2744', 'A number with no obvious relation to 14'],
       answer: 2,
       explain: [
-        'Only 0, 1 and n − 1 encrypt to themselves.',
+        'That would mean encryption left the message as it was. Encryption cubes it, and 14 cubed is not 14.',
         'Encryption raises m to the power e. It does not multiply them.',
-        'Correct. 2 to the power 7 is 128, which is below 3233, so no remainder is taken. The ciphertext is an ordinary power, and a seventh root recovers the message. This is one reason padding is required.',
-        'That would be true for a message large enough for the power to wrap around n many times. This one is too small.',
+        'Correct. 14 to the power 3 is 2744, just below 2773, so no remainder is taken. The ciphertext is an ordinary cube, and a cube root recovers the message with no key at all. This is one reason padding is required.',
+        'That begins one message later. 15 to the power 3 is 3375, which is above 2773, so it wraps around and becomes 602. 14 to the power 3 still fits below n.',
       ],
-      tryInput: { p: 61, q: 53, e: 7, m: 2 },
+      tryInput: { p: 47, q: 59, e: 3, m: 14 },
+      check: (r) => (r.n === 2773 && r.e === 3 && r.c === 2744 && r.c === 14 ** 3 && r.decrypted === 14) || `ciphertext ${r.c}`,
     },
     {
       type: 'debug',
@@ -731,7 +751,8 @@ plain = power(cipher, d, n)`,
     {
       type: 'challenge',
       title: 'Speed up decryption with the Chinese remainder theorem',
-      prompt: 'The key holder knows p and q. Compute m_p = c^(d mod (p − 1)) mod p and m_q = c^(d mod (q − 1)) mod q, then combine them: with q_inv the inverse of q modulo p, let h = q_inv × (m_p − m_q) mod p and m = m_q + h × q. Check that this equals c^d mod n for every c with the toy key p = 61, q = 53, e = 17, and count the modular multiplications against the direct method. Then explain why an attacker who obtains m_p but a faulty m_q can factor n.',
+      prompt: 'The key holder knows p and q. Compute m_p = c^(d mod (p − 1)) mod p and m_q = c^(d mod (q − 1)) mod q, then combine them: with q_inv the inverse of q modulo p, let h = q_inv × (m_p − m_q) mod p and m = m_q + h × q. Check that this equals c^d mod n for every c with the toy key p = 61, q = 53, e = 17. For c = 2790, print m_p, m_q, h and m, and count the modular multiplications of both methods, using square-and-multiply as on this page. Then add 1 to m_q before combining, as a hardware fault might, and work out why an attacker who sees that faulty result can factor n.',
+      expect: 'All 3,233 values of c give the same result as c^d mod n. For c = 2790 the two short exponents are 53 and 49, q_inv is 38, and you get m_p = 4, m_q = 12, h = 1 and m = 12 + 1 × 53 = 65. The direct method takes 17 multiplications mod 3233. The two short powers take 10 mod 61 and 9 mod 53, which is 19, plus two more to combine. So the count is no lower. The saving is that every one of them works on numbers half as long. With m_q wrongly 13, h becomes 24 and the result is 1285. The difference from the right answer, 1285 − 65 = 1220, is a multiple of 61 but not of 53, so gcd(3233, 1220) = 61 and n is factored.',
       hints: [
         'The exponents d mod (p − 1) and d mod (q − 1) are about half as long as d, and the moduli are half as long as n.',
         'For the last part, consider the greatest common divisor of n and the difference between the faulty result and the correct one.',
@@ -793,6 +814,22 @@ plain = power(cipher, d, n)`,
       check: (r) => soundAnd(r, r.c === 0 && r.d === 27, `got c=${r.c} d=${r.d}`) },
     { name: 'the attacker finds the smaller prime after 52 trial divisions', input: {},
       check: (r) => soundAnd(r, r.attack.factor === 53 && r.attack.other === 61 && r.attack.trials === 52 && r.attack.m === 65, `got ${r.attack.factor} after ${r.attack.trials}`) },
+    { name: 'try-this: 66 encrypts to 524 under the default key', input: { p: 61, q: 53, e: 17, m: 66 },
+      check: (r) => soundAnd(r, r.c === 524, `got ${r.c}`) },
+    { name: 'try-this: with e = 7 the message 3 is still an ordinary power', input: { p: 61, q: 53, e: 7, m: 3 },
+      check: (r) => soundAnd(r, r.c === 2187 && r.c === 3 ** 7 && r.d === 1783, `got c=${r.c} d=${r.d}`) },
+    { name: 'try-this: with e = 7 the message 4 wraps around to 219', input: { p: 61, q: 53, e: 7, m: 4 },
+      check: (r) => soundAnd(r, r.c === 219 && 4 ** 7 === 16384, `got ${r.c}`) },
+    { name: 'try-this: d is 851 for e = 11', input: { p: 61, q: 53, e: 11, m: 65 },
+      check: (r) => soundAnd(r, r.d === 851, `got d=${r.d}`) },
+    { name: 'try-this: d is 2299 for e = 19', input: { p: 61, q: 53, e: 19, m: 65 },
+      check: (r) => soundAnd(r, r.d === 2299, `got d=${r.d}`) },
+    { name: 'try-this: d is 407 for e = 23', input: { p: 61, q: 53, e: 23, m: 65 },
+      check: (r) => soundAnd(r, r.d === 407, `got d=${r.d}`) },
+    { name: 'quiz: 14 cubed stays below n = 2773 and is its own ciphertext', input: { p: 47, q: 59, e: 3, m: 14 },
+      check: (r) => soundAnd(r, r.n === 2773 && r.c === 2744, `got ${r.c}`) },
+    { name: 'quiz: 15 cubed wraps around to 602', input: { p: 47, q: 59, e: 3, m: 15 },
+      check: (r) => soundAnd(r, r.c === 602, `got ${r.c}`) },
     { name: 'another key matches exact big-integer arithmetic', input: { p: 47, q: 59, e: 17, m: 1234 }, check: sound },
   ],
 };

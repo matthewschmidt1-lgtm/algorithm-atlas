@@ -83,6 +83,8 @@ export const QUIZ_TYPES = ['choice', 'predict', 'debug', 'challenge'];
 export const INPUT_TYPES = ['range', 'select', 'seed', 'number', 'list', 'text', 'toggle', 'cells'];
 export const VIEW_KINDS = ['bars', 'graph', 'grid', 'scene', 'table', 'rows', 'board'];
 export const LANGUAGES = ['python', 'javascript', 'cpp'];
+// The languages a learner can run and edit on the page. C++ is compiled when the site is built.
+export const RUNNABLE = ['python', 'javascript'];
 export const LANGUAGE_LABELS = { python: 'Python', javascript: 'JavaScript', cpp: 'C++' };
 const SCENE_LAYERS = ['heat', 'contour', 'line', 'polygon', 'band', 'segments', 'points', 'circle', 'rect', 'bars', 'text'];
 
@@ -243,11 +245,21 @@ export function validateAlgorithm(a, ctx, fileId) {
     if (f.type === 'select') need(isArr(f.options) && f.options.some((o) => o.value === f.default), `viz.inputs.${f.id}: select needs options including the default`);
     inputIds.add(f.id);
   }
+  // an input as the player would run it: the declared defaults, overridden by the given values
+  const defaults = Object.fromEntries((v.inputs || []).map((f) => [f.id, f.default]));
+  const merged = (values) => { const all = { ...defaults, ...values }; return Object.keys(all).sort().map((k) => [k, all[k]]); };
   for (const p of v.presets || []) {
     need(isStr(p.label) && p.values && typeof p.values === 'object', 'viz.presets need label and values');
     for (const k of Object.keys(p.values || {})) need(inputIds.has(k), `viz.presets "${p.label}" sets unknown input "${k}"`);
   }
   need(isArr(v.tryThis) && v.tryThis.length >= 2, 'viz.tryThis needs at least two experiments for the learner');
+  // A prompt asks the learner to commit to an answer, and keeps the outcome behind a fold.
+  for (const [i, tt] of (v.tryThis || []).entries()) {
+    if (isStr(tt)) { err(`viz.tryThis[${i}] is a plain sentence. Write it as { ask, reveal }: a question first, the outcome second`); continue; }
+    need(tt && isStr(tt.ask) && isStr(tt.reveal), `viz.tryThis[${i}] needs ask and reveal`);
+    if (tt && isStr(tt.ask) && !/\?/.test(tt.ask)) err(`viz.tryThis[${i}].ask must put a question to the learner`);
+    if (tt && tt.input) for (const k of Object.keys(tt.input)) need(inputIds.has(k), `viz.tryThis[${i}].input sets unknown input "${k}"`);
+  }
   if (v.experiment) {
     const e = v.experiment;
     need(isStr(e.metric) && isStr(e.metricLabel) && isArr(e.sizes) && typeof e.input === 'function', 'viz.experiment needs metric, metricLabel, sizes, input(n, variant, seed)');
@@ -275,6 +287,27 @@ export function validateAlgorithm(a, ctx, fileId) {
     for (const n of (s && s.notes) || []) need(Number.isInteger(n.line) && n.line >= 1 && n.line <= lines && isStr(n.text), `code.${lang}.notes: line ${n.line} out of range or missing text`);
   }
   need(c.python && isArr(c.python.notes) && c.python.notes.length >= 2, 'code.python.notes needs at least two line explanations');
+  // Changes the learner is invited to make to the program, each one a mistake the lesson names.
+  // tools/validate.js and tools/build.py make each change and confirm the output really differs.
+  need(isArr(c.breakIt) && c.breakIt.length >= 2, 'code.breakIt needs at least two changes that break the program');
+  for (const [i, b] of (c.breakIt || []).entries()) {
+    need(b && isStr(b.change) && isStr(b.reveal), `code.breakIt[${i}] needs change (what to edit, in words) and reveal (what happens and why)`);
+    for (const lang of RUNNABLE) {
+      const src = (c[lang] && c[lang].source) || '';
+      const find = b && b.find && b.find[lang], rep = b && b.replace && b.replace[lang];
+      if (!isStr(find) || typeof rep !== 'string') { err(`code.breakIt[${i}] needs find.${lang} and replace.${lang}`); continue; }
+      const n = src.split(find).length - 1;
+      if (n !== 1) err(`code.breakIt[${i}].find.${lang} must occur exactly once in the ${lang} source (it occurs ${n} times)`);
+    }
+  }
+  for (const [i, x] of (c.more || []).entries()) {
+    need(x && isStr(x.title) && isStr(x.lead), `code.more[${i}] needs title and lead`);
+    need(x && x.sample && isStr(x.sample.input) && isStr(x.sample.expected), `code.more[${i}].sample needs input and expected`);
+    for (const lang of LANGUAGES) {
+      need(x && x[lang] && isStr(x[lang].source), `code.more[${i}].${lang}.source required`);
+      if (x && x[lang] && x[lang].source && /\t/.test(x[lang].source)) err(`code.more[${i}].${lang}.source contains tab characters; use spaces`);
+    }
+  }
 
   const x = a.complexity || {};
   need(isStr(x.summary), 'complexity.summary required');
@@ -306,13 +339,28 @@ export function validateAlgorithm(a, ctx, fileId) {
   for (const q of a.quiz || []) {
     need(QUIZ_TYPES.includes(q.type), `quiz.type must be one of ${QUIZ_TYPES.join(', ')}`);
     qt.add(q.type);
-    if (q.type === 'challenge') need(isStr(q.title) && isStr(q.prompt), 'quiz challenge needs title and prompt');
+    if (q.type === 'challenge') {
+      need(isStr(q.title) && isStr(q.prompt), 'quiz challenge needs title and prompt');
+      need(isStr(q.expect), `quiz challenge "${q.title}" needs expect: what a correct solution gives on a stated input, so the learner can check their own`);
+    }
     else {
       need(isStr(q.q) && isArr(q.options) && q.options.length >= 3, 'quiz question needs q and at least three options');
       need(Number.isInteger(q.answer) && q.answer >= 0 && q.answer < (q.options || []).length, 'quiz.answer must index into options');
       need(isArr(q.explain) && q.explain.length === (q.options || []).length, 'quiz.explain must give feedback for every option');
       if (q.type === 'debug') need(isStr(q.code), 'quiz debug item needs code');
       if (q.tryInput) for (const k of Object.keys(q.tryInput)) need(inputIds.has(k), `quiz.tryInput sets unknown input "${k}"`);
+      if (q.type === 'predict') {
+        // A prediction is only a prediction if the page has not already shown the outcome.
+        need(q.tryInput && typeof q.tryInput === 'object', `quiz predict "${String(q.q).slice(0, 50)}" needs tryInput so the learner can run the case afterwards`);
+        need(typeof q.check === 'function', `quiz predict "${String(q.q).slice(0, 50)}" needs check(result, counters): proof that the stated answer is what the run gives`);
+        if (q.tryInput) {
+          const same = (x) => JSON.stringify(merged(x)) === JSON.stringify(merged(q.tryInput));
+          if (same({})) err(`quiz predict "${String(q.q).slice(0, 50)}" runs the default input, which the learner has already watched`);
+          for (const p of v.presets || []) if (same(p.values || {})) err(`quiz predict "${String(q.q).slice(0, 50)}" runs the preset "${p.label}". Use an input the page shows nowhere else`);
+          if (ex.tryInput && same(ex.tryInput)) err(`quiz predict "${String(q.q).slice(0, 50)}" runs the worked example. Use an input the page shows nowhere else`);
+          for (const tt of v.tryThis || []) if (tt && tt.input && same(tt.input)) err(`quiz predict "${String(q.q).slice(0, 50)}" runs the same input as a "Things to try" prompt`);
+        }
+      }
     }
   }
   if (ex.tryInput) for (const k of Object.keys(ex.tryInput)) need(inputIds.has(k), `example.tryInput sets unknown input "${k}"`);
@@ -346,6 +394,7 @@ export function validateAlgorithm(a, ctx, fileId) {
     if (k === 'logic') { const { pseudocode, ...rest } = a.logic || {}; walk(rest, 'logic'); } else walk(a[k], k);
   }
   walk({ summary: m.summary, describe: v.describe, tryThis: v.tryThis }, 'meta/viz');
+  walk({ breakIt: ((a.code || {}).breakIt || []).map((b) => ({ change: b.change, reveal: b.reveal })), more: ((a.code || {}).more || []).map((x) => ({ title: x.title, lead: x.lead })) }, 'code');
   errors.push(...[...flagged].slice(0, 6));
 
   return { errors, warnings };

@@ -241,9 +241,12 @@ export default {
       { label: 'One long run', values: { text: 'A'.repeat(40) } },
     ],
     tryThis: [
-      'Load "No runs: the output doubles" and compare the two numbers in the Size row at the last step. Then retype the text so that two neighbouring letters match, and see which pair absorbs them.',
-      'Load "Runs of two: break even". Every pair costs 16 bits and replaces exactly 16 bits. Add one more letter to any run and watch the output fall below the input.',
-      'Type a sentence of your own. Before running it, count the runs: the output will be 16 bits times that count. Ordinary sentences have almost as many runs as letters.',
+      { ask: 'Load "No runs: the output doubles": 80 bits go in and 160 come out. Now change the F to an E, so that the text reads `ABCDEEGHIJ` and two neighbours match. How many bits will the output take?',
+        reveal: '144 bits. The two E share one pair, 2×E, so there are 9 pairs instead of 10. One matching neighbour saves exactly one pair, 16 bits, and the output is still far larger than the 80-bit input.' },
+      { ask: 'Load "Runs of two: break even": 80 bits in, 80 bits out. Add a third A at the front, so that the text reads `AAABBCCDDEE`. The input grows to 88 bits. How large will the output be?',
+        reveal: 'Still 80 bits. The extra A joins the first pair, which becomes 3×A, and no new pair is needed. A pair costs 16 bits whatever its count, so a symbol added to an existing run is free. The output is now smaller than the input.' },
+      { ask: 'Type `a good book is well written`, or a sentence of your own. It has 27 symbols, or 216 bits. Before running it, count the runs. How many bits will the output take?',
+        reveal: '368 bits, which is 170% of the input. There are 23 runs: only the four double letters, oo, oo, ll and tt, save a pair each. The output is always 16 bits times the number of runs, and ordinary sentences have almost as many runs as letters.' },
     ],
     run,
     report: (r) => `${r.runs.length} ${r.runs.length === 1 ? 'run' : 'runs'} in ${r.text.length} symbols.\nInput:  ${r.text.length} × 8 bits = ${r.inputBits} bits\nOutput: ${r.runs.length} × 16 bits = ${r.outputBits} bits (${Math.round(100 * r.ratio)}% of the input)\nPairs: ${r.runs.map(pairText).join(' ')}\nDecoded: "${r.decoded}" (identical to the input)`,
@@ -322,9 +325,19 @@ export default {
 
   code: {
     sample: {
-      input: 'Two texts: "WWWWWWBBBBWWWWWWWWBB", which has long runs, and "ABCDEFGH", which has none. For each, print the pairs, the sizes under this lesson\'s cost model, and whether decoding returns the original.',
-      expected: '6W 4B 8W 2B\n160 bits -> 64 bits\nround trip ok\n1A 1B 1C 1D 1E 1F 1G 1H\n64 bits -> 128 bits\nround trip ok',
+      input: 'Three texts: "WWWWWWBBBBWWWWWWWWBB", which has long runs, "ABCDEFGH", which has none, and the letter A repeated 300 times, a run too long for one count. For each, print the pairs, the sizes under this lesson\'s cost model, and whether decoding returns the original.',
+      expected: '6W 4B 8W 2B\n160 bits -> 64 bits\nround trip ok\n1A 1B 1C 1D 1E 1F 1G 1H\n64 bits -> 128 bits\nround trip ok\n255A 45A\n2400 bits -> 32 bits\nround trip ok',
     },
+    breakIt: [
+      { change: 'In the inner loop, change `count < MAX_RUN` to `count <= MAX_RUN`, so that a run may grow one symbol past the limit. What will the two pairs for the 300 A be?',
+        find: { python: 'count < MAX_RUN', javascript: 'count < MAX_RUN' },
+        replace: { python: 'count <= MAX_RUN', javascript: 'count <= MAX_RUN' },
+        reveal: 'The last three lines become "0A 44A", "2400 bits -> 32 bits" and "round trip FAILED". The first run is now allowed to reach 256, and 256 does not fit in 8 bits: the stored count wraps around to 0. The decoder writes no A at all for that pair and 44 for the next, so 256 symbols are lost, and nothing in the encoder complained. The first two texts are unaffected, because their runs are nowhere near the limit. Python and JavaScript print the same thing.' },
+      { change: 'Make the outer loop stop one symbol before the end of the text: `i < len(text) - 1` in Python. Someone might do this to be sure the encoder never looks past the last symbol. Which of the three texts will no longer come back whole?',
+        find: { python: 'while i < len(text):', javascript: 'while (i < text.length) {' },
+        replace: { python: 'while i < len(text) - 1:', javascript: 'while (i < text.length - 1) {' },
+        reveal: 'Only "ABCDEFGH". It now prints "1A 1B 1C 1D 1E 1F 1G", "64 bits -> 112 bits" and "round trip FAILED". The final H is a run of one that starts at the last position, and the loop stops before reaching it. The other two texts end in runs of 2 and 45, which start early enough to be written in full. This is the forgotten last run in another form, and it hides whenever the text happens to end in a longer run.' },
+    ],
     python: {
       source: `MAX_RUN = 255  # the largest count that fits in 8 bits
 
@@ -337,7 +350,7 @@ def encode(text):
         count = 1
         while i + count < len(text) and text[i + count] == symbol and count < MAX_RUN:
             count += 1
-        runs.append((count, symbol))
+        runs.append((count & 0xFF, symbol))  # only 8 bits of the count are stored
         i += count
     return runs
 
@@ -346,14 +359,14 @@ def decode(runs):
     return "".join(symbol * count for count, symbol in runs)
 
 
-for text in ["WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH"]:
+for text in ["WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH", "A" * 300]:
     runs = encode(text)
     print(" ".join(f"{count}{symbol}" for count, symbol in runs))
     print(f"{8 * len(text)} bits -> {16 * len(runs)} bits")
     print("round trip ok" if decode(runs) == text else "round trip FAILED")`,
       notes: [
         { line: 10, text: 'The inner loop extends the run. It stops at the end of the text, at a different symbol, or when the count is full.' },
-        { line: 12, text: 'This line runs once per run, including the last one. Writing the pair here, after the inner loop, is what avoids the classic bug of losing the final run.' },
+        { line: 12, text: 'This line runs once per run, including the last one. Writing the pair here, after the inner loop, is what avoids the classic bug of losing the final run. The `& 0xFF` keeps only the lowest 8 bits of the count, as the 8-bit field of a real file would. It changes nothing as long as the count never passes 255.' },
         { line: 13, text: 'Jump over the whole run. Every symbol is visited once, so the running time is linear in the length of the text.' },
         { line: 24, text: 'The cost model of this lesson: 8 bits per input symbol, and 16 bits per pair (8 for the count, 8 for the symbol).' },
       ],
@@ -370,7 +383,7 @@ function encode(text) {
     while (i + count < text.length && text[i + count] === symbol && count < MAX_RUN) {
       count++;
     }
-    runs.push([count, symbol]);
+    runs.push([count & 0xFF, symbol]); // only 8 bits of the count are stored
     i += count;
   }
   return runs;
@@ -380,7 +393,7 @@ function decode(runs) {
   return runs.map(([count, symbol]) => symbol.repeat(count)).join("");
 }
 
-for (const text of ["WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH"]) {
+for (const text of ["WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH", "A".repeat(300)]) {
   const runs = encode(text);
   console.log(runs.map(([count, symbol]) => count + symbol).join(" "));
   console.log(8 * text.length + " bits -> " + 16 * runs.length + " bits");
@@ -404,7 +417,7 @@ std::vector<std::pair<int, char>> encode(const std::string& text) {
         while (i + count < text.size() && text[i + count] == symbol && count < MAX_RUN) {
             ++count;
         }
-        runs.push_back({count, symbol});
+        runs.push_back({count & 0xFF, symbol});  // only 8 bits of the count are stored
         i += count;
     }
     return runs;
@@ -417,7 +430,8 @@ std::string decode(const std::vector<std::pair<int, char>>& runs) {
 }
 
 int main() {
-    for (const std::string text : {"WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH"}) {
+    const std::vector<std::string> texts = {"WWWWWWBBBBWWWWWWWWBB", "ABCDEFGH", std::string(300, 'A')};
+    for (const std::string& text : texts) {
         auto runs = encode(text);
         for (std::size_t k = 0; k < runs.size(); ++k) {
             std::cout << runs[k].first << runs[k].second << (k + 1 < runs.size() ? " " : "\\n");
@@ -520,16 +534,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The text ABABABAB is 8 symbols, or 64 bits. How many bits will the run-length encoded output take?',
-      options: ['16', '32', '64', '128'],
-      answer: 3,
+      q: 'The text MISSISSIPPI is 11 symbols, or 88 bits. How many bits will the run-length encoded output take?',
+      options: ['64', '88', '128', '176'],
+      answer: 2,
       explain: [
-        '16 bits would be one pair. The text is not one run.',
-        '32 bits would be two pairs. That would need a method that notices the repeated pattern AB, which this one does not.',
-        '64 bits would be four pairs. Count the runs again: each letter differs from the one before it.',
-        'Correct. No letter equals its neighbour, so there are 8 runs of length 1, and 8 pairs at 16 bits each is 128 bits: twice the input.',
+        '64 bits would be four pairs, one for each different letter. A pair describes one unbroken run, and the four I are not next to each other.',
+        'The output equals the input only when the runs average exactly two symbols. Here most runs are a single letter.',
+        'There are 8 runs: M, I, SS, I, SS, I, PP, I. Eight pairs at 16 bits each is 128 bits, well above the 88-bit input. Only the three double letters share a pair.',
+        '176 bits would be one pair for every letter. SS, SS and PP each fit in one pair, so there are 8 pairs, not 11.',
       ],
-      tryInput: { text: 'ABABABAB' },
+      tryInput: { text: 'MISSISSIPPI' },
+      check: (r) => (r.runs.length === 8 && r.inputBits === 88 && r.outputBits === 128 && r.runs.map(([c, x]) => `${c}${x}`).join(' ') === '1M 1I 2S 1I 2S 1I 2P 1I') || `got ${r.runs.length} runs, ${r.outputBits} bits`,
     },
     {
       type: 'debug',
@@ -568,9 +583,10 @@ int main() {
     {
       type: 'challenge',
       title: 'Bound the worst case',
-      prompt: 'Extend the encoder with a second kind of record so that data without runs grows only slightly. Use one header byte: a value from 0 to 127 means "the next header + 1 bytes are literal data", and a value from 129 to 255 means "repeat the next byte 257 − header times". Write the matching decoder, check the round trip on several texts, and work out the largest possible output for an input of n bytes.',
+      prompt: 'Extend the encoder with a second kind of record so that data without runs grows only slightly. Use one header byte: a value from 0 to 127 means "the next header + 1 bytes are literal data", and a value from 129 to 255 means "repeat the next byte 257 − header times". Write the matching decoder. Use a repeat record for every run of 3 or more and literal records for everything else. Test it on "ABCDEFGH", "she sells sea shells" and "WWWWWWBBBBWWWWWWWWBB", check that each one decodes back to itself, and work out the largest possible output for an input of n bytes.',
+      expect: '"ABCDEFGH" becomes 9 bytes: the header 7, then the eight letters. The plain pairs of this lesson need 16 bytes. "she sells sea shells" becomes 21 bytes, the header 19 and then the 20 symbols, against 36 bytes as plain pairs. "WWWWWWBBBBWWWWWWWWBB" becomes 9 bytes: 251 W, 253 B, 249 W, then the header 1 followed by B B. That is one byte more than its 8 bytes of plain pairs, because the last run of two is stored as literals. The largest output comes from an input with no run of 3 or more: one extra header byte for every 128 bytes of input, rounded up. An input of 300 such bytes becomes 303.',
       hints: [
-        'Only start a repeat record for runs of 3 or more. A run of 2 is cheaper left inside a literal record.',
+        'Only start a repeat record for runs of 3 or more. A run of 2 in the middle of other literals is cheaper left inside the literal record. The rule is simple, not perfect: a run of 2 with no literals beside it costs one byte more this way.',
         'A literal record holds at most 128 bytes, so the worst case adds one header byte for every 128 bytes of input.',
       ],
     },
@@ -625,6 +641,12 @@ int main() {
       check: (r) => (r.runs.map(([c, s]) => `${c}${s}`).join(' ') === '4A 4A 2A 1B' && r.decoded === r.text) || `got ${r.runs.join(' ')}` },
     { name: 'digits, spaces and a run of one', input: { text: '11  22 3' },
       check: (r) => (sameAsReference(r) === true && r.runs.length === 5) || 'digits or spaces were mishandled' },
+    { name: 'things to try: one matching neighbour saves one pair, 144 bits', input: { text: 'ABCDEEGHIJ' },
+      check: (r) => (sameAsReference(r) === true && r.runs.length === 9 && r.outputBits === 144 && r.inputBits === 80) || `got ${r.outputBits} bits` },
+    { name: 'things to try: a third A is absorbed, 88 bits in and 80 out', input: { text: 'AAABBCCDDEE' },
+      check: (r) => (sameAsReference(r) === true && r.runs.length === 5 && r.runs[0][0] === 3 && r.inputBits === 88 && r.outputBits === 80) || `got ${r.inputBits} -> ${r.outputBits}` },
+    { name: 'things to try: a sentence with four double letters has 23 runs, 368 bits', input: { text: 'a good book is well written' },
+      check: (r) => (sameAsReference(r) === true && r.runs.length === 23 && r.runs.filter(([c]) => c === 2).length === 4 && r.inputBits === 216 && r.outputBits === 368 && Math.round(100 * r.ratio) === 170) || `got ${r.runs.length} runs, ${r.outputBits} bits` },
     { name: 'one long run costs one pair', input: { text: 'A'.repeat(40) },
       check: (r) => (r.outputBits === 16 && r.inputBits === 320 && r.decoded.length === 40) || `got ${r.outputBits} bits` },
   ],

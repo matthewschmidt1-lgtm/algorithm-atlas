@@ -27,7 +27,8 @@ export default async function render({ params }) {
   }
   const L = await C.loadLesson(c.lesson);
   const meta = C.algoById[c.lesson];
-  const input = { weights: c.items.map((x) => x.cost), values: c.items.map((x) => x.benefit), capacity: c.budget };
+  // told in the case's own words: proposals, cost and benefit, not items, weight and value
+  const input = { weights: c.items.map((x) => x.cost), values: c.items.map((x) => x.benefit), capacity: c.budget, wording: 'budget' };
   const player = createPlayer(L, { input });
   const playerEl = assemblePlayer(player, { pseudo: false, pageKeys: true });
   const res = player.run;
@@ -38,11 +39,12 @@ export default async function render({ params }) {
   const byBenefit = shortcut(c, (x) => x.benefit);
   const byRatio = shortcut(c, (x) => x.benefit / x.cost);
   const names = (idx) => list(idx.map((i) => c.items[i].name));
+  const dearest = c.items.reduce((at, x, i) => (x.cost > c.items[at].cost ? i : at), 0);
 
   const table = h('div.data-table-wrap', h('table.data-table.case-table',
     h('thead', h('tr', h('th', 'Proposal'), h('th', 'Cost'), h('th', 'Benefit over the year'), h('th', 'Benefit per $1 spent'), h('th', 'Funded'))),
     h('tbody', c.items.map((x, i) => h('tr', { class: chosen.includes(i) ? 'is-chosen' : '' },
-      h('th', { scope: 'row' }, x.name), h('td.mono', money(x.cost, c.unit)), h('td.mono', thousands(x.benefit)),
+      h('th', { scope: 'row' }, h('span.case-n', `${i + 1}`), x.name), h('td.mono', money(x.cost, c.unit)), h('td.mono', thousands(x.benefit)),
       h('td.mono', `$${((x.benefit * 1000) / (x.cost * c.unit)).toFixed(2)}`), h('td', chosen.includes(i) ? 'Yes' : ''))))),
     h('p.small.muted', h('a.link', { href: '#per-dollar', onclick: (e) => { e.preventDefault(); document.getElementById('per-dollar').scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 'How "Benefit per $1 spent" is worked out, and how to read it')));
 
@@ -84,7 +86,7 @@ export default async function render({ params }) {
       byRatio.spent < c.budget ? h('p.case-lead', `Ranking by benefit per $1 funds ${byRatio.picked.length} proposals and then has ${money(c.budget - byRatio.spent, c.unit)} left that no remaining proposal fits into. Money left unspent earns nothing in this model, which is why the ranking falls short.`) : null,
       ok ? h('p.case-lead', `The best plan brings in ${thousands(res.result.best - Math.max(byBenefit.benefit, byRatio.benefit))} more than the better of the two shortcuts. The difference is not large here. The point is that neither shortcut can be trusted to find it, and nothing about either ranking warns you.`) : null),
     h('section.case-sec', h('h2', 'Watch the method work it out'),
-      h('p.case-lead', `This is the ${meta.name} lesson's own method, running on the eight proposals. It builds a table: for each proposal in turn, and for each possible budget, the best benefit that can be had. Costs are counted in units of ${money(1, c.unit)}.`),
+      h('p.case-lead', `This is the ${meta.name} lesson's own method, running on the eight proposals. It builds a table: for each proposal in turn, and for each possible budget, the best benefit that can be had. The proposals are numbered as in the table at the top of this page. Costs and budgets are counted in units of ${money(1, c.unit)}, and benefits in thousands of dollars, so "proposal ${dearest + 1} costs ${c.items[dearest].cost}" means the ${c.items[dearest].name} at ${money(c.items[dearest].cost, c.unit)}.`),
       playerEl,
       h('p', { style: { marginTop: '14px' } }, h('a.text-link', { href: `#/algorithm/${meta.id}` }, `Read the ${meta.name} lesson`, h('span', { html: icon('arrow', { size: 15 }) })))),
     h('section.case-sec', h('h2', 'What this model leaves out'),

@@ -301,9 +301,12 @@ export default {
       { label: 'A negative edge (where it fails)', values: { edges: 'A>B:2, A>C:1, B>C:-3, C>D:2' } },
     ],
     tryThis: [
-      'Load "A tempting wrong turn". The first edges out of A are cheap toward B and C, but the best route to F goes through D. Watch the algorithm settle B and C first and still find the right answer.',
-      'Load "A negative edge (where it fails)". Before you step through it, work out the cheapest cost from A to C by hand. Then watch C get settled at 1, and watch what happens when the edge from B offers a cheaper route. The last step compares the answer with the truth, and D is the node to keep an eye on.',
-      'Raise "Extra edges" to 1 and watch the queue. More edges mean more distance updates, and stale queue entries start to appear.',
+      { ask: 'Load "A tempting wrong turn". The cheap edges out of A lead towards B and C, but that side ends with an edge of cost 9 into F. The other side starts with an edge of cost 4. Which route to F will the algorithm report, and what will it cost?',
+        reveal: 'A → D → E → F, at cost 6. The route through B and C costs 11. The algorithm does settle B and C first, at distances 1 and 2, because they are the nearest. But settling a node fixes only that node\'s distance. F waits in the queue at 11 until E, settled at 5, offers it 5 + 1 = 6. The old entry for F at 11 is still in the queue at the end, and it is skipped as stale.' },
+      { ask: 'Load "A negative edge (where it fails)". Before you step through it, work out by hand the cheapest cost from A to C and from A to D. The algorithm will report one of the two correctly and one wrongly. Which is which?',
+        reveal: 'C comes out right, at −1. D comes out wrong: the algorithm reports 3 and the true cost is 1. C is settled at 1, and D is worked out from that as 1 + 2 = 3. Then B is settled and offers C the cheaper route 2 − 3 = −1. The code lowers C, but C is already marked settled, so its edge to D is not followed again and D keeps the 3. Nothing warns you.' },
+      { ask: 'Load "Dense graph". It has 10 nodes and 22 edges. Each node is settled once, so 10 removals from the queue would be enough. How many removals will there be?',
+        reveal: 'Eleven. The report counts 22 priority-queue operations: 11 insertions and 11 removals. H went into the queue twice. E first offered it a distance of 14, and later F offered 12. The entry at 12 came out first and settled H. The entry at 14 came out afterwards as a stale entry and was skipped. More edges mean more chances for a distance to improve after a node is already in the queue.' },
     ],
     run,
     report: (r, c) => `Distances from ${r.source}: ${Object.entries(r.dist).map(([k, v]) => `${k}=${v === Infinity ? '∞' : v}`).join(', ')}\n${r.negative ? 'Route reported' : 'Shortest route'} to ${r.target}: ${r.path.length ? r.path.join(' → ') + ` (cost ${r.dist[r.target]})` : 'unreachable'}\n${c.relaxations || 0} edge relaxations, ${c['heap operations'] || 0} priority-queue operations.${r.negative ? (r.wrong.length ? `\nThis graph has a negative edge, and the answer above is wrong for ${r.wrong.join(', ')}. True ${r.wrong.length === 1 ? 'distance' : 'distances'}: ${r.wrong.map((k) => `${k}=${r.truth[k]}`).join(', ')}.` : '\nThis graph has a negative edge. The answer above happens to be right, but the algorithm does not guarantee it.') : ''}`,
@@ -374,9 +377,19 @@ export default {
 
   code: {
     sample: {
-      input: 'An undirected graph with edges A-B:4, A-C:2, B-C:1, B-D:5, C-D:8, C-E:10, D-E:2, D-F:6, E-F:3. Shortest paths from A, and the route to F.',
-      expected: 'A:0 B:3 C:2 D:8 E:10 F:13\nA -> C -> B -> D -> E -> F',
+      input: 'A graph of one-way edges A>B:4, A>C:2, B>C:1, B>D:5, C>D:6, C>E:10, D>E:2, D>F:6, E>F:3. Shortest paths from A, and the route to F.',
+      expected: 'A:0 B:4 C:2 D:8 E:10 F:13\nA -> C -> D -> E -> F',
     },
+    breakIt: [
+      { change: 'Change the relaxation test so that a distance is set only the first time a node is reached: test whether `dist[v]` is still infinity, instead of whether `d + w` is smaller than it. Which distances will come out too high?',
+        find: { python: 'if d + w < dist[v]:', javascript: 'if (d + w < dist.get(v)) {' },
+        replace: { python: 'if dist[v] == float("inf"):', javascript: 'if (dist.get(v) === Infinity) {' },
+        reveal: 'E and F. The program prints "A:0 B:4 C:2 D:8 E:12 F:14" and the route "A -> C -> D -> F". E is first reached from C, at 2 + 10 = 12. Later D offers 8 + 2 = 10, but E already has a distance, so the offer is ignored. F is then left with 8 + 6 = 14 from D and never hears of the 13 that goes through E. The first route found to a node is not always the cheapest, so a distance has to stay open to improvement until the node leaves the queue. Fixing it when the node is first seen is right for breadth-first search and wrong here.' },
+      { change: 'Change the cost of the edge from B to C from 1 to `-3`, so that reaching C through B costs 4 − 3 = 1 instead of 2. D, E and F all lie beyond C. Will their distances drop by 1 as well?',
+        find: { python: '("B", "C", 1)', javascript: '["B", "C", 1]' },
+        replace: { python: '("B", "C", -3)', javascript: '["B", "C", -3]' },
+        reveal: 'No. The program prints "A:0 B:4 C:1 D:8 E:10 F:13" and "A -> B -> C -> D -> E -> F". C is lowered to 1, but D, E and F keep 8, 10 and 13, where the true costs are 7, 9 and 12. C was settled at 2 and its edges were followed then. When B later offered 1, C was already marked settled, so its edges were not followed again. The two lines even disagree with each other: the route printed costs 4 − 3 + 6 + 2 + 3 = 12, and the distance printed for F is 13. Nothing warns you. For a graph with a negative cost, use [Bellman-Ford](#/algorithm/bellman-ford).' },
+    ],
     python: {
       source: `import heapq
 
@@ -406,12 +419,12 @@ def path_to(prev, target):
     return route[::-1]
 
 
-edges = [("A", "B", 4), ("A", "C", 2), ("B", "C", 1), ("B", "D", 5), ("C", "D", 8),
+edges = [("A", "B", 4), ("A", "C", 2), ("B", "C", 1), ("B", "D", 5), ("C", "D", 6),
          ("C", "E", 10), ("D", "E", 2), ("D", "F", 6), ("E", "F", 3)]
 graph = {}
 for u, v, w in edges:
-    graph.setdefault(u, []).append((v, w))
-    graph.setdefault(v, []).append((u, w))
+    graph.setdefault(u, []).append((v, w))  # a one-way edge from u to v
+    graph.setdefault(v, [])
 
 dist, prev = dijkstra(graph, "A")
 print(" ".join(f"{v}:{dist[v]}" for v in sorted(graph)))
@@ -487,14 +500,13 @@ function pathTo(prev, target) {
   return route;
 }
 
-const edges = [["A", "B", 4], ["A", "C", 2], ["B", "C", 1], ["B", "D", 5], ["C", "D", 8],
+const edges = [["A", "B", 4], ["A", "C", 2], ["B", "C", 1], ["B", "D", 5], ["C", "D", 6],
   ["C", "E", 10], ["D", "E", 2], ["D", "F", 6], ["E", "F", 3]];
 const graph = new Map();
 for (const [u, v, w] of edges) {
   if (!graph.has(u)) graph.set(u, []);
   if (!graph.has(v)) graph.set(v, []);
-  graph.get(u).push([v, w]);
-  graph.get(v).push([u, w]);
+  graph.get(u).push([v, w]);  // a one-way edge from u to v
 }
 
 const { dist, prev } = dijkstra(graph, "A");
@@ -515,10 +527,9 @@ int main() {
     const int INF = std::numeric_limits<int>::max();
     std::vector<std::vector<std::pair<int, int>>> graph(n);
     auto add = [&](int u, int v, int w) {
-        graph[u].push_back({v, w});
-        graph[v].push_back({u, w});
+        graph[u].push_back({v, w});  // a one-way edge from u to v
     };
-    add(0, 1, 4); add(0, 2, 2); add(1, 2, 1); add(1, 3, 5); add(2, 3, 8);
+    add(0, 1, 4); add(0, 2, 2); add(1, 2, 1); add(1, 3, 5); add(2, 3, 6);
     add(2, 4, 10); add(3, 4, 2); add(3, 5, 6); add(4, 5, 3);
 
     std::vector<int> dist(n, INF), prev(n, -1);
@@ -648,16 +659,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the graph A-B:1, B-C:1, C-F:9, A-D:4, D-E:1, E-F:1, starting from A, what is the shortest distance to F?',
-      options: ['11', '6', '5', '7'],
-      answer: 1,
+      q: 'In the graph A-B:2, A-C:6, B-C:3, B-D:7, C-D:1, D-E:2, starting from A, what is the shortest distance to E?',
+      options: ['11', '9', '8', '6'],
+      answer: 2,
       explain: [
-        '11 is the cost of A, B, C, F. That route starts cheaply but ends with an expensive edge.',
-        'Correct. A to D costs 4, D to E costs 1, and E to F costs 1.',
-        'There is no route that cheap; count the edges on A, D, E, F again.',
-        'Check the weights: 4 + 1 + 1.',
+        '11 is the cost of A, B, D, E. It starts with the cheapest edge out of A, but the edge from B to D costs 7.',
+        '9 is the cost of A, C, D, E. That uses the direct edge to C, which costs 6. C can be reached for 5 by going through B.',
+        'The route is A, B, C, D, E, which costs 2 + 3 + 1 + 2. It uses four edges where two other routes use three, and it is still the cheapest.',
+        '6 is the distance to D. E is one more edge beyond D, and that edge costs 2.',
       ],
-      tryInput: { edges: 'A-B:1, B-C:1, C-F:9, A-D:4, D-E:1, E-F:1' },
+      tryInput: { edges: 'A-B:2, A-C:6, B-C:3, B-D:7, C-D:1, D-E:2' },
+      check: (r) => (r.dist.E === 8 && r.dist.D === 6 && r.dist.C === 5 && r.path.join('') === 'ABCDE') || `distance ${r.dist.E} by the route ${r.path.join(', ')}`,
     },
     {
       type: 'debug',
@@ -693,7 +705,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Stop early, then go bidirectional',
-      prompt: 'Change the implementation to stop as soon as the destination is settled, and count how many nodes it settles on a 20 by 20 grid graph from one corner to the opposite corner. Then implement bidirectional search: run one search forward from the source and one backward from the destination, alternating, and stop when the frontiers have met and no shorter connection is possible. Compare the number of settled nodes.',
+      prompt: 'Change the implementation to stop as soon as the destination is settled, and count how many nodes it settles on a 20 by 20 grid graph in which every edge costs 1, from one corner to the opposite corner. Then implement bidirectional search: run one search forward from the source and one backward from the destination, alternating, and stop when the frontiers have met and no shorter connection is possible. Compare the number of settled nodes. Then repeat both counts in the middle of the grid, from row 10, column 5 to row 10, column 15, counting rows and columns from 0.',
+      expect: 'Corner to corner, the distance is 38. Stopping early saves nothing: the far corner is the farthest of the 400 nodes, so all 400 are settled before the search stops. The bidirectional search settles 380, which is 190 from each end: every node within 18 steps of that corner. The saving is small because the corners hem both searches in. In the middle of the grid the distance is 10. Stopping early settles between 166 and 195 nodes, depending on how your queue breaks ties among the 30 nodes at distance 10. The bidirectional search settles 82, which is 41 from each end: every node within 4 steps. Your bidirectional counts may differ by a few if you alternate or break ties in another way, but the two distances must be 38 and 10.',
       hints: ['Stopping when the two searches first touch is not sufficient; keep the best meeting cost seen so far.', 'You can stop when the sum of the two queues\' minimum keys is at least the best meeting cost.'],
     },
   ],

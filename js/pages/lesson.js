@@ -132,6 +132,13 @@ export default async function render({ params, query }) {
     h('p', biz.bridge),
     h('p.small', biz.cases.map((c) => [h('a.link', { href: `#/case/${c.id}` }, `Worked case: ${c.title}`), ' · ']), h('a.link', { href: `#/track/business` }, 'More decisions like this'))) : null;
 
+  // A prompt puts a question, and keeps the outcome closed until the reader asks for it.
+  const tryList = h('ol.try-list', L.viz.tryThis.map((t) => h('li',
+    h('p.try-ask', { html: rich(t.ask) }),
+    t.input ? h('p.try-set', h('button.btn.btn-sm', { type: 'button', onclick: () => toPlayer(t.input), html: `${icon('play', { size: 13 })}<span>Set this up</span>` })) : null,
+    h('details.try-reveal', h('summary', 'See what happens'), h('p', { html: rich(t.reveal) })))));
+  renderMath(tryList);
+
   const inputsFold = h('details.fold.inputs-fold', h('summary', 'Change the input'), h('div.fold-body', player.parts.inputs, runCompare.el));
   const see = sec('see', 1, 'See it work', 'Step by step',
     h('p.muted', 'The real algorithm, running here one step at a time. Press play, or step through it yourself.'),
@@ -140,17 +147,24 @@ export default async function render({ params, query }) {
     bridge,
     inputsFold,
     report,
-    h('div.lv2.try-this', h('h3', 'Things to try'), h('ol.try-list', L.viz.tryThis.map((t) => h('li', { html: rich(t) }))),
+    h('div.lv2.try-this', h('h3', 'Things to try'),
+      h('p.muted.try-lead', 'Each of these asks a question. Settle on your answer before you run it or open the outcome.'),
+      tryList,
       h('p.small.muted', 'For a larger workspace with the event log and source beside the picture, ', h('a.link', { href: `#/lab/${m.id}` }, 'open this in the lab'), '.')));
 
   // For someone deciding whether the method fits their problem. The three statements are the
   // lesson's own (they also fill the comparison table), so nothing is said twice.
   const K = L.compare || {};
+  const elsewhere = ((L.tradeoffs || {}).alternatives || []).slice(0, 2);
   const decide = K.useWhen || K.requires || K.limits ? sec('decide', 1, 'Should you use it?', 'If you are deciding',
     h('dl.decide-dl',
       K.useWhen ? h('div', h('dt', 'Use it when'), h('dd', { html: rich(K.useWhen) })) : null,
       K.requires ? h('div', h('dt', 'It needs'), h('dd', { html: rich(K.requires) })) : null,
-      K.limits ? h('div', h('dt', 'It falls short when'), h('dd', { html: rich(K.limits) })) : null)) : null;
+      K.limits ? h('div', h('dt', 'It falls short when'), h('dd', { html: rich(K.limits) })) : null,
+      // Saying where a method fails is half an answer. The other half is what to reach for instead.
+      elsewhere.length ? h('div', h('dt', 'If it does not fit'), h('dd', h('ul.alts.decide-alts', elsewhere.map((a) => h('li',
+        a.id && C.algoById[a.id] ? h('a.ref', { href: `#/algorithm/${a.id}` }, C.algoById[a.id].name) : h('span.ref.is-plain', a.name),
+        h('span', { html: rich(a.when) })))))) : null)) : null;
   if (decide) renderMath(decide);
 
   const words = sec('words', 1, 'Words to know', 'Plain definitions',
@@ -166,9 +180,17 @@ export default async function render({ params, query }) {
   renderMath(how);
 
   const codePanel = createCodePanel(L);
+  const breakIt = L.code.breakIt || [];
   const code = sec('code', 2, 'In code', 'Read it, run it',
     h('p.muted', `A complete program in ${Object.keys(L.code).filter((k) => LANGUAGE_LABELS[k]).map((k) => LANGUAGE_LABELS[k]).join(', ').replace(/, ([^,]*)$/, ' and $1')}. Each version prints the same output.`),
-    codePanel.el);
+    codePanel.el,
+    breakIt.length ? h('div.break-it',
+      h('h3', 'Break it on purpose'),
+      h('p.muted', 'A program is understood when you can say what a change will do to it. Press "Edit the code", make one of these changes, decide what you expect, then run it.'),
+      h('ol.try-list', breakIt.map((b) => h('li',
+        h('p.try-ask', { html: rich(b.change) }),
+        h('details.try-reveal', h('summary', 'See what happens'), h('p', { html: rich(b.reveal) })))))) : null,
+    (L.code.more || []).map((x) => { const panel = createCodePanel({ code: x }); return h('div.code-more', h('h3', x.title), h('p.muted', { html: rich(x.lead) }), panel.el); }));
 
   const matters = sec('matters', 2, 'Why it matters', 'In the world',
     h('div.prose.precise', { html: richBlock(B.interesting) }),

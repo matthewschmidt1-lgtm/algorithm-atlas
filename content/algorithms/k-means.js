@@ -201,6 +201,8 @@ function isFixedPoint(r) {
 
 const LINE = [1, 0, 2, 0, 3, 0, 8, 0, 9, 0, 10, 0];
 const TWO_ROWS = [1, 1, 1, 3, 3, 1, 3, 3, 7, 1, 7, 3, 9, 1, 9, 3];
+// Three pairs on a line. Starting on the first three points puts two centres in the left pair.
+const THREE_PAIRS = [0, 0, 1, 0, 5, 0, 6, 0, 10, 0, 11, 0];
 
 export default {
   meta: {
@@ -299,10 +301,14 @@ export default {
       { label: 'Stuck: two rows of four', values: { custom: TWO_ROWS, k: 2, init: 'first' } },
     ],
     tryThis: [
-      'Run the default. Two of the three centres start inside the same group. For several rounds they hardly move and the cost is almost flat. Then one of them drifts far enough to win points from the group that has no centre of its own, and the cost falls sharply. Watch the cost chart: it never rises, but it does not fall evenly either.',
-      'Load "A bad start". The data are the same, only the starting centres differ. This time the run converges with two centres splitting one group between them and a single centre covering the other two. Compare the final cost in the output panel with the default run. Then load "Same data, k-means++ start".',
-      'Keep the default data and press Randomize on the starting-centre seed several times. Count how often the cost ends at about 3.2 and how often it ends much higher. This is why k-means is normally run from many starts, keeping the best.',
-      'Load "Too many clusters (k = 5)". The method returns five clusters because it was asked for five, cutting real groups in two. The cost is lower than with k = 3, which shows that a lower cost alone cannot tell you the right k.',
+      { ask: 'Load the default and stop on the first frame that shows all three starting centres. Two of them start inside the same group, and one group has no centre of its own. Will the run still end with one centre in each group? And will the cost fall evenly, round by round?',
+        reveal: 'It does end with one centre per group, 20 points each, at a cost of 3.187, but it takes 8 rounds. The first assignment costs 29.2 and the first update brings that to 18.1. Then the two crowded centres hardly move: at the assignment step of round 5 the cost is still 15.5. Once one of them has drifted far enough to win points from the group that had no centre, round 6 alone takes the cost from 13.6 to 3.9. The cost never rises, but it does not fall evenly either.' },
+      { ask: 'Load "A bad start". The data are the same as the default and only the starting centres differ. Will it find the same three groups of 20? Guess the final cost before you run it, then load "Same data, k-means++ start" and guess again.',
+        reveal: 'It does not. It converges after 4 rounds with clusters of 13, 8 and 39 points: two centres split one group between them, and a single centre covers nearly all of the other two. The cost is 14.345, four and a half times the default\'s 3.187, and nothing in the run tells you a better answer exists. The k-means++ start reaches 3.187 in 2 rounds on the same data.' },
+      { ask: 'Keep the default data and set the starting-centre seed to each number from 1 to 20 in turn, or press Randomize twenty times. Write down the final cost each time. How many of twenty starts do you expect to end at the low cost of about 3.2?',
+        reveal: 'With seeds 1 to 20, fifteen runs end at 3.187 and five end at 14.345: seeds 2, 11, 12, 16 and 19. So on easy data like this, one start in four gives the wrong grouping and reports it with the same confidence. This is why k-means is normally run from many starts, keeping the result with the lowest cost.' },
+      { ask: 'Load "Too many clusters (k = 5)". The data still come from three groups. Will the final cost be higher or lower than the 3.187 that k = 3 reached?',
+        reveal: 'Lower: 2.238. The method returns five clusters because it was asked for five, with sizes 20, 8, 5, 12 and 15. One real group is left whole and the other two are each cut in two. The grouping is worse and the cost is better, which shows that a lower cost alone cannot tell you the right k.' },
     ],
     run,
     report: (r, c) => `${r.converged ? `Converged after ${r.rounds} round${r.rounds === 1 ? '' : 's'}` : `Stopped at the limit of ${r.rounds} rounds`}. Cluster sizes: ${r.sizes.join(', ')}.\nCost (within-cluster sum of squares): ${f3(r.wcss)}\nCentres: ${r.centroids.map(at).join('  ')}\n${c['distance computations'] || 0} distance computations.`,
@@ -374,11 +380,25 @@ export default {
 
   code: {
     sample: {
-      input: 'Cluster eight points that form two squares into k = 2 groups, starting from the first two points, printing the centres and the cost after each round.',
-      expected: 'round 1: 8 changed, centres (1.00, 1.50) (6.33, 6.17), cost 124.67\nround 2: 2 changed, centres (1.50, 1.50) (8.50, 8.50), cost 4.00\nround 3: no point changed cluster, stop\nclusters: 1 1 1 1 2 2 2 2',
+      input: 'Cluster eight points that form two squares side by side, a left one and a right one, into k = 2 groups. Start from the first two points and print the centres and the cost after each round. These are the eight points of the "Stuck: two rows of four" preset, listed in a different order.',
+      expected: 'round 1: 8 changed, centres (1.00, 2.00) (6.33, 2.00), cost 45.33\nround 2: 2 changed, centres (2.00, 2.00) (8.00, 2.00), cost 16.00\nround 3: no point changed cluster, stop\nclusters: 1 1 1 1 2 2 2 2',
     },
+    breakIt: [
+      { change: 'Start the two centres on the first and third points, not the first and second: where a starting centre is copied from `points[j]`, use `points[2 * j]`. Nothing else changes. Will the program still find the left square and the right square?',
+        find: { python: 'centres = [[float(points[j][0]), float(points[j][1])] for j in range(k)]', javascript: 'centres.push([points[j][0], points[j][1]]);' },
+        replace: { python: 'centres = [[float(points[2 * j][0]), float(points[2 * j][1])] for j in range(k)]', javascript: 'centres.push([points[2 * j][0], points[2 * j][1]]);' },
+        reveal: 'No. It prints "round 1: 8 changed, centres (5.00, 1.00) (5.00, 3.00), cost 80.00", then "round 2: no point changed cluster, stop" and "clusters: 1 1 2 2 1 1 2 2". The centres started at (1, 1) and (1, 3), one above the other, so each took a whole row. Every point is then nearer to its own row\'s centre, and the loop stops. The cost is 80 where the other start reached 16, and the program reports that it has converged in both cases. A single run cannot tell you which kind of answer you have.' },
+      { change: 'In the update step, divide the sums by the total number of points in place of `m`, the number of points in this cluster. Where will the centres end up?',
+        find: { python: 'centres[j] = [sx / m, sy / m]', javascript: 'centres[j] = [sx / m, sy / m];' },
+        replace: { python: 'centres[j] = [sx / len(points), sy / len(points)]', javascript: 'centres[j] = [sx / points.length, sy / points.length];' },
+        reveal: 'It prints "round 1: 8 changed, centres (0.25, 0.50) (4.75, 1.50), cost 67.50", stops in round 2, and ends with "clusters: 1 2 1 2 2 2 2 2". The first cluster holds two points, (1, 1) and (1, 3), whose mean is (1, 2). Dividing their sums by 8 gives (0.25, 0.50), a place outside the data and close to the origin. Every centre is pulled towards (0, 0) this way, and a small cluster is pulled hardest.' },
+      { change: 'Ask for three clusters: change `k = 2` to `k = 3`. Will the final cost be higher or lower than 16, and is the grouping better?',
+        find: { python: 'k = 2\n', javascript: 'const k = 2;' },
+        replace: { python: 'k = 3\n', javascript: 'const k = 3;' },
+        reveal: 'Lower. The last round prints "round 2: 2 changed, centres (2.00, 1.00) (8.00, 2.00) (2.00, 3.00), cost 12.00" and the result is "clusters: 1 1 3 3 2 2 2 2". The left square has been cut into its bottom pair and its top pair. The cost fell from 16 to 12 only because every point now has a centre nearer to it. Carry on to k = 8 and the cost reaches 0, with one cluster for each point. Cost can be compared between runs with the same k, and it cannot choose k for you.' },
+    ],
     python: {
-      source: `points = [(1, 1), (2, 1), (1, 2), (2, 2), (8, 8), (9, 8), (8, 9), (9, 9)]
+      source: `points = [(1, 1), (3, 1), (1, 3), (3, 3), (7, 1), (9, 1), (7, 3), (9, 3)]
 k = 2
 centres = [[float(points[j][0]), float(points[j][1])] for j in range(k)]
 assign = [-1] * len(points)
@@ -428,7 +448,7 @@ print("clusters: " + " ".join(str(a + 1) for a in assign))`,
       ],
     },
     javascript: {
-      source: `const points = [[1, 1], [2, 1], [1, 2], [2, 2], [8, 8], [9, 8], [8, 9], [9, 9]];
+      source: `const points = [[1, 1], [3, 1], [1, 3], [3, 3], [7, 1], [9, 1], [7, 3], [9, 3]];
 const k = 2;
 const centres = [];
 for (let j = 0; j < k; j++) centres.push([points[j][0], points[j][1]]);
@@ -484,7 +504,7 @@ double dist2(const P& p, const P& c) {
 }
 
 int main() {
-    const std::vector<P> points = {{1, 1}, {2, 1}, {1, 2}, {2, 2}, {8, 8}, {9, 8}, {8, 9}, {9, 9}};
+    const std::vector<P> points = {{1, 1}, {3, 1}, {1, 3}, {3, 3}, {7, 1}, {9, 1}, {7, 3}, {9, 3}};
     const int n = (int)points.size(), k = 2;
     std::vector<P> centres(points.begin(), points.begin() + k);
     std::vector<int> assign(n, -1);
@@ -642,16 +662,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Eight points form two rows of four: (1,1), (3,1), (7,1), (9,1) along the bottom and (1,3), (3,3), (7,3), (9,3) along the top. With k = 2 and centres starting at (1,1) and (1,3), which clusters does k-means end with?',
-      options: ['The four points on the left and the four on the right, with cost 16', 'The bottom row and the top row, with cost 80', 'It never converges', 'One cluster of seven points and one of a single point'],
+      q: 'Six points lie along a line in three pairs: (0, 0) and (1, 0), then (5, 0) and (6, 0), then (10, 0) and (11, 0). With k = 3 and the centres starting on the first three points, (0, 0), (1, 0) and (5, 0), which clusters does k-means end with?',
+      options: ['The three pairs, with cost 1.5', 'The point at 0 alone, the point at 1 alone, and the other four points together, with cost 26', 'The left pair in one cluster, the other four points in another, and the third centre left with no points', 'It never converges'],
       answer: 1,
       explain: [
-        'That is the best grouping, and five times cheaper. But this start cannot reach it.',
-        'Correct. Each bottom point is nearer to the start at (1,1) and each top point to the start at (1,3). The centres move to (5,1) and (5,3), every point is still with its nearest centre, and the algorithm stops at a local optimum.',
-        'k-means always converges. The cost cannot rise and there are finitely many groupings.',
-        'Each starting centre attracts its whole row, four points each.',
+        'That is the best grouping, and it costs 1.5 where this run ends at 26. But this start cannot reach it: two of the three centres begin inside the left pair and neither ever leaves.',
+        'Correct. In round one the points at 0 and 1 each sit on a centre, and the other four are all nearest to the centre at 5, which then moves to their average, 8. Now the point at 5 is 4 away from the centre at 1 and 3 away from the centre at 8, so it stays where it is. Nothing changes and the algorithm stops, with two centres spent on one pair and one centre stretched over two.',
+        'A centre loses a point only when another centre is nearer to it. The points at 0 and 1 each sit exactly on their own centre, at distance 0, so neither centre can take the other\'s point.',
+        'k-means always converges. The cost cannot rise and there are finitely many groupings. Here it stops in the second round.',
       ],
-      tryInput: { custom: TWO_ROWS, k: 2, init: 'first' },
+      tryInput: { custom: THREE_PAIRS, k: 3, init: 'first' },
+      check: (r) => (r.converged && r.sizes.join() === '1,1,4' && r.assignment.join('') === '012222' && Math.abs(r.wcss - 26) < 1e-9 && Math.abs(r.centroids[2][0] - 8) < 1e-12) || `sizes ${r.sizes}, cost ${r.wcss}`,
     },
     {
       type: 'debug',
@@ -687,7 +708,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Restarts and the elbow',
-      prompt: 'Write a function that runs k-means from 20 random starts and returns the result with the lowest cost. On data drawn from four blobs, record how many of the 20 starts reach the lowest cost, first with uniformly random starting points and then with k-means++. Then, using the best-of-20 result each time, plot the cost for k from 1 to 8 and describe where the curve bends and why.',
+      prompt: 'Write a function that runs k-means from many starts and returns the result with the lowest cost.\n\nTest it first on the eight points of the code sample: (1, 1), (3, 1), (1, 3), (3, 3), (7, 1), (9, 1), (7, 3) and (9, 3). They are few enough that you can try every possible start in place of random ones: with k = 2 there are 28 ways to pick two of the points as starting centres. How many of the 28 reach the lowest cost, and where do the others end? Then, keeping the best result over every possible start, list the cost for each k from 1 to 8 and say where the curve bends.\n\nAfter that, move to data drawn from four blobs. Record how many of 20 random starts reach the lowest cost, first with uniformly random starting points and then with k-means++, and plot the best-of-20 cost for k from 1 to 8.',
+      expect: 'On the eight points of the code sample with k = 2, 24 of the 28 starts reach the lowest cost, 16, with the left square and the right square as the clusters. The other 4 are the starts with one centre directly above the other, such as (1, 1) and (1, 3). They end with the bottom row and the top row at a cost of 80. The best costs for k = 1 to 8 are 88, 16, 12, 8, 6, 4, 2 and 0. The curve bends at k = 2: the second centre removes 72 of the cost, and no later centre removes more than 4.',
       hints: [
         'The cost at k = 1 is the total squared distance of all points from their overall mean.',
         'Up to the true number of groups, each added centre removes a large share of the cost. Beyond it, extra centres only split compact groups, and the gain is small.',
@@ -747,7 +769,20 @@ int main() {
         if (r.assignment.join('') !== '000111' || r.rounds !== 3) return `assignment ${r.assignment}, rounds ${r.rounds}`;
         return isFixedPoint(r);
       } },
-    { name: 'two rows of four: stuck at cost 80 although cost 16 exists (quiz prediction)', input: { custom: TWO_ROWS, k: 2, init: 'first' },
+    { name: 'three pairs on a line, starting on the first three points: stuck at cost 26 (quiz prediction), and 1.5 from a start with one centre per pair', input: { custom: THREE_PAIRS, k: 3, init: 'first' },
+      check: (r) => {
+        if (Math.abs(r.wcss - 26) > 1e-9 || r.sizes.join() !== '1,1,4' || r.rounds !== 2) return `cost ${r.wcss}, sizes ${r.sizes}, rounds ${r.rounds}`;
+        const spread = quiet({ custom: [0, 0, 5, 0, 10, 0, 1, 0, 6, 0, 11, 0], k: 3, init: 'first' });
+        if (Math.abs(spread.wcss - 1.5) > 1e-9 || spread.sizes.join() !== '2,2,2') return `one centre per pair: cost ${spread.wcss}, sizes ${spread.sizes}`;
+        return isFixedPoint(r);
+      } },
+    { name: 'the code sample: two squares from the first two points, costs 45.33 then 16 (and the break-it start on points 1 and 3 is the stuck preset)', input: { custom: [1, 1, 3, 1, 1, 3, 3, 3, 7, 1, 9, 1, 7, 3, 9, 3], k: 2, init: 'first' },
+      check: (r) => {
+        const h = r.history;
+        if (r.rounds !== 3 || r.assignment.join('') !== '00001111' || Math.abs(r.wcss - 16) > 1e-9 || Math.abs(h[1] - 136 / 3) > 1e-9) return `rounds ${r.rounds}, assignment ${r.assignment}, history ${h}`;
+        return isFixedPoint(r);
+      } },
+    { name: 'two rows of four: stuck at cost 80 although cost 16 exists (the "Stuck" preset)', input: { custom: TWO_ROWS, k: 2, init: 'first' },
       check: (r) => {
         if (Math.abs(r.wcss - 80) > 1e-9 || r.assignment.join('') !== '01010101') return `cost ${r.wcss}, assignment ${r.assignment}`;
         const leftRight = r.points.reduce((s, p) => s + dist2(p, p[0] < 5 ? [2, 2] : [8, 2]), 0);

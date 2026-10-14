@@ -207,10 +207,15 @@ export default {
       { label: 'Directed, no cycle', values: { edges: 'A>B, A>C, B>D, C>D, A>D' } },
     ],
     tryThis: [
-      'Watch the "Stack" row. It always holds the route from the start to the current node, and it grows and shrinks only at its right-hand end. Compare it with the queue in the breadth-first search lesson, which grows at one end and shrinks at the other.',
-      'Load "Tree-like graph (no cycles)". No dashed edges appear. Then raise "Extra edges" a little. Every extra edge adds one dashed edge, and each dashed edge closes a cycle.',
-      'Load "Directed, with a cycle" and find the step where an edge points at a node still on the stack. Then load "Directed, no cycle": edges still lead to nodes already discovered, but only to finished ones, never to one on the stack.',
-      'Run the default graph here and in the breadth-first search lesson. Both examine the same number of edges. Only the order of discovery differs.',
+      { ask: 'Run the graph the page opens with and watch the "Stack" row. The graph has 8 nodes. How many of them will be on the stack at once when it is at its deepest?',
+        reveal: 'Seven. At its deepest the stack reads A, C, B, E, H, F, D: the route from the start to the node the search is standing on. Only G is missing, because it was finished and taken off before H was discovered. The row grows and shrinks only at its right-hand end. The queue in the breadth-first search lesson grows at one end and shrinks at the other.',
+        input: { nodes: 8, density: 0.35, seed: 3, edges: '' } },
+      { ask: 'Load "Tree-like graph (no cycles)". It has 10 nodes and 9 edges, and no dashed edges appear. Now raise "Extra edges" to 0.2, which adds 3 edges. How many dashed edges will there be?',
+        reveal: 'Three. The report changes from "9 tree edges, 0 other edges" to "9 tree edges, 3 other edges". Ten nodes are always reached by exactly 9 tree edges, so every edge beyond 9 must lead to a node already discovered. In an undirected graph each of those points back at a node still on the stack, so each one closes a cycle.' },
+      { ask: 'Load "Directed, with a cycle". Three of its five edges become tree edges, and the other two lead to a node already discovered. How many of those two close a cycle?',
+        reveal: 'One. The edge from C to A points at A while A is still on the stack, so it leads back to an ancestor and closes the cycle A, B, C. The edge from A to D points at D after D is finished, and proves nothing. Now load "Directed, no cycle". It also has two edges to nodes already discovered, but both point at D after it is finished, so no cycle is reported. In a directed graph only an edge to a node still on the stack closes a cycle.' },
+      { ask: 'Run the opening graph (8 nodes, seed 3) here and note "edges examined". The breadth-first search lesson opens on the same graph. Will it examine more edges, fewer, or the same number?',
+        reveal: 'The same number: 22, which is twice the 11 edges of the graph, because both searches look at every edge once from each end. Only the order differs. Here the nodes are discovered as A, C, B, E, G, H, F, D. Breadth-first search visits them as A, C, D, B, E, F, G, H.' },
     ],
     run,
     report: (r, c) => `Discovery order from ${r.start}: ${r.order.join(' → ')}\nFinish order: ${r.finishOrder.join(' → ')}\nDiscovery/finish times: ${r.order.map((id) => `${id}=${r.disc[id]}/${r.fin[id]}`).join(', ')}\n${r.kinds.tree} tree edges, ${r.kinds.back + r.kinds.forward + r.kinds.cross} other edges. ${r.hasCycle ? 'The graph contains a cycle.' : 'No cycle was found among the nodes reached.'}\n${c['edges examined'] || 0} edges examined. Deepest stack: ${r.maxDepth}.`,
@@ -286,6 +291,16 @@ export default {
       input: 'An undirected graph with edges A-D, A-E, B-D, B-E, C-E, B-F, C-F, F-G. The discovery order from A, the discovery/finish times of every node, and the back edges found.',
       expected: 'order: A D B E C F G\ntimes: A:1/14 B:3/12 C:5/10 D:2/13 E:4/11 F:6/9 G:7/8\nback edges: E-A F-B',
     },
+    breakIt: [
+      { change: 'Change the test for a new node so that it asks whether `v` is finished instead of whether it is discovered. A node now counts as seen only after all its neighbours have been explored. What will happen on the first edge the search follows, from A to D?',
+        find: { python: 'if v not in discovered:', javascript: 'if (!discovered.has(v)) {' },
+        replace: { python: 'if v not in finished:', javascript: 'if (!finished.has(v)) {' },
+        reveal: 'The program crashes before it prints anything. Python stops with "RecursionError: maximum recursion depth exceeded", JavaScript with "RangeError: Maximum call stack size exceeded", and the C++ program dies with a segmentation fault. `visit(A)` calls `visit(D)`. A is not finished yet, so D calls `visit(A)` again, and the two call each other until the call stack runs out. A node must be marked before its neighbours are explored, or the first cycle traps the search. In an undirected graph a single edge is enough, because it can be walked both ways.' },
+      { change: 'In the test that records a back edge, delete the condition that `v` is not the parent of `u`. How many back edges will the program report?',
+        find: { python: 'elif v not in finished and v != parent[u]:', javascript: '} else if (!finished.has(v) && v !== parent.get(u)) {' },
+        replace: { python: 'elif v not in finished:', javascript: '} else if (!finished.has(v)) {' },
+        reveal: 'Eight, where there should be two. The last line becomes "back edges: D-A B-D E-A E-B C-E F-B F-C G-F". Only E-A and F-B close a cycle. The other six are the six tree edges seen from their far end: in an undirected graph the node you came from is always a discovered, unfinished neighbour. A cycle test written this way reports a cycle in every graph that has an edge, trees included.' },
+    ],
     python: {
       source: `def dfs(graph, start):
     discovered, finished = {}, {}
@@ -536,6 +551,7 @@ int main() {
         'After C, the only undiscovered neighbour is D, so the search cannot jump to F.',
       ],
       tryInput: { edges: 'A-B, B-C, C-D, D-E, A-F, F-E' },
+      check: (r) => (r.order.join('') === 'ABCDEF' && r.disc.F === 6) || `discovery order ${r.order.join(', ')}`,
     },
     {
       type: 'debug',
@@ -569,7 +585,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Remove the recursion',
-      prompt: 'Rewrite the search with an explicit stack so that it produces exactly the same discovery times, finish times and back edges as the recursive version, on any graph. Then run both on a path of 100,000 nodes (0-1, 1-2, 2-3 and so on) and observe which one survives.',
+      prompt: 'Rewrite the search with an explicit stack so that it produces exactly the same discovery times, finish times and back edges as the recursive version, on any graph. Check it on the graph in the code sample above. Then run both versions on a path of 100,000 nodes (0-1, 1-2, 2-3 and so on), starting from node 0, and see which one survives.',
+      expect: 'On the sample graph the explicit-stack version prints the same three lines as the program above: "order: A D B E C F G", "times: A:1/14 B:3/12 C:5/10 D:2/13 E:4/11 F:6/9 G:7/8" and "back edges: E-A F-B". On the path it finishes and finds no back edges. Node 99999 is discovered at time 100000 and finished at time 100001, and node 0 is finished last, at time 200000. The recursive version in Python does not survive. It stops with a RecursionError, because Python allows only about 1,000 nested calls by default.',
       hints: ['Each stack entry needs a node and a position in that node\'s neighbour list, so that you can resume where you left off.', 'Look at the entry on top without removing it. Pop it, and record the finish time, only when its neighbour list is used up.'],
     },
   ],

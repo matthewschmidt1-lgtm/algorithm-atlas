@@ -139,9 +139,12 @@ export default {
       { label: 'Larger list: 63 values', values: { size: 63, where: 'missing', custom: [] } },
     ],
     tryThis: [
-      'Set the number of items to 15 and search for a value that is not in the list: the run makes 4 checks. Now try 31 items, then 63. Each time the list roughly doubles, the number of checks rises by exactly one.',
-      'Set "Search for" to the first value. Linear search would find it in one comparison, but binary search takes one of its longest routes. Binary search wins in the worst case and on average, not on every single input.',
-      'Type your own values `10, 20, 30, 40, 50` and set the target to 35. Watch `lo` move past `hi`. That crossing is how the search knows the value is absent.',
+      { ask: 'Set the number of items to 15 and search for a value that is not in the list. Count the checks. Then, before you run them: how many checks will 31 items take? And 63?',
+        reveal: '15 items take 4 checks, 31 take 5 and 63 take 6. Each time the list roughly doubles, the number of checks rises by exactly one.' },
+      { ask: 'Set "Search for" to the first value. Linear search would find it in one comparison. Will binary search find it quickly too?',
+        reveal: 'No. On 20 values it takes 4 checks, one short of its longest route, because the first position is one of the last places the halving reaches. Binary search wins in the worst case and on average, not on every single input.' },
+      { ask: 'Type your own values `10, 20, 30, 40, 50` and set the target to 35, which is not there. Where will `lo` and `hi` be standing when the search gives up?',
+        reveal: '`lo` is at position 3 and `hi` is at position 2, after only 2 checks. `lo` has moved past `hi`, so no position is left between them. That crossing is how the search knows the value is absent.' },
     ],
     run,
     report: (r, c) => `${r.index >= 0 ? `Found ${r.target} at position ${r.index}` : `${r.target} is not in the list`} after ${c.comparisons || 0} ${c.comparisons === 1 ? 'check' : 'checks'}. The worst case for ${r.array.length} values is ${worstCase(r.array.length)}.\nPositions checked: ${r.probes.join(', ')}`,
@@ -214,9 +217,24 @@ export default {
 
   code: {
     sample: {
-      input: 'The sorted list [2, 5, 8, 12, 16, 23, 38, 56, 72, 91], searched for 23 and then for 7.',
-      expected: '23 found at index 5 after 3 probes\n7 not found after 3 probes',
+      input: 'The sorted list [2, 5, 8, 12, 16, 23, 38, 56, 72, 91], searched for 23, then for 7, then for 2.',
+      expected: '23 found at index 5 after 3 probes\n7 not found after 3 probes\n2 found at index 0 after 3 probes',
     },
+    breakIt: [
+      { change: 'In the loop condition, change `lo <= hi` to `lo < hi`. Which of the three searches will now give a wrong answer?',
+        find: { python: 'while lo <= hi:', javascript: 'while (lo <= hi) {' },
+        replace: { python: 'while lo < hi:', javascript: 'while (lo < hi) {' },
+        reveal: 'The search for 2 now prints "2 not found after 2 probes", although 2 is the first value in the list. The loop stops when `lo` and `hi` meet, and the position they meet on is never checked. The other two searches still print the right thing, which is why this mistake survives so many quick tests.' },
+      { change: 'Swap the 2 and the 23 in the list, so that it begins `23, 5, 8` and is no longer in order. The value 23 is still in the list. Will the search find it?',
+        find: { python: 'data = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]', javascript: 'const data = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91];' },
+        replace: { python: 'data = [23, 5, 8, 12, 16, 2, 38, 56, 72, 91]', javascript: 'const data = [23, 5, 8, 12, 16, 2, 38, 56, 72, 91];' },
+        reveal: 'It prints "23 not found after 4 probes" and "2 not found after 3 probes". Both values are in the list. The first check sees 16, concludes that 23 must lie to the right, and throws away the half that holds it. Nothing warns you: on a list that is not sorted, binary search gives a confident wrong answer.' },
+      { change: 'Change `lo = mid + 1` to `lo = mid`. What happens to the search for 23?',
+        find: { python: 'lo = mid + 1', javascript: 'lo = mid + 1;' },
+        replace: { python: 'lo = mid', javascript: 'lo = mid;' },
+        hangs: true,
+        reveal: 'The program never finishes, and the page stops it at the time limit. When the range shrinks to positions 4 and 5 the midpoint is 4, the value there is too small, and `lo = mid` sets `lo` to 4 again. Nothing changes, so the loop repeats for ever. The `+ 1` is what guarantees the range gets smaller on every pass.' },
+    ],
     python: {
       source: `def binary_search(a, target):
     lo, hi = 0, len(a) - 1
@@ -234,7 +252,7 @@ export default {
 
 
 data = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
-for target in (23, 7):
+for target in (23, 7, 2):
     index, probes = binary_search(data, target)
     if index >= 0:
         print(f"{target} found at index {index} after {probes} probes")
@@ -268,7 +286,7 @@ for target in (23, 7):
 }
 
 const data = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91];
-for (const target of [23, 7]) {
+for (const target of [23, 7, 2]) {
   const { index, probes } = binarySearch(data, target);
   if (index >= 0) {
     console.log(target + " found at index " + index + " after " + probes + " probes");
@@ -302,7 +320,7 @@ int binary_search(const std::vector<int>& a, int target, int& probes) {
 
 int main() {
     std::vector<int> data = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91};
-    for (int target : {23, 7}) {
+    for (int target : {23, 7, 2}) {
         int probes = 0;
         int index = binary_search(data, target, probes);
         if (index >= 0) {
@@ -421,16 +439,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The sorted list has 15 values and the target is not in it. How many values will binary search check before it reports "not found"?',
-      options: ['15', '8', '4', '3'],
-      answer: 2,
+      q: 'The sorted list is 3, 9, 14, 20, 27, 31, 40, 52, 60, 77, 85 and the target is 60. Which values will binary search look at, in order?',
+      options: ['3, 9, 14 and so on, up to 60', '31, then 60', '31, then 52, then 60', '27, then 52, then 60'],
+      answer: 1,
       explain: [
-        '15 is what linear search needs. Binary search never looks at most of the list.',
-        '8 is half the list. Binary search discards half per check; it does not check half.',
-        'Correct. The range shrinks from 15 to 7 to 3 to 1 to 0, with one check at each size.',
-        'After 3 checks one candidate position is still left, and it has to be checked too.',
+        'That is linear search, which would need 9 looks. Binary search starts in the middle.',
+        'Correct. The middle of positions 0 to 10 is position 5, which holds 31. That is too small, so the range becomes positions 6 to 10, whose middle is position 8, which holds 60.',
+        'After 31 the range is positions 6 to 10. Its middle is position 8, which holds 60, not position 7, which holds 52.',
+        'There are 11 values, so the first middle is position 5, which holds 31. Position 4, which holds 27, would be the middle of a list of 9 or 10.',
       ],
-      tryInput: { size: 15, where: 'missing', custom: [] },
+      tryInput: { custom: [3, 9, 14, 20, 27, 31, 40, 52, 60, 77, 85], target: 60 },
+      check: (r, c) => (r.index === 8 && r.probes.join(',') === '5,8' && c.comparisons === 2) || `index ${r.index}, positions ${r.probes.join(',')}`,
     },
     {
       type: 'debug',
@@ -480,7 +499,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Find the first position that is not too small',
-      prompt: 'Write `lower_bound(a, target)`: it returns the first position whose value is greater than or equal to the target, or the length of the list if there is none. Unlike the search in this lesson it never stops early at a match, so on a list with duplicates it returns the first of them, and for a missing value it returns the place where that value would be inserted. Test it on [1, 3, 3, 3, 7] with targets 3, 4, 0 and 9. The answers should be 1, 4, 0 and 5.',
+      prompt: 'Write `lower_bound(a, target)`: it returns the first position whose value is greater than or equal to the target, or the length of the list if there is none. Unlike the search in this lesson it never stops early at a match, so on a list with duplicates it returns the first of them, and for a missing value it returns the place where that value would be inserted. Test it on [1, 3, 3, 3, 7] with targets 3, 4, 0 and 9.',
+      expect: 'On [1, 3, 3, 3, 7] the four answers are 1, 4, 0 and 5. Target 3 gives position 1, the first of the three 3s, not the middle one. Target 4 gives position 4, where a 4 would have to be inserted. Target 0 gives 0 and target 9 gives 5, the length of the list.',
       hints: [
         'Use a half-open range: `lo = 0`, `hi = len(a)`, and loop while `lo < hi`.',
         'If `a[mid] < target`, the answer is to the right of `mid`. Otherwise `mid` itself might be the answer, so keep it in the range with `hi = mid`.',
@@ -539,7 +559,7 @@ int main() {
       check: (r, c) => (r.index === 15 && c.comparisons === 1) || `index ${r.index}, comparisons ${c.comparisons}` },
     { name: 'the worked example: 16 is at position 4 after probing 12, 23, 16', input: { custom: [2, 5, 8, 12, 16, 23, 38], target: 16 },
       check: (r, c) => (r.index === 4 && c.comparisons === 3 && r.probes.join(',') === '3,5,4') || `index ${r.index}, probes ${r.probes.join(',')}` },
-    { name: 'the predict question: 15 values, absent target, 4 checks', input: { size: 15, where: 'missing', custom: [] },
+    { name: '15 values with an absent target take 4 checks', input: { size: 15, where: 'missing', custom: [] },
       check: (r, c) => (r.index === -1 && c.comparisons === 4) || `comparisons ${c.comparisons}` },
     { name: '31 and 63 values with an absent target take 5 and 6 checks', input: { size: 63, where: 'missing', seed: 4, custom: [] },
       check: (r, c) => (r.index === -1 && c.comparisons === 6) || `comparisons ${c.comparisons}` },

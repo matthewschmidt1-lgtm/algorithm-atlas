@@ -224,10 +224,14 @@ export default {
       { label: 'A sudden jump', values: { measNoise: 1, procNoise: 0.3, custom: [0.5, 1, 1.5, 2, 2.5, 3, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14] } },
     ],
     tryThis: [
-      'Load "Typical tracking" and step through the first five steps. The first gain is about twice its long-run value, because the filter starts out unsure. Watch the gain fall and the band narrow as it gains confidence, then level off.',
-      'Compare "Noisy sensor, steady motion" with "Good sensor, erratic motion". In the first the gain settles near 0.05 and the estimate is far smoother than the dots. In the second it settles near 0.9 and the estimate follows the dots closely. The filter leans toward whichever source is more reliable.',
-      'Load "No process noise". The filter believes its motion model completely, so every measurement counts for less than the one before and the gain heads toward zero. The estimate becomes a long-run average.',
-      'Load "A sudden jump". Between two steps the readings leap by 6.5 where the model expects 0.5, which it considers almost impossible. The estimate needs several steps to catch up, and the band does not widen at all, because the variance never looks at the data.',
+      { ask: 'Load "Typical tracking" and step through the first five steps. The dashed line in the lower chart marks the long-run gain, 0.221. Will the gain at step 1 be above that line or below it, and by roughly how much?',
+        reveal: 'Above it, at 0.448, about twice the long-run value. The filter starts out unsure, with a variance of 3, so it leans hard on the first readings. The gain then falls through 0.338, 0.286, 0.258 and 0.243, and the band narrows from 3.46 either side to 1.88 as the filter gains confidence. From step 12 on the gain is within 0.001 of its long-run value.' },
+      { ask: 'Load "Noisy sensor, steady motion" and then "Good sensor, erratic motion". Before each run, decide where the gain will end up: near 0, near 0.5 or near 1? And in which of the two runs will the filter improve more on its own sensor?',
+        reveal: 'Near 0 with the noisy sensor: the long-run gain is 0.049, and the estimate is far smoother than the dots. Near 1 with the good sensor: 0.908, and the estimate follows the dots closely. The filter leans toward whichever source is more reliable. The noisy sensor is where it helps most. There the readings are typically off by 3.93 and the estimates by 1.51. With the good sensor the two figures are 0.49 and 0.50, so the filter adds almost nothing to a sensor that is already better than the motion model.' },
+      { ask: 'Load "No process noise". The filter now believes its motion model completely. In the other presets the gain levels off at some value above zero. Will it level off here?',
+        reveal: 'No. It starts at 0.429 and is still falling at the end of the run, where it is 0.016. Nothing ever adds uncertainty, so every measurement counts for less than the one before, and the long-run gain is 0. The estimate becomes a long-run average of everything the filter has seen.' },
+      { ask: 'Load "A sudden jump". Between two steps the readings leap by 6.5 where the model expects 0.5. Decide two things before you run it. How many readings after the jump will pass before the estimate is within 1 of them? And will the shaded band widen at the jump?',
+        reveal: 'Six readings, and no. The first reading after the jump is 9.5, and the estimate only gets to 5.10, which leaves it 4.40 behind. The gap then closes slowly: 3.25, 2.40, 1.78, 1.32, 0.98. At the last reading the estimate is still 0.30 behind. The band does not widen at all, because the variance never looks at the data. The gain is the same before and after the jump, so the filter gives a reading it should find almost impossible the same share as any other.' },
     ],
     run,
     report: (r) => {
@@ -307,6 +311,16 @@ export default {
       input: 'Track an object that moves about 0.5 per step from eight noisy readings. Start with estimate 0 and variance 3, with process noise variance 1 and sensor variance 4. The first two steps are the worked example.',
       expected: 'step  reading   gain  estimate  variance\n   1      2.5  0.500     1.500     2.000\n   2      3.4  0.429     2.600     1.714\n   3      2.1  0.404     2.696     1.617\n   4      3.9  0.395     3.474     1.582\n   5      4.4  0.392     4.141     1.569\n   6      4.2  0.391     4.469     1.564\n   7      5.6  0.391     5.215     1.563\n   8      5.9  0.390     5.787     1.562',
     },
+    breakIt: [
+      { change: 'Delete the line in the predict step that adds `Q` to `P`. The gain column settles at 0.390 in the correct program. What will it do now?',
+        find: { python: '        P = P + Q\n', javascript: '    P = P + Q;\n' },
+        replace: { python: '', javascript: '' },
+        reveal: 'It never settles. The gains run 0.429, 0.300, 0.231, 0.188, 0.158, 0.136, 0.120, 0.107, and the variance falls to 0.429 where it should level off near 1.562. Nothing adds uncertainty any more, so the filter grows surer at every step and listens to each reading less than the one before. The last estimate, 5.500, still looks reasonable next to the correct 5.787, and that is the danger: the output is smooth and plausible while the filter is going deaf. If the object changed speed now, this filter would barely react.' },
+      { change: 'The sensor has a typical error of 2, so its variance is 4. Pass the typical error where the variance belongs: where the program sets `R`, change 4.0 to 2.0. Will the filter trust its sensor more or less than it should?',
+        find: { python: 'Q=1.0, R=4.0, readings=readings', javascript: '0.5, 1.0, 4.0, readings' },
+        replace: { python: 'Q=1.0, R=2.0, readings=readings', javascript: '0.5, 1.0, 2.0, readings' },
+        reveal: 'More. The gain now starts at 0.667 and settles at 0.500 where the correct value is 0.390, so every noisy reading pulls the estimate further than it should. At step 3 the low reading of 2.1 drags the estimate back from 2.908 to 2.742, where the correct filter still rises from 2.600 to 2.696. The variance column settles at 1.000 where the correct filter reports 1.562. The correct filter is the best that can be done with this sensor, so the true uncertainty cannot be below 1.562. This one is more sure of itself than it has any right to be. The formulas use variances, and a standard deviation in their place goes unnoticed because the program still runs.' },
+    ],
     python: {
       source: `def kalman_filter(x, P, v, Q, R, readings):
     """Track one number. x is the estimate and P its variance."""
@@ -499,16 +513,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The process noise is set to zero, so the filter believes its motion model is perfect. Over 60 steps, what does the Kalman gain do?',
-      options: ['Settles at a constant above 0.1', 'Keeps falling toward zero', 'Rises toward 1', 'Stays at its first value'],
+      q: 'The process noise is set to zero and the measurement noise to 1. Ten readings arrive exactly where the motion model expects them: 0.5, 1, 1.5 and so on up to 5. The eleventh reads 15.5, which is 10 above the prediction of 5.5. Where does the estimate land?',
+      options: ['At about 15.5: a reading that far off overrides the prediction', 'At about 6.4: the filter moves less than a tenth of the way', 'At about 9.4: the filter moves about 40% of the way', 'At about 10.5: halfway between the prediction and the reading'],
       answer: 1,
       explain: [
-        'A constant positive gain needs some process noise to keep the variance from shrinking to zero.',
-        'Correct. With Q = 0 nothing ever adds uncertainty, so the variance shrinks at every update and the gain falls like 1/k. By step 60 it is below 0.02, and each new reading is almost ignored.',
-        'The gain rises only if the prediction becomes less reliable, and here it becomes more reliable at every step.',
-        'The first gain is large because the starting variance is large. It cannot stay there as the variance shrinks.',
+        'The gain depends only on the variances, never on how far off a reading is. A surprising reading gets the same share as any other, and that share is never more than 1.',
+        'Correct. With no process noise nothing ever adds uncertainty, so after ten readings the filter is very sure of itself and the gain has fallen to 0.088. The estimate moves 0.088 × 10 = 0.88, from 5.5 to 6.38. If the object really has jumped, this filter will take a long time to follow.',
+        'That is what a process noise of 0.5 gives. The gain then settles at 0.390 and the estimate lands on 9.40. With the process noise at zero the gain keeps falling instead of settling.',
+        'Halfway needs a gain of 0.5, which means the prediction and the sensor are equally uncertain. After ten readings with no process noise, the prediction is far more certain than the sensor.',
       ],
-      tryInput: { measNoise: 2, procNoise: 0, steps: 60, seed: 5, custom: [] },
+      tryInput: { measNoise: 1, procNoise: 0, custom: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15.5] },
+      check: (r, c) => {
+        const withNoise = run({ measNoise: 1, procNoise: 0.5, custom: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15.5] }, QUIET);
+        return (c.updates === 11 && Math.abs(r.estimates[10] - 5) < 1e-12 && f2(r.estimates[11]) === '6.38' && f3(r.gains[10]) === '0.088' && r.steadyGain === 0
+          && f2(withNoise.estimates[11]) === '9.40' && f3(withNoise.gains[10]) === '0.390') || `estimate ${f2(r.estimates[11])}, gain ${f3(r.gains[10])}; with process noise ${f2(withNoise.estimates[11])}`;
+      },
     },
     {
       type: 'debug',
@@ -542,7 +561,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Estimate the velocity too',
-      prompt: 'Extend the filter so that the state is the pair (position, velocity) and only position is measured. Use the motion model position ← position + velocity, velocity ← velocity, with a 2 by 2 covariance matrix P, and write out the predict and update steps with matrices. Feed it readings from an object that starts at 0 and moves at 0.8 per step, with sensor noise of standard deviation 2, while the filter starts with velocity 0. Plot how the velocity estimate converges to 0.8 although velocity is never measured.',
+      prompt: 'Extend the filter so that the state is the pair (position, velocity) and only position is measured. Use the motion model position ← position + velocity, velocity ← velocity, with a 2 by 2 covariance matrix P, and write out the predict and update steps with matrices. Start the filter at position 0 and velocity 0 with P = [[3, 0], [0, 1]], and use Q = [[0.01, 0], [0, 0.01]] and a sensor variance of R = 4. First test it on twelve noise-free readings from an object that starts at 0 and moves at 0.8 per step: 0.8, 1.6, 2.4 and so on up to 9.6. What is the velocity estimate after 1, 4, 8 and 12 readings? Then add sensor noise of standard deviation 2 to the readings and plot how the velocity estimate heads toward 0.8 although velocity is never measured.',
+      expect: 'On the noise-free readings the velocity estimate is 0.100 after 1 reading, 0.594 after 4, 0.762 after 8 and 0.794 after 12. The position estimate after 12 readings is 9.532, against a true position of 9.6. The first update uses a position gain of 0.501 and a velocity gain of 0.125. By the twelfth they have fallen to 0.303 and 0.047. With noise of standard deviation 2 the path is much rougher. Four random sets of twelve readings ended with velocity estimates of 0.51, 0.69, 0.59 and 0.85, and the same four carried on to 60 readings ended at 0.94, 0.75, 0.73 and 0.88. The estimate heads toward 0.8 and then wanders around it.',
       hints: ['With F = [[1, 1], [0, 1]] and H = [1, 0], predict with x ← F x and P ← F P Fᵀ + Q, then K = P Hᵀ / (H P Hᵀ + R).', 'The off-diagonal entry of P is what lets a position measurement correct the velocity.'],
     },
   ],
@@ -641,7 +661,7 @@ int main() {
           && f2(r.gains[1]) === '0.43' && f2(r.variances[2]) === '1.71';
         return ok || `estimates ${r.estimates}, variances ${r.variances}, gains ${r.gains}`;
       } },
-    { name: 'quiz: with no process noise the gain falls like 1 / (k + R / P0)', input: { measNoise: 2, procNoise: 0, steps: 60, seed: 5, custom: [] },
+    { name: 'with no process noise the gain falls like 1 / (k + R / P0)', input: { measNoise: 2, procNoise: 0, steps: 60, seed: 5, custom: [] },
       check: (r) => {
         for (let k = 1; k <= 60; k++) if (Math.abs(r.gains[k - 1] - 1 / (k + 4 / 3)) > 1e-12) return `gain at step ${k} is ${r.gains[k - 1]}`;
         return (r.gains[59] < 0.02 && r.steadyGain === 0) || `final gain ${r.gains[59]}`;
@@ -656,6 +676,26 @@ int main() {
       check: (r) => {
         const good = run({ measNoise: 0.5, procNoise: 1.5, steps: 40, seed: 5, custom: [] }, QUIET);
         return (Math.abs(r.steadyGain - 0.05) < 0.005 && Math.abs(good.steadyGain - 0.9) < 0.01) || `gains ${r.steadyGain} and ${good.steadyGain}`;
+      } },
+    { name: 'things to try: typical tracking starts at gain 0.448, twice the long-run 0.221, and settles from step 12', input: { measNoise: 2, procNoise: 0.5, steps: 30, seed: 5, custom: [] },
+      check: (r, c) => {
+        const first = r.gains.slice(0, 5).map(f3).join(' ');
+        return (first === '0.448 0.338 0.286 0.258 0.243' && f3(r.steadyGain) === '0.221' && c['steps until the gain settles'] === 11 && Math.abs(r.gains[11] - r.steadyGain) <= 1e-3
+          && f2(2 * Math.sqrt(r.variances[0])) === '3.46' && f2(2 * Math.sqrt(r.variances[30])) === '1.88') || `gains ${first}, settles after ${c['steps until the gain settles']} steps`;
+      } },
+    { name: 'things to try: long-run gains 0.049 and 0.908, typical errors 3.93 against 1.51 and 0.49 against 0.50', input: { measNoise: 4, procNoise: 0.2, steps: 40, seed: 5, custom: [] },
+      check: (r) => {
+        const good = run({ measNoise: 0.5, procNoise: 1.5, steps: 40, seed: 5, custom: [] }, QUIET);
+        const got = [f3(r.steadyGain), f2(r.rmsMeasurement), f2(r.rmsEstimate), f3(good.steadyGain), f2(good.rmsMeasurement), f2(good.rmsEstimate)].join(' ');
+        return got === '0.049 3.93 1.51 0.908 0.49 0.50' || got;
+      } },
+    { name: 'things to try: with no process noise the gain goes from 0.429 to 0.016 in 60 steps', input: { measNoise: 2, procNoise: 0, steps: 60, seed: 5, custom: [] },
+      check: (r) => (f3(r.gains[0]) === '0.429' && f3(r.gains[59]) === '0.016' && r.steadyGain === 0) || `gains ${f3(r.gains[0])} and ${f3(r.gains[59])}` },
+    { name: 'things to try: after the sudden jump the estimate trails by 4.40, 3.25, 2.40, 1.78, 1.32, 0.98 and the variance never rises', input: { measNoise: 1, procNoise: 0.3, custom: [0.5, 1, 1.5, 2, 2.5, 3, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14] },
+      check: (r) => {
+        const gaps = r.measurements.map((z, i) => f2(z - r.estimates[i + 1]));
+        const rising = r.variances.findIndex((v, i) => i > 0 && v > r.variances[i - 1]);
+        return (gaps.slice(6, 12).join(' ') === '4.40 3.25 2.40 1.78 1.32 0.98' && gaps[15] === '0.30' && f2(r.estimates[7]) === '5.10' && rising === -1) || `gaps ${gaps.slice(6).join(' ')}, variance rose at step ${rising}`;
       } },
   ],
 };

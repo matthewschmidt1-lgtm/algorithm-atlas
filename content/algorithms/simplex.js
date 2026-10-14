@@ -553,11 +553,16 @@ export default {
       { label: 'Outside the form: an "at least" limit', values: { objective: 'x + 2y', limits: 'x + y >= 2, x <= 4, y <= 3' } },
     ],
     tryThis: [
-      'Run the bakery and watch the dashed line. It joins all mixes with the current profit. Each pivot pushes it further out, and at the end it touches the shape at one corner only.',
-      'Load "Bakery where bread earns more". The limits are the same, so the shape is the same, but the dashed line now tilts the other way and the walk stops one corner earlier, at (6, 2).',
-      'Load "A tie in the ratio test". Three limit lines pass through the corner (2, 2). Watch the second pivot, where two rows tie and Bland\'s rule chooses, and the third pivot, where the table changes but the corner does not move.',
-      'Load "Nothing stops the profit" and then add the limit `x + y <= 12`. The shape closes and the walk ends at a best corner.',
-      'Load "Outside the form". The start (0, 0) breaks the first limit, so the walk cannot begin. Change `x + y >= 2` to `x + y <= 6` and it runs.',
+      { ask: 'Run the bakery and watch the dashed line. It joins all mixes that earn the current profit, and each pivot pushes it further out. When the walk stops, how much of the shaded shape will the dashed line still touch?',
+        reveal: 'One corner and nothing else. The line moves out through profits 12, 22 and 24, and at 24 it touches the shape only at (2, 4). Push it any further and it leaves the shape altogether, which is another way of saying that no allowed mix earns more than 24.' },
+      { ask: 'Load "Bakery where bread earns more". The limits have not changed, so the shape is the same. Will the walk end at the same corner as before, and will it need the same number of pivots?',
+        reveal: 'No to both. It stops at (6, 2) with profit 34 after 2 pivots, one corner earlier than the 3 pivots that end at (2, 4) in the worked example. The dashed line now tilts the other way, so the corner it touches last is a different one. The shape decides which mixes are allowed. The profit decides which corner is best.' },
+      { ask: 'Load "A tie in the ratio test". Three limit lines pass through the corner (2, 2), where two would be enough to pin it down. The run takes 3 pivots. How many of them move the walk to a new corner?',
+        reveal: 'Two. The walk goes (0, 0), then (2, 0), then (2, 2). On the second pivot two rows tie in the ratio test and Bland\'s rule takes the one whose variable comes first. The third pivot rewrites the table, but the corner stays at (2, 2) and the profit stays at 6. A tie in the ratio test is the warning that a pivot like this may follow.' },
+      { ask: 'Load "Nothing stops the profit" and run it. Then add the limit `x + y <= 12` to the end of the list, which closes the shape. Where will the walk end now, and will that corner be the only best one?',
+        reveal: 'It ends at (7, 5) with profit 12 after 2 pivots, and that corner is not the only best one. The new limit line runs parallel to the lines of equal profit, so the whole side from (7, 5) to (9/2, 15/2) earns 12. Without the new limit the run stops after 1 pivot at (2, 0) and reports that y can grow for ever.' },
+      { ask: 'Load "Outside the form". Its first limit is `x + y >= 2`. The walk always starts at (0, 0). What will the method do with this problem?',
+        reveal: 'Nothing. At (0, 0) the sum x + y is 0, which is not at least 2, so the starting corner is not allowed and the method cannot begin. The page checks every corner directly instead and finds the best mix (4, 3) with profit 10. Change `x + y >= 2` to `x + y <= 6` and the walk runs: (0, 0), (4, 0), (4, 2), then (3, 3), with profit 9 after 3 pivots.' },
     ],
     run,
     report: (r) => {
@@ -655,9 +660,24 @@ export default {
 
   code: {
     sample: {
-      input: 'Four problems, each with profit rates c, limit coefficients A and right-hand sides b. The bakery: maximise 2x + 5y with x ≤ 6, y ≤ 4, x + 2y ≤ 10. An open shape: x + y with x − y ≤ 2, −x + y ≤ 3. A tie: x + 2y with x ≤ 2, x + y ≤ 4, y ≤ 2. And x + y ≥ 2 written as −x − y ≤ −2, which is outside the form. Each pivot is printed with the profit it reaches.',
+      input: 'Four problems, each with profit rates c, limit coefficients A and right-hand sides b. The bakery: maximise 2x + 5y with x ≤ 6, y ≤ 4, x + 2y ≤ 10. An open shape: x + y with x − y ≤ 2, −x + y ≤ 3. A tie: x + 2y with x ≤ 2, x + y ≤ 4, y ≤ 2. And x − y with x ≤ 1, y ≤ 3 and x + y ≥ 2, the last written as −x − y ≤ −2, which is outside the form. Each pivot is printed with the profit it reaches.',
       expected: "bakery\n  x enters, s1 leaves, profit 12.00\n  y enters, s3 leaves, profit 22.00\n  s1 enters, s2 leaves, profit 24.00\n  best: x = 2.00, y = 4.00, profit 24.00\nopen\n  x enters, s1 leaves, profit 2.00\n  unbounded: nothing stops y from growing\ntie\n  x enters, s1 leaves, profit 2.00\n  y enters, s2 leaves, profit 6.00\n  s1 enters, s3 leaves, profit 6.00\n  best: x = 2.00, y = 2.00, profit 6.00\nat least\n  no starting corner: a limit has a negative right side",
     },
+    breakIt: [
+      { change: 'In the ratio test, change the condition on the entry in the entering column from `> EPS` to `!= 0`, so that rows with a negative entry take part too. Which of the four problems will now print something different?',
+        find: { python: 'if T[i][enter] > EPS:', javascript: 'if (T[i][enter] > EPS) {' },
+        replace: { python: 'if T[i][enter] != 0:', javascript: 'if (T[i][enter] !== 0) {' },
+        hangs: true,
+        reveal: 'None of them prints anything. The program never gets past the bakery, and the page stops it at the time limit. After two pivots the walk is at (6, 2) with profit 22 and s1 is about to enter. The row for y has −0.5 in that column and a value of 2, which gives a ratio of −4. That looks smaller than the honest ratios 6 and 4, so y leaves. The pivot lands on x = 10, y = 0, with s1 at −4: ten batches of bread in an oven that holds 6, for a profit of 20, lower than before. The next pivot brings y back in and returns to (6, 2), and the two pivots then repeat for ever. A row with a negative entry never limits the entering variable, so it has to be skipped.' },
+      { change: 'Leave the hours out of the bakery: delete its third limit, so that `A` is `[[1, 0], [0, 1]]` and `b` is `[6, 4]`. What plan does the program print for the bakery now?',
+        find: { python: 'report("bakery", [2, 5], [[1, 0], [0, 1], [1, 2]], [6, 4, 10])', javascript: 'report("bakery", [2, 5], [[1, 0], [0, 1], [1, 2]], [6, 4, 10]);' },
+        replace: { python: 'report("bakery", [2, 5], [[1, 0], [0, 1]], [6, 4])', javascript: 'report("bakery", [2, 5], [[1, 0], [0, 1]], [6, 4]);' },
+        reveal: 'The bakery now prints "y enters, s2 leaves, profit 32.00" and "best: x = 6.00, y = 4.00, profit 32.00". The plan fills the oven and uses every tin, which needs 6 + 2 × 4 = 14 hours of work when there are 10. Nothing in the output looks wrong. The method can only respect the limits it is given, so a missing limit gives a confident answer that nobody could carry out. The other three problems print what they did before.' },
+      { change: 'Switch off the check for a negative right-hand side at the top of `simplex`, by replacing its condition with false (`False` in Python). What will the program now print for the last problem, the one with the limit x + y ≥ 2?',
+        find: { python: 'if min(b) < 0:', javascript: 'if (Math.min(...b) < 0) return' },
+        replace: { python: 'if False:', javascript: 'if (false) return' },
+        reveal: 'Instead of "no starting corner" it prints "x enters, s2 leaves, profit 1.00" and "best: x = 1.00, y = 0.00, profit 1.00". That plan has x + y = 1, which breaks the limit x + y ≥ 2. The walk started at (0, 0), a point that was never allowed, and nothing later in the method checks whether it has entered the allowed shape. The true best plan is x = 1, y = 1, with profit 0. Reaching it takes a first phase that finds an allowed corner to start from.' },
+    ],
     python: {
       source: `EPS = 1e-9
 
@@ -722,7 +742,7 @@ def report(title, c, A, b):
 report("bakery", [2, 5], [[1, 0], [0, 1], [1, 2]], [6, 4, 10])
 report("open", [1, 1], [[1, -1], [-1, 1]], [2, 3])
 report("tie", [1, 2], [[1, 0], [1, 1], [0, 1]], [2, 4, 2])
-report("at least", [1, 2], [[-1, -1], [1, 0], [0, 1]], [-2, 4, 3])`,
+report("at least", [1, -1], [[-1, -1], [1, 0], [0, 1]], [-2, 1, 3])`,
       notes: [
         { line: 7, text: "The check of the form. A negative right-hand side means the corner where everything is 0 breaks that limit, so there is nowhere to start." },
         { line: 10, text: "One row per limit: its coefficients, a 1 in the column of its own slack variable, and the right-hand side." },
@@ -800,7 +820,7 @@ function report(title, c, A, b) {
 report("bakery", [2, 5], [[1, 0], [0, 1], [1, 2]], [6, 4, 10]);
 report("open", [1, 1], [[1, -1], [-1, 1]], [2, 3]);
 report("tie", [1, 2], [[1, 0], [1, 1], [0, 1]], [2, 4, 2]);
-report("at least", [1, 2], [[-1, -1], [1, 0], [0, 1]], [-2, 4, 3]);`,
+report("at least", [1, -1], [[-1, -1], [1, 0], [0, 1]], [-2, 1, 3]);`,
     },
     cpp: {
       source: `#include <algorithm>
@@ -884,7 +904,7 @@ int main() {
     report("bakery", {2, 5}, {{1, 0}, {0, 1}, {1, 2}}, {6, 4, 10});
     report("open", {1, 1}, {{1, -1}, {-1, 1}}, {2, 3});
     report("tie", {1, 2}, {{1, 0}, {1, 1}, {0, 1}}, {2, 4, 2});
-    report("at least", {1, 2}, {{-1, -1}, {1, 0}, {0, 1}}, {-2, 4, 3});
+    report("at least", {1, -1}, {{-1, -1}, {1, 0}, {0, 1}}, {-2, 1, 3});
     return 0;
 }`,
     },
@@ -987,16 +1007,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Keep the bakery\'s limits but change the profits to 5 coins per batch of bread and 2 per cake. At which corner does the walk stop?',
-      options: ['(6, 0)', '(6, 2)', '(2, 4)', '(0, 4)'],
+      q: 'A workshop earns 4 coins for each chair, x, and 3 for each table, y. The limits are `x <= 5`, `y <= 6` and `x + y <= 8`. At which corner does the walk stop?',
+      options: ['(5, 0)', '(5, 3)', '(2, 6)', '(0, 6)'],
       answer: 1,
       explain: [
-        'From (6, 0) there are still 4 hours left, and each cake made with them adds 2 coins, so the walk goes on.',
-        'At (6, 2) the profit is 34. Going on to (2, 4) would swap 2 batches of bread, worth 10, for 1 cake, worth 2, so no edge climbs any further.',
-        'That was the best corner when cakes earned more. With bread at 5 coins, (2, 4) is worth only 18.',
-        'Bland\'s rule lets x grow first, so the walk never passes through (0, 4), which is worth only 8.',
+        'At (5, 0) only 5 of the 8 allowed items are made. Each table added from there earns 3 more coins, so the walk goes on.',
+        'At (5, 3) the profit is 29. Going on to (2, 6) would swap 3 chairs, worth 12, for 3 tables, worth 9, so no edge climbs any further. The walk took 2 pivots.',
+        'The corner (2, 6) is worth 26, less than the 29 at (5, 3). The walk only moves along an edge that raises the profit, so it never goes there.',
+        'Bland\'s rule lets x grow first, so the walk never passes through (0, 6), which is worth only 18.',
       ],
-      tryInput: { objective: '5x + 2y', limits: BAKERY },
+      tryInput: { objective: '4x + 3y', limits: 'x <= 5, y <= 6, x + y <= 8' },
+      check: (r, c) => (r.status === 'optimal' && corner(r) === '(5, 3)' && r.exact.value === '29' && c.pivots === 2 && JSON.stringify(r.path) === '[[0,0],[5,0],[5,3]]') || `${r.status} at ${corner(r)}, profit ${r.exact.value}, ${c.pivots} pivots`,
     },
     {
       type: 'debug',
@@ -1043,7 +1064,8 @@ for i in range(m):
     {
       type: 'challenge',
       title: 'Try the largest-coefficient rule',
-      prompt: 'Change one of the programs so that the entering variable is the column with the most negative number in the profit row, which was Dantzig\'s original rule, instead of the first negative one. Run it on the bakery. It should reach the same best plan in 2 pivots instead of 3, going through (0, 4) instead of (6, 0) and (6, 2). Then find out why this rule, unlike Bland\'s, comes with no guarantee of finishing.',
+      prompt: 'Change one of the programs so that the entering variable is the column with the most negative number in the profit row, which was Dantzig\'s original rule, instead of the first negative one. Run it on the bakery, the first of the four problems, and compare the pivots it prints with the three that Bland\'s rule takes. Then find out why this rule, unlike Bland\'s, comes with no guarantee of finishing.',
+      expect: 'On the bakery it prints two pivots instead of three: "y enters, s2 leaves, profit 20.00", then "x enters, s3 leaves, profit 24.00", then "best: x = 2.00, y = 4.00, profit 24.00". The walk goes through (0, 4) instead of (6, 0) and (6, 2) and ends at the same best plan. The tie problem also drops from three pivots to two, with profits 4.00 and 6.00.',
       hints: ['Only the line that chooses `enter` changes. Keep the tie-breaking in the ratio test as it is.', 'Look up "cycling" in the simplex method. It can only happen on problems with ties in the ratio test.'],
     },
   ],
@@ -1092,7 +1114,9 @@ for i in range(m):
     { name: 'the worked example: (0, 0), (6, 0), (6, 2), (2, 4), profit 24 in 3 pivots', input: { objective: '2x + 5y', limits: BAKERY },
       check: (r, c) => (r.status === 'optimal' && corner(r) === '(2, 4)' && r.exact.value === '24' && r.pivots === 3 && c.pivots === 3 && JSON.stringify(r.path) === '[[0,0],[6,0],[6,2],[2,4]]' && !r.alternative && agreesWithEveryCorner(r) === true)
         || `${r.status} at ${corner(r)}, profit ${r.exact.value}, ${r.pivots} pivots; ${agreesWithEveryCorner(r)}` },
-    { name: 'the predicted bakery with profits 5 and 2 stops at (6, 2)', input: { objective: '5x + 2y', limits: BAKERY },
+    { name: 'the quiz prediction: profit 4x + 3y under x <= 5, y <= 6, x + y <= 8 stops at (5, 3) with 29', input: { objective: '4x + 3y', limits: 'x <= 5, y <= 6, x + y <= 8' },
+      check: (r) => (corner(r) === '(5, 3)' && r.exact.value === '29' && r.pivots === 2 && agreesWithEveryCorner(r) === true) || `stopped at ${corner(r)} with profit ${r.exact.value}; ${agreesWithEveryCorner(r)}` },
+    { name: 'the bakery with profits 5 and 2 stops at (6, 2)', input: { objective: '5x + 2y', limits: BAKERY },
       check: (r) => (corner(r) === '(6, 2)' && r.exact.value === '34' && r.pivots === 2 && agreesWithEveryCorner(r) === true) || `stopped at ${corner(r)} with profit ${r.exact.value}; ${agreesWithEveryCorner(r)}` },
     { name: 'five limits agree with a check of every corner', input: { objective: '3x + 4y', limits: 'x <= 8, y <= 6, x + y <= 10, x + 3y <= 20, 3x + y <= 25' },
       check: (r) => (corner(r) === '(5, 5)' && r.exact.value === '35' && agreesWithEveryCorner(r) === true) || `${corner(r)}; ${agreesWithEveryCorner(r)}` },

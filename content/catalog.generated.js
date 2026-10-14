@@ -7,10 +7,11 @@ export const buildInfo = {
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
  "browser": "Google Chrome 155.0.8059.40",
  "lessons": 73,
- "tests": 737,
- "runs": 631,
- "frames": 38641,
- "programs": 219,
+ "tests": 1025,
+ "runs": 655,
+ "frames": 39319,
+ "programs": 231,
+ "brokenOnPurpose": 198,
  "formulas": 105,
  "relations": {
   "exact": 58,
@@ -165,17 +166,20 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 4, 9, 15, 22, 27, 31, 36, 44, 50, in order, and the target",
     "no value is shown as checked before it has been compared",
     "finds a present value at the position a reference lookup gives",
     "an absent value costs n comparisons and returns -1",
     "the first value costs one comparison",
     "the worked example: 17 is at position 3 after 4 comparisons",
     "the worked example: 20 is absent after 6 comparisons",
-    "the predict question: 12 values, absent target, 12 comparisons",
+    "an absent target in 12 values costs 12 comparisons",
+    "the predict question: 30 is absent from a sorted list of 9 and still costs 9 comparisons",
+    "the default target sits at position 11 with and without shuffling",
     "shuffling changes the order but not the cost"
    ],
    "runs": 7,
-   "frames": 87,
+   "frames": 84,
    "cost": [
     {
      "formula": "n",
@@ -284,7 +288,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 2
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 3
   },
   "frames": 14
  },
@@ -443,20 +449,21 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The sorted list is 3, 9, 14, 20, 27, 31, 40, 52, 60, 77, 85 and the ta",
     "finds a present value at the position a reference lookup gives",
     "reports an absent value as -1 within the worst-case bound",
     "finds the first and smallest value",
     "finds the last and largest value",
     "the middle value is found with one probe",
     "the worked example: 16 is at position 4 after probing 12, 23, 16",
-    "the predict question: 15 values, absent target, 4 checks",
+    "15 values with an absent target take 4 checks",
     "31 and 63 values with an absent target take 5 and 6 checks",
     "the try-this case: 35 is absent from 10..50 after two probes",
     "a single value, present and absent",
     "the sample in the code section: 23 at index 5 in three probes"
    ],
    "runs": 7,
-   "frames": 72,
+   "frames": 68,
    "cost": [
     {
      "formula": "log₂(n + 1)",
@@ -530,7 +537,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 2
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 3
   },
   "frames": 12
  },
@@ -676,6 +685,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 2, 1, 4, 3, 6, 5, and the sort stops when a pass makes no ",
     "sorts a random list",
     "sorts a list with few distinct values",
     "sorts a nearly sorted list with the early exit off",
@@ -686,10 +696,13 @@ export const catalog = [
     "one large value at the front: 13 comparisons, 7 swaps",
     "one small value at the end: 28 comparisons, 7 swaps",
     "handles duplicates and negatives",
+    "ten sorted values cost 9 comparisons with the early exit and 45 without",
+    "ten reversed values: all 45 comparisons lead to a swap",
+    "a list of three swapped pairs is sorted after one pass and needs a second to find out",
     "a single value needs no comparisons"
    ],
    "runs": 7,
-   "frames": 293,
+   "frames": 269,
    "cost": [
     {
      "formula": "n(n − 1)/2 (most possible)",
@@ -788,7 +801,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 2
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 3
   },
   "frames": 70
  },
@@ -939,6 +954,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: In the list 1, 2, 3, 4, 5, 7, 6 only the last two values are out of or",
     "sorts a random list with exactly n(n-1)/2 comparisons",
     "sorts a list with few distinct values",
     "sorts a reversed list",
@@ -952,7 +968,7 @@ export const catalog = [
     "a single value needs no comparisons"
    ],
    "runs": 7,
-   "frames": 379,
+   "frames": 388,
    "cost": [
     {
      "formula": "n(n − 1)/2 (every input)",
@@ -1006,6 +1022,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 2
   },
   "frames": 76
@@ -1153,6 +1171,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 1, 2, 4, 3, 5, 6, 7, 8. One neighbouring pair is out of or",
     "sorts a random list; shifts equal inversions",
     "sorts a list with few distinct values",
     "sorts a nearly sorted list in close to n comparisons",
@@ -1162,6 +1181,12 @@ export const catalog = [
     "a reversed list of 6 costs 15 comparisons and 15 shifts",
     "a misplaced value costs 7 shifts in either direction",
     "a large value at the front also costs 7 shifts",
+    "ten nearly sorted values cost 10 comparisons and 1 shift",
+    "ten random values cost 26 comparisons and 17 shifts",
+    "ten reversed values cost 45 comparisons and 45 shifts",
+    "one misplaced value costs 13 comparisons whichever way it travels",
+    "the same from the other end: 13 comparisons",
+    "the code sample input, with its two 29s, costs 14 shifts",
     "handles duplicates and negatives",
     "a single value needs no comparisons"
    ],
@@ -1265,6 +1290,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 2
   },
   "frames": 63
@@ -1419,12 +1446,14 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 1, 3, 5, 7, 2, 4, 6, 8. Each half is already in order, but",
     "sorts a random list within the comparison bounds",
     "sorts a list with few distinct values",
     "sorts a reversed list of odd length",
     "the worked example costs 5 comparisons",
     "a sorted list of 8 costs 12 comparisons and 48 writes",
     "the worst case for 8 values costs 17 comparisons and 48 writes",
+    "two sorted halves that interleave cost 15 comparisons",
     "16 values: 4 levels and 128 writes",
     "32 values: 5 levels and 320 writes",
     "handles duplicates and negatives",
@@ -1530,6 +1559,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 1
   },
   "frames": 91
@@ -1675,15 +1706,25 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 1, 3, 2, 6, 5, 7, 4 and the pivot is the last element of e",
     "sorts a random list",
     "sorts with every pivot rule",
     "random pivot sorts reversed input",
     "sorted input with last pivot costs n(n-1)/2 comparisons",
+    "14 sorted values: 84 comparisons with the last pivot, depth 13",
+    "14 sorted values: 50 comparisons with median of three, depth 5",
+    "random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (16)",
+    "random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (32)",
+    "random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (64)",
+    "64 values with four distinct keys cost 605 comparisons, depth 19",
+    "a list whose pivots are all medians costs 10 comparisons",
+    "equal values are the worst case for this partition: 120 comparisons for 16",
+    "the code sample input, with its two 5s, costs 16 comparisons",
     "the worked example costs 6 comparisons",
     "handles custom input with duplicates and negatives"
    ],
    "runs": 6,
-   "frames": 376,
+   "frames": 353,
    "cost": [
     {
      "formula": "2(n + 1)Hₙ − 4n (expected, random order)",
@@ -1782,7 +1823,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 1
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 2
   },
   "frames": 70
  },
@@ -1941,19 +1984,24 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 3, 8, 6, 9, 2, 7. What does the array look like when the b",
     "sorts a random list; the build phase yields a max-heap",
     "sorts a list with few distinct values",
     "sorts a sorted list of maximum size",
     "sorts a nearly sorted list",
     "the worked example: heap 10,5,3,4,1 after 6 comparisons, 12 in total",
+    "six values: the build phase gives 9,8,7,3,2,6",
+    "ten sorted values: 14 comparisons to build, 41 in total",
+    "ten reversed values: 9 comparisons to build, 35 in total",
+    "31 random values: the heap is built with 46 comparisons",
     "a descending list is already a heap: the build phase makes no swaps",
     "a generated reversed list is a heap before the build phase",
     "all-equal values never swap during a sift",
     "handles duplicates and negatives",
     "a single value needs no comparisons"
    ],
-   "runs": 7,
-   "frames": 367,
+   "runs": 8,
+   "frames": 734,
    "cost": [
     {
      "formula": "2n log₂ n (upper bound)",
@@ -2007,6 +2055,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 2
   },
   "frames": 73
@@ -2166,6 +2216,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The list is 5, 2, 5, 3, 2, 5, 5. When the counting pass has finished, ",
     "sorts a random list with 4n + 2k writes and only range-scan comparisons",
     "sorts a list with few distinct values",
     "sorts a reversed list",
@@ -2175,11 +2226,15 @@ export const catalog = [
     "three values over a range of 999 cost 2010 writes",
     "the marks preset costs 60 writes",
     "64 values use 126 comparisons, all in the range scan",
+    "twelve values from four keys cost 240 writes, and 64 cost 448",
+    "64 values from the same four keys cost 448 writes",
+    "the marks preset: the four 3s fill positions 3 to 6",
+    "an unused key inside the range keeps a count of 0",
     "all-equal keys need a single count cell",
     "a single value"
    ],
    "runs": 7,
-   "frames": 190,
+   "frames": 192,
    "cost": [
     {
      "formula": "4n + 2k with k = 99 (upper limit)",
@@ -2278,6 +2333,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 2
   },
   "frames": 40
@@ -2453,19 +2510,26 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A table has 7 slots, numbered 0 to 6, so a key's home slot is the rema",
     "every key is reachable from its home slot, and the lookup agrees with a scan",
     "a nearly full table stays consistent and reports an absent key as absent",
     "the worked example: slots, probes per key and the lookup of 33",
     "the worked example: 43 is absent after 4 probes",
-    "the predict question: 3, 13, 23, 33 take 10 probes to insert",
+    "four keys that share a home slot: 3, 13, 23, 33 take 10 probes to insert",
     "the \"every key collides\" preset: 1 to 6 probes",
     "probing wraps from the last slot to slot 0",
     "the try-this case: 15 lengthens the search for 42",
+    "the try-this case without 15: the search for 42 takes 4 probes",
+    "the predict question: in 7 slots, 5 is pushed past 3 and 24 and wraps to slot 0",
+    "try-this numbers: half full, 8 probes for 5 keys and a longest run of 4",
+    "try-this numbers: nearly full, 15 probes for 9 keys and a longest run of 9",
+    "try-this numbers: nearly full, the absent key 53 takes 6 probes",
+    "try-this numbers: 9 keys in 16 slots take 11 probes with a longest run of 4",
     "a completely full table ends an unsuccessful search after one circuit",
     "a repeated key is stored once"
    ],
-   "runs": 8,
-   "frames": 219,
+   "runs": 9,
+   "frames": 242,
    "cost": [
     {
      "formula": "½ (1 + 1/(1 − α))",
@@ -2584,6 +2648,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 10
   },
   "frames": 26
@@ -2754,20 +2820,26 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Union by rank is on and path compression is off. Eight elements are jo",
     "matches an independent quick-find reference with both rules",
     "matches the reference with neither rule",
     "matches the reference with path compression only",
     "union by rank alone keeps height within log2 n",
     "the worked example: finds of 0 take 2 steps and then 1",
-    "the predict question: a naive chain of 8 puts element 0 seven steps from the root",
+    "a naive chain of 8 puts element 0 seven steps from the root",
     "path compression alone: second find on the chain takes one step",
     "union by rank alone turns the chain into a star",
+    "the predict question: pairing equal trees with union by rank puts 0 three steps from the root",
+    "try-this numbers: the chain of 10 costs 18, 10 and 9 parent steps under the three settings",
+    "try-this numbers: path compression alone on the chain of 10",
+    "try-this numbers: union by rank alone on the chain of 10",
+    "try-this numbers: the random sequence with neither rule has height 4 at seed 4",
     "experiment formulas: n(n-1)/2 with neither rule",
     "experiment formulas: 2n-4 with both rules",
     "a union of two elements already together changes nothing"
    ],
    "runs": 8,
-   "frames": 365,
+   "frames": 353,
    "cost": [
     {
      "formula": "n(n − 1) / 2",
@@ -2876,7 +2948,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 12
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 13
   },
   "frames": 46
  },
@@ -3050,16 +3124,17 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: In the graph A-C, A-E, C-F, E-B, B-D, F-D, starting from A and checkin",
     "distances match an independent relaxation on a random graph",
     "distances match the reference on a tree-like graph",
     "an undirected graph has every edge examined exactly twice",
     "the worked example",
-    "the predicted visit order",
+    "the visit order on a ring of six nodes",
     "nodes in another piece of the graph are never found",
     "directed edges are followed one way only"
    ],
-   "runs": 7,
-   "frames": 199,
+   "runs": 8,
+   "frames": 231,
    "cost": [
     {
      "formula": "2(V − 1), twice the edges of a tree",
@@ -3148,6 +3223,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 32
@@ -3317,6 +3394,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: In the graph A-B, B-C, C-D, D-E, A-F, F-E, starting from A and trying ",
     "discovers exactly the reachable nodes with properly nested times",
     "well formed on a tree-like graph, with no cycle reported",
     "an undirected graph has every edge examined twice and E - V + 1 back edges",
@@ -3326,8 +3404,8 @@ export const catalog = [
     "a directed graph without a cycle has forward or cross edges but no back edge",
     "nodes in another piece of the graph are not discovered"
    ],
-   "runs": 8,
-   "frames": 201,
+   "runs": 9,
+   "frames": 233,
    "cost": [
     {
      "formula": "2(V − 1), twice the edges of a tree",
@@ -3416,6 +3494,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 3
   },
   "frames": 32
@@ -3586,17 +3666,18 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The rules are A>C, B>C, C>D, D>E, E>C and B>F. What does the algorithm",
     "every arrow points forward on a random DAG",
     "valid on a sparse DAG, and every arrow is removed once",
     "the worked example",
     "a chain has only one valid order",
-    "the predicted cycle",
+    "a graph with a cycle is reported as one",
     "the reported cycle follows real arrows",
     "a self-loop is a cycle",
     "agrees with an independent cycle test on acyclic input"
    ],
-   "runs": 8,
-   "frames": 122,
+   "runs": 9,
+   "frames": 146,
    "cost": [
     {
      "formula": "V − 1",
@@ -3685,6 +3766,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 2
   },
   "frames": 22
@@ -3855,6 +3938,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: In the graph A-B:2, A-C:6, B-C:3, B-D:7, C-D:1, D-E:2, starting from A",
     "matches an independent Bellman-Ford on a random graph",
     "matches the reference on a sparse graph",
     "finds the non-greedy route",
@@ -3866,7 +3950,7 @@ export const catalog = [
     "the count of edges examined never moves without a step that says which edges"
    ],
    "runs": 7,
-   "frames": 159,
+   "frames": 158,
    "cost": [
     {
      "formula": "n log₂ n (scaled)",
@@ -3915,6 +3999,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 2
   },
   "frames": 28
@@ -4079,11 +4165,12 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The one-way roads are A>B:2, A>C:4, C>D:1, D>C:-2, D>E:3 and B>E:7. Wh",
     "matches an independent Floyd-Warshall on a random graph",
     "matches the reference on a sparse graph",
     "matches the reference on a directed graph with negative edges",
     "the worked example",
-    "the predicted negative cycle",
+    "a negative cycle that the source can reach is reported",
     "a zero-weight cycle is not reported",
     "nodes the negative cycle cannot reach keep correct distances",
     "edge order decides the number of passes",
@@ -4092,7 +4179,7 @@ export const catalog = [
     "reports unreachable nodes"
    ],
    "runs": 9,
-   "frames": 252,
+   "frames": 256,
    "cost": [
     {
      "formula": "V(V − 1): every pass is needed",
@@ -4181,6 +4268,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 48
@@ -4351,6 +4440,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A grid of 6 rows and 8 columns is empty except for a wall in the fifth",
     "Manhattan heuristic matches a breadth-first shortest length",
     "zero heuristic matches a breadth-first shortest length",
     "the doubled heuristic is faster, longer here, and within twice the optimum",
@@ -4358,12 +4448,14 @@ export const catalog = [
     "optimal on a dense grid with the zero heuristic",
     "the doubled heuristic stays within twice the optimum on another grid",
     "the worked example: 6 cells explored on an open 6 by 8 grid",
-    "the predicted zero-heuristic run explores 31 cells",
+    "the quiz prediction: behind a wall with one gap, zero explores 36 cells and Manhattan 25, both for the 11-step shortest path",
+    "the same walled grid with the Manhattan estimate: 25 cells",
+    "the zero-heuristic run on an open 6 by 8 grid explores 31 cells",
     "an unreachable goal is handled",
     "a random grid whose goal is cut off agrees with breadth-first search"
    ],
-   "runs": 8,
-   "frames": 604,
+   "runs": 9,
+   "frames": 733,
    "cost": [
     {
      "formula": "proportional to side² (scaled)",
@@ -4417,6 +4509,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 10
   },
   "frames": 95
@@ -4583,16 +4677,18 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The worked example examined 6 of its 9 endings. Suppose the scores ins",
     "the worked example: value 4 after 6 of 9 endings, with the 9, 8 and 1 skipped",
     "the worked example without pruning examines all 9 endings and gives the same value",
-    "the predicted run: with the groups reversed nothing is cut and the value is still 4",
+    "the quiz prediction: with each group reversed, 7 of 9 endings are examined and the value is still 4",
+    "with the groups reversed nothing is cut and the value is still 4",
     "alpha-beta agrees with plain minimax and with an independent reference on 1,600 seeded trees, and never examines more endings",
     "with the best move first, exactly b^⌈d/2⌉ + b^⌊d/2⌋ − 1 endings are examined",
     "noughts and crosses: X must block on square 7, the game is a draw, and 4 of 6 endings are examined",
     "noughts and crosses without pruning reaches the same value from all 6 endings"
    ],
    "runs": 8,
-   "frames": 204,
+   "frames": 203,
    "cost": [
     {
      "formula": "2^d",
@@ -4711,6 +4807,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 3
   },
   "frames": 43
@@ -4893,19 +4991,23 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On the cliff edge, set the exploration rate to 1 and train for 200 epi",
     "small room, always exploring, 2,000 episodes: every value within 0.001 of value iteration, and the route is a shortest one",
     "open room, exploring half the time, 3,000 episodes: every value within 0.001 of value iteration, route of 7 moves",
     "cliff edge, exploring half the time, 3,000 episodes: values within 0.001, and the route runs along the edge",
     "the same tolerance holds for 20 other seeds in the small room",
     "default run: a shortest route, exact along it, and every recorded update obeys the update rule",
     "the worked example: C1 goes 5, 7.5, 8.75 and B1 goes 2.25, 4.5 in the first episodes",
-    "the predicted run: moving at random throughout still gives a shortest route of 5 moves",
+    "small room, always exploring, 200 episodes: a shortest route of 5 moves and an exact table",
+    "the predicted run: on the cliff, moving at random throughout falls 198 times in 200 and still gives the 7-move route along the edge",
+    "a discount of 0.5 leaves the route alone and gives 0.625 at the start (quoted in Things to try)",
+    "average gap after 200 episodes: 1.95 at a learning rate of 1, 2.46 at 0.5, 4.19 at 0.1 (quoted in Things to try)",
     "the three small-room presets: all give a 5-move route, with 12 moves untried when never exploring and 135 falls when always exploring",
     "never exploring on the cliff keeps a 9-move route where 7 is possible, and exploring finds the 7",
     "the reference values match the closed form on the cliff: 10 × 0.9^6 at the start"
    ],
    "runs": 9,
-   "frames": 411,
+   "frames": 405,
    "cost": [
     {
      "formula": "proportional to the number of episodes (scaled)",
@@ -4954,6 +5056,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 6
   },
   "frames": 45
@@ -5127,6 +5231,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The edges are A-B:1, B-C:2, A-C:3, C-D:4, B-D:5, D-E:6 and C-E:7. How ",
     "total weight matches an independent Prim on a random graph",
     "matches Prim on a dense graph",
     "a tree-like graph keeps every edge",
@@ -5136,8 +5241,8 @@ export const catalog = [
     "a disconnected graph gives a minimum spanning forest",
     "negative weights are handled"
    ],
-   "runs": 8,
-   "frames": 122,
+   "runs": 9,
+   "frames": 141,
    "cost": [
     {
      "formula": "E log₂ E (scaled)",
@@ -5186,6 +5291,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 7
   },
   "frames": 19
@@ -5357,12 +5464,14 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Six pages have the links A>D, B>D, C>D, D>E, D>F and E>F. Three pages ",
     "ranks sum to 1 and the result is a fixed point of an independent matrix step",
     "agrees with a direct solution by Gaussian elimination",
     "a graph with dead ends still sums to 1 and matches the direct solution",
     "a symmetric cycle gives equal ranks immediately",
     "the worked example: 40/30/50, then 45/30/45, settling near 43/31/46 out of 120",
-    "the predicted winner: one good link beats two",
+    "the quiz prediction: F, with two incoming links, finishes ahead of D, which has three",
+    "one good link beats two",
     "a single link with a dead end has the closed-form answer",
     "stops at the round limit and says so"
    ],
@@ -5421,6 +5530,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 4
   },
   "frames": 33
@@ -5587,13 +5698,16 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A small extension has four tasks in a row: dig 2 days, pour 3, frame 5",
     "the worked example: 11 days, critical path base, walls, roof, paint",
     "default random project agrees with a search over every chain",
     "sparse random project agrees with a search over every chain",
     "dense random project agrees with a search over every chain",
     "another dense random project agrees with a search over every chain",
     "two chains of equal length are both critical",
-    "the predicted late delivery: still 11 days, and a second chain becomes critical",
+    "the quiz prediction: an order with 6 days of slack that runs 9 days late adds 3 days",
+    "before the delay the same project takes 12 days and the order has 6 days of slack",
+    "a delivery that uses exactly its slack: still 11 days, and a second chain becomes critical",
     "a delivery one day later than its slack lengthens the project",
     "shortening a critical task by 3 days shortens the shed by only 2",
     "with no dependencies the longest task is the project",
@@ -5602,7 +5716,7 @@ export const catalog = [
     "a single task"
    ],
    "runs": 9,
-   "frames": 334,
+   "frames": 327,
    "cost": [
     {
      "formula": "3 (V − 1)",
@@ -5691,6 +5805,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 8
   },
   "frames": 43
@@ -5886,6 +6002,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Recursion with a memo is used to find fib(10). The memo starts with fi",
     "plain recursion matches the closed formula and the call-count formula",
     "memoized recursion matches the closed formula with 2n - 1 calls",
     "bottom-up table satisfies Cassini's identity at every position",
@@ -5895,6 +6012,11 @@ export const catalog = [
     "plain recursion for n = 24 makes 150,049 calls",
     "quiz: memo for n = 10 makes 19 calls; plain recursion would make 177",
     "tryThis numbers: 9, 15, 25 calls and fib(1) requested 6,765 times for n = 20",
+    "tryThis numbers: plain recursion for n = 7 makes 41 calls, 15 + 25 + 1",
+    "tryThis numbers: the memo for n = 7 makes 13 calls",
+    "tryThis numbers: the n = 6 tree ends with 7 first-time answers and 18 repeats",
+    "tryThis numbers: with the memo, 14 of the 25 circles for n = 6 are never requested",
+    "tryThis numbers: the table for n = 20 takes 19 additions",
     "base cases n = 0 and n = 1",
     "n = 1 with a memo is a single lookup"
    ],
@@ -5988,6 +6110,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 4
   },
   "frames": 39
@@ -6173,6 +6297,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: How long is the longest common subsequence of \"thursday\" and \"tuesday\"",
     "default: stone and longest share \"one\"",
     "worked example: tea and eat, every cell of the table",
     "textbook example matches brute force over all subsets",
@@ -6182,12 +6307,13 @@ export const catalog = [
     "identity holds on the default pair (6 changes)",
     "a subsequence need not be contiguous",
     "tryThis: a word against its reverse gives its longest palindromic subsequence length",
+    "code sample: abcde and ace share all of ace",
     "nothing in common",
     "empty string",
     "identical strings"
    ],
-   "runs": 9,
-   "frames": 342,
+   "runs": 10,
+   "frames": 445,
    "cost": [
     {
      "formula": "(n + 1)²",
@@ -6286,7 +6412,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 3
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 4
   },
   "frames": 47
  },
@@ -6485,6 +6613,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: What is the edit distance from \"flaw\" to \"lawn\"?",
     "kitten to sitting is 3 and the script replays correctly",
     "worked example: tea to eat, every cell of the table",
     "matches brute-force recursion: sunday to saturday",
@@ -6493,6 +6622,10 @@ export const catalog = [
     "symmetric: swapping the strings gives the same distance",
     "preset: two swapped letters cost 2",
     "quiz: flaw to lawn is 2",
+    "things to try: one changed letter lifts the rest of the diagonal to 1",
+    "things to try: clearing the second box leaves one column, distance 6",
+    "things to try: sitting to kitten is 3 and the insert becomes a delete",
+    "things to try: the swapped pair is two substitutions",
     "empty second string: delete everything",
     "both strings empty",
     "identical strings: distance 0 and (m + 1)(n + 1) cells"
@@ -6597,7 +6730,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 7
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 10
   },
   "frames": 54
  },
@@ -6787,9 +6922,14 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Four items have weights 2, 4, 5, 7 and values 4, 7, 9, 10. The bag hol",
     "default input matches brute force over all subsets, and greedy falls short",
     "worked example: every cell of the table, the chosen items and the greedy value",
-    "quiz: the small fixed example is 9 with items 2 and 3; greedy gets 8",
+    "the small fixed example (second problem of the code sample) is 9 with items 2 and 3; greedy gets 8",
+    "quiz prediction: weights 2, 4, 5, 7 and values 4, 7, 9, 10 at capacity 9 give 16 with items 2 and 3; greedy gets 13",
+    "tryThis: on the worked example greedy falls short at capacities 2, 4 and 5 only",
+    "tryThis: the default items give 36, 41, 41, 41, 41, 44, 49 at capacities 10 to 16",
+    "tryThis: 4 items at capacity 8 fill 45 cells, 8 items 81, capacity 16 fills 85",
     "matches brute force on 8 random items",
     "matches brute force on another seed with a tight bag",
     "matches brute force with duplicate items and a zero value",
@@ -6798,7 +6938,7 @@ export const catalog = [
     "table size is (n + 1)(W + 1)"
    ],
    "runs": 7,
-   "frames": 406,
+   "frames": 414,
    "cost": [
     {
      "formula": "11 (W + 1)",
@@ -6907,6 +7047,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 4
   },
   "frames": 64
@@ -7090,6 +7232,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Align CAT with CGT using match +1, mismatch −3 and gap −1. What is the",
     "default input: score 0, and the alignment is consistent and matches brute force",
     "worked example: GAT and GT, every cell of the table",
     "matches brute force with other scores",
@@ -7100,11 +7243,13 @@ export const catalog = [
     "quiz: CAT and CGT with mismatch -3 prefer two gaps",
     "tryThis: a short sequence inside a long one pays for the overhang",
     "challenge numbers: global score of ACGT and TTACGTTT with +2, -1, -2 is 0",
+    "code sample: ACGT and TTACGT score 2 with two leading gaps",
+    "things to try: the alignments the reveals quote",
     "one empty sequence: all gaps",
     "identical sequences align on the diagonal"
    ],
-   "runs": 8,
-   "frames": 354,
+   "runs": 9,
+   "frames": 399,
    "cost": [
     {
      "formula": "(n + 1)²",
@@ -7203,7 +7348,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 6
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 9
   },
   "frames": 62
  },
@@ -7392,13 +7539,15 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The default American put, with interest at 5% a year, shows three node",
     "the tree worked by hand: share 60 that doubles or halves, no interest, call at 60 is worth 20",
     "put-call parity for European options: call − put = share − strike × e^(−rT), to rounding error, on trees of every size",
     "an American option is worth at least its European counterpart at every size, and an American call equals the European call",
     "the price approaches the Black-Scholes value: within 0.005 at 1,000 steps, and ten times the steps leaves about a tenth of the gap",
     "default American put: 5.88 today, early exercise at three nodes, 24.68 to hold against 25.92 to exercise at 74.08",
     "tryThis: the European put values the 74.08 node at 24.68, below its exercise value; steps 3, 4, 5 give 6.50, 5.88, 6.37",
-    "quiz: with no interest no node prefers early exercise, and both puts are worth 7.49",
+    "the quiz prediction: at 10% interest a fourth node, the one at 90.48, prefers early exercise",
+    "tryThis: with no interest no node prefers early exercise, and both puts are worth 7.49",
     "quiz: the in-place update in the wrong direction turns the hand-worked 20 into 33.33",
     "a tree too coarse for its inputs: p = 1.27, a node worth −4.95, the tree says 1.13 where 500 steps say 0.10",
     "the picture and the count-only run give the same price, there are (n + 1)(n + 2)/2 nodes, and one step is a single blend",
@@ -7469,6 +7618,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 8
   },
   "frames": 23
@@ -7635,9 +7786,13 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The Fibonacci sequence runs 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144: ea",
     "matches a brute-force gcd and satisfies Bezout on the default input",
     "matches the reference on 78 and 30",
     "the try-this case: gcd(144, 90) = 18 in 4 divisions",
+    "the quiz prediction: Fibonacci numbers 55 and 34 take 8 divisions",
+    "things to try: 44 and 120 take 6 divisions, one more than 120 and 44, and the first has quotient 0",
+    "things to try: 8 and 5 take 4 divisions, the same as 144 and 90",
     "the worked example: gcd(48, 18) = 6 in 3 divisions",
     "the textbook case: gcd(1071, 462) = 21 = -3 × 1071 + 7 × 462",
     "worst case: Fibonacci numbers 144 and 89 take 10 divisions, all quotients 1 but the last",
@@ -7650,8 +7805,8 @@ export const catalog = [
     "experiment worst case: two-digit Fibonacci pair hits the Lame limit of 10",
     "experiment average stays under the Lame limit"
    ],
-   "runs": 9,
-   "frames": 130,
+   "runs": 11,
+   "frames": 155,
    "cost": [
     {
      "formula": "5 × digits (Lamé's limit)",
@@ -7780,6 +7935,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 6
   },
   "frames": 15
@@ -7936,18 +8093,23 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: With a limit of 130 and both shortcuts on, which is the largest prime ",
     "matches trial division up to 200",
     "matches trial division with the shortcuts off",
     "there are 25 primes up to 100, found with 104 crossings using 2, 3, 5 and 7",
     "without the shortcuts, 100 takes 146 crossings and gives the same primes",
     "the worked example: 10 primes up to 30 with 24 crossings",
-    "the predict question: with limit 50 the last prime used is 7",
+    "the predict question: with limit 130 the last prime used is 11, which crosses out only 121",
+    "the code sample: 15 primes up to 49 with 43 crossings",
+    "things to try: up to 100, 30 of the 104 crossings are repeats, 15 of them among the 31 in the pass for 3",
+    "things to try: without the shortcuts 15 primes do the crossing out",
+    "with limit 50 the last prime used is 7",
     "the try-this case: limit 200 uses primes up to 13",
     "a limit that is the square of a prime: 49 is crossed out",
     "the smallest limit on the slider, shortcuts off"
    ],
    "runs": 7,
-   "frames": 607,
+   "frames": 596,
    "cost": [
     {
      "formula": "n ln ln n (scaled)",
@@ -8046,6 +8208,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 116
@@ -8219,6 +8383,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: How many modular multiplications does square and multiply use to compu",
     "the default: 7^1000 mod 13 = 9 with 14 multiplications",
     "the worked example: 5^13 mod 23 = 21 with 3 squarings and 2 extra multiplications",
     "agrees with repeated multiplication on a larger case",
@@ -8227,7 +8392,10 @@ export const catalog = [
     "toy Diffie-Hellman: 5^6 mod 23 = 8",
     "Fermat checks: 2^90 mod 91 = 64",
     "the Carmichael number 561 passes: 2^560 mod 561 = 1",
-    "the predict question: 3^64 mod 1000 takes 6 multiplications",
+    "the predict question: 3^100 mod 1000 takes 8 multiplications, 6 squarings and 2 extra",
+    "things to try: 1024 takes 10 multiplications, all squarings",
+    "things to try: the binary lengths of 17 and 2753 are 5 and 12, and 1023 is nine squarings plus nine extra",
+    "a power of two: 3^64 mod 1000 takes 6 multiplications",
     "the try-this case: exponents 1023 and 1024 need 18 and 10 multiplications",
     "the slow method gives the same answer with e - 1 multiplications",
     "exponent 0 and exponent 1",
@@ -8236,7 +8404,7 @@ export const catalog = [
     "worst-case exponent 2^16 - 1 uses 2 × 16 - 2 = 30 multiplications"
    ],
    "runs": 10,
-   "frames": 117,
+   "frames": 119,
    "cost": [
     {
      "formula": "2b − 2",
@@ -8345,6 +8513,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 5
   },
   "frames": 17
@@ -8506,16 +8676,21 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Choose the function arctan(x), whose starting bracket is [−1, 2], and ",
     "steps equal ceil(log2(width / tolerance)) and the root is within half the tolerance",
     "the step formula and the error bound hold for every catalogue function at several tolerances",
     "the worked example: four steps end at [1.375, 1.4375] with midpoint 1.40625",
-    "the quiz prediction: tolerance 0.001 on [1, 2] takes 10 halvings",
+    "things to try: tolerance 0.001 on [1, 2] takes 10 halvings",
+    "the quiz prediction: tolerance 0.01 on arctan from [−1, 2] takes 9 halvings",
+    "things to try: cos(x) − x takes 20 halvings and 22 evaluations, the same as the square root of 2",
+    "things to try: the bracket of width 2 takes 21 halvings",
+    "things to try: the triple root takes 22 halvings, and f is below the tolerance at 1.99609375 although that is 0.0039 from the root",
     "a midpoint that is an exact root returns at once",
     "refuses a bracket without a sign change",
     "a tolerance below floating-point spacing stops instead of looping"
    ],
    "runs": 8,
-   "frames": 258,
+   "frames": 256,
    "cost": [
     {
      "formula": "2 + ⌈log₂(10^d)⌉ (starting width 1)",
@@ -8664,6 +8839,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 4
   },
   "frames": 42
@@ -8834,17 +9011,24 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Newton's method is run on x² − 2 from the starting guess 0.25. There t",
     "the worked example: guesses 1, 3/2, 17/12, 577/408, converging to the square root of 2 in 5 steps",
     "the error is squared each step on x² − 2: e(k+1) = e(k)² / (2 x(k))",
     "converges to the known root of every well-started catalogue function",
-    "the quiz prediction: x³ − 2x + 2 from 0 cycles between 0 and 1",
+    "the quiz prediction: x² − 2 from 0.25 jumps to 4.125 and then converges in 7 steps",
+    "things to try: the bars of correct digits on x² − 2 are 0.4, 1.1, 2.6, 5.7, 11.8, 16",
+    "things to try: x³ − 2x + 2 from −2 converges in 4 steps within the limit of 8",
+    "things to try: arctan converges from 1.35 in 8 steps and diverges from 1.4",
+    "things to try: the triple root takes 34 steps and ends 0.0000015 from the root, twice the last move",
+    "things to try: tolerance 0.001 takes 4 steps and is already right to 11 places, and 1e-12 takes 6",
+    "the cycle preset: x³ − 2x + 2 from 0 cycles between 0 and 1",
     "arctan diverges from 1.5 and converges from 1.2",
     "a horizontal tangent is reported, not divided by",
     "a triple root converges linearly with ratio 2/3",
     "a starting guess that is already a root returns without a step"
    ],
    "runs": 10,
-   "frames": 183,
+   "frames": 181,
    "cost": [],
    "costNote": "This lesson measures its behaviour but states no formula for the pipeline to compare it with.",
    "languages": [
@@ -8852,6 +9036,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 6
   },
   "frames": 12
@@ -9029,17 +9215,22 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The rule is \"the value falls at a rate equal to the value\", starting f",
     "the worked example: 1, 0.5, 0.25, 0.125, 0.0625 with largest error 0.118 at time 1",
     "steps of 0.25 give the largest error 0.051 quoted in the example",
     "first order: halving dt roughly halves the largest error on every scalar system",
     "matches the closed form (1 − dt)^n on decay",
     "oscillator energy is multiplied by 1 + dt² on every step",
-    "the quiz prediction: decay with dt = 2.5 gives 1, −1.5, 2.25, −3.375",
+    "preset: decay with dt = 2.5 gives 1, −1.5, 2.25, −3.375",
     "an unstable run is stopped and reported",
-    "step count: whole steps that fit in the duration"
+    "step count: whole steps that fit in the duration",
+    "things to try: decay errors 0.118, 0.0515, 0.0243 at steps 0.5, 0.25, 0.125",
+    "things to try: a step of exactly 2 on decay gives 1, −1, 1, −1 for 10 steps",
+    "things to try: oscillator energy ends at 3.658 with dt 0.1 (swing 2.56) and at 0.6107 with dt 0.01",
+    "things to try: logistic growth with dt 2.2 hops between 0.7462 and 1.163, and settles at 1 with dt 1.5"
    ],
-   "runs": 11,
-   "frames": 367,
+   "runs": 15,
+   "frames": 587,
    "cost": [
     {
      "formula": "proportional to 1/n",
@@ -9138,6 +9329,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 3
   },
   "frames": 22
@@ -9306,17 +9499,22 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The rule is \"the value falls at a rate equal to the value\", starting f",
     "the worked example: one step of 1 on growth gives slopes 1, 1.5, 1.75, 2.75 and the value 65/24",
-    "the quiz prediction: one step of 1 on decay gives slopes −1, −0.5, −0.75, −0.25 and the value 0.375",
+    "one step of 1 on decay gives slopes −1, −0.5, −0.75, −0.25 and the value 0.375",
     "matches the closed form (1 − h + h²/2 − h³/6 + h⁴/24)^n on decay",
     "fourth order: halving dt cuts the largest error about 16-fold on every system",
     "the errors quoted in \"try this\": 0.0071 at dt = 1, 0.00029 at dt = 0.5, 0.000015 at dt = 0.25",
     "equal budget: 64 evaluations of RK4 beat 64 of Euler by more than 100-fold; at 8 Euler wins",
     "oscillator energy is multiplied by 1 − h⁶/72 + h⁸/576 on every step",
-    "stability limit on decay: grows at dt = 3, decays at dt = 2.7"
+    "stability limit on decay: grows at dt = 3, decays at dt = 2.7",
+    "things to try: equal budgets on decay, and the errors at steps 0.5, 0.25 and 0.125",
+    "things to try: oscillator energy falls to 0.495813 with dt 0.5, where Euler would reach 3,762",
+    "things to try: decay fades at dt 2.5 and 2.78, and grows at 2.79 and 3",
+    "things to try: the first step on the moving target has slopes 1, 0.37758, 0.68879, −0.14849"
    ],
-   "runs": 10,
-   "frames": 400,
+   "runs": 12,
+   "frames": 491,
    "cost": [
     {
      "formula": "proportional to 1/B⁴",
@@ -9405,6 +9603,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 27
@@ -9590,19 +9790,24 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A block of only 16 samples contains a single sine wave that completes ",
     "matches the direct DFT within 1e-9 on the default noisy chord",
     "matches the direct DFT for every length from 2 to 256, with noise and off-bin frequencies",
     "Parseval: the sum of squared samples equals the sum of squared outputs divided by n",
     "a clean chord gives peaks at exactly the input frequencies with the input amplitudes",
     "the default noisy chord still has its peaks at 2, 5 and 9",
     "the worked example: 6, 1, 4, 1 transforms to 12, 2, 8, 2 and amounts 3, 1, 2",
-    "the quiz prediction: 20 cycles in 32 samples appears at bin 12",
+    "the quiz prediction: 11 cycles in 16 samples appears at bin 5",
+    "things to try: doubling the amplitude of wave 2 changes only the bar at 5",
+    "things to try: 4.5 cycles leaks into every bin, with 0.66 and 0.61 at bins 4 and 5",
+    "things to try: under heavy noise 128 samples mark peaks 6 and 13, and 32 samples mark 2, 6, 11 and 13",
+    "things to try: 20 cycles in 32 samples appears at bin 12",
     "operation counts: (n/2) log2 n for the FFT and n² for the direct transform",
     "a single click has a flat spectrum, a constant has only bin 0, and real input is mirror-symmetric",
     "a length that is not a power of two is refused"
    ],
    "runs": 11,
-   "frames": 877,
+   "frames": 822,
    "cost": [
     {
      "formula": "(n/2) log₂ n",
@@ -9711,6 +9916,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 8
   },
   "frames": 100
@@ -9892,14 +10099,29 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The narrow valley is f(x, y) = ½x² + 6y². Its slope is 1 × x along the",
     "converges to the minimum of the bowl",
     "diverges above the stability limit",
     "loss never increases below the stability limit",
     "reaches a Himmelblau minimum",
+    "the narrow valley without momentum takes 49 steps at rate 0.15",
+    "the same valley at the same rate with momentum 0.5 takes 25 steps",
+    "on the bowl one step multiplies the distance by (1 − 2 × rate): the loss ratio is that number squared",
+    "bowl at rate 0.5 lands on the centre in one step",
+    "bowl at rate 0.25 converges in 13 steps",
+    "bowl at rate 0.6 converges in 6 steps (quoted by the code sample break-it)",
+    "bowl at rate 0.76 overshoots and converges in 14 steps",
+    "bowl at rate 1 sits exactly on the limit: the loss never changes",
+    "bowl at rate 1.1 is reported as diverged after 71 steps",
+    "the narrow valley at rate 0.18 diverges across the valley after 91 steps while x goes to 0",
+    "too much momentum is slower: 0.9 takes 160 steps in the narrow valley at rate 0.15",
+    "four minima: starting on the right ends at (3, 2) after 68 steps",
+    "ripples: rates 0.001 to 0.004 all stop in the dip at (−2.985, 2.985), loss 17.909",
+    "Things to try: the other figures quoted for the bowl, the four minima and the ripples",
     "momentum converges in the narrow valley"
    ],
    "runs": 9,
-   "frames": 1262,
+   "frames": 1328,
    "cost": [
     {
      "formula": "proportional to κ",
@@ -9998,7 +10220,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 7
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
+   "outputLines": 8
   },
   "frames": 83
  },
@@ -10176,10 +10400,16 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On the rippled surface, a starting temperature of 0.01 leaves the sear",
     "default run leaves the starting dip and ends in a dip next to the centre",
     "the lucky seed reaches the central dip",
     "with almost no heat it stays in the dip nearest the start",
     "cooling too fast gives a worse result than the default on the same seed",
+    "Things to try: the default run, as quoted",
+    "Things to try: almost no heat, cooled too fast, too hot and the lucky seed, as quoted",
+    "Things to try: with almost no heat a step size of 1.5 still leaves the starting dip",
+    "Things to try: the round bowl, as quoted",
+    "quiz prediction: on the four minima a search with almost no heat still ends near value 0",
     "bookkeeping: best never rises, temperature is geometric, evaluations are counted",
     "gets close to the minimum of the bowl",
     "the acceptance chances quoted in the worked example",
@@ -10194,6 +10424,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 14
   },
   "frames": 302
@@ -10367,6 +10599,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On the rippled surface, set the mutation rate to 0 and the population ",
     "default run reaches the central dip and uses the stated number of evaluations",
     "with elitism the best value never gets worse",
     "without elitism the best value can get worse, and one more evaluation is used per generation",
@@ -10375,6 +10608,10 @@ export const catalog = [
     "every member stays inside the map",
     "finds a Himmelblau minimum",
     "the numbers in the worked example and the derivation",
+    "Things to try: the default run, as quoted",
+    "Things to try: the unlucky seed and the tiny population, as quoted",
+    "Things to try: no mutation, too much mutation and no elitism, as quoted",
+    "quiz prediction: six members with no mutation become one point on a slope by generation 8",
     "the seed statistics quoted in Try this"
    ],
    "runs": 10,
@@ -10386,6 +10623,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 5
   },
   "frames": 66
@@ -10557,8 +10796,10 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A workshop earns 4 coins for each chair, x, and 3 for each table, y. T",
     "the worked example: (0, 0), (6, 0), (6, 2), (2, 4), profit 24 in 3 pivots",
-    "the predicted bakery with profits 5 and 2 stops at (6, 2)",
+    "the quiz prediction: profit 4x + 3y under x <= 5, y <= 6, x + y <= 8 stops at (5, 3) with 29",
+    "the bakery with profits 5 and 2 stops at (6, 2)",
     "five limits agree with a check of every corner",
     "fractions and negative coefficients agree with a check of every corner",
     "random problem 3 with 4 limits agrees with a check of every corner",
@@ -10674,6 +10915,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 15
   },
   "frames": 27
@@ -10865,6 +11108,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The preset \"One point per step, shrinking rate\" divides the learning r",
     "a batch of every point takes exactly the gradient descent step, at every step",
     "a batch size above the number of points is treated as the full batch",
     "the average of the per-example gradients equals the full gradient",
@@ -10874,12 +11118,17 @@ export const catalog = [
     "larger batches estimate the full gradient more closely, and the full batch exactly",
     "the same seed reproduces the run exactly and a different seed does not",
     "the worked example: order B, A, C, D and the lines quoted in the text",
-    "quiz prediction: at batch size 24 the loss never rises, while at batch size 1 it does",
+    "at batch size 24 the loss never rises, while at batch size 1 it does",
+    "Things to try: the loss rises on 27, 23, 24 and 0 of 60 steps at batch sizes 1, 4, 12 and 24",
+    "Things to try: final losses at batch 1, 4, 12 against plain gradient descent given the same work (2, 10, 30 steps)",
+    "Things to try: 120 steps end at loss 0.059 with decay 0.1 and at 0.065 with decay 0",
+    "quiz prediction: decay 0.5 leaves the line short of the least squares line after 120 steps",
+    "Things to try: seeds 4 and 5 end at losses 0.163 and 0.062, against best possible 0.065 and 0.055",
     "with no scatter in the data a fixed learning rate comes to rest on the exact line",
     "a shrinking learning rate ends closer to the least squares line than a fixed one"
    ],
    "runs": 11,
-   "frames": 1437,
+   "frames": 1562,
    "cost": [
     {
      "formula": "proportional to n",
@@ -10978,6 +11227,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 6
   },
   "frames": 125
@@ -11148,6 +11399,15 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On the steep ravine Adam starts at x = −2, y = 0.2, and the minimum is",
+    "Things to try: plain descent after 60 steps, and its first step",
+    "Things to try: at plain rate 0.02 y bounces between 0.2 and −0.2, at 0.021 it grows to 60.9",
+    "Things to try: without bias correction the first step lands on (−1.6838, −0.1162) and the longest step is 4.991 × α",
+    "Things to try: straight ravine 131 steps and always ahead; turned ravine 177 steps, plain descent lower from step 9 to step 45",
+    "Things to try: with momentum x overshoots to +0.26 at step 36; without it Adam stops after 85 steps and x never crosses 0",
+    "Things to try: without momentum y rests, then swings out to 0.271 at step 59 as √v̂ falls to about 3",
+    "Things to try: round bowl, plain descent stops after 6 steps and Adam is still moving after 60; mild valley 49 against 100",
+    "quiz prediction: at α = 0.01 Adam covers under 0.6 in x in 60 steps, and is still short after 300",
     "the first step moves each coordinate by the learning rate, whatever its slope",
     "the first step is the learning rate on a different surface and with a different rate",
     "the first three updates match the formulas written out without running averages",
@@ -11272,6 +11532,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 9
   },
   "frames": 242
@@ -11472,15 +11734,18 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Three points: (−1.5, −1), (0, 0.5) and (1.5, 0.5). They are the points",
     "gradient descent matches the closed form on the default data",
     "matches the closed form across seeds and sizes",
     "closed form recovers an exact line when there is no noise",
     "loss never increases below the stability limit",
     "the worked example: best line y = 0.75x, first step lands on y = 0.5x",
-    "a learning rate of 1.05 makes the loss grow (quiz prediction)"
+    "three wide points at rate 0.8: the slope error grows by a factor of 1.4 per step and the run diverges at step 22 (quiz prediction)",
+    "rates quoted in \"Things to try\": 11 steps at 0.5, and 16 at 0.8",
+    "a learning rate of 1.05 makes the loss grow (the \"Step too large\" preset)"
    ],
    "runs": 9,
-   "frames": 712,
+   "frames": 635,
    "cost": [
     {
      "formula": "condition number κ (scaled)",
@@ -11534,6 +11799,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 8
   },
   "frames": 75
@@ -11718,17 +11985,21 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Eight labelled points, four of each class, surround a query at the cen",
     "matches a sort-based reference on the default input",
     "matches the reference on overlapping data with an even k",
     "matches the reference on XOR",
     "the worked example: k = 3 gives class 0 by 2 votes to 1",
     "the worked example: k = 1 gives class 1",
-    "the worked example: k = 5 gives class 1 by 3 votes to 2 (quiz prediction)",
+    "eight points, four of each class: k = 7 gives class 0 by 4 votes to 3 (quiz prediction), after class 0 at k = 3 and class 1 at k = 5",
+    "the code sample: leave-one-out on the six points is 5 of 6 at k = 1",
+    "the code sample: leave-one-out on the six points is 6 of 6 at k = 3",
+    "the worked example: k = 5 gives class 1 by 3 votes to 2",
     "a tied vote goes to the nearest neighbour",
     "accuracy is a fraction and XOR is learnable"
    ],
    "runs": 9,
-   "frames": 340,
+   "frames": 344,
    "cost": [
     {
      "formula": "n",
@@ -11777,7 +12048,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 3
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
+   "outputLines": 5
   },
   "frames": 49
  },
@@ -11970,17 +12243,20 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Six points lie along a line in three pairs: (0, 0) and (1, 0), then (5",
     "default run converges to a fixed point with non-increasing cost",
     "fixed point and monotone cost with k-means++ on four blobs",
     "fixed point and monotone cost when k does not match the data",
     "the worked example: costs 150, 53.2, 27.28, 4 and centres at 2 and 9",
-    "two rows of four: stuck at cost 80 although cost 16 exists (quiz prediction)",
+    "three pairs on a line, starting on the first three points: stuck at cost 26 (quiz prediction), and 1.5 from a start with one centre per pair",
+    "the code sample: two squares from the first two points, costs 45.33 then 16 (and the break-it start on points 1 and 3 is the stuck preset)",
+    "two rows of four: stuck at cost 80 although cost 16 exists (the \"Stuck\" preset)",
     "the bad-start preset ends far above the k-means++ result on the same data",
     "more clusters cost less on the same data",
     "k = 1 puts the centre at the overall mean in one round"
    ],
    "runs": 10,
-   "frames": 168,
+   "frames": 170,
    "cost": [
     {
      "formula": "proportional to n (scaled)",
@@ -12029,6 +12305,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 4
   },
   "frames": 34
@@ -12243,6 +12521,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: In the worked example the first principal direction is the diagonal, a",
     "default: directions and variances match the closed form for a 2 by 2 symmetric matrix",
     "default: the two directions are perpendicular and of length 1",
     "default: the variances along the two directions add up to the total variance",
@@ -12252,13 +12531,14 @@ export const catalog = [
     "points on one straight line: the first direction carries all the variance",
     "a start exactly at right angles finds the directions in the wrong order, and they are swapped",
     "the corners of a square have no principal direction: equal variances, any perpendicular pair",
-    "x in millimetres: the first direction turns to within 4° of the x axis with over 99% of the variance (quiz prediction)",
+    "both features in millimetres: the same 45° direction and 80% share, with variances 400 and 100 (quiz prediction)",
+    "x in millimetres: the first direction turns to within 4° of the x axis with over 99% of the variance (preset and \"Things to try\")",
     "the scores on the two directions are uncorrelated, and moving the whole cloud changes nothing",
     "presets: the nearly round cloud needs 29 multiplications for its first direction, the default 11",
     "inputs with no spread are refused with a reason"
    ],
    "runs": 10,
-   "frames": 302,
+   "frames": 313,
    "cost": [
     {
      "formula": "3 + ln(10⁻⁹ ÷ (1 − r²)) ÷ ln(r²)",
@@ -12312,6 +12592,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 16
   },
   "frames": 29
@@ -12515,16 +12797,18 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Four points, and this is not the XOR pattern. Class 1 sits in the midd",
     "reaches the maximum-likelihood fit found independently by Newton's method",
     "default run converges and matches Newton on overlapping data",
     "loss never increases at a small learning rate",
     "reported accuracy equals a recount from the returned weights",
     "the worked example: one step gives weights (1, 1), bias 0, probability 0.73",
-    "XOR stays at chance (quiz prediction)",
+    "class 1 between two class 0 points: the gradient is exactly zero at the start and nothing is learned (quiz prediction)",
+    "XOR stays at chance (the XOR preset)",
     "separable data: perfect accuracy, falling loss, weights still growing"
    ],
    "runs": 9,
-   "frames": 786,
+   "frames": 770,
    "cost": [],
    "costNote": "This lesson has no size experiment, so its cost is argued in the text and was not measured.",
    "languages": [
@@ -12532,6 +12816,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 6
   },
   "frames": 84
@@ -12741,6 +13027,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Four points: (0, 0) and (1, 1) are class 0, while (0, 1) and (1, 0) ar",
     "default: every chosen split matches a brute-force search over every threshold",
     "moons, fully grown: every chosen split matches brute force",
     "XOR, 80 points, fully grown: every chosen split matches brute force",
@@ -12801,6 +13088,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 9
   },
   "frames": 24
@@ -12987,18 +13276,21 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Three points lie on one horizontal line: (−1, 0) is class 1, (0, 0) is",
     "converges on separable data and every point is strictly on its correct side",
     "the number of updates respects Novikoff's bound (R/γ)²",
     "respects the bound and converges for several seeds",
     "the worked example: two updates, weights (2, 0), bias 0",
-    "XOR never converges and stops at the pass limit (quiz prediction)",
+    "XOR never converges and stops at the pass limit",
+    "three points on a line with the odd one in the middle: 3 mistakes, then 2 in every pass (quiz prediction)",
+    "the default run: 4, 2, 2, 2, 0 mistakes and 10 updates (quoted in Things to try)",
     "exact XOR corners: every pass has mistakes",
     "reported accuracy equals a recount from the returned weights",
     "converges exactly when an independent check says the points are separable",
     "moons preset is not separable and does not converge"
    ],
    "runs": 9,
-   "frames": 1018,
+   "frames": 778,
    "cost": [],
    "costNote": "This lesson has no size experiment, so its cost is argued in the text and was not measured.",
    "languages": [
@@ -13006,6 +13298,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 8
   },
   "frames": 42
@@ -13206,10 +13500,14 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On XOR, a network with a single hidden unit cannot get every point rig",
     "the analytic gradient matches a finite-difference gradient for every weight",
     "the gradient also matches on another dataset and network size",
     "XOR is learned with the default settings and the loss falls",
     "with a small learning rate the loss never rises",
+    "one hidden unit separates a separable set of 60 points (quiz prediction)",
+    "a learning rate of 5 makes the loss rise in epochs 9, 10, 11, 15, 16 and 17 and still ends at 40 of 40 (quoted in Things to try)",
+    "the small learning rate ends at 23 of 40 after 200 epochs and 40 of 40 after 1,000 (quoted in Things to try)",
     "one hidden unit gets three of the four XOR corners",
     "two hidden units on seed 1 end at 25 of 40",
     "a separable set is separated",
@@ -13308,6 +13606,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 10
   },
   "frames": 116
@@ -13483,6 +13783,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: An image has four rows that all read 9, 7, 5, 3, 1, so each column is ",
     "every kernel matches an independent shift-and-add computation on a random image",
     "with the kernel turned, the output matches convolution computed straight from its definition",
     "a blur whose weights add up to 1 leaves a flat image unchanged",
@@ -13491,15 +13792,17 @@ export const catalog = [
     "turning a symmetric kernel changes nothing; turning a Sobel kernel flips every sign and leaves the strength alone",
     "the worked example: a strip 1 1 1 9 9 9 gives 0, 32, 32, 0",
     "the default run: a square gives ±32 on its sides, 0 in its middle and on the flat border",
-    "the predicted answer: the horizontal Sobel kernel gives 8 everywhere on a ramp, and blur and sharpen leave it unchanged",
+    "quoted in Try this: the horizontal Sobel kernel gives 8 everywhere on a ramp, and blur and sharpen leave it unchanged",
+    "the predicted answer: a ramp that falls by 2 per column gives −16 everywhere under the horizontal Sobel kernel",
+    "quoted in Try this: a kernel that compares two opposite corners is blind to the diagonal edge, and turning the Sobel kernel flips 20 numbers on the square",
     "a single 1 on the right moves a dot one cell left, and one cell right once the kernel is turned",
     "the numbers quoted in Try this: blurring a dot, and sharpening a step",
     "the output of a sum of two images is the sum of their outputs",
     "a typed kernel and a typed image are used as given, and the count is positions times weights",
     "a 5 by 5 kernel on a larger image also matches the reference"
    ],
-   "runs": 12,
-   "frames": 750,
+   "runs": 13,
+   "frames": 758,
    "cost": [
     {
      "formula": "9 (n − 2)²",
@@ -13578,6 +13881,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 3,
+   "brokenOnPurpose": 3,
    "outputLines": 21
   },
   "frames": 108
@@ -13761,6 +14066,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Five nodes stand in a line: A-B-C-D-E. Only A starts with a non-zero n",
     "the default run matches an independent computation with whole matrices",
     "random graphs, every weight set and both ways of combining also match it",
     "relabelling the nodes relabels the outputs and changes nothing else",
@@ -13856,6 +14162,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 3,
+   "brokenOnPurpose": 2,
    "outputLines": 5
   },
   "frames": 41
@@ -14062,6 +14370,8 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Type \"the the the\" and switch on \"Add position information\". All three",
+    "the predict question: Type \"cat cat cat\" and switch on the causal mask, with no position inf",
     "each row of weights sums to 1 and the output matches an independent direct computation",
     "the same with position information",
     "the same with a causal mask",
@@ -14077,10 +14387,11 @@ export const catalog = [
     "the numbers of the worked example and the code sample",
     "without scaling the weights are more lopsided: cat goes from 0.498 to 0.765",
     "the position vector is the sine and cosine formula for four entries",
+    "the numbers quoted in the things to try",
     "the feed-forward layer of the original block has twice the weights of its attention layer"
    ],
    "runs": 10,
-   "frames": 404,
+   "frames": 368,
    "cost": [
     {
      "formula": "n²",
@@ -14169,6 +14480,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 3,
+   "brokenOnPurpose": 2,
    "outputLines": 12
   },
   "frames": 45
@@ -14356,16 +14669,19 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The default run uses seed 7 and 100 steps, and ends on the plus. Keep ",
     "the schedule: accumulated noise variance equals 1 - abar at every step",
     "the simulated forward process has the noise variance the schedule predicts",
     "the default reverse run ends exactly on a training image",
     "reverse runs from 200 seeds all end on a training image, split roughly evenly",
+    "the numbers quoted in the things to try: when the denoiser becomes sure, and the forward weights",
+    "the same seed with 50 steps ends on a different image from the default run",
     "coarse and fine step counts also end on a training image",
     "the denoiser weights are a probability distribution and the guess stays between the images",
     "the worked example by hand"
    ],
    "runs": 7,
-   "frames": 639,
+   "frames": 589,
    "cost": [],
    "costNote": "This lesson has no size experiment, so its cost is argued in the text and was not measured.",
    "languages": [
@@ -14373,6 +14689,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 3,
+   "brokenOnPurpose": 3,
    "outputLines": 7
   },
   "frames": 102
@@ -14570,15 +14888,18 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: With 100 points the output panel reports a typical error of about 0.16",
     "the worked example: five points, four inside, estimate 3.2",
     "the estimate equals 4 × inside / n and is near π for 4000 points",
     "error shrinks like 1/√n: 100 times the points gives about a tenth of the error",
     "RMS error over 300 seeds matches √(π(4 − π)/n)",
-    "quiz and presets: typical error at 2000 points is half that at 500; 0.164, 0.082, 0.041 at 100, 400, 1600",
-    "the same seed reproduces the same run, and one point gives 0 or 4"
+    "presets: typical error at 2000 points is half that at 500; 0.164, 0.082, 0.041 at 100, 400, 1600",
+    "the same seed reproduces the same run, and one point gives 0 or 4",
+    "things to try: 400 points with seeds 1 to 5 give 3.24, 3.18, 3.14, 3.02 and 3.25",
+    "things to try: with seed 12 the errors are 0.3784, 0.0984, 0.0784 at 100, 400, 1600 points, then 0.0804 at 2,000 and 0.0066 at 4,000"
    ],
    "runs": 8,
-   "frames": 1010,
+   "frames": 1006,
    "cost": [
     {
      "formula": "n",
@@ -14632,6 +14953,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 149
@@ -14816,6 +15139,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: You are almost sure a coin is fair: your prior is Beta(20, 20). Then y",
     "posterior parameters equal the prior plus the counts",
     "the posterior mean is (a0 + heads) / (a0 + b0 + n), a weighted average of prior mean and frequency",
     "the worked example: H, H, T, H from a flat prior",
@@ -14827,8 +15151,8 @@ export const catalog = [
     "calibration: the 95% interval covers the true chance in most of 400 runs",
     "all heads never gives certainty: mean is (n + 1) / (n + 2)"
    ],
-   "runs": 8,
-   "frames": 314,
+   "runs": 9,
+   "frames": 356,
    "cost": [],
    "costNote": "This lesson has no size experiment, so its cost is argued in the text and was not measured.",
    "languages": [
@@ -14836,6 +15160,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 10
   },
   "frames": 42
@@ -15007,6 +15333,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Versions A and B are identical: both truly convert 20%. The plan is 10",
     "worked example: 30 of 200 against 50 of 200 gives z = 2.5 and p = 0.0124",
     "z squared equals Pearson's chi-squared statistic for the two-by-two table of counts",
     "p-values agree with known points of the normal distribution and with an independent formula",
@@ -15014,16 +15341,17 @@ export const catalog = [
     "no real difference, peeking at 20 checks: false wins rise to about a quarter, far above 5%",
     "every added check adds false wins: 1, 5 and 20 checks",
     "peeking can only add winners: whenever the planned test is significant, the peeking run also declares one",
-    "presets and quiz: the same visitors give no difference when tested once, and a false win for B at check 6 when peeking",
+    "the quiz prediction: identical versions at 20%, seed 7, a false win for A at check 3 of 10 that is gone by the end",
+    "presets: the same visitors give no difference when tested once, and a false win for B at check 6 when peeking",
     "default: a true gap of 3 points is found at 2000 per group, and with peeking the run stops at 1100",
     "power: 10% against 13% with 2000 per group is detected in most experiments",
     "sample size: 3839 per group separates 10% from 12% about four times in five",
-    "preset and quiz: a one-point improvement is missed at 1000 per group",
+    "preset: a one-point improvement is missed at 1000 per group",
     "nobody buys, or everybody buys: the score is 0 and the p-value is 1, not a division by zero",
     "the number of progress checks does not change the planned test, and the same seed repeats exactly"
    ],
    "runs": 8,
-   "frames": 184,
+   "frames": 178,
    "cost": [
     {
      "formula": "5% of 2000",
@@ -15072,6 +15400,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 4
   },
   "frames": 29
@@ -15256,6 +15586,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Demand grows by exactly 2 units every month, with no randomness at all",
     "worked example: 100, 110, 104, 120 with a weight of one half gives 105, 104.5 and 112.25",
     "the simple level equals the explicit weighted sum of past figures, with weights that sum to 1",
     "α = 1 reproduces the last observation: every forecast is the figure of the month before",
@@ -15271,8 +15602,8 @@ export const catalog = [
     "histories too short for the method are refused with a reason",
     "the same seed gives the same figures, and the figures do not depend on the method"
    ],
-   "runs": 10,
-   "frames": 420,
+   "runs": 11,
+   "frames": 471,
    "cost": [
     {
      "formula": "n − 1",
@@ -15401,6 +15732,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 51
@@ -15561,17 +15894,23 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The reservoir has room for 7 items and the stream has 30. Which items ",
     "the reservoir holds k distinct items of the stream, and counters match the log",
     "replaying the log by hand gives the same reservoir, and item i enters exactly when j ≤ k",
     "uniformity: over 6000 seeds each of 20 items is kept about 4/20 of the time",
     "invariant: after i items each is held with probability k/i (i = 3, 5, 8, 13)",
     "every pair is equally likely: 2 of 5 over 10000 seeds gives each of the 10 pairs about 10%",
     "average replacements over 2000 seeds match k (H(n) − H(k))",
-    "quiz: a stream shorter than the reservoir is kept whole, with no random draws",
+    "a stream shorter than the reservoir is kept whole, with no random draws",
+    "the predict question: 7 of 30 always takes 23 random draws",
+    "try-this numbers: four of twenty admits items 5 to 8 and passes over 17 to 20",
+    "try-this numbers: the long stream makes 9 replacements up to item 30 and 3 after",
+    "try-this numbers: one slot, 40 items, replacements at 2, 3, 6, 7 and 12",
+    "try-this numbers: seeds 1 to 10 keep 16 items from the first half of twenty",
     "the worked example: 2 of 6 with seed 1"
    ],
    "runs": 8,
-   "frames": 174,
+   "frames": 201,
    "cost": [
     {
      "formula": "expected: 10 × (H(n) − H(10))",
@@ -15630,6 +15969,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 2
   },
   "frames": 22
@@ -15820,15 +16161,20 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: This time the chain starts at x = 2, the centre of the right bump, and",
     "the acceptance rule holds at every step, and every step records one sample",
     "the worked example: the first four steps with seed 36",
     "known values of the target: mean 0.8, left share about 0.3002",
     "long runs approach the known mean and the known mass of each bump",
     "multiplying the target by a constant changes nothing",
-    "quiz and preset: width 0.15 stays in the left bump although over 90% of proposals are accepted",
+    "preset: width 0.15 stays in the left bump although over 90% of proposals are accepted",
     "preset: width 40 rejects more than 90% of proposals",
     "preset: a start in the tail climbs into the right bump",
-    "experiment: crossings are rare for narrow proposals and common for moderate ones"
+    "experiment: crossings are rare for narrow proposals and common for moderate ones",
+    "things to try: width 2.5 accepts 92 and crosses 20 times, width 0.15 accepts 242 and never crosses",
+    "things to try: width 40 accepts 8 proposals, so the samples hold 9 different positions",
+    "things to try: over seeds 1 to 10 the left share spans 26.2% to 32.5% at 3,000 steps and 20.8% to 47.2% at 250",
+    "things to try: from x = 5 the mean is 2.53 and the chain is first within 1 of the bump centre at step 21"
    ],
    "runs": 8,
    "frames": 1816,
@@ -15839,6 +16185,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 4
   },
   "frames": 252
@@ -16023,17 +16371,22 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The process noise is set to zero and the measurement noise to 1. Ten r",
     "the scalar predict and update equations hold at every step, in gain form and in precision form",
     "the variance and gain converge to the closed-form steady state",
     "averaged over 300 runs, the estimate error is smaller than the raw measurement error",
     "the reported variance is honest: normalized squared error averages 1 over 400 runs",
     "the worked example: readings 2.5 and 3.4 with Q = 1 and R = 4",
-    "quiz: with no process noise the gain falls like 1 / (k + R / P0)",
+    "with no process noise the gain falls like 1 / (k + R / P0)",
     "the gains do not depend on the measurements",
-    "presets: long-run gains near 0.05 (noisy sensor) and 0.9 (good sensor)"
+    "presets: long-run gains near 0.05 (noisy sensor) and 0.9 (good sensor)",
+    "things to try: typical tracking starts at gain 0.448, twice the long-run 0.221, and settles from step 12",
+    "things to try: long-run gains 0.049 and 0.908, typical errors 3.93 against 1.51 and 0.49 against 0.50",
+    "things to try: with no process noise the gain goes from 0.429 to 0.016 in 60 steps",
+    "things to try: after the sudden jump the estimate trails by 4.40, 3.25, 2.40, 1.78, 1.32, 0.98 and the variance never rises"
    ],
    "runs": 9,
-   "frames": 578,
+   "frames": 480,
    "cost": [],
    "costNote": "This lesson measures its behaviour but states no formula for the pipeline to compare it with.",
    "languages": [
@@ -16041,6 +16394,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 9
   },
   "frames": 62
@@ -16249,6 +16604,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: With 12 particles the default run starves at step 3 and ends on the wr",
     "weights sum to 1 after normalising at every step, and resampling keeps the particle count",
     "resampling copies particle i either ⌊N·w⌋ or ⌈N·w⌉ times, and every new particle is an exact copy of an old one",
     "the worked example: weights 0.31, 0.07, 0.31, 0.31, estimate 1.77, marks pick particles 1, 3, 4, 4, and the left side falls from 0.38 to 0.07",
@@ -16256,11 +16612,15 @@ export const catalog = [
     "the gap to the Kalman answer shrinks like 1/√N: 16 times the particles gives about a quarter of the gap",
     "hallway with a beacon: 16,000 particles agree with an exact grid computation of the two-humped belief (RMS gap under 0.06 m)",
     "default run: the true side falls to 4% of the weight at step 5, recovers, and the wrong side is empty at step 7",
-    "quiz and presets: with 12 particles the same readings starve the cloud at step 3 and it ends 10.21 m off; 20 particles starve, 24 recover",
+    "presets: with 12 particles the same readings starve the cloud at step 3 and it ends 10.21 m off; 20 particles starve, 24 recover",
     "changing the number of particles leaves the robot path and the readings untouched",
     "plain case presets: 300 particles end 0.02 m from the exact answer; 6 particles end 0.57 m from it and too sure of themselves",
     "tryThis: with a sensor error of 0.2, only 10 of 150 particles are copied at step 2 and about 5 are effective",
-    "a cloud that is far from the reading still gets weights that sum to 1, and a left-hand start is tracked through the beacon"
+    "a cloud that is far from the reading still gets weights that sum to 1, and a left-hand start is tracked through the beacon",
+    "things to try: at step 6 of the default run the right side takes 69% of the weight and only 35 particles are copied",
+    "things to try: with seed 47 the cloud survives with 24, 30, 40 and 50 particles and starves with 20, 35, 46 and 64",
+    "things to try: the plain case with 6 particles is 1.42 m from the exact line at step 3 and ends 4.1 spreads from the robot",
+    "things to try: a sensor error of 0.2 leaves 5.5 effective particles at step 2 and the run ends 0.15 m off"
    ],
    "runs": 8,
    "frames": 316,
@@ -16322,6 +16682,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 9
   },
   "frames": 38
@@ -16502,18 +16864,20 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: On the \"Two walls\" map with seed 12, a run limited to 50 iterations re",
     "default run: every tree edge is collision-free and within the step size, and the path is valid",
     "trees and paths are valid on every layout, over 15 seeds each, with large and small steps",
     "the segment test never misses a crossing that walking along the segment finds",
     "the worked example: three branches added, the fourth rejected although its end point is free",
-    "quiz: a walled-in goal gives an honest failure after exactly 300 iterations",
+    "preset: a walled-in goal gives an honest failure after exactly 300 iterations",
+    "the quiz prediction: seed 12 fails within 50 iterations and succeeds at iteration 106 when allowed 500, after the same first 50",
     "preset: 50 iterations are too few for the two walls, and failure is reported",
     "more iterations succeed more often in the narrow passage (40 seeds)",
     "preset: with seed 7, a goal bias of 0.5 needs more iterations than 0.1 on the two walls",
     "the same seed gives the same tree, and the open world is solved"
    ],
    "runs": 10,
-   "frames": 2453,
+   "frames": 2259,
    "cost": [
     {
      "formula": "n² / 2 (scaled)",
@@ -16562,6 +16926,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 131
@@ -16696,6 +17062,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The text MISSISSIPPI is 11 symbols, or 88 bits. How many bits will the",
     "default input matches a regular-expression reference and round-trips",
     "the worked example: 80 bits become 64",
     "text without runs doubles in size",
@@ -16703,10 +17070,13 @@ export const catalog = [
     "ordinary words expand and still round-trip",
     "a run longer than the count limit is split",
     "digits, spaces and a run of one",
+    "things to try: one matching neighbour saves one pair, 144 bits",
+    "things to try: a third A is absorbed, 88 bits in and 80 out",
+    "things to try: a sentence with four double letters has 23 runs, 368 bits",
     "one long run costs one pair"
    ],
    "runs": 8,
-   "frames": 262,
+   "frames": 265,
    "cost": [
     {
      "formula": "16 × 512 ÷ run length",
@@ -16760,7 +17130,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 6
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
+   "outputLines": 9
   },
   "frames": 30
  },
@@ -16930,6 +17302,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The text ABCDEF has six different symbols, each appearing once. How ma",
     "default input: prefix-free, optimal, round trip, entropy bound",
     "the worked example: 15 bits and the quoted codes",
     "the code sample text: 49 bits",
@@ -16938,10 +17311,13 @@ export const catalog = [
     "two symbols get one bit each",
     "a dominant symbol costs one bit, far above the entropy",
     "a pangram with many symbols is still sound",
-    "digits, punctuation and markup characters"
+    "digits, punctuation and markup characters",
+    "things to try: a second A shortens only the code for A, 22 bits",
+    "things to try: the dominant-symbol preset takes 34 bits, 1.214 per symbol against an entropy of 0.806",
+    "things to try: the space gets the only 2-bit code in a short English sentence"
    ],
    "runs": 9,
-   "frames": 537,
+   "frames": 527,
    "cost": [
     {
      "formula": "entropy × 200 (lower limit)",
@@ -17040,7 +17416,9 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
-   "outputLines": 8
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
+   "outputLines": 11
   },
   "frames": 61
  },
@@ -17195,6 +17573,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The text aaaaaaaaaaaa is twelve copies of a. With the default window o",
     "default input: every triple is a longest match and the text round-trips",
     "the code sample: 11 triples, 165 bits instead of 280",
     "the worked example: four triples, 60 bits instead of 72",
@@ -17204,10 +17583,13 @@ export const catalog = [
     "an ordinary sentence expands",
     "text without repeats costs one triple per symbol",
     "odd window and look-ahead sizes, single symbol",
+    "things to try: a window of 32 keeps 24 triples at 16 bits each, 384 bits",
+    "things to try: the ninth triple of the default text is (14,7,space), and a window of 4 finds (3,2,a) there",
+    "things to try: three abc are followed by (3,7,b) and (3,6,c), 75 bits",
     "spaces, digits and markup characters"
    ],
    "runs": 9,
-   "frames": 404,
+   "frames": 408,
    "cost": [],
    "costNote": "This lesson measures its behaviour but states no formula for the pipeline to compare it with.",
    "languages": [
@@ -17215,6 +17597,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 47
@@ -17392,6 +17776,8 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: The training text is the single word aaaaa: five letters and the end m",
+    "the predict question: Six merges are learned from \"slow slow slower fastest fastest oldest\":",
     "pair counts match an independent count at every merge, on the default text",
     "the same on a sentence with nine merges",
     "the same on a longer text with twenty merges",
@@ -17402,6 +17788,8 @@ export const catalog = [
     "the default run learns the six merges shown in the code sample",
     "a tie goes to the pair met first, reading left to right",
     "the worked example by hand",
+    "overlapping copies with a letter left over: aaaaa counts the pair 4 times, replaces it twice and leaves aa aa a _ (quiz prediction)",
+    "a word that shares letters but not rules: \"lowest\" keeps l, o and w single and gets est_ (quiz prediction)",
     "overlapping copies: aaaa counts the pair 3 times and replaces it twice",
     "letters never seen in training are reported and left as single characters",
     "merging until nothing is left stops after 16 merges, with pairs occurring once from round 11",
@@ -17499,6 +17887,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 9
   },
   "frames": 27
@@ -17666,16 +18056,22 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Set p = 47 and g = 5. By chance Alice and Bob both pick the secret 9. ",
     "default exchange matches exact big-integer arithmetic",
     "the worked example: A = 10, B = 8, secret 6, found by Eve in 3 tries",
     "a base of order 11 still agrees",
     "Eve may find a different exponent that works equally well",
     "the largest toy prime",
     "every listed prime with extreme secrets",
+    "try-this: a = 21 costs Eve 21 tries and the honest parties 32 multiplications",
+    "try-this: with g = 2 and a = 17 Eve finds x = 6 and the secret 4",
+    "try-this: with g = 5 the secret 17 costs Eve the full 17 tries",
+    "quiz: equal secrets under attack give equal keys that Mallory also holds",
+    "quiz: the same equal secrets without the attacker give 29",
     "attacker in the middle: the two sides hold different secrets that Mallory knows"
    ],
-   "runs": 8,
-   "frames": 139,
+   "runs": 9,
+   "frames": 157,
    "cost": [
     {
      "formula": "p − 2 tries",
@@ -17734,6 +18130,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 6
   },
   "frames": 18
@@ -17905,6 +18303,7 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: With p = 47, q = 59 (so n = 2773) and e = 3, the message m = 14 is enc",
     "the default key: n = 3233, d = 2753, 65 encrypts to 2790",
     "the worked example: p = 3, q = 11, e = 3, d = 7, 2 encrypts to 8",
     "a small message with e = 7 is an ordinary power",
@@ -17912,10 +18311,18 @@ export const catalog = [
     "zero and a message sharing a factor with n still round-trip",
     "message 0",
     "the attacker finds the smaller prime after 52 trial divisions",
+    "try-this: 66 encrypts to 524 under the default key",
+    "try-this: with e = 7 the message 3 is still an ordinary power",
+    "try-this: with e = 7 the message 4 wraps around to 219",
+    "try-this: d is 851 for e = 11",
+    "try-this: d is 2299 for e = 19",
+    "try-this: d is 407 for e = 23",
+    "quiz: 14 cubed stays below n = 2773 and is its own ciphertext",
+    "quiz: 15 cubed wraps around to 602",
     "another key matches exact big-integer arithmetic"
    ],
    "runs": 8,
-   "frames": 235,
+   "frames": 232,
    "cost": [
     {
      "formula": "about √n = 2^(bits ÷ 2)",
@@ -17984,6 +18391,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 5
   },
   "frames": 34
@@ -18156,17 +18565,21 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A line is drawn from (3, 14) to (10, 2). It covers 7 pixels across and",
+    "the predict question: Drawing from (0, 0) to (4, 2) lights (1, 0) and (3, 1) along the way. ",
     "default line: endpoints, pixel count, half-pixel bound, no gaps",
     "the worked example lights (0,0) (1,0) (2,1) (3,1) (4,2) (5,2)",
     "the default line has max(19, 8) + 1 = 20 pixels",
+    "the quiz prediction: the steep line from (3,14) to (10,2) has max(7, 12) + 1 = 13 pixels",
+    "the tie preset drawn both ways differs in 8 of its 17 pixels, all in the even columns",
     "every pair of endpoints on a 9 by 7 grid, in all eight octants",
     "mirror images of a line are mirror images pixel for pixel",
     "a reversed line lights the same pixels whenever no exact tie can occur",
     "the tie case in the quiz: (4,2) to (0,0) lights (3,2) and (1,1)",
     "single pixel, horizontal, vertical and diagonal lines"
    ],
-   "runs": 10,
-   "frames": 306,
+   "runs": 11,
+   "frames": 326,
    "cost": [
     {
      "formula": "2n (horizontal)",
@@ -18325,6 +18738,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 3
   },
   "frames": 40
@@ -18503,9 +18918,14 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: Six points: the corners of a triangle at (0, 0), (10, 0) and (5, 9), a",
+    "the predict question: Seven points: (0, 0), (2, 0), (4, 0), (6, 0), (6, 3), (6, 6) and (3, 3",
     "default input: every point inside or on the hull, strictly convex, counter-clockwise, matches gift wrapping",
     "matches gift wrapping on 240 random inputs across all four distributions",
     "the worked example: hull 0, 1, 3, 4 with 4 turn tests and 1 pop",
+    "the quiz prediction: a triangle with three points inside pops exactly those three",
+    "the quiz prediction: a triangle with points along all three sides has 3 corners",
+    "the scattered preset: 8 corners, 10 pops and 26 turn tests",
     "points on a circle are all corners: no pops and n − 2 turn tests",
     "sixty points on a circle are still all corners",
     "two thousand points on a circle: all corners, n − 2 turn tests",
@@ -18515,7 +18935,7 @@ export const catalog = [
     "the scan stays under 2n − 2 − h turn tests on a large scattered set"
    ],
    "runs": 10,
-   "frames": 262,
+   "frames": 252,
    "cost": [
     {
      "formula": "2n (upper bound)",
@@ -18624,6 +19044,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 2
   },
   "frames": 32
@@ -18786,8 +19208,12 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: A hundred and twenty keys are spread over 3 servers by hash mod 3. A f",
     "default run: only keys in the new server's arc move, all to the new server, and the lookup matches a linear scan",
     "the default run moves 9 of 60 keys on the ring and 48 of 60 with modulo",
+    "try-this: the default run takes all 9 moved keys from S4, and the removal hands all 18 of S4's keys to S2",
+    "try-this: 200 keys over seeds 1 to 5, with 1 position and with 8",
+    "quiz: three servers become four, modulo moves 92 of 120 and the ring 26",
     "removing a server moves exactly the keys it held",
     "ownership rules hold with virtual nodes, for both events, across 60 configurations",
     "the fraction moved on the ring averages about 1/(n + 1), and modulo about n/(n + 1)",
@@ -18795,8 +19221,8 @@ export const catalog = [
     "the worked example: on a 0 to 99 ring, adding D at 55 moves only key 51; modulo moves 5 of 6",
     "the demonstration hash is one-to-one on a sample, so positions never collide"
    ],
-   "runs": 7,
-   "frames": 140,
+   "runs": 9,
+   "frames": 179,
    "cost": [
     {
      "formula": "2000 / (n + 1)",
@@ -18885,6 +19311,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 2,
    "outputLines": 4
   },
   "frames": 20
@@ -19064,10 +19492,15 @@ export const catalog = [
   ],
   "checks": {
    "tests": [
+    "the predict question: With 32 items the best number of rounds is 4, which gives the marked i",
     "the state stays normalized and matches sin²((2k + 1)θ) on the default input",
     "the worked example: four items, one round, amplitudes 0, 0, 1, 0 and certainty",
     "default run quotes: 47.3% after one round, 96.1% after three",
-    "the quiz prediction: 16 items, 6 rounds, about 2%",
+    "try-this: one round on 16 items lifts the marked amplitude to 0.6875 and leaves the others at 0.1875",
+    "try-this: 16 items stand at 58.2% after round 4 and 12.5% after round 5",
+    "try-this: of measurement seeds 1 to 20 on 8 items only seed 7 is wrong, and four of seeds 1 to 60 are",
+    "quiz: 32 items, 12 rounds, back up at 92.9% after 1.4% at round 8",
+    "things to try: 16 items, 6 rounds, about 2%",
     "formula and normalization hold for every size from 2 to 6 qubits and up to 24 rounds",
     "the best number of rounds is 1, 2, 3, 4, 6 for 2 to 6 qubits and beats its neighbours",
     "measurements succeed about as often as the probability says (8 items, 94.5%)",
@@ -19075,7 +19508,7 @@ export const catalog = [
     "for 1024 items the best count is 25 rounds, against 512.5 classical tests on average"
    ],
    "runs": 9,
-   "frames": 141,
+   "frames": 159,
    "cost": [
     {
      "formula": "(π/4)·√N",
@@ -19124,6 +19557,8 @@ export const catalog = [
     "cpp",
     "javascript"
    ],
+   "morePrograms": 0,
+   "brokenOnPurpose": 3,
    "outputLines": 7
   },
   "frames": 11

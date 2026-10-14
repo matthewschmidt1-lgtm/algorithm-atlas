@@ -329,10 +329,14 @@ export default {
       { label: 'Random sequence, neither rule', values: { pattern: 'random', byRank: false, compress: false, ops: '' } },
     ],
     tryThis: [
-      'Load "Neither rule: a tall chain". Every union puts the old root under a new one, so the tree becomes a single line, and each find from element 0 walks its whole length. Note the "parent steps" counter at the end.',
-      'Now load "Chain with path compression only". The same line forms, but the first find from 0 repoints everything it passes, and the second find takes one step. Compare the counter with the previous run.',
-      'Load "Chain with union by rank only". The line never forms at all: every new element is attached directly under the existing root, because a single element always has the smaller rank.',
-      'Load "Random sequence, neither rule" and press Randomize a few times, reading the height of the tallest tree in the last step each time. With a dozen elements, random unions seldom build anything as tall as the chain. The bad case needs an awkward order, which sorted or structured data can easily supply.',
+      { ask: 'Load "Neither rule: a tall chain". It joins 10 elements in a line, 0 with 1, then 1 with 2, and so on, and then finds element 0 twice. Before you run it: how many steps up the tree will the first find take? And the second?',
+        reveal: 'Both take 9 steps, so the "parent steps" counter ends at 18. Every union puts the old root under a new one, so the tree becomes a single line with 0 at the bottom, and a find from 0 walks its whole length. With path compression off, the first find leaves the tree as it found it, and the second has to make the same walk again.' },
+      { ask: 'Now load "Chain with path compression only". The same line forms and the first find from 0 again takes 9 steps. How many steps will the second find take, and how tall will the tree be at the end?',
+        reveal: 'The second find takes 1 step, and the tree ends with height 1. The first find repoints every element it passes straight at the root, 9. The counter ends at 10 parent steps where the previous run needed 18.' },
+      { ask: 'Load "Chain with union by rank only". The unions are the same nine as before, in the same order. How tall will the tree be when they are done?',
+        reveal: 'Height 1. The line never forms at all. After the first union the root is 1, with rank 1, and every later union brings a single element of rank 0, which goes directly under that root. Each find from 0 takes 1 step.' },
+      { ask: 'Load "Random sequence, neither rule" and read the height of the tallest tree in the report. The chain reached height 9 with these 10 elements and no rules. Before you press Randomize a few times: how tall do you expect random unions to make the tallest tree?',
+        reveal: 'Much shorter than the chain. With the starting seed, 4, the tallest tree has height 4. Over seeds 1 to 30 the height is 2 or 3 in 19 runs, 4 in 7, 5 in 3 and 6 in one, and it never comes near 9. Random unions seldom build a tall chain. The bad case needs an awkward order, which sorted or structured data can easily supply.' },
     ],
     run,
     report: (r, c) => `${r.sets} ${r.sets === 1 ? 'set' : 'sets'}: ${r.groups.map((g) => `{${g.join(', ')}}`).join(' ')}\nparent = [${r.parent.join(', ')}]\nTallest tree: height ${r.height}. ${c['parent steps'] || 0} parent steps over ${r.log.length} operations, ${c.links || 0} of which merged two sets.`,
@@ -414,9 +418,23 @@ export default {
 
   code: {
     sample: {
-      input: 'Eight elements, 0 to 7, and the unions (0,1), (2,3), (1,3), (4,5), (6,7), (5,7), (2,1), then find(0) and two connectivity questions.',
-      expected: 'union(0, 1): merged, sets left: 7\nunion(2, 3): merged, sets left: 6\nunion(1, 3): merged, sets left: 5\nunion(4, 5): merged, sets left: 4\nunion(6, 7): merged, sets left: 3\nunion(5, 7): merged, sets left: 2\nunion(2, 1): already together\nparent: 1 3 3 3 5 7 7 7\nfind(0) = 3\nparent: 3 3 3 3 5 7 7 7\n0 and 2 connected: yes\n0 and 4 connected: no',
+      input: 'Eight elements, 0 to 7, and the unions (0,1), (2,3), (0,3), (4,5), (6,7), (5,7), (2,1), then find(0) and three connectivity questions.',
+      expected: 'union(0, 1): merged, sets left: 7\nunion(2, 3): merged, sets left: 6\nunion(0, 3): merged, sets left: 5\nunion(4, 5): merged, sets left: 4\nunion(6, 7): merged, sets left: 3\nunion(5, 7): merged, sets left: 2\nunion(2, 1): already together\nparent: 1 3 3 3 5 7 7 7\nfind(0) = 3\nparent: 3 3 3 3 5 7 7 7\n1 and 2 connected: yes\n4 and 6 connected: yes\n0 and 4 connected: no',
     },
+    breakIt: [
+      { change: 'In `union`, link the element instead of its root: on the line that sets the parent of `ra`, set the parent of `a`. Which of the three connectivity answers will be wrong, and which union caused it?',
+        find: { python: 'parent[ra] = rb', javascript: 'parent[ra] = rb;' },
+        replace: { python: 'parent[a] = rb', javascript: 'parent[a] = rb;' },
+        reveal: 'The program prints "1 and 2 connected: no", and the damage was done at union(0, 3). The root of 0 is 1, but the changed line repoints only 0 at 3 and leaves 1 behind in a set of its own, although the very first union joined 0 and 1. Two more lines change. The parent lines read "3 1 3 3 5 7 7 7", and union(2, 1) prints "merged, sets left: 1" where it should say "already together": it finds two different roots, 3 and 1, reports a merge, and then sets the parent of 2, which was 3 already. The count says 1 set. There are three: {0, 2, 3}, {1} and {4, 5, 6, 7}.' },
+      { change: 'In the three connectivity questions at the end, compare the parents of the two elements instead of their roots: use `parent[a]` and `parent[b]` in place of the two calls to `find`. Which answer will change?',
+        find: { python: 'same = find(parent, a) == find(parent, b)', javascript: 'const same = find(parent, a) === find(parent, b);' },
+        replace: { python: 'same = parent[a] == parent[b]', javascript: 'const same = parent[a] === parent[b];' },
+        reveal: 'The second one. It prints "4 and 6 connected: no", although 4 and 6 are both in the set {4, 5, 6, 7}. The parent of 4 is 5 and the parent of 6 is 7. Those differ, but both lead to the root 7. "1 and 2 connected: yes" stays right only because 1 and 2 happen to point straight at the same root. A parent is one step on the way to the root, and two elements of one set can have different parents. Only the roots can be compared.' },
+      { change: 'In `union`, remove the check that returns early when the two roots are the same. What will the program report for union(2, 1), whose elements are already together?',
+        find: { python: '    if ra == rb:\n        return False\n', javascript: '  if (ra === rb) return false;\n' },
+        replace: { python: '', javascript: '' },
+        reveal: 'It prints "union(2, 1): merged, sets left: 1". Nothing was merged. There are still two sets, as the last line, "0 and 4 connected: no", confirms. The parent lines do not change, because the function only pointed the root 3 at itself. But it raised the rank of 3 for no reason and told the caller that a merge had happened, so the count of sets is now wrong. Any program that relies on that answer goes wrong with it. [Kruskal\'s algorithm](#/algorithm/kruskal), for one, uses it to reject an edge that would close a cycle.' },
+    ],
     python: {
       source: `def find(parent, x):
     root = x
@@ -445,7 +463,7 @@ n = 8
 parent = list(range(n))
 rank = [0] * n
 sets = n
-for a, b in [(0, 1), (2, 3), (1, 3), (4, 5), (6, 7), (5, 7), (2, 1)]:
+for a, b in [(0, 1), (2, 3), (0, 3), (4, 5), (6, 7), (5, 7), (2, 1)]:
     if union(parent, rank, a, b):
         sets -= 1
         print(f"union({a}, {b}): merged, sets left: {sets}")
@@ -454,7 +472,7 @@ for a, b in [(0, 1), (2, 3), (1, 3), (4, 5), (6, 7), (5, 7), (2, 1)]:
 print("parent: " + " ".join(str(p) for p in parent))
 print("find(0) = " + str(find(parent, 0)))
 print("parent: " + " ".join(str(p) for p in parent))
-for a, b in [(0, 2), (0, 4)]:
+for a, b in [(1, 2), (4, 6), (0, 4)]:
     same = find(parent, a) == find(parent, b)
     print(f"{a} and {b} connected: " + ("yes" if same else "no"))`,
       notes: [
@@ -497,7 +515,7 @@ const n = 8;
 const parent = Array.from({ length: n }, (_, i) => i);
 const rank = new Array(n).fill(0);
 let sets = n;
-for (const [a, b] of [[0, 1], [2, 3], [1, 3], [4, 5], [6, 7], [5, 7], [2, 1]]) {
+for (const [a, b] of [[0, 1], [2, 3], [0, 3], [4, 5], [6, 7], [5, 7], [2, 1]]) {
   if (union(parent, rank, a, b)) {
     sets -= 1;
     console.log("union(" + a + ", " + b + "): merged, sets left: " + sets);
@@ -508,7 +526,7 @@ for (const [a, b] of [[0, 1], [2, 3], [1, 3], [4, 5], [6, 7], [5, 7], [2, 1]]) {
 console.log("parent: " + parent.join(" "));
 console.log("find(0) = " + find(parent, 0));
 console.log("parent: " + parent.join(" "));
-for (const [a, b] of [[0, 2], [0, 4]]) {
+for (const [a, b] of [[1, 2], [4, 6], [0, 4]]) {
   const same = find(parent, a) === find(parent, b);
   console.log(a + " and " + b + " connected: " + (same ? "yes" : "no"));
 }`,
@@ -553,7 +571,7 @@ int main() {
     std::vector<int> parent(n), rank(n, 0);
     std::iota(parent.begin(), parent.end(), 0);
     int sets = n;
-    std::vector<std::pair<int, int>> pairs = {{0, 1}, {2, 3}, {1, 3}, {4, 5}, {6, 7}, {5, 7}, {2, 1}};
+    std::vector<std::pair<int, int>> pairs = {{0, 1}, {2, 3}, {0, 3}, {4, 5}, {6, 7}, {5, 7}, {2, 1}};
     for (auto [a, b] : pairs) {
         if (unite(parent, rank, a, b)) {
             sets -= 1;
@@ -565,7 +583,7 @@ int main() {
     print_parents(parent);
     std::cout << "find(0) = " << find(parent, 0) << "\\n";
     print_parents(parent);
-    std::vector<std::pair<int, int>> questions = {{0, 2}, {0, 4}};
+    std::vector<std::pair<int, int>> questions = {{1, 2}, {4, 6}, {0, 4}};
     for (auto [a, b] : questions) {
         bool same = find(parent, a) == find(parent, b);
         std::cout << a << " and " << b << " connected: " << (same ? "yes" : "no") << "\\n";
@@ -682,16 +700,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Both rules are switched off and 8 elements are joined in a line: union(0, 1), union(1, 2), and so on up to union(6, 7). Each union puts the first root under the second. How many steps does find(0) then take to reach the root?',
-      options: ['1', '3', '7', '8'],
+      q: 'Union by rank is on and path compression is off. Eight elements are joined in pairs, then the pairs are joined, then the two halves: union(0, 1), union(2, 3), union(4, 5), union(6, 7), then union(1, 3), union(5, 7), then union(3, 7). On a tie the first root goes under the second. How many steps does find(0) then take to reach the root?',
+      options: ['1', '2', '3', '7'],
       answer: 2,
       explain: [
-        'One step is what you would get with union by rank, where every element hangs directly under one root.',
-        '3 is log₂ 8, the limit that union by rank guarantees. With the rules off there is no such limit.',
-        'Correct. Each union put the previous root under a new one, so the tree is a chain 0, 1, 2, up to 7, and element 0 is 7 steps from the root.',
-        'There are 8 elements but only 7 arrows between them.',
+        'One step is what union by rank gives when single elements are added to a larger set one at a time. Here every union joins two trees of equal rank, and each such tie makes the tree one level taller.',
+        'After the first six unions element 0 is 2 steps from its root, 3. The last union puts 3 under 7, which adds one more step.',
+        'Correct. Every union here is a tie, so 0 goes under 1, then 1 under 3, then 3 under 7. The path from 0 is 0, 1, 3, 7: 3 steps. That is log₂ 8, the tallest tree union by rank can build from 8 elements.',
+        '7 steps needs a chain of all 8 elements. Union by rank cannot build one: a tree only gets taller when two trees of equal rank are joined, and that takes twice as many elements for each extra level.',
       ],
-      tryInput: { elements: 8, pattern: 'chain', byRank: false, compress: false, ops: '' },
+      tryInput: { elements: 8, ops: '0-1, 2-3, 4-5, 6-7, 1-3, 5-7, 3-7, ?0', byRank: true, compress: false },
+      check: (r, c) => (r.log[7].type === 'find' && r.log[7].steps === 3 && r.log[7].root === 7 && r.height === 3 && r.rank[7] === 3 && r.parent.join(',') === '1,3,3,7,5,7,7,7') || `find(0) took ${r.log[7].steps} steps, parent ${r.parent.join(',')}`,
     },
     {
       type: 'debug',
@@ -752,7 +771,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Friend circles and their sizes',
-      prompt: 'You are given n people and a list of friendships, each a pair of people. Report how many separate friend circles there are and the size of the largest one. Replace rank with a `size` array: a root\'s entry holds the number of people in its set, a union puts the smaller set under the larger one and adds the sizes, and a counter of circles drops by one on every union that really merges. Then add a function that answers "how many people are in the same circle as person x?".',
+      prompt: 'You are given n people and a list of friendships, each a pair of people. Report how many separate friend circles there are and the size of the largest one. Replace rank with a `size` array: a root\'s entry holds the number of people in its set, a union puts the smaller set under the larger one and adds the sizes, and a counter of circles drops by one on every union that really merges. Then add a function that answers "how many people are in the same circle as person x?". Test it on 10 people, numbered 0 to 9, with the friendships (0,1), (1,2), (3,4), (5,6), (6,7), (7,8), (8,5) and (2,0). Report the number of circles, the size of the largest, and the circle size for each of persons 1, 4, 6 and 9.',
+      expect: 'There are 4 circles and the largest has 4 people. Person 1 is in a circle of 3, person 4 in a circle of 2, person 6 in a circle of 4 and person 9 in a circle of 1. The circles are {0, 1, 2}, {3, 4}, {5, 6, 7, 8} and {9}. Eight friendships are listed but only six of them merge anything: (8,5) and (2,0) join people who are already in the same circle, so the count drops from 10 to 4, not to 2.',
       hints: [
         'Initialize every size to 1 and the circle counter to n.',
         'Only a root\'s size is meaningful. Always go through `find` before reading it.',
@@ -807,12 +827,22 @@ int main() {
       check: (r) => (matchesReference(r) === true && r.height <= Math.floor(Math.log2(12))) || `height ${r.height}` },
     { name: 'the worked example: finds of 0 take 2 steps and then 1', input: { elements: 6, ops: '0-1, 2-3, 1-3, ?0, ?0', byRank: true, compress: true },
       check: (r, c) => (r.parent.join(',') === '3,3,3,3,4,5' && r.rank[3] === 2 && r.log[3].steps === 2 && r.log[4].steps === 1 && r.sets === 3 && c['parent steps'] === 3) || `parent ${r.parent.join(',')}, steps ${r.log[3].steps} then ${r.log[4].steps}` },
-    { name: 'the predict question: a naive chain of 8 puts element 0 seven steps from the root', input: { elements: 8, pattern: 'chain', byRank: false, compress: false, ops: '' },
+    { name: 'a naive chain of 8 puts element 0 seven steps from the root', input: { elements: 8, pattern: 'chain', byRank: false, compress: false, ops: '' },
       check: (r, c) => (r.height === 7 && r.log[7].steps === 7 && r.log[8].steps === 7 && c['parent steps'] === 14) || `height ${r.height}, steps ${r.log[7].steps}` },
     { name: 'path compression alone: second find on the chain takes one step', input: { elements: 8, pattern: 'chain', byRank: false, compress: true, ops: '' },
       check: (r, c) => (r.log[7].steps === 7 && r.log[8].steps === 1 && r.height === 1 && c['parent steps'] === 8) || `steps ${r.log[7].steps} then ${r.log[8].steps}, height ${r.height}` },
     { name: 'union by rank alone turns the chain into a star', input: { elements: 8, pattern: 'chain', byRank: true, compress: false, ops: '' },
       check: (r) => (r.height === 1 && r.sets === 1 && r.log[7].steps === 1) || `height ${r.height}` },
+    { name: 'the predict question: pairing equal trees with union by rank puts 0 three steps from the root', input: { elements: 8, ops: '0-1, 2-3, 4-5, 6-7, 1-3, 5-7, 3-7, ?0', byRank: true, compress: false },
+      check: (r, c) => (r.log[7].steps === 3 && r.height === 3 && r.rank[7] === 3 && c['parent steps'] === 3) || `find(0) took ${r.log[7].steps} steps, height ${r.height}` },
+    { name: 'try-this numbers: the chain of 10 costs 18, 10 and 9 parent steps under the three settings', input: { elements: 10, pattern: 'chain', byRank: false, compress: false, ops: '' },
+      check: (r, c) => (r.height === 9 && r.log[9].steps === 9 && r.log[10].steps === 9 && c['parent steps'] === 18) || `height ${r.height}, ${c['parent steps']} parent steps` },
+    { name: 'try-this numbers: path compression alone on the chain of 10', input: { elements: 10, pattern: 'chain', byRank: false, compress: true, ops: '' },
+      check: (r, c) => (r.height === 1 && r.log[9].steps === 9 && r.log[10].steps === 1 && c['parent steps'] === 10) || `height ${r.height}, ${c['parent steps']} parent steps` },
+    { name: 'try-this numbers: union by rank alone on the chain of 10', input: { elements: 10, pattern: 'chain', byRank: true, compress: false, ops: '' },
+      check: (r, c) => (r.height === 1 && r.parent.every((x) => x === 1) && r.log[9].steps === 1 && r.log[10].steps === 1) || `height ${r.height}, parent ${r.parent.join(',')}` },
+    { name: 'try-this numbers: the random sequence with neither rule has height 4 at seed 4', input: { pattern: 'random', byRank: false, compress: false, ops: '' },
+      check: (r) => r.height === 4 || `height ${r.height}` },
     { name: 'experiment formulas: n(n-1)/2 with neither rule', input: { elements: 12, pattern: 'chain-sweep', byRank: false, compress: false, ops: '' },
       check: (r, c) => c['parent steps'] === 66 || `got ${c['parent steps']}` },
     { name: 'experiment formulas: 2n-4 with both rules', input: { elements: 12, pattern: 'chain-sweep', byRank: true, compress: true, ops: '' },

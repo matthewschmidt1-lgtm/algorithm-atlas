@@ -171,10 +171,15 @@ export default {
       { label: 'Two routes to E', values: { edges: 'A-B, B-C, C-D, D-E, A-F, F-E' } },
     ],
     tryThis: [
-      'Watch the numbers under the nodes in the "Visited" row. They never go down: every node at distance 1 is visited before any node at distance 2. Step through and find the moment the first distance-2 node is visited.',
-      'Load "Two routes to E". One route from A to E has four edges and the other has two. Predict which edge will first reach E, then watch. The search cannot be fooled by the long way round.',
-      'Type the edges `A-B, C-D`. Nodes C and D are never found, because no route leads to them from A. To explore a whole graph that is in several pieces, you would restart the search from each node not yet found.',
-      'Raise "Extra edges" to 1. More and more edge checks end with "already found". Every edge still gets examined twice, once from each end.',
+      { ask: 'Run the graph the page opens with and watch the numbers in the "Visited" row. Each one is that node\'s distance from A. How many nodes will be visited before the first one at distance 2?',
+        reveal: 'Three: A, then C and D, the two nodes at distance 1. Only then is B visited, the first node at distance 2. The whole row reads 0, 1, 1, 2, 2, 2, 3, 3. The numbers never go down, because every node at one distance joins the queue before any node farther out.',
+        input: { nodes: 8, density: 0.35, seed: 3, edges: '' } },
+      { ask: 'Load "Two routes to E". One route from A to E has four edges and the other has two. Which edge will be the first to reach E: D-E or F-E?',
+        reveal: 'F-E. The search visits A, then B, then F, and F finds E at distance 2. The long way round has only got as far as C by then. When D-E is examined later, both of its ends have already been found, so it changes nothing. The search cannot be fooled by the long way round.' },
+      { ask: 'Type the edges `A-B, C-D`. The search starts at A. How many of the four nodes will it visit?',
+        reveal: 'Two: A and B. The report lists C and D as unreachable after only 2 edges examined, because no route leads to them from A. To explore a whole graph that is in several pieces, you would restart the search from each node not yet found.' },
+      { ask: 'On the opening graph (8 nodes, seed 3), set "Extra edges" to 0 and note the "edges examined" count, then set it to 1. There are 7 nodes to find, so only 7 edge checks can ever find a new one. How will the total number of checks compare with the number of edges?',
+        reveal: 'It is exactly twice the number of edges, because each edge is looked at once from each end. At 0 the graph has 7 edges and 14 are examined. At 1 it has 18 edges and 36 are examined. Only 7 checks find a new node either way. The rest, 7 of them at 0 and 29 at 1, end with "already found".' },
     ],
     run,
     report: (r, c) => `Visit order from ${r.start}: ${r.order.join(' → ')}\nFewest edges from ${r.start}: ${Object.entries(r.dist).map(([k, v]) => `${k}=${v === Infinity ? 'unreachable' : v}`).join(', ')}\n${c['edges examined'] || 0} edges examined.`,
@@ -245,9 +250,23 @@ export default {
 
   code: {
     sample: {
-      input: 'An undirected graph with edges A-D, A-E, B-D, B-E, C-E, B-F, C-F, F-G. The visit order from A, the distance to every node, and a shortest route to G.',
-      expected: 'order: A D E B C F G\ndistance: A:0 B:2 C:2 D:1 E:1 F:3 G:4\npath to G: A -> D -> B -> F -> G',
+      input: 'An undirected graph with edges A-D, A-E, B-D, B-E, C-E, D-F, C-F, F-G. The visit order from A, the distance to every node, and a shortest route to G.',
+      expected: 'order: A D E B F C G\ndistance: A:0 B:2 C:2 D:1 E:1 F:2 G:3\npath to G: A -> D -> F -> G',
     },
+    breakIt: [
+      { change: 'Turn the queue into a stack: take the next node from the back instead of the front. In Python that is `queue.pop()` in place of `queue.popleft()`, and in JavaScript `queue.pop()` in place of `queue[head++]`. Which distances will come out wrong?',
+        find: { python: 'u = queue.popleft()', javascript: 'const u = queue[head++];' },
+        replace: { python: 'u = queue.pop()', javascript: 'const u = queue.pop();' },
+        reveal: 'F and G. The program prints "order: A E C F G B D", "distance: A:0 B:2 C:2 D:1 E:1 F:3 G:4" and "path to G: A -> E -> C -> F -> G". F is 2 edges from A through D, but D sat at the bottom of the stack while the search ran down E, C, F and G first. A stack follows the newest find, which is depth-first search, and the first route it finds to a node need not be a shortest one.' },
+      { change: 'Change the test for a new node so that it asks whether `v` is in `order`, the list of nodes already visited, instead of whether it is in `dist`. A node now counts as found only when it leaves the queue. What will the first line of output look like?',
+        find: { python: 'if v not in dist:', javascript: 'if (!dist.has(v)) {' },
+        replace: { python: 'if v not in order:', javascript: 'if (!order.includes(v)) {' },
+        reveal: 'It prints "order: A D E B F B C C G" and "distance: A:0 B:2 C:3 D:1 E:1 F:2 G:3". B and C are each visited twice. A node that is waiting in the queue does not yet count as found, so a second neighbour queues it again. C also gets the wrong distance: E found it at distance 2, then F, itself at distance 2, found it again while it was still waiting and overwrote the 2 with 3. Mark a node when it joins the queue, not when it leaves.' },
+      { change: 'Delete the last edge, F-G, from the list, so that nothing is joined to G. The last line still asks for the path to G. What will it print?',
+        find: { python: ', ("F", "G")]', javascript: ', ["F", "G"]];' },
+        replace: { python: ']', javascript: '];' },
+        reveal: 'It prints "order: A D E B F C", "distance: A:0 B:2 C:2 D:1 E:1 F:2" and "path to G: G". G is missing from the first two lines (the C++ version, which numbers its nodes in advance, prints G:-1), because no route leads to it and a search only covers the piece of the graph it starts in. The last line is the trap. It looks like a route, but it is only G with nothing leading to it. Check that the target was found before you trace a path to it.' },
+    ],
     python: {
       source: `from collections import deque
 
@@ -276,7 +295,7 @@ def path_to(parent, target):
 
 
 edges = [("A", "D"), ("A", "E"), ("B", "D"), ("B", "E"),
-         ("C", "E"), ("B", "F"), ("C", "F"), ("F", "G")]
+         ("C", "E"), ("D", "F"), ("C", "F"), ("F", "G")]
 graph = {}
 for u, v in edges:
     graph.setdefault(u, []).append(v)
@@ -323,7 +342,7 @@ function pathTo(parent, target) {
 }
 
 const edges = [["A", "D"], ["A", "E"], ["B", "D"], ["B", "E"],
-  ["C", "E"], ["B", "F"], ["C", "F"], ["F", "G"]];
+  ["C", "E"], ["D", "F"], ["C", "F"], ["F", "G"]];
 const graph = new Map();
 for (const [u, v] of edges) {
   if (!graph.has(u)) graph.set(u, []);
@@ -348,7 +367,7 @@ console.log("path to G: " + pathTo(parent, "G").join(" -> "));`,
 int main() {
     const int n = 7;  // nodes A..G are 0..6
     std::vector<std::pair<int, int>> edges = {
-        {0, 3}, {0, 4}, {1, 3}, {1, 4}, {2, 4}, {1, 5}, {2, 5}, {5, 6}};
+        {0, 3}, {0, 4}, {1, 3}, {1, 4}, {2, 4}, {3, 5}, {2, 5}, {5, 6}};
     std::vector<std::vector<int>> graph(n);
     for (auto [u, v] : edges) {
         graph[u].push_back(v);
@@ -488,16 +507,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the graph A-B, B-C, C-D, D-E, A-F, F-E, starting from A and checking neighbours alphabetically, in what order are the nodes visited?',
-      options: ['A, B, C, D, E, F', 'A, B, F, C, E, D', 'A, F, E, D, C, B', 'A, B, F, E, C, D'],
+      q: 'In the graph A-C, A-E, C-F, E-B, B-D, F-D, starting from A and checking neighbours alphabetically, in what order are the nodes visited?',
+      options: ['A, B, C, D, E, F', 'A, C, E, F, B, D', 'A, C, F, D, B, E', 'A, C, E, B, F, D'],
       answer: 1,
       explain: [
-        'That follows one branch to its end, which is what depth-first search does.',
-        'Correct. B and F are one edge away. Then C (found from B) and E (found from F) are two away, and D is three away.',
-        'That also follows a single branch. Breadth-first search finishes each layer before going deeper.',
-        'The layers are right but the order inside layer two is not. B was visited before F, so C joined the queue before E.',
+        'That is alphabetical order. B is not joined to A, so it cannot be visited second. Only the neighbours of a visited node join the queue.',
+        'C and E are one edge from A. C is visited first and finds F, then E finds B, so F is ahead of B in the queue. D is three edges away and comes last.',
+        'That follows one branch all the way round, which is what depth-first search does. Breadth-first search finishes each layer before going deeper.',
+        'The layers are right but the order inside layer two is not. C was visited before E, so F joined the queue before B. The queue goes by arrival, not by alphabet.',
       ],
-      tryInput: { edges: 'A-B, B-C, C-D, D-E, A-F, F-E' },
+      tryInput: { edges: 'A-C, A-E, C-F, E-B, B-D, F-D' },
+      check: (r) => (r.order.join('') === 'ACEFBD' && r.dist.F === 2 && r.dist.B === 2 && r.dist.D === 3) || `visit order ${r.order.join(', ')}`,
     },
     {
       type: 'debug',
@@ -533,7 +553,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Can the graph be coloured with two colours?',
-      prompt: 'A graph is called bipartite if its nodes can be coloured with two colours so that every edge joins nodes of different colours. Modify breadth-first search to decide whether a graph is bipartite, and to print the colouring when it is. Test it on a square (A-B, B-C, C-D, D-A), which is bipartite, and a triangle, which is not. Make sure it also handles graphs in several pieces.',
+      prompt: 'A graph is called bipartite if its nodes can be coloured with two colours so that every edge joins nodes of different colours. Modify breadth-first search to decide whether a graph is bipartite, and to print the colouring when it is. Test it on three graphs: the square A-B, B-C, C-D, D-A, the triangle A-B, B-C, A-C, and the two-piece graph A-B, C-D, D-E, C-E. Make sure the search restarts in every piece.',
+      expect: 'The square is bipartite: A and C get one colour, B and D the other. The triangle is not: A gives B and C the opposite colour to its own, and the edge B-C then joins two nodes of the same colour. The two-piece graph is not bipartite either, because its second piece is the triangle C, D, E. A search that starts at A and never restarts sees only A-B and wrongly answers yes. Any cycle with an odd number of edges fails in the same way.',
       hints: ['Colour each node by whether its distance from the start is even or odd.', 'The colouring fails exactly when some edge joins two nodes with the same colour. You can detect this in the "already found" branch.'],
     },
   ],
@@ -581,7 +602,7 @@ int main() {
       check: (r, c) => c['edges examined'] === 2 * r.graph.edges.length || `examined ${c['edges examined']} for ${r.graph.edges.length} edges` },
     { name: 'the worked example', input: { edges: 'A-B, A-C, B-D, C-D, D-E' },
       check: (r) => (r.order.join('') === 'ABCDE' && r.dist.B === 1 && r.dist.C === 1 && r.dist.D === 2 && r.dist.E === 3 && r.parent.D === 'B') || `got order ${r.order.join('')} with D=${r.dist.D}, E=${r.dist.E}, parent of D ${r.parent.D}` },
-    { name: 'the predicted visit order', input: { edges: 'A-B, B-C, C-D, D-E, A-F, F-E' },
+    { name: 'the visit order on a ring of six nodes', input: { edges: 'A-B, B-C, C-D, D-E, A-F, F-E' },
       check: (r) => (r.order.join('') === 'ABFCED' && r.dist.E === 2 && r.parent.E === 'F') || `got ${r.order.join('')}` },
     { name: 'nodes in another piece of the graph are never found', input: { edges: 'A-B, C-D' },
       check: (r) => (r.order.join('') === 'AB' && r.dist.C === Infinity && r.dist.D === Infinity) || 'C and D should be unreachable' },

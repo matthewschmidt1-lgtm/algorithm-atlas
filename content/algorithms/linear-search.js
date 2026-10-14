@@ -133,9 +133,12 @@ export default {
       { label: 'Unsorted list', values: { where: 'last', shuffle: true, custom: [] } },
     ],
     tryThis: [
-      'Load "Worst case: target is absent" and note the number of comparisons. Then double the number of items. The comparisons double too, because every value has to be checked.',
-      'Switch "Shuffle the list first" on and off with the same seed. The bars change order but the number of comparisons stays the same. Only the position of the target matters, never the order of the other values.',
-      'Set "Search for" to the last value, then to a value that is not in the list. Both cost the same number of comparisons. Linear search cannot tell "it is at the very end" from "it is not here" until it gets to the end.',
+      { ask: 'Load "Worst case: target is absent" and note the number of comparisons for its 16 items. Then set the number of items to 32. Before you run it: how many comparisons will the search make now?',
+        reveal: '16 items take 16 comparisons and 32 items take 32. Every value has to be checked before the search can say the target is absent, so doubling the list doubles the work.' },
+      { ask: 'Load "Target somewhere in the list" and note the number of comparisons. Then switch "Shuffle the list first" on, leaving everything else alone. The bars will change order. Will the number of comparisons change?',
+        reveal: 'No. Both runs take 12 comparisons. The sorted list is searched for 75 and the shuffled one for 89, and each of those sits at position 11. Only the position of the target matters, never the order of the other values.' },
+      { ask: 'Set "Search for" to the last value and run it. Then set it to a value that is not in the list. Which of the two searches will cost more comparisons?',
+        reveal: 'Neither. With 16 items both cost 16 comparisons. Linear search cannot tell "it is at the very end" from "it is not here" until it gets to the end.' },
     ],
     run,
     report: (r, c) => `${r.index >= 0 ? `Found ${r.target} at position ${r.index}` : `${r.target} is not in the list`} after ${c.comparisons || 0} of a possible ${r.array.length} comparisons.\n[${r.array.join(', ')}]`,
@@ -201,9 +204,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The unsorted list [21, 3, 30, 17, 8, 12], searched for 17 and then for 20.',
-      expected: '17 found at index 3 after 4 comparisons\n20 not found after 6 comparisons',
+      input: 'The unsorted list [21, 3, 30, 17, 8, 12], searched for 17, then for 12, which is the last value, then for 20, which is absent.',
+      expected: '17 found at index 3 after 4 comparisons\n12 found at index 5 after 6 comparisons\n20 not found after 6 comparisons',
     },
+    breakIt: [
+      { change: 'Move the final "not found" return inside the loop, so that it runs as soon as one comparison fails. In Python that means indenting it one more level. How many of the three searches will still find their value?',
+        find: { python: '\n    return -1, comparisons', javascript: '    }\n  }\n  return { index: -1, comparisons };' },
+        replace: { python: '\n        return -1, comparisons', javascript: '    }\n    return { index: -1, comparisons };\n  }' },
+        reveal: 'None. The program prints "17 not found after 1 comparisons", "12 not found after 1 comparisons" and "20 not found after 1 comparisons". The first value is 21, it matches none of the targets, and the function gives up right there. Only a search for 21 would still succeed. "Not found" is a statement about the whole list, so it can only be returned after the loop has finished.' },
+      { change: 'Make the loop stop one position early by subtracting 1 from the length in the loop bound. Which search will now give a wrong answer?',
+        find: { python: 'range(len(a))', javascript: 'i < a.length' },
+        replace: { python: 'range(len(a) - 1)', javascript: 'i < a.length - 1' },
+        reveal: 'The search for 12. It now prints "12 not found after 5 comparisons", although 12 is in the list, because the last position is never checked. The search for 17 is unchanged, and the search for 20 prints "20 not found after 5 comparisons": the right answer, reached without looking at every value.' },
+      { change: 'Make the loop start at position 1 instead of position 0. Will any of the three searches give a wrong answer?',
+        find: { python: 'range(len(a))', javascript: 'let i = 0' },
+        replace: { python: 'range(1, len(a))', javascript: 'let i = 1' },
+        reveal: 'No, and that is the danger. It prints "17 found at index 3 after 3 comparisons", "12 found at index 5 after 5 comparisons" and "20 not found after 5 comparisons". Every answer is right and every count is one lower, because the first value, 21, is never checked. The mistake would show only in a search for 21. A test that never asks for the first value cannot catch it.' },
+    ],
     python: {
       source: `def linear_search(a, target):
     comparisons = 0
@@ -215,7 +232,7 @@ export default {
 
 
 data = [21, 3, 30, 17, 8, 12]
-for target in (17, 20):
+for target in (17, 12, 20):
     index, comparisons = linear_search(data, target)
     if index >= 0:
         print(f"{target} found at index {index} after {comparisons} comparisons")
@@ -241,7 +258,7 @@ for target in (17, 20):
 }
 
 const data = [21, 3, 30, 17, 8, 12];
-for (const target of [17, 20]) {
+for (const target of [17, 12, 20]) {
   const { index, comparisons } = linearSearch(data, target);
   if (index >= 0) {
     console.log(target + " found at index " + index + " after " + comparisons + " comparisons");
@@ -267,7 +284,7 @@ int linear_search(const std::vector<int>& a, int target, int& comparisons) {
 
 int main() {
     std::vector<int> data = {21, 3, 30, 17, 8, 12};
-    for (int target : {17, 20}) {
+    for (int target : {17, 12, 20}) {
         int comparisons = 0;
         int index = linear_search(data, target, comparisons);
         if (index >= 0) {
@@ -375,16 +392,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The list has 12 values and the target is not in it. How many comparisons will the run show?',
-      options: ['6', '11', '12', '13'],
+      q: 'The list is 4, 9, 15, 22, 27, 31, 36, 44, 50, in order, and the target is 30, which is not in it. How many comparisons will linear search make?',
+      options: ['5, stopping after 27, the last value below 30', '6, stopping at 31, the first value above 30', '9, one for every value', '10, one for every value and one more to confirm'],
       answer: 2,
       explain: [
-        '6 would be about average for a target that is present. This one is absent.',
-        'The last value must be checked too. Stopping one early could miss the target.',
-        'Correct. One comparison for each of the 12 values, then the search reports that the target is absent.',
-        'There are only 12 values, and each is compared once.',
+        'Stopping after 27 would need the search to know that everything later is larger. It does not look ahead, and it does not know the list is sorted.',
+        'A search that knew the list was sorted could stop at 31. Linear search only asks "is this value equal to 30?", so a larger value tells it nothing.',
+        'Correct. It checks all 9 values and only then reports that 30 is absent. The list happens to be in order, but linear search makes no use of that.',
+        'Each of the 9 values is compared once. Running off the end of the list is what confirms the target is absent, and that takes no extra comparison.',
       ],
-      tryInput: { size: 12, where: 'missing', custom: [], shuffle: false },
+      tryInput: { custom: [4, 9, 15, 22, 27, 31, 36, 44, 50], target: 30, shuffle: false },
+      check: (r, c) => (r.index === -1 && c.comparisons === 9 && r.array.length === 9) || `index ${r.index}, comparisons ${c.comparisons}`,
     },
     {
       type: 'debug',
@@ -429,7 +447,8 @@ int main() {
     {
       type: 'challenge',
       title: 'The sentinel trick',
-      prompt: 'The loop in this lesson makes two tests per step: "is this the target?" and "have I run off the end?". Write a version that makes only the first test inside the loop. Append the target to the end of the list before searching, so the loop is guaranteed to stop, then decide afterwards whether the match is a real one. Count the tests each version makes on a list of 1,000 values and an absent target. Then restore the list to its original state.',
+      prompt: 'The loop in this lesson makes two tests per step: "is this the target?" and "have I run off the end?". Write a version that makes only the first test inside the loop. Append the target to the end of the list before searching, so the loop is guaranteed to stop, then decide afterwards whether the match is a real one. Then restore the list to its original state. Try both versions on the list of the numbers 1 to 1,000, searching for 0, which is absent, and then for 250. Count every test each version makes: each "is this the target?", each "have I run off the end?", and the one check after the sentinel loop.',
+      expect: 'Searching 1 to 1,000 for 0, both versions return -1. The two-test loop makes 2,001 tests: 1,000 comparisons with the target and 1,001 checks for the end of the list. The sentinel version makes 1,002: 1,001 comparisons, the last of them with the sentinel, and one check afterwards. Searching for 250, both return position 249, after 500 tests in the first version and 251 in the second. The list holds 1,000 values again after each search.',
       hints: [
         'After the loop stops at position `i`, the target was really present only if `i` is less than the original length.',
         'Think about what must be true of the list for this trick to be allowed: it has to be writable, with room for one more item.',
@@ -493,8 +512,12 @@ int main() {
       check: (r, c) => (r.index === 3 && c.comparisons === 4) || `index ${r.index}, comparisons ${c.comparisons}` },
     { name: 'the worked example: 20 is absent after 6 comparisons', input: { custom: [3, 8, 12, 17, 21, 30], target: 20, shuffle: false },
       check: (r, c) => (r.index === -1 && c.comparisons === 6) || `index ${r.index}, comparisons ${c.comparisons}` },
-    { name: 'the predict question: 12 values, absent target, 12 comparisons', input: { size: 12, where: 'missing', custom: [], shuffle: false },
+    { name: 'an absent target in 12 values costs 12 comparisons', input: { size: 12, where: 'missing', custom: [], shuffle: false },
       check: (r, c) => (r.index === -1 && c.comparisons === 12) || `comparisons ${c.comparisons}` },
+    { name: 'the predict question: 30 is absent from a sorted list of 9 and still costs 9 comparisons', input: { custom: [4, 9, 15, 22, 27, 31, 36, 44, 50], target: 30, shuffle: false },
+      check: (r, c) => (r.index === -1 && c.comparisons === 9) || `index ${r.index}, comparisons ${c.comparisons}` },
+    { name: 'the default target sits at position 11 with and without shuffling', input: { shuffle: true },
+      check: (r, c) => (r.index === 11 && c.comparisons === 12 && r.target === 89) || `index ${r.index}, target ${r.target}, comparisons ${c.comparisons}` },
     { name: 'shuffling changes the order but not the cost', input: { size: 30, where: 'last', seed: 9, custom: [], shuffle: true },
       check: (r, c) => {
         const sorted = r.array.slice().sort((a, b) => a - b);

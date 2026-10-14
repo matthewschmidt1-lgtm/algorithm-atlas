@@ -216,10 +216,18 @@ export default {
       { label: 'Moving target', values: { system: 'driven', dt: 0.3, duration: 12 } },
     ],
     tryThis: [
-      'Run "Decay, coarse steps" and then "Decay, steps half as long". The largest error falls from 0.118 to 0.051. Halving the step roughly halves the error and doubles the number of steps. That one-for-one trade is what "first order" means.',
-      'Load "Decay, step too large: unstable". With a step of 2.5 each step jumps past zero and lands farther away on the other side: 1, −1.5, 2.25, −3.4. Now set the step to 1.5. It still jumps past zero each time, but lands closer, so it settles. The boundary for this equation is a step of 2.',
-      'Load "Oscillator: energy drift". The exact motion swings between −1 and 1 for ever. Euler\'s swing grows with every cycle. Make the step ten times smaller and the growth is slower, but it never stops.',
-      'Choose logistic growth with a duration of 40 and raise the step size past 2. The exact solution glides up to 1 and stays there. Euler\'s values start to bounce around 1 instead of settling. The bouncing comes from the method, not from the equation.',
+      { ask: 'Run "Decay, coarse steps" (a step of 0.5) and note the largest error. Run "Decay, steps half as long" (0.25) and note it again. Now halve the step once more, to 0.125. What will the largest error be?',
+        input: { system: 'decay', dt: 0.125, duration: 5 },
+        reveal: 'About 0.024. The three runs give 0.118, 0.0515 and 0.0243, with 10, 20 and 40 steps. Each halving of the step roughly halves the error and doubles the work. That one-for-one trade is what "first order" means.' },
+      { ask: 'Load "Decay, step too large: unstable". With a step of 2.5 each step jumps past zero and lands farther away on the other side: 1, −1.5, 2.25, −3.4. Now set the step to exactly 2. Will the values still grow?',
+        input: { system: 'decay', dt: 2, duration: 20 },
+        reveal: 'No, and they do not fade either. They go 1, −1, 1, −1 for all 10 steps. On this rule one Euler step multiplies the value by 1 − dt. With a step of 2.5 that is −1.5, so the size grows by half each time. With a step of 2 it is −1, so the size never changes. Only below 2 does the multiplier shrink the value. The boundary for this equation is a step of 2.' },
+      { ask: 'Load "Oscillator: energy drift". The exact motion swings between −1 and 1 for ever and keeps its energy at 0.5. Where will Euler\'s energy be after 200 steps of 0.1: still near 0.5, about 0.6, or above 3? Then make the step ten times smaller, 0.01, and answer again.',
+        input: { system: 'oscillator', dt: 0.01, duration: 20 },
+        reveal: 'Above 3. With a step of 0.1 the energy climbs from 0.5 to 3.658, and the swing reaches 2.56 where it should never pass 1. With a step of 0.01 the energy ends at 0.6107 after 2,000 steps. The growth is slower, but it never stops: every Euler step multiplies the energy by 1 + dt², and that is above 1 for any step.' },
+      { ask: 'Choose logistic growth with a duration of 40 and a step of 2.2. The exact solution glides up to 1 and stays there. Will Euler\'s values settle at 1 as well?',
+        input: { system: 'logistic', dt: 2.2, duration: 40 },
+        reveal: 'No. They end up hopping between 0.7462 and 1.163, one landing below the true value and the next above it, and they never close in. Lower the step to 1.5 and the values do settle at 1. The bouncing comes from the method, not from the equation.' },
     ],
     run,
     report: (r, c) => `${r.status === 'blew-up' ? `Stopped after ${r.steps} steps: the computed solution blew up. The step size is too large for this system.` : `${r.steps} steps of ${num(r.dt)} reached time ${tnum(r.tEnd)}.${r.runaway ? ' The error exceeds the solution itself and was still growing at the end: unstable at this step size.' : ''}`}\nLargest error against the exact solution: ${r.status === 'blew-up' ? 'beyond one million' : `${num(r.maxError, 3)} (at time ${tnum(r.maxErrorAt)})`}.\n${c['derivative evaluations'] || 0} derivative evaluations, one per step.`,
@@ -291,6 +299,16 @@ export default {
       input: 'Solve y′ = −y with y(0) = 1 up to t = 1, using 10, 20 and 40 steps, and compare with the exact value e⁻¹.',
       expected: 'dt = 0.100: y(1) = 0.348678, error = 0.019201\ndt = 0.050: y(1) = 0.358486, error = 0.009394\ndt = 0.025: y(1) = 0.363232, error = 0.004647',
     },
+    breakIt: [
+      { change: 'Leave the step size out of the update, so that it adds `slope` and not `dt * slope`. What will the three lines print for y(1)?',
+        find: { python: 'y = y + dt * slope', javascript: 'y = y + dt * slope;' },
+        replace: { python: 'y = y + slope', javascript: 'y = y + slope;' },
+        reveal: 'All three lines print "y(1) = 0.000000, error = 0.367879". Adding the slope itself is a step of length 1, whatever `dt` is. Here the slope is −y, so the first pass gives y − y = 0, and from 0 nothing ever changes. Notice that a smaller `dt` no longer helps. That is the sign of this mistake: the answers stop approaching the exact value as the step shrinks.' },
+      { change: 'Replace the counted loop with one that watches the clock: keep stepping while `t` is less than 1. Which of the three runs will take one step too many?',
+        find: { python: 'for _ in range(steps):', javascript: 'for (let i = 0; i < steps; i++) {' },
+        replace: { python: 'while t < 1.0:', javascript: 'while (t < 1) {' },
+        reveal: 'Only the first. It now prints "dt = 0.100: y(1) = 0.313811, error = 0.054069", nearly three times the error it had, and the other two lines do not change. Adding 0.1 ten times gives 0.9999999999999999, not 1. That is still less than 1, so the loop takes an eleventh step. Adding 0.05 twenty times gives 1.0000000000000002 and stops on time. Whether the loop overruns depends on rounding you cannot see from the code, which is why the correct program counts its steps.' },
+    ],
     python: {
       source: `import math
 
@@ -466,16 +484,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The rule is "the value falls at a rate equal to the value", starting from 1. The true solution fades smoothly toward zero. What does Euler\'s method produce with a step of 2.5?',
-      options: ['Values that fade smoothly toward zero, slightly too fast', 'Values that flip sign and grow: −1.5, 2.25, −3.375 and so on', 'The value 1 at every step', 'Zero after the first step, and zero from then on'],
+      q: 'The rule is "the value falls at a rate equal to the value", starting from 1. The true solution fades smoothly toward zero and never goes negative. What does Euler\'s method produce with a step of 1.5?',
+      options: ['Values that fade smoothly toward zero and stay positive', 'Values that flip sign at every step and shrink: −0.5, 0.25, −0.125 and so on', 'Values that flip sign at every step and grow: −1.5, 2.25, −3.375 and so on', 'Zero after the first step, and zero from then on'],
       answer: 1,
       explain: [
-        'That is what a small step gives. A step of 2.5 is past the stability limit of 2.',
-        'Correct. Each step replaces the value y by y − 2.5y = −1.5y, so the sign flips and the size grows by half each time.',
-        'The slope at 1 is −1, so the value certainly moves.',
+        'That is what a step below 1 gives. With a step of 1.5 the first move is 1 − 1.5 × 1 = −0.5, which is already past zero.',
+        'Correct. Each step replaces the value y by y − 1.5y = −0.5y, so the sign flips and the size halves. The run settles toward zero, but through negative values the true solution never takes. Stable is not the same as accurate: the largest error is 0.723, at the very first step.',
+        'Growth needs a multiplier larger than 1 in size. Here it is 1 − 1.5 = −0.5, so each value is half the size of the one before. Those growing numbers belong to a step of 2.5.',
         'That happens with a step of exactly 1, where y − 1 × y = 0.',
       ],
-      tryInput: { system: 'decay', dt: 2.5, duration: 20 },
+      tryInput: { system: 'decay', dt: 1.5, duration: 12 },
+      check: (r, c) => (r.steps === 8 && r.status === 'completed' && !r.runaway && [1, -0.5, 0.25, -0.125].every((v, i) => r.ys[i][0] === v) && num(r.maxError, 3) === '0.723' && r.maxErrorAt === 1.5 && c['derivative evaluations'] === 8) || `values ${r.ys.slice(0, 4).map((y) => y[0]).join(', ')}, largest error ${num(r.maxError, 3)} at ${r.maxErrorAt}`,
     },
     {
       type: 'debug',
@@ -511,7 +530,8 @@ int main() {
     {
       type: 'challenge',
       title: 'One changed line, bounded energy',
-      prompt: 'Simulate the oscillator x′ = v, v′ = −x from x = 1, v = 0 with Euler\'s method and a step of 0.1 for 1,000 steps, printing the energy ½(x² + v²) every 100 steps. Then change the update so that v is updated first and the new v is used to update x. This is the semi-implicit Euler method. Compare the energy of the two runs, and measure how the error at t = 10 changes in each when you halve the step.',
+      prompt: 'Simulate the oscillator x′ = v, v′ = −x from x = 1, v = 0 with Euler\'s method and a step of 0.1 for 1,000 steps, printing the energy ½(x² + v²) every 100 steps. Then change the update so that v is updated first and the new v is used to update x. This is the semi-implicit Euler method. Compare the energy of the two runs. Last, measure the error of each method at t = 10 with steps of 0.1 and 0.05. Take the error to be the distance between the computed (x, v) and the exact (cos 10, −sin 10).',
+      expect: 'Plain Euler: the energy is 1.352 after 100 steps, 3.658 after 200, 72.39 after 500 and about 10,480 after 1,000. It should be 0.5 throughout. Semi-implicit Euler: the energy never leaves the range 0.4762 to 0.5263 in all 1,000 steps. At t = 10 the error of plain Euler is 0.646 with a step of 0.1 and 0.284 with 0.05. The error of semi-implicit Euler is 0.0300 and then 0.0142. Halving the step roughly halves both, so both methods are first order. The changed line did not raise the order. It stopped the energy from drifting.',
       hints: ['Plain Euler: compute both new values from the old x and v. Semi-implicit: v ← v − dt·x, then x ← x + dt·v.', 'The semi-implicit energy wobbles but stays close to 0.5. Both methods are still first order, so halving the step should roughly halve the error.'],
     },
   ],
@@ -588,11 +608,31 @@ int main() {
         }
         return true;
       } },
-    { name: 'the quiz prediction: decay with dt = 2.5 gives 1, −1.5, 2.25, −3.375', input: { system: 'decay', dt: 2.5, duration: 20 },
+    { name: 'preset: decay with dt = 2.5 gives 1, −1.5, 2.25, −3.375', input: { system: 'decay', dt: 2.5, duration: 20 },
       check: (r) => (r.steps === 8 && [1, -1.5, 2.25, -3.375].every((v, i) => r.ys[i][0] === v) && r.status === 'completed') || `values ${r.ys.slice(0, 4).map((y) => y[0]).join(', ')}` },
     { name: 'an unstable run is stopped and reported', input: { system: 'oscillator', dt: 3, duration: 40 },
       check: (r) => (r.status === 'blew-up' && r.steps <= 13 && r.steps >= 11) || `status ${r.status} after ${r.steps} steps` },
     { name: 'step count: whole steps that fit in the duration', input: { system: 'decay', dt: 0.3, duration: 1 },
       check: (r, c) => (r.steps === 3 && Math.abs(r.tEnd - 0.9) < 1e-12 && c['derivative evaluations'] === 3) || `${r.steps} steps to ${r.tEnd}` },
+    { name: 'things to try: decay errors 0.118, 0.0515, 0.0243 at steps 0.5, 0.25, 0.125', input: { system: 'decay', dt: 0.125, duration: 5 },
+      check: (r) => {
+        const got = [0.5, 0.25].map((dt) => num(run({ system: 'decay', dt, duration: 5 }, quiet).maxError, 3)).concat(num(r.maxError, 3)).join(' ');
+        return (got === '0.118 0.0515 0.0243' && r.steps === 40) || `errors ${got}`;
+      } },
+    { name: 'things to try: a step of exactly 2 on decay gives 1, −1, 1, −1 for 10 steps', input: { system: 'decay', dt: 2, duration: 20 },
+      check: (r) => (r.steps === 10 && r.ys.every((y, i) => y[0] === (i % 2 ? -1 : 1)) && !r.runaway) || `values ${r.ys.map((y) => y[0]).join(', ')}` },
+    { name: 'things to try: oscillator energy ends at 3.658 with dt 0.1 (swing 2.56) and at 0.6107 with dt 0.01', input: { system: 'oscillator', dt: 0.01, duration: 20 },
+      check: (r) => {
+        const E = odeById.oscillator.energy;
+        const coarse = run({ system: 'oscillator', dt: 0.1, duration: 20 }, quiet);
+        const swing = Math.max(...coarse.ys.map((y) => Math.abs(y[0])));
+        return (r.steps === 2000 && num(E(r.ys[2000])) === '0.6107' && num(E(coarse.ys[200])) === '3.658' && swing.toFixed(2) === '2.56') || `energies ${num(E(coarse.ys[200]))} and ${num(E(r.ys[r.steps]))}, swing ${swing}`;
+      } },
+    { name: 'things to try: logistic growth with dt 2.2 hops between 0.7462 and 1.163, and settles at 1 with dt 1.5', input: { system: 'logistic', dt: 2.2, duration: 40 },
+      check: (r) => {
+        const tail = r.ys.slice(-4).map((y) => num(y[0])).join(' ');
+        const calm = run({ system: 'logistic', dt: 1.5, duration: 40 }, quiet);
+        return (tail === '1.163 0.7462 1.163 0.7462' && num(calm.ys[calm.steps][0]) === '1') || `last values ${tail}; with dt 1.5 it ends at ${calm.ys[calm.steps][0]}`;
+      } },
   ],
 };

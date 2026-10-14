@@ -330,6 +330,8 @@ const allChecks = (r) => { for (const check of [matchesClosedForm, perpendicular
 
 const EXAMPLE = [5, 4, 1, 0, 3, 2, 4, 1, 2, 3];
 const EXAMPLE_MM = [50, 4, 10, 0, 30, 2, 40, 1, 20, 3];
+// The worked example with both features in millimetres: every number ten times larger.
+const EXAMPLE_BOTH_MM = [50, 40, 10, 0, 30, 20, 40, 10, 20, 30];
 
 export default {
   meta: {
@@ -428,11 +430,16 @@ export default {
       { label: 'The worked example with x in millimetres', values: { custom: EXAMPLE_MM, start: 0 } },
     ],
     tryThis: [
-      'Run the default and watch the terracotta arrow during power iteration. It swings most on the first step and less on each step after. In the small chart the dots fall along a straight line, which means every step shrinks the movement by the same factor. The first search ends after 11 multiplications.',
-      'Load "Nearly round: slow to settle". The arrow needs 29 multiplications where the default needed 11, and the line in the chart slopes more gently. The shrink factor is the second variance divided by the first, and in a rounder cloud those two are closer. Raise the thickness and count again.',
-      'Load "Starting almost at right angles". The start has very little of the leading direction in it, so the first step moves the arrow only a little and the second moves it a lot. The movement grows before it shrinks. The answer at the end is the same as from any other start.',
-      'Load "Worked example: five points" and then "The worked example with x in millimetres". The objects are the same, and only the unit of x has changed. The first direction swings from 45° to under 4° and its share of the variance goes from 80% to over 99%. This is why columns in different units are rescaled before the method is used.',
-      'Set the thickness to 0.05. Almost all the variance lies along one direction, and the strip of scores in the last frame holds nearly everything the two-dimensional plot did.',
+      { ask: 'Run the default and watch the terracotta arrow during power iteration. Will it turn by the same amount at every step? And how many multiplications will the first search need before the tip of the arrow moves by less than one billionth?',
+        reveal: 'It swings most on the first step and less on each step after: the tip moves 0.47, then 0.065, then 0.0079. Each step is about an eighth of the one before, because every multiplication shrinks the movement by the second variance divided by the first, here 0.0288 ÷ 0.2381. That constant factor is why the dots in the small chart fall along a straight line. The first search ends after 11 multiplications.' },
+      { ask: 'Load "Nearly round: slow to settle". The default needed 11 multiplications to find its first direction. Will a rounder cloud need fewer or more, and roughly how many?',
+        reveal: 'More: 29. The two variances are 0.359 and 0.182, so each step shrinks the movement only by about half, where the default shrank it to an eighth, and the line in the chart slopes more gently. In a rounder cloud the two variances are closer together and the leading direction stands out less. Lower the thickness and count again: on the same points the count falls to 18 at 0.6, 11 at 0.4 and 7 at 0.2.' },
+      { ask: 'Load "Starting almost at right angles". The start has very little of the leading direction in it. Will the first step still be the largest, as it was in the default? And will the search end somewhere different?',
+        reveal: 'The first step moves the tip of the arrow by 0.19, the second by 0.82 and the third by 0.44. Only after that does the movement shrink steadily. A start almost at right angles to the answer gives the first multiplication very little to amplify, so the movement grows before it shrinks. The search takes 13 multiplications where the default took 11, and it ends at the same direction, (0.852, 0.523), as from any other start.' },
+      { ask: 'Load "Worked example: five points", where the first direction is the diagonal, at 45°, with 80% of the variance. Then load "The worked example with x in millimetres". The objects are the same and only the unit of x has changed, so every x is ten times larger. Where will the first direction point now, and what share of the variance will it hold?',
+        reveal: 'It swings to (0.998, 0.060), which is 3.5° from the x axis, and its share goes from 80% to 99.4%. Multiplying x by 10 multiplies its variance by 100, to 250 against 2.5 for y, so nearly all the spread now lies along x. The method sees numbers, not objects. This is why columns in different units are rescaled before the method is used.' },
+      { ask: 'Set the thickness to 0.05, so that the cloud is nearly a line. What share of the variance will the first direction hold? And will the first search be quicker or slower than the 11 multiplications of the default?',
+        reveal: 'The first direction holds 99.7% of the variance, and the search is quicker: 5 multiplications. The second variance is about 300 times smaller than the first, so each step shrinks the movement about 300-fold. The strip of scores in the last frame holds nearly everything the two-dimensional plot did.' },
     ],
     run,
     report: (r, c) => `Centre (${f3(r.mean[0])}, ${f3(r.mean[1])}). Covariance matrix [${f4(r.cov[0])}, ${f4(r.cov[1])}; ${f4(r.cov[1])}, ${f4(r.cov[2])}], total variance ${f4(r.total)}.\nFirst principal direction ${vec(r.components[0].direction, f4)}: variance ${f4(r.components[0].variance)}, ${pct(r.share)} of the total.\nSecond principal direction ${vec(r.components[1].direction, f4)}: variance ${f4(r.components[1].variance)}, ${pct(1 - r.share)} of the total.\n${c['matrix-vector products'] || 0} matrix-vector products by power iteration${r.components[0].converged ? '' : ' (the first search was stopped before it settled)'}.${r.round ? '\nThe two variances are equal, so no direction stands out.' : ''}${r.swapped ? '\nThe start was exactly at right angles to the leading direction, so the components were found in the wrong order and swapped.' : ''}`,
@@ -511,12 +518,22 @@ export default {
   code: {
     sample: {
       input: 'Find both principal directions of six points by centring, forming the covariance matrix, and running power iteration with deflation, printing every step. Then project the points onto the first direction.',
-      expected: 'mean: (5.00, 5.00)\ncovariance: [8.4000 6.0000] [6.0000 5.2000]\ndirection 1, step 1: (0.8137, 0.5812) variance 8.4000\ndirection 1, step 2: (0.7940, 0.6080) variance 12.9946\ndirection 1, step 3: (0.7930, 0.6092) variance 13.0096\ndirection 1, step 4: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 5: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 6: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 7: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 8: (0.7930, 0.6092) variance 13.0097\ndirection 2, step 1: (0.6092, -0.7930) variance 0.2191\ndirection 2, step 2: (0.6092, -0.7930) variance 0.5903\nat right angles: yes\ntotal variance 13.6000 = 13.0097 + 0.5903\nshare along direction 1: 95.7%\nscores: -5.000 -2.804 -0.793 0.793 3.414 4.390',
+      expected: 'mean: (5.00, 15.00)\ncovariance: [8.4000 6.0000] [6.0000 5.2000]\ndirection 1, step 1: (0.8137, 0.5812) variance 8.4000\ndirection 1, step 2: (0.7940, 0.6080) variance 12.9946\ndirection 1, step 3: (0.7930, 0.6092) variance 13.0096\ndirection 1, step 4: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 5: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 6: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 7: (0.7930, 0.6092) variance 13.0097\ndirection 1, step 8: (0.7930, 0.6092) variance 13.0097\ndirection 2, step 1: (0.6092, -0.7930) variance 0.2191\ndirection 2, step 2: (0.6092, -0.7930) variance 0.5903\nat right angles: yes\ntotal variance 13.6000 = 13.0097 + 0.5903\nshare along direction 1: 95.7%\nscores: -5.000 -2.804 -0.793 0.793 3.414 4.390',
     },
+    breakIt: [
+      { change: 'Skip the centring: build `centred` from the raw coordinates, without subtracting the two means. The cloud itself leans about 38° up from the x axis. Where will direction 1 point now?',
+        find: { python: 'centred = [(p[0] - mean_x, p[1] - mean_y) for p in points]', javascript: 'const centred = points.map((p) => [p[0] - meanX, p[1] - meanY]);' },
+        replace: { python: 'centred = [(p[0], p[1]) for p in points]', javascript: 'const centred = points.map((p) => [p[0], p[1]]);' },
+        reveal: 'Direction 1 settles at (0.3341, 0.9425), about 70° up from the x axis, where the correct program found (0.7930, 0.6092), about 38°. The centre of the cloud is at (5, 15), which lies 72° up from the x axis as seen from the origin, and that is very nearly where the direction now points. Without the subtraction every point has large positive coordinates, the covariance line reads "[38.4000 96.0000] [96.0000 275.2000]", and the matrix describes where the cloud is, not what shape it has. The last line gives the mistake away: all six scores are positive, from 11.645 to 19.304, when scores measured from the centre add up to zero.' },
+      { change: 'Record x in millimetres and leave y alone: multiply the first number of every point by 10, so that the list begins `(10, 12), (30, 13)`. The six objects have not changed. Where will direction 1 point?',
+        find: { python: 'points = [(1, 12), (3, 13), (4, 15), (6, 15), (7, 18), (9, 17)]', javascript: 'const points = [[1, 12], [3, 13], [4, 15], [6, 15], [7, 18], [9, 17]];' },
+        replace: { python: 'points = [(10, 12), (30, 13), (40, 15), (60, 15), (70, 18), (90, 17)]', javascript: 'const points = [[10, 12], [30, 13], [40, 15], [60, 15], [70, 18], [90, 17]];' },
+        reveal: 'Almost along the x axis: (0.9975, 0.0713), about 4° from it, where it was (0.7930, 0.6092). The variance of x has gone from 8.4 to 840 while the variance of y is still 5.2, so the covariance line reads "[840.0000 60.0000] [60.0000 5.2000]" and the share along direction 1 rises from 95.7% to 99.9%. The search also ends sooner, after 4 steps where it took 8, because one variance now dwarfs the other. Nothing about the six objects is different. The method sees numbers and follows the largest spread, whatever unit produced it.' },
+    ],
     python: {
       source: `import math
 
-points = [(1, 2), (3, 3), (4, 5), (6, 5), (7, 8), (9, 7)]
+points = [(1, 12), (3, 13), (4, 15), (6, 15), (7, 18), (9, 17)]
 n = len(points)
 
 # 1. centre the data
@@ -574,7 +591,7 @@ print("scores: " + " ".join(f"{s:.3f}" for s in scores))`,
       ],
     },
     javascript: {
-      source: `const points = [[1, 2], [3, 3], [4, 5], [6, 5], [7, 8], [9, 7]];
+      source: `const points = [[1, 12], [3, 13], [4, 15], [6, 15], [7, 18], [9, 17]];
 const n = points.length;
 
 // 1. centre the data
@@ -647,7 +664,7 @@ Direction powerIteration(double a, double b, double d, const char* name) {
 }
 
 int main() {
-    const std::vector<std::vector<double>> points = {{1, 2}, {3, 3}, {4, 5}, {6, 5}, {7, 8}, {9, 7}};
+    const std::vector<std::vector<double>> points = {{1, 12}, {3, 13}, {4, 15}, {6, 15}, {7, 18}, {9, 17}};
     const int n = (int)points.size();
 
     // 1. centre the data
@@ -798,16 +815,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the worked example the first principal direction is the diagonal, at 45°. Now suppose x had been recorded in millimetres and not centimetres, so every x is ten times larger: (50, 4), (10, 0), (30, 2), (40, 1), (20, 3). The objects are the same. Where does the first principal direction point?',
-      options: ['Still at 45°, because the objects have not changed', 'Almost along the x axis, between 3° and 4° from it', 'Almost along the y axis', 'At 45° the other way, down to the right'],
-      answer: 1,
+      q: 'In the worked example the first principal direction is the diagonal, at 45°, and it holds 80% of the variance. Now suppose both measurements had been recorded in millimetres and not centimetres, so every number is ten times larger: (50, 40), (10, 0), (30, 20), (40, 10), (20, 30). Where does the first principal direction point, and what share does it hold?',
+      options: ['Still at 45°, with the same 80% of the variance', 'Still at 45°, but with over 99% of the variance, because the numbers are larger', 'Almost along the x axis, as when x alone was put in millimetres', 'Nowhere: with variances this large, power iteration no longer settles'],
+      answer: 0,
       explain: [
-        'The method sees numbers, not objects. Multiplying x by 10 multiplies its variance by 100.',
-        'The variance of x is now 250 against 2.5 for y, so nearly all the spread lies along x. The first direction turns to within 3.5° of the x axis and takes over 99% of the variance.',
-        'It is x that grew, so the direction turns towards x.',
-        'The covariance is still positive, so the direction still leans up to the right, only very slightly.',
+        'Correct. Multiplying both features by 10 multiplies every entry of the covariance matrix by 100, to 250, 150 and 250. A matrix times 100 stretches every direction by the same extra factor, so the directions stay where they were. The variances along them become 400 and 100, and 400 out of 500 is still 80%. What turns the direction is a change in one unit relative to the other.',
+        'The share is a ratio. Both variances are multiplied by 100, to 400 and 100, so the first is still four fifths of the total.',
+        'The direction turned towards x when x alone grew, because the spread of x then dwarfed the spread of y. Here both spreads grew by the same factor.',
+        'Each step shrinks the movement by the second variance divided by the first, which is 100 ÷ 400. That is the same quarter as before, and the search takes the same 16 multiplications.',
       ],
-      tryInput: { custom: EXAMPLE_MM, start: 0 },
+      tryInput: { custom: EXAMPLE_BOTH_MM, start: 0 },
+      check: (r) => {
+        const [c1, c2] = r.components;
+        return (Math.abs(c1.direction[0] - Math.SQRT1_2) < 1e-7 && Math.abs(c1.direction[1] - Math.SQRT1_2) < 1e-7 && Math.abs(c1.variance - 400) < 1e-6 && Math.abs(c2.variance - 100) < 1e-6 && Math.abs(r.share - 0.8) < 1e-9 && c1.steps === 16)
+          || `direction ${c1.direction}, variances ${c1.variance} and ${c2.variance}, share ${r.share}, ${c1.steps} steps`;
+      },
     },
     {
       type: 'debug',
@@ -842,7 +864,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Three features, and a fair comparison of units',
-      prompt: 'Extend the code sample to three features: a 3 by 3 covariance matrix, and three directions found one after another by power iteration with deflation. Test it on points you generate along a known direction with a little scatter. Check that the three directions are perpendicular in pairs and that the three variances add up to the total. Then multiply one feature by 100, run it again, and finally run it on features that have each been divided by their standard deviation. Describe how the first direction changes across the three runs.',
+      prompt: 'Extend the code sample to three features: a 3 by 3 covariance matrix, and three directions found one after another by power iteration with deflation. Test it on these six points, whose first two features are those of the code sample: (1, 12, 3), (3, 13, 1), (4, 15, 2), (6, 15, 0), (7, 18, 2), (9, 17, 1). Check that the three directions are perpendicular in pairs and that the three variances add up to the total. Then multiply the third feature by 100 and run it again. Finally run it on features that have each been divided by their standard deviation, the one that divides by n − 1. Describe how the first direction changes across the three runs.',
+      expect: 'As given: the variances along the three directions are 13.2302, 1.2502 and 0.2196, which add up to the total of 14.7, and the first direction is (0.7891, 0.5996, −0.1337) with 90.0% of the variance. With the third feature times 100: the first direction is (−0.0146, −0.0055, 0.9999), almost exactly the third feature alone, with 99.9% of a total of 11013.6. With each feature divided by its standard deviation (2.8983, 2.2804 and 1.0488): the variances are 2.1701, 0.7856 and 0.0443, which add up to 3, and the first direction is (0.6662, 0.6091, −0.4303) with 72.3%. A direction may come out with all its signs reversed, which is the same answer. In every run the three directions are at right angles in pairs.',
       hints: [
         'A 3 by 3 symmetric matrix has six distinct entries. Write a function that multiplies it by a vector of three numbers.',
         'Deflation subtracts λ × v[i] × v[j] from entry (i, j) of the matrix.',
@@ -952,7 +975,14 @@ int main() {
       } },
     { name: 'the corners of a square have no principal direction: equal variances, any perpendicular pair', input: { custom: [1, 1, -1, 1, -1, -1, 1, -1], start: 35 },
       check: (r) => (r.round && Math.abs(r.components[0].variance - 4 / 3) < 1e-12 && Math.abs(r.components[1].variance - 4 / 3) < 1e-12 && perpendicular(r) === true && variancesAddUp(r) === true) || `round ${r.round}, variances ${r.components.map((c) => c.variance)}` },
-    { name: 'x in millimetres: the first direction turns to within 4° of the x axis with over 99% of the variance (quiz prediction)', input: { custom: EXAMPLE_MM, start: 0 },
+    { name: 'both features in millimetres: the same 45° direction and 80% share, with variances 400 and 100 (quiz prediction)', input: { custom: EXAMPLE_BOTH_MM, start: 0 },
+      check: (r) => {
+        const base = quiet({ custom: EXAMPLE, start: 0 });
+        if (parallel(r.components[0].direction, base.components[0].direction) > 1e-9 || r.components[0].steps !== base.components[0].steps) return `direction ${r.components[0].direction} after ${r.components[0].steps} steps, against ${base.components[0].direction} after ${base.components[0].steps}`;
+        if (Math.abs(r.components[0].variance - 100 * base.components[0].variance) > 1e-6 || Math.abs(r.share - base.share) > 1e-9) return `variance ${r.components[0].variance}, share ${r.share}`;
+        return (Math.abs(r.cov[0] - 250) < 1e-9 && Math.abs(r.cov[1] - 150) < 1e-9 && Math.abs(r.cov[2] - 250) < 1e-9 && allChecks(r) === true) || `covariance ${r.cov}`;
+      } },
+    { name: 'x in millimetres: the first direction turns to within 4° of the x axis with over 99% of the variance (preset and "Things to try")', input: { custom: EXAMPLE_MM, start: 0 },
       check: (r) => {
         const degreesFromX = Math.atan2(Math.abs(r.components[0].direction[1]), Math.abs(r.components[0].direction[0])) * 180 / Math.PI;
         if (!(degreesFromX > 3 && degreesFromX < 4) || !(r.share > 0.99) || r.components[0].direction[0] * r.components[0].direction[1] <= 0) return `${degreesFromX}° from the x axis, share ${r.share}`;

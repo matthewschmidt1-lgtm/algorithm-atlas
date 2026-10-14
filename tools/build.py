@@ -166,7 +166,45 @@ def check_native(result):
             e = check_cpp(code["cpp"]["source"], code["cpp"].get("expected"), work)
             if e:
                 errs.append(e)
+        # further programs in the same lesson are held to the same standard
+        for i, x in enumerate(code.get("more") or []):
+            sub = work / ("more%d" % i)
+            sub.mkdir()
+            if x.get("python"):
+                e = check_python(x["python"]["source"], x["python"].get("expected"), sub)
+                if e:
+                    errs.append("code.more[%d]: %s" % (i, e))
+            if x.get("cpp"):
+                e = check_cpp(x["cpp"]["source"], x["cpp"].get("expected"), sub)
+                if e:
+                    errs.append("code.more[%d]: %s" % (i, e))
+        # break-it lines: the change must really alter what the Python program does
+        broken = result.setdefault("broken", [])
+        for b in code.get("breakIt") or []:
+            out, finished = run_broken(b["source"], work)
+            broken.append({"i": b["i"], "lang": "python", "ok": finished, "out": out})
+            if finished and code.get("python") and norm(out) == norm(code["python"].get("expected")):
+                errs.append("code.breakIt[%d] changes nothing in Python: the program prints the same output. Choose sample inputs that expose the mistake." % b["i"])
+            if out == HUNG and not b.get("hangs"):
+                errs.append("code.breakIt[%d] makes the Python program run for ever. Say so with hangs: true, or choose a change that finishes." % b["i"])
     return errs
+
+
+HUNG = "did not finish within the time limit"
+
+
+def run_broken(src, work):
+    """Run a deliberately broken program. Returns (what it printed or how it failed, whether it finished cleanly)."""
+    path = work / "broken.py"
+    path.write_text(src, encoding="utf-8")
+    try:
+        r = subprocess.run([sys.executable, "-I", str(path)], capture_output=True, text=True, timeout=4)
+    except subprocess.TimeoutExpired:
+        return HUNG, False
+    if r.returncode != 0:
+        last = (r.stderr.strip().split("\n") or [""])[-1]
+        return (norm(r.stdout) + "\n" if r.stdout.strip() else "") + last, False
+    return norm(r.stdout), True
 
 
 def tool_version(cmd):
@@ -193,7 +231,8 @@ def build_info(entries):
         "tests": sum(len(e["checks"]["tests"]) for e in entries),
         "runs": sum(e["checks"]["runs"] for e in entries),
         "frames": sum(e["checks"]["frames"] for e in entries),
-        "programs": sum(len(e["checks"]["languages"]) for e in entries),
+        "programs": sum(len(e["checks"]["languages"]) + e["checks"].get("morePrograms", 0) for e in entries),
+        "brokenOnPurpose": sum(e["checks"].get("brokenOnPurpose", 0) for e in entries),
         "formulas": sum(len(e["checks"]["cost"]) for e in entries),
         "relations": relations,
         "lessonsWithCostCheck": sum(1 for e in entries if e["checks"]["cost"]),
@@ -205,6 +244,7 @@ def main():
     ap.add_argument("--only", help="comma-separated ids to validate (implies --check)")
     ap.add_argument("--check", action="store_true", help="validate without writing the catalog")
     ap.add_argument("--quiet", action="store_true", help="print failures and the summary only")
+    ap.add_argument("--broken", action="store_true", help="also print what each break-it change makes the program do")
     args = ap.parse_args()
 
     all_ids = sorted(p.stem for p in (ROOT / "content" / "algorithms").glob("*.js"))
@@ -237,6 +277,9 @@ def main():
             print("%s  %s%s" % ("FAIL" if bad else "ok  ", r["id"], info))
         for e in r["errors"]:
             print("    error: " + e)
+        if args.broken:
+            for b in sorted(r.get("broken") or [], key=lambda b: (b["i"], b["lang"])):
+                print("    breakIt[%d] %-10s %s\n      %s" % (b["i"], b["lang"], "prints:" if b["ok"] else "fails:", str(b["out"]).replace("\n", "\n      ")))
         if not args.quiet or bad:
             for w in r["warnings"]:
                 print("    warn:  " + w)

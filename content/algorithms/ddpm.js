@@ -256,10 +256,14 @@ export default {
       { label: 'Many fine steps', values: { ...DEFAULTS, steps: 200 } },
     ],
     tryThis: [
-      'Play the default run and watch the weights under the training images. For roughly the first third of the steps they stay near 25% each and the best guess is a blur of all four. Then one image pulls ahead, and by about the halfway point the denoiser is certain. The rest of the run only cleans up. The choice of image was made by noise, early, while the picture still looked like static.',
-      'Press Randomize several times. The final image changes, and it is always exactly one of the four. Over the seeds 1 to 200 the counts are 50 plus, 62 ring, 49 cross and 39 triangle. An even split would be 50 each, and differences of this size are what chance produces in 200 draws.',
-      'Load "Forward: destroy the ring" and watch the same weights in the other direction. The denoiser stays certain for a long time after your eye has lost the ring, then loses it too. By the last step all four weights are near 25%: no information about the starting image is left.',
-      'Compare "Few, coarse steps" with "Many fine steps". Both end on a training image. With real networks, the number of steps is a trade between speed and quality. With this perfect denoiser even coarse steps cannot go wrong, which is one more way the demonstration is easier than the real thing.',
+      { ask: 'Play the default run and watch the weights under the four training images. The run has 100 steps, counted down from 100. Roughly when will the denoiser become sure which image it is making: near the start, around the middle, or only in the last few steps?',
+        reveal: 'Around the middle. For the first 37 steps no image has even half the weight, and the best guess is a blur of all four. One image first passes 50% at step 63, and at step 50 the denoiser is at least 99% sure. The rest of the run only cleans up. The choice of image was made by noise, early, while the picture still looked like static.' },
+      { ask: 'Press Randomize several times and note the final image each time. Will you ever see a picture that is not one of the four training images? And over the seeds 1 to 200, how evenly would you expect the four to be chosen?',
+        reveal: 'Never. The final image changes with the seed, and it is always exactly one of the four. Over the seeds 1 to 200 the counts are 50 plus, 62 ring, 49 cross and 39 triangle. An even split would be 50 each, and differences of this size are what chance produces in 200 draws.' },
+      { ask: 'Load "Forward: destroy the ring" and watch the same weights in the other direction. Which loses the ring first: your eye or the denoiser? And what will the four weights be after the last step?',
+        reveal: 'Your eye. The denoiser stays certain for a long time after the picture has stopped looking like a ring to you, then loses it too. After step 100 the weights are 26%, 24%, 24% and 26%, and only 0.0045 of the original signal is left. No information about the starting image survives.' },
+      { ask: 'Compare "Few, coarse steps", which has 25 steps, with "Many fine steps", which has 200. Will the coarse run still end on a clean training image, or will its larger jumps leave it blurred or noisy?',
+        reveal: 'Both end exactly on a training image, with a pixel difference of 0.000. The 25-step run is 99% sure at step 11 and the 200-step run at step 90, a little past the middle of the countdown each time. With real networks, the number of steps is a trade between speed and quality. With this perfect denoiser even coarse steps cannot go wrong, which is one more way the demonstration is easier than the real thing.' },
     ],
     run,
     report: (r, c) => (r.mode === 'forward'
@@ -272,7 +276,7 @@ export default {
     steps: [
       'Choose a noise schedule: small numbers β₁ to β_T that say how much noise each of the T steps adds. Let α_t = 1 − β_t, and let ᾱ_t be the product of α₁ up to α_t. It says how much of the original picture survives after t steps.',
       'Forward process. After t steps a picture x₀ has become x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · noise. This formula jumps straight to any step, which is how training examples are made.',
-      'Training, in a real model. Pick a training image, a step t and some noise at random, form x_t, and ask the network to predict the noise. Adjust the network to reduce the squared error. This page skips training and uses the exact optimal answer instead.',
+      'Training, in a real model. Pick a training image, a step t and some noise at random, form x_t, and ask the network to predict the noise. Adjust the network to reduce the squared error. The demonstration on this page skips training and uses the exact optimal answer instead. The second program in the code section, "Training it", runs this loop on a model small enough to read.',
       'Sampling. Start with x_T made of pure noise.',
       'At step t, ask the denoiser for its best guess x̂₀ of the clean picture, and work out the noise ε̂ that this guess implies.',
       'Move to step t − 1: subtract a small multiple of ε̂ and rescale, which gives the mean μ of the next picture. Then add a smaller amount of fresh noise. On the final step add none.',
@@ -303,7 +307,7 @@ export default {
       'ᾱ_t decreases with t, from 1 at step 0 to nearly 0 at step T.',
     ],
     edgeCases: [
-      'The last sampling step, t = 1, adds no fresh noise. Otherwise the result would be left slightly noisy.',
+      'The last sampling step, t = 1, adds no fresh noise. With the noise size used on this page that amount is exactly zero anyway. A sampler that takes the noise size as √β has to leave it out by hand, or every result is left slightly noisy.',
       'If ᾱ_T is not close to 0, the forward process never reaches pure noise, and starting the sampler from pure noise starts it somewhere the denoiser was never trained for.',
       'Too few steps make each β large. With the schedule used here, T = 20 would give a final β of 1, which wipes out the picture in one step and makes the update divide by zero. The slider starts at 25 for that reason.',
       'A training set with one image: every weight goes to that image and every sample is that image.',
@@ -311,7 +315,7 @@ export default {
     ],
     correctness: 'Two facts are exact. First, the jump formula for the forward process follows from adding independent Gaussian noises: after t steps the surviving signal is √ᾱ_t and the accumulated noise variance is 1 − ᾱ_t. A test on this page checks that against the step-by-step simulation. Second, for a finite training set the squared-error-optimal denoiser is the posterior mean given by Bayes\' rule, which is the weighted average described above. What is approximate is the reverse step. The true reverse of a small noising step is nearly Gaussian, and it becomes exactly Gaussian only as the steps become infinitely small. In that limit a sampler with the exact denoiser draws from exactly the training distribution, which here means each of the four images with probability one quarter. Nothing guarantees that a trained network matches the optimal denoiser, and the interesting behaviour of real models, good and bad, comes from that mismatch.',
     mistakes: [
-      'Adding fresh noise on the final step, which leaves every sample slightly speckled.',
+      'Adding fresh noise on the final step when the noise size is taken as √β. That leaves every sample slightly speckled. With the smaller noise size used on this page the final amount works out to exactly zero, so the slip cannot show here.',
       'Confusing ᾱ_t with α_t, or 1 − ᾱ_t with its square root. The formulas mix all four.',
       'Feeding the network pictures scaled 0 to 1 when the noise schedule assumes values centred on zero, such as −1 to 1.',
       'Evaluating a generative model only by how good its samples look, without checking whether they are copies of training images.',
@@ -321,9 +325,23 @@ export default {
 
   code: {
     sample: {
-      input: 'A one-dimensional version: the training set is the three numbers −1, 0.2 and 1. Use 40 steps and the same linear schedule and optimal denoiser as the visualization, with a small fixed random number generator so that every language prints the same numbers. Print one sampling run, then the results of ten more.',
+      input: 'A one-dimensional version: the training set is the three numbers −1, 0.2 and 1. Use 40 steps and the same linear schedule and optimal denoiser as the visualization, with a small fixed random number generator so that every language prints the same numbers. Print one sampling run, then the results of ten more. The denoiser here is the exact formula. The second program, further down, trains one.',
       expected: 'signal left after 40 noising steps: 0.002\nt=32: x=0.771 guess=0.073\nt=24: x=0.467 guess=0.011\nt=16: x=-0.218 guess=0.065\nt= 8: x=-0.602 guess=-0.719\nt= 0: x=-1.000 guess=-1.000\nten samples: 1.000 1.000 0.200 0.200 0.200 0.200 -1.000 1.000 -1.000 1.000',
     },
+    breakIt: [
+      { change: 'In the line that works out `eps`, drop the square root from the divisor, so that it divides by `(1 - abar[t])`. The formulas mix 1 − ᾱ with its square root, and this is an easy place to pick the wrong one. Where will the first run end up?',
+        find: { python: '* x0) / math.sqrt(1 - abar[t])', javascript: '* x0) / Math.sqrt(1 - abar[t]);' },
+        replace: { python: '* x0) / (1 - abar[t])', javascript: '* x0) / (1 - abar[t]);' },
+        reveal: 'Nowhere near a training value. The last line of the first run reads `t= 0: x=2.657 guess=0.200`, and the ten samples begin −10.819, −4.980, −5.124, 10.370. Dividing by 1 − ᾱ instead of by its square root makes the estimated noise too large, most of all in the last steps, where 1 − ᾱ is small. The update then subtracts far too much and throws x past the value its own guess was pointing at. No error is raised. The numbers are simply wrong.' },
+      { change: 'In the line that works out `mean`, divide by the square root of `abar[t]` where it now divides by the square root of `1 - beta[t]`. That confuses ᾱ, what is left of the signal after all t steps, with α, what a single step keeps. How far does the run get?',
+        find: { python: '/ math.sqrt(1 - beta[t])', javascript: '/ Math.sqrt(1 - beta[t]);' },
+        replace: { python: '/ math.sqrt(abar[t])', javascript: '/ Math.sqrt(abar[t]);' },
+        reveal: 'It is destroyed on the first step. Python prints the first line and then stops with `ZeroDivisionError: float division by zero`. JavaScript carries on and prints `x=NaN guess=NaN` on every line, then ten samples of `NaN`. At step 40 the square root of ᾱ is 0.002, the number the program has just printed, while the square root of α is about 0.7. So the first step multiplies x by several hundred where it should multiply by about 1.4. After that x is so far from every training value that all three weights in the denoiser round to 0, and it divides 0 by 0.' },
+      { change: 'Change `T = 40` to `T = 20`, to make sampling twice as fast. The schedule still rises from 0.1/T to 20/T. What goes wrong?',
+        find: { python: 'T = 40', javascript: 'const T = 40;' },
+        replace: { python: 'T = 20', javascript: 'const T = 20;' },
+        reveal: 'The first line becomes `signal left after 20 noising steps: 0.000`, and then Python stops with `ZeroDivisionError: float division by zero`, while JavaScript prints `NaN` for every x and every sample. With T = 20 the last β is 20/20 = 1. A step with β = 1 keeps nothing of the picture, so α is 0 there, and the reverse step divides by the square root of α. Fewer steps need a schedule built for fewer steps, not the same one cut short.' },
+    ],
     python: {
       source: `import math
 
@@ -385,7 +403,7 @@ print("ten samples: " + " ".join(f"{sample(False):.3f}" for _ in range(10)))`,
         { line: 43, text: 'The noise that the guess implies: what must have been added to the faded guess to give x.' },
         { line: 44, text: 'The DDPM update: remove a small part of that noise and undo the fading of this step.' },
         { line: 46, text: 'Add fresh noise, except on the last step. This randomness is why different runs end on different training values.' },
-        { line: 54, text: 'Ten samples. Each one is exactly a training value: with an exact denoiser, sampling can only return what it was given.' },
+        { line: 54, text: 'Ten samples. Each of these is a training value: with an exact denoiser, sampling returns what it was given. Very rarely, about 1 run in 1,000 with these settings, the last guess is still split between two values and the sample ends between them.' },
       ],
     },
     javascript: {
@@ -506,6 +524,280 @@ int main() {
     return 0;
 }`,
     },
+    more: [
+      {
+        title: 'Training it',
+        lead: 'The first program is handed the right answer. This one learns it. The model has the same formula as the exact denoiser, but where that formula uses the training values, the model holds three adjustable numbers that start at −0.5, 0 and 0.5. Training follows the recipe in the steps of this lesson: pick a training value, a step and some noise, make the noisy value, predict the noise, and move the three numbers a little to shrink the squared error. They are never copied from the data. They end at −0.987, 0.199 and 1.002, and each of the eleven samples lands on one of them: near a training value, not on it. The numbers keep wobbling and do not settle, because every update follows a single noisy example. The loss stops near 0.14, not at 0, and no model could bring it to 0, because one noisy value does not say exactly how much noise is in it. Be clear about what this shows. The right formula is built in and only three numbers are learned, so this is the training loop at its easiest. It does not show a neural network generalizing.',
+        sample: {
+          input: 'The same training set, 40-step schedule and random number generator as the first program. The model starts from the three numbers −0.5, 0 and 0.5 and is shown 20,000 noisy examples one at a time, with a learning rate of 0.002. Each printed loss is the average squared error in the predicted noise over the examples since the line before. Sampling then restarts the generator at 2020, so its eleven runs use the same random numbers as the eleven runs of the first program, which ended on −1, then 1, 1, 0.2, 0.2, 0.2, 0.2, −1, 1, −1, 1.',
+          expected: 'before training: learned -0.500 0.000 0.500\nafter   200 examples: learned -0.701 0.112 0.904, loss 0.855\nafter  2000 examples: learned -0.998 0.213 1.011, loss 0.185\nafter 20000 examples: learned -0.987 0.199 1.002, loss 0.142\nsamples: -0.987 1.002 1.002 0.199 0.199 0.199 0.199 -0.987 1.002 -0.987 1.002',
+        },
+        python: {
+          source: `import math
+
+DATA = [-1.0, 0.2, 1.0]     # the training set: used only to make noisy examples
+learned = [-0.5, 0.0, 0.5]  # the model: three adjustable numbers, not the data
+T = 40
+RATE = 0.002
+state = 2020
+
+
+def rand():
+    """Park-Miller generator: the same numbers in every language."""
+    global state
+    state = state * 48271 % 2147483647
+    return state / 2147483647
+
+
+def gauss():
+    """One bell-curve random number from two uniform ones (Box-Muller)."""
+    return math.sqrt(-2 * math.log(rand())) * math.cos(2 * math.pi * rand())
+
+
+beta = [0.0]
+abar = [1.0]  # abar[t]: fraction of the original signal's variance left after t steps
+for t in range(1, T + 1):
+    beta.append((0.1 + 19.9 * (t - 1) / (T - 1)) / T)
+    abar.append(abar[t - 1] * (1 - beta[t]))
+
+
+def predict(x, t):
+    """The model's estimate of the noise in x, with the weights and the guess behind it."""
+    signal = math.sqrt(abar[t])
+    weights = []
+    for v in learned:
+        miss = x - signal * v
+        weights.append(math.exp(-miss * miss / (2 * (1 - abar[t]))))
+    total = sum(weights)
+    weights = [w / total for w in weights]
+    guess = sum(w * v for w, v in zip(weights, learned))
+    return (x - signal * guess) / math.sqrt(1 - abar[t]), weights, guess
+
+
+def train(examples):
+    """Gradient descent on the DDPM loss, one noisy example at a time. Returns the average loss."""
+    total = 0.0
+    for _ in range(examples):
+        x0 = DATA[int(rand() * 3)]     # pick a training value,
+        t = 1 + int(rand() * T)        # a step,
+        eps = gauss()                  # and some noise
+        signal, noise = math.sqrt(abar[t]), math.sqrt(1 - abar[t])
+        x = signal * x0 + noise * eps  # the jump formula
+        predicted, weights, guess = predict(x, t)
+        error = predicted - eps        # the loss is this error squared
+        total += error * error
+        for i in range(3):
+            # How the guess moves when learned[i] moves: directly, and by shifting the weights.
+            pull = signal * (x - signal * learned[i]) / (1 - abar[t])
+            d_guess = weights[i] * (1 + (learned[i] - guess) * pull)
+            learned[i] -= RATE * 2 * error * (-signal / noise) * d_guess
+    return total / examples
+
+
+def sample():
+    x = gauss()
+    for t in range(T, 0, -1):
+        eps = predict(x, t)[0]
+        mean = (x - beta[t] * eps / math.sqrt(1 - abar[t])) / math.sqrt(1 - beta[t])
+        sigma = math.sqrt(beta[t] * (1 - abar[t - 1]) / (1 - abar[t]))
+        x = mean + (sigma * gauss() if t > 1 else 0.0)
+    return x
+
+
+def show(numbers):
+    return " ".join(f"{n:.3f}" for n in numbers)
+
+
+print("before training: learned " + show(learned))
+seen = 0
+for examples in (200, 1800, 18000):
+    loss = train(examples)
+    seen += examples
+    print(f"after {seen:5d} examples: learned {show(learned)}, loss {loss:.3f}")
+state = 2020  # restart the generator, so sampling uses the same random numbers as the first program
+print("samples: " + show([sample() for _ in range(11)]))`,
+        },
+        javascript: {
+          source: `const DATA = [-1.0, 0.2, 1.0];     // the training set: used only to make noisy examples
+const learned = [-0.5, 0.0, 0.5];  // the model: three adjustable numbers, not the data
+const T = 40;
+const RATE = 0.002;
+let state = 2020;
+
+// Park-Miller generator: the same numbers in every language.
+function rand() {
+  state = (state * 48271) % 2147483647;
+  return state / 2147483647;
+}
+
+// One bell-curve random number from two uniform ones (Box-Muller).
+function gauss() {
+  return Math.sqrt(-2 * Math.log(rand())) * Math.cos(2 * Math.PI * rand());
+}
+
+const beta = [0];
+const abar = [1]; // abar[t]: fraction of the original signal's variance left after t steps
+for (let t = 1; t <= T; t++) {
+  beta.push((0.1 + (19.9 * (t - 1)) / (T - 1)) / T);
+  abar.push(abar[t - 1] * (1 - beta[t]));
+}
+
+// The model's estimate of the noise in x, with the weights and the guess behind it.
+function predict(x, t) {
+  const signal = Math.sqrt(abar[t]);
+  const raw = learned.map((v) => {
+    const miss = x - signal * v;
+    return Math.exp((-miss * miss) / (2 * (1 - abar[t])));
+  });
+  const total = raw.reduce((sum, w) => sum + w, 0);
+  const weights = raw.map((w) => w / total);
+  const guess = weights.reduce((sum, w, i) => sum + w * learned[i], 0);
+  return { predicted: (x - signal * guess) / Math.sqrt(1 - abar[t]), weights, guess };
+}
+
+// Gradient descent on the DDPM loss, one noisy example at a time. Returns the average loss.
+function train(examples) {
+  let total = 0;
+  for (let n = 0; n < examples; n++) {
+    const x0 = DATA[Math.floor(rand() * 3)];  // pick a training value,
+    const t = 1 + Math.floor(rand() * T);     // a step,
+    const eps = gauss();                      // and some noise
+    const signal = Math.sqrt(abar[t]);
+    const noise = Math.sqrt(1 - abar[t]);
+    const x = signal * x0 + noise * eps;      // the jump formula
+    const { predicted, weights, guess } = predict(x, t);
+    const error = predicted - eps;            // the loss is this error squared
+    total += error * error;
+    for (let i = 0; i < 3; i++) {
+      // How the guess moves when learned[i] moves: directly, and by shifting the weights.
+      const pull = signal * (x - signal * learned[i]) / (1 - abar[t]);
+      const dGuess = weights[i] * (1 + (learned[i] - guess) * pull);
+      learned[i] -= RATE * 2 * error * (-signal / noise) * dGuess;
+    }
+  }
+  return total / examples;
+}
+
+function sample() {
+  let x = gauss();
+  for (let t = T; t >= 1; t--) {
+    const eps = predict(x, t).predicted;
+    const mean = (x - (beta[t] * eps) / Math.sqrt(1 - abar[t])) / Math.sqrt(1 - beta[t]);
+    const sigma = Math.sqrt((beta[t] * (1 - abar[t - 1])) / (1 - abar[t]));
+    x = mean + (t > 1 ? sigma * gauss() : 0);
+  }
+  return x;
+}
+
+const show = (numbers) => numbers.map((n) => n.toFixed(3)).join(" ");
+
+console.log("before training: learned " + show(learned));
+let seen = 0;
+for (const examples of [200, 1800, 18000]) {
+  const loss = train(examples);
+  seen += examples;
+  console.log("after " + String(seen).padStart(5, " ") + " examples: learned " + show(learned) + ", loss " + loss.toFixed(3));
+}
+state = 2020; // restart the generator, so sampling uses the same random numbers as the first program
+const results = [];
+for (let i = 0; i < 11; i++) results.push(sample());
+console.log("samples: " + show(results));`,
+        },
+        cpp: {
+          source: `#include <cmath>
+#include <cstdio>
+#include <vector>
+
+const double DATA[3] = {-1.0, 0.2, 1.0};  // the training set: used only to make noisy examples
+double learned[3] = {-0.5, 0.0, 0.5};     // the model: three adjustable numbers, not the data
+const int T = 40;
+const double RATE = 0.002;
+const double PI = 3.141592653589793;
+long long state = 2020;
+std::vector<double> beta_(T + 1, 0.0), abar(T + 1, 1.0);
+double weights[3], guess;                 // filled in by predict
+
+// Park-Miller generator: the same numbers in every language.
+double rnd() {
+    state = state * 48271 % 2147483647;
+    return static_cast<double>(state) / 2147483647;
+}
+
+// One bell-curve random number from two uniform ones (Box-Muller).
+double gauss() {
+    double radius = std::sqrt(-2 * std::log(rnd()));
+    return radius * std::cos(2 * PI * rnd());
+}
+
+// The model's estimate of the noise in x. Leaves the weights and the guess behind it in the globals.
+double predict(double x, int t) {
+    double signal = std::sqrt(abar[t]), total = 0;
+    for (int i = 0; i < 3; ++i) {
+        double miss = x - signal * learned[i];
+        weights[i] = std::exp(-miss * miss / (2 * (1 - abar[t])));
+        total += weights[i];
+    }
+    guess = 0;
+    for (int i = 0; i < 3; ++i) {
+        weights[i] /= total;
+        guess += weights[i] * learned[i];
+    }
+    return (x - signal * guess) / std::sqrt(1 - abar[t]);
+}
+
+// Gradient descent on the DDPM loss, one noisy example at a time. Returns the average loss.
+double train(int examples) {
+    double total = 0;
+    for (int n = 0; n < examples; ++n) {
+        double x0 = DATA[static_cast<int>(rnd() * 3)];  // pick a training value,
+        int t = 1 + static_cast<int>(rnd() * T);        // a step,
+        double eps = gauss();                           // and some noise
+        double signal = std::sqrt(abar[t]), noise = std::sqrt(1 - abar[t]);
+        double x = signal * x0 + noise * eps;           // the jump formula
+        double error = predict(x, t) - eps;             // the loss is this error squared
+        total += error * error;
+        for (int i = 0; i < 3; ++i) {
+            // How the guess moves when learned[i] moves: directly, and by shifting the weights.
+            double pull = signal * (x - signal * learned[i]) / (1 - abar[t]);
+            double d_guess = weights[i] * (1 + (learned[i] - guess) * pull);
+            learned[i] -= RATE * 2 * error * (-signal / noise) * d_guess;
+        }
+    }
+    return total / examples;
+}
+
+double sample() {
+    double x = gauss();
+    for (int t = T; t >= 1; --t) {
+        double eps = predict(x, t);
+        double mean = (x - beta_[t] * eps / std::sqrt(1 - abar[t])) / std::sqrt(1 - beta_[t]);
+        double sigma = std::sqrt(beta_[t] * (1 - abar[t - 1]) / (1 - abar[t]));
+        x = mean + (t > 1 ? sigma * gauss() : 0.0);
+    }
+    return x;
+}
+
+int main() {
+    for (int t = 1; t <= T; ++t) {
+        beta_[t] = (0.1 + 19.9 * (t - 1) / (T - 1)) / T;
+        abar[t] = abar[t - 1] * (1 - beta_[t]);
+    }
+    std::printf("before training: learned %.3f %.3f %.3f\\n", learned[0], learned[1], learned[2]);
+    int seen = 0;
+    for (int examples : {200, 1800, 18000}) {
+        double loss = train(examples);
+        seen += examples;
+        std::printf("after %5d examples: learned %.3f %.3f %.3f, loss %.3f\\n", seen, learned[0], learned[1], learned[2], loss);
+    }
+    state = 2020;  // restart the generator, so sampling uses the same random numbers as the first program
+    std::printf("samples:");
+    for (int i = 0; i < 11; ++i) std::printf(" %.3f", sample());
+    std::printf("\\n");
+    return 0;
+}`,
+        },
+      },
+    ],
   },
 
   complexity: {
@@ -520,7 +812,7 @@ int main() {
     tradeoffs: 'More steps give a more faithful reverse process and cost proportionally more time. Much of the work since 2020 has been about cutting the number of steps, by deterministic samplers, better numerical solvers, or training a second model to imitate many steps in one.',
     assumptions: [
       'Cost is counted in denoiser evaluations. For a real model each one is a full pass through a large network.',
-      'The statements about training describe real diffusion models. Nothing is trained on this page.',
+      'The statements about training describe real diffusion models. Nothing is trained in the demonstration. The second program trains a model of three numbers.',
       'The exact denoiser shown here is only feasible because the training set is tiny.',
     ],
   },
@@ -606,16 +898,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The visualization starts from pure noise and runs 100 reverse steps with the exact optimal denoiser for its four training images. What is the final picture?',
-      options: ['A blurry average of the four images', 'Exactly one of the four training images', 'A new shape that combines parts of several images', 'Something that still looks like noise'],
+      q: 'The default run uses seed 7 and 100 steps, and ends on the plus. Keep seed 7 and set the number of steps to 50. The run then starts from exactly the same 100 pixels of noise. What will it end on?',
+      options: ['The plus again. The same starting noise must lead to the same picture', 'One of the four training images, but not necessarily the plus', 'A blend of the plus and another image, because the route changes partway', 'A picture that is still partly noise, because 50 steps are too few to clean it'],
       answer: 1,
       explain: [
-        'The blurry average is the denoiser\'s guess at the start, when it cannot tell the images apart. It does not survive to the end.',
-        'Correct. As the noise level falls, the weights collapse onto a single training image and the last step returns it exactly. This demonstration memorizes by construction.',
-        'That would require a denoiser that generalizes. The exact one never leaves the four images it knows.',
-        'The reverse process removes the noise completely by the last step.',
+        'The picture is not hidden in the starting noise. With 50 steps each step is larger and the fresh noise added along the way is scaled differently, so the route from the same starting point is different. This run ends on the cross.',
+        'It ends exactly on the cross, with a pixel difference of 0.000. The starting pixels are the same as in the default run, but the route from there is not, and that is enough to tip the choice to another image. The noise only decides which image comes out, and all of the noise takes part, not just the first draw.',
+        'The exact denoiser never settles between images. As the noise level falls, its weights collapse onto one training image, here the cross.',
+        'The schedule is stretched to fit the number of steps, so the noise is gone by the last step whatever that number is. The run ends exactly on the cross.',
       ],
-      tryInput: { ...DEFAULTS },
+      tryInput: { ...DEFAULTS, steps: 50 },
+      check: (r, c) => (r.nearest === 'cross' && r.distance < 1e-9 && r.T === 50 && c['denoiser evaluations'] === 50) || `ended on ${r.nearest}, distance ${r.distance}`,
     },
     {
       type: 'debug',
@@ -650,8 +943,9 @@ int main() {
     {
       type: 'challenge',
       title: 'Make the exact denoiser forget',
-      prompt: 'Work in two dimensions. Take about 30 training points arranged on a circle. First run the sampler with the exact optimal denoiser, 200 times, and confirm that every sample lands on a training point. Then blunt the denoiser: divide the exponent in its weights by a constant larger than 1, so that it is less sure which training point a noisy point came from. Run 200 samples again and plot them. Describe where the samples now fall, and say in what sense the blunted denoiser has generalized and in what sense it is simply wrong.',
-      hints: ['The weights are exp(−distance² / (2(1 − ᾱ_t))). Blunting them replaces 2(1 − ᾱ_t) by a larger number.', 'Look at whether new samples fall on the circle between training points, inside it, or both.'],
+      prompt: 'Work in two dimensions. Take 8 training points evenly spaced on a circle of radius 1, and use 100 steps with the schedule of this page. First run the sampler with the exact optimal denoiser, 200 times, and count how many samples land on a training point. Then blunt the denoiser: divide the exponent in its weights by 30, so that it is less sure which training point a noisy point came from. Run 200 samples again and plot them. Describe where the samples now fall, and say in what sense the blunted denoiser has generalized and in what sense it is simply wrong.',
+      expect: 'With the exact denoiser all 200 samples land on a training point, to within 0.000001. With the exponent divided by 30, none of the 200 does, and every one of them is strictly inside the circle. Their average distance from the centre is about 0.97 and their average distance from the nearest training point is between 0.08 and 0.09. About 190 of the 200 lie within 0.01 of a straight line joining two neighbouring training points. Your figures will differ a little with your random numbers: six runs gave 0.971 to 0.976 for the first average, 0.078 to 0.092 for the second, and 189 to 197 for the count. So the blunted denoiser does produce points that were not in the training set, which is generalizing of a kind. But it puts them on the chords between neighbours and never on the circle the data came from, because a weighted average of training points cannot leave the octagon they form.',
+      hints: ['The weights are exp(−distance² / (2(1 − ᾱ_t))). Blunting them by 30 replaces 2(1 − ᾱ_t) by 60(1 − ᾱ_t).', 'Look at whether new samples fall on the circle between training points, inside it, or both.'],
     },
   ],
 
@@ -668,7 +962,7 @@ int main() {
 
   advanced: {
     history: 'Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan and Surya Ganguli proposed in 2015 to learn a generative model by reversing a gradual diffusion process, an idea taken from non-equilibrium thermodynamics. In 2019 Yang Song and Stefano Ermon developed a closely related approach based on estimating the gradient of the log-density of the data at many noise levels. In 2020 Jonathan Ho, Ajay Jain and Pieter Abbeel simplified the training objective to predicting the added noise, connected the two lines of work, and reported image quality that brought the method wide attention. In 2021 Song and colleagues described both as discretizations of a stochastic differential equation, and Prafulla Dhariwal and Alex Nichol reported diffusion models surpassing generative adversarial networks on image synthesis. Robin Rombach and colleagues showed in 2022 that running the diffusion in a compressed latent space makes high-resolution generation far cheaper, the design behind Stable Diffusion.',
-    derivation: '**The forward process.** One step is $x_t = \\sqrt{1 - \\beta_t}\\, x_{t-1} + \\sqrt{\\beta_t}\\, \\epsilon_t$ with $\\epsilon_t \\sim \\mathcal{N}(0, I)$. Write $\\alpha_t = 1 - \\beta_t$ and $\\bar\\alpha_t = \\prod_{s \\le t} \\alpha_s$. Unrolling the recursion, the coefficient of $x_0$ is $\\sqrt{\\bar\\alpha_t}$, and the independent noises add up to a single Gaussian whose variance $v_t$ obeys $v_t = \\alpha_t v_{t-1} + \\beta_t$, with solution $v_t = 1 - \\bar\\alpha_t$. So\n\n$$x_t = \\sqrt{\\bar\\alpha_t}\\, x_0 + \\sqrt{1 - \\bar\\alpha_t}\\, \\epsilon, \\qquad \\epsilon \\sim \\mathcal{N}(0, I).$$\n\n**The optimal denoiser.** Suppose $x_0$ is one of the training images $x_1, \\dots, x_N$, each equally likely. Given $x_t$, Bayes\' rule gives image $i$ the posterior probability\n\n$$w_i(x_t) = \\frac{\\exp\\left(-\\lVert x_t - \\sqrt{\\bar\\alpha_t}\\, x_i \\rVert^2 / (2(1 - \\bar\\alpha_t))\\right)}{\\sum_j \\exp\\left(-\\lVert x_t - \\sqrt{\\bar\\alpha_t}\\, x_j \\rVert^2 / (2(1 - \\bar\\alpha_t))\\right)}.$$\n\nThe guess that minimizes the expected squared error is the posterior mean, $\\hat x_0 = \\mathbb{E}[x_0 \\mid x_t] = \\sum_i w_i(x_t)\\, x_i$, and the matching noise estimate is $\\hat\\epsilon = (x_t - \\sqrt{\\bar\\alpha_t}\\, \\hat x_0)/\\sqrt{1 - \\bar\\alpha_t}$. A network trained with the DDPM loss\n\n$$L = \\mathbb{E}_{x_0, t, \\epsilon}\\, \\lVert \\epsilon - \\epsilon_\\theta(\\sqrt{\\bar\\alpha_t}\\, x_0 + \\sqrt{1 - \\bar\\alpha_t}\\, \\epsilon,\\, t) \\rVert^2$$\n\non this training set has $\\hat\\epsilon$ as its exact minimizer.\n\n**The reverse step.** If $x_0$ were known, the distribution of $x_{t-1}$ given $x_t$ and $x_0$ would be Gaussian with variance $\\tilde\\beta_t = \\beta_t (1 - \\bar\\alpha_{t-1})/(1 - \\bar\\alpha_t)$ and a mean that is a fixed combination of $x_t$ and $x_0$. Substituting the estimate $\\hat x_0$, written in terms of $\\hat\\epsilon$, gives the sampling update\n\n$$x_{t-1} = \\frac{1}{\\sqrt{\\alpha_t}}\\left(x_t - \\frac{\\beta_t}{\\sqrt{1 - \\bar\\alpha_t}}\\, \\hat\\epsilon\\right) + \\sigma_t z, \\qquad z \\sim \\mathcal{N}(0, I),$$\n\nwith $\\sigma_t^2 = \\tilde\\beta_t$ on this page and $z = 0$ at $t = 1$. At $t = 1$ the update returns $\\hat x_0$ itself, because $\\bar\\alpha_1 = \\alpha_1$. Once the weights have collapsed onto one image, that is the image returned.',
+    derivation: '**The forward process.** One step is $x_t = \\sqrt{1 - \\beta_t}\\, x_{t-1} + \\sqrt{\\beta_t}\\, \\epsilon_t$ with $\\epsilon_t \\sim \\mathcal{N}(0, I)$. Write $\\alpha_t = 1 - \\beta_t$ and $\\bar\\alpha_t = \\prod_{s \\le t} \\alpha_s$. Unrolling the recursion, the coefficient of $x_0$ is $\\sqrt{\\bar\\alpha_t}$, and the independent noises add up to a single Gaussian whose variance $v_t$ obeys $v_t = \\alpha_t v_{t-1} + \\beta_t$, with solution $v_t = 1 - \\bar\\alpha_t$. So\n\n$$x_t = \\sqrt{\\bar\\alpha_t}\\, x_0 + \\sqrt{1 - \\bar\\alpha_t}\\, \\epsilon, \\qquad \\epsilon \\sim \\mathcal{N}(0, I).$$\n\n**The optimal denoiser.** Suppose $x_0$ is one of the training images $x_1, \\dots, x_N$, each equally likely. Given $x_t$, Bayes\' rule gives image $i$ the posterior probability\n\n$$w_i(x_t) = \\frac{\\exp\\left(-\\lVert x_t - \\sqrt{\\bar\\alpha_t}\\, x_i \\rVert^2 / (2(1 - \\bar\\alpha_t))\\right)}{\\sum_j \\exp\\left(-\\lVert x_t - \\sqrt{\\bar\\alpha_t}\\, x_j \\rVert^2 / (2(1 - \\bar\\alpha_t))\\right)}.$$\n\nThe guess that minimizes the expected squared error is the posterior mean, $\\hat x_0 = \\mathbb{E}[x_0 \\mid x_t] = \\sum_i w_i(x_t)\\, x_i$, and the matching noise estimate is $\\hat\\epsilon = (x_t - \\sqrt{\\bar\\alpha_t}\\, \\hat x_0)/\\sqrt{1 - \\bar\\alpha_t}$. A network trained with the DDPM loss\n\n$$L = \\mathbb{E}_{x_0, t, \\epsilon}\\, \\lVert \\epsilon - \\epsilon_\\theta(\\sqrt{\\bar\\alpha_t}\\, x_0 + \\sqrt{1 - \\bar\\alpha_t}\\, \\epsilon,\\, t) \\rVert^2$$\n\non this training set has $\\hat\\epsilon$ as its exact minimizer.\n\n**The reverse step.** If $x_0$ were known, the distribution of $x_{t-1}$ given $x_t$ and $x_0$ would be Gaussian with variance $\\tilde\\beta_t = \\beta_t (1 - \\bar\\alpha_{t-1})/(1 - \\bar\\alpha_t)$ and mean\n\n$$\\tilde\\mu_t(x_t, x_0) = \\frac{\\sqrt{\\bar\\alpha_{t-1}}\\,\\beta_t}{1 - \\bar\\alpha_t}\\, x_0 + \\frac{\\sqrt{\\alpha_t}\\,(1 - \\bar\\alpha_{t-1})}{1 - \\bar\\alpha_t}\\, x_t.$$\n\nBoth come from Bayes\' rule applied to two Gaussians in $x_{t-1}$. Call one over a variance a precision. The forward step from $x_{t-1}$ to $x_t$ pins $x_{t-1}$ near $x_t/\\sqrt{\\alpha_t}$ with precision $\\alpha_t/\\beta_t$, and the jump from $x_0$ pins it near $\\sqrt{\\bar\\alpha_{t-1}}\\, x_0$ with precision $1/(1 - \\bar\\alpha_{t-1})$. The precisions add up to $1/\\tilde\\beta_t$, and the mean is the two centres weighted by their precisions.\n\nThe sampler does not know $x_0$, so it puts the estimate $\\hat x_0 = (x_t - \\sqrt{1 - \\bar\\alpha_t}\\, \\hat\\epsilon)/\\sqrt{\\bar\\alpha_t}$ in its place. Because $\\bar\\alpha_t = \\alpha_t \\bar\\alpha_{t-1}$ and $\\beta_t + \\alpha_t (1 - \\bar\\alpha_{t-1}) = 1 - \\bar\\alpha_t$, the two terms in $x_t$ add up to $x_t/\\sqrt{\\alpha_t}$, and the coefficient of $\\hat\\epsilon$ comes to $-\\beta_t/(\\sqrt{\\alpha_t}\\sqrt{1 - \\bar\\alpha_t})$. That is the sampling update\n\n$$x_{t-1} = \\frac{1}{\\sqrt{\\alpha_t}}\\left(x_t - \\frac{\\beta_t}{\\sqrt{1 - \\bar\\alpha_t}}\\, \\hat\\epsilon\\right) + \\sigma_t z, \\qquad z \\sim \\mathcal{N}(0, I),$$\n\nwith $\\sigma_t^2 = \\tilde\\beta_t$ on this page and $z = 0$ at $t = 1$. The line for $\\mu$ in the pseudocode and the reverse step of both programs in the code section compute this mean with exactly these two coefficients: $\\beta_t/\\sqrt{1 - \\bar\\alpha_t}$ on $\\hat\\epsilon$, and $1/\\sqrt{\\alpha_t}$ on the whole. At $t = 1$ the update returns $\\hat x_0$ itself, because $\\bar\\alpha_1 = \\alpha_1$. Once the weights have collapsed onto one image, that is the image returned.',
     variants: [
       { name: 'Score-based models', text: 'Describe the same process in continuous time as a stochastic differential equation. The network estimates the score, the gradient of the log-density of noisy data, which is the predicted noise up to a scale factor.' },
       { name: 'DDIM', text: 'A deterministic sampler for the same trained network that adds no fresh noise and can take much larger steps, reducing a thousand steps to tens.' },
@@ -727,6 +1021,15 @@ int main() {
         }
         return (counts.plus === 50 && counts.ring === 62 && counts.cross === 49 && counts.triangle === 39) || JSON.stringify(counts);
       } },
+    { name: 'the numbers quoted in the things to try: when the denoiser becomes sure, and the forward weights', input: {},
+      check: (r) => {
+        const coarse = run({ ...DEFAULTS, steps: 25 }, QUIET), fine = run({ ...DEFAULTS, steps: 200 }, QUIET), fwd = run({ ...DEFAULTS, mode: 'forward' }, QUIET);
+        if (r.undecidedUntil !== 63 || r.decidedAt !== 50) return `default: over 50% at step ${r.undecidedUntil}, 99% at step ${r.decidedAt}`;
+        if (coarse.decidedAt !== 11 || fine.decidedAt !== 90 || coarse.distance > 1e-9 || fine.distance > 1e-9) return `coarse sure at ${coarse.decidedAt}, fine at ${fine.decidedAt}`;
+        return (fwd.weights.map((w) => Math.round(w * 100)).join(',') === '26,24,24,26' && fwd.signalLeft.toFixed(4) === '0.0045') || `forward weights ${fwd.weights}, signal ${fwd.signalLeft}`;
+      } },
+    { name: 'the same seed with 50 steps ends on a different image from the default run', input: { ...DEFAULTS, steps: 50 },
+      check: (r) => (r.nearest === 'cross' && r.distance < 1e-9 && run({ ...DEFAULTS }, QUIET).nearest === 'plus') || `ended on ${r.nearest}` },
     { name: 'coarse and fine step counts also end on a training image', input: { ...DEFAULTS, steps: 25, seed: 11 },
       check: (r) => (r.distance < 1e-9 && run({ ...DEFAULTS, steps: 200, seed: 11 }, QUIET).distance < 1e-9) || `distance ${r.distance}` },
     { name: 'the denoiser weights are a probability distribution and the guess stays between the images', input: {},

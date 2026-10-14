@@ -361,11 +361,16 @@ export default {
       { label: 'A single click', values: { custom: [1, 0, 0, 0, 0, 0, 0, 0] } },
     ],
     tryThis: [
-      'Load "The same chord, no noise" and go to the last step. The bars at frequencies 2, 5 and 9 have heights 1, 0.6 and 0.4, the amplitudes of the three waves. Change the amplitude of wave 2 and only the bar at 5 changes.',
-      'Load "A note between two bins". A wave of 4.5 cycles does not fit the window a whole number of times, so no single bin matches it. Its energy spreads over many bins, mostly 4 and 5. This is called leakage, and it comes from analysing a finite block, not from any fault in the FFT.',
-      'Load "Too fast to capture". With 32 samples the highest frequency that can be told apart is 16 cycles. A wave of 20 cycles produces exactly the same samples as one of 12 cycles turned upside down, so the peak appears at 12. This is called aliasing.',
-      'Load "Notes under heavy noise" and then lower the number of samples to 32. With 128 samples the two notes stand clear of the noise. With 32 they are harder to pick out, because a longer window averages the noise down while each note keeps its height.',
-      'With 16 samples, step through the levels and count the butterflies in each: always 8, half the number of samples. Four levels of 8 make 32 multiplications, where the direct method needs 256.',
+      { ask: 'Load "The same chord, no noise" and go to the last step. Three bars stand at frequencies 2, 5 and 9, with the heights of the three waves: 1, 0.6 and 0.4. Now raise the amplitude of wave 2 from 0.6 to 1.2. Which bars will change, and to what?',
+        reveal: 'Only the bar at 5 changes, from 0.6 to 1.2. The bars at 2 and 9 stay at 1 and 0.4. Each of the three waves fits the window a whole number of times, so each one lands in a single bin of its own and the others never see it.' },
+      { ask: 'Load "A note between two bins". The only wave has 4.5 cycles per window and amplitude 1, and there is no bin 4.5. Where will it show up: at bin 4, at bin 5, shared between the two, or somewhere else?',
+        reveal: 'Everywhere. The tallest bars are at 4 and 5, with heights 0.66 and 0.61, but all 17 bars are above zero: 0.25 at bin 3, 0.19 at bin 6, and still 0.03 at bin 15. No bar reaches the true height of 1. A wave of 4.5 cycles does not fit the window a whole number of times, so no single bin matches it and its energy spreads. This is called leakage, and it comes from analysing a finite block, not from any fault in the FFT.' },
+      { ask: 'Load "Too fast to capture". The wave completes 20 cycles in a window of 32 samples, but the chart stops at frequency 16. Where will the peak appear?',
+        reveal: 'At frequency 12, with its full height of 1. With 32 samples the highest frequency that can be told apart is 16 cycles. A wave of 20 cycles produces exactly the same samples as one of 32 − 20 = 12 cycles turned upside down, so the two cannot be distinguished. This is called aliasing.' },
+      { ask: 'Load "Notes under heavy noise". It has two notes, at frequencies 6 and 13, in 128 samples. Run it and see which peaks the last step marks. Then lower the number of samples to 32, leaving the notes and the noise as they are. Will the same two peaks be marked?',
+        reveal: 'No. With 128 samples the marked peaks are 6 and 13, with heights 1.00 and 0.61, close to the true 1 and 0.6. With 32 samples four peaks are marked: 2, 6, 11 and 13, with heights 0.28, 0.77, 0.44 and 0.56. Two of them are nothing but noise, and the one at 11 is nearly as tall as the real note at 13. A longer window averages the noise down while each note keeps its height. These figures are for the noise seed 7; another seed gives different false peaks.' },
+      { ask: 'Set the number of samples to 16 and step through the levels, counting the butterflies in each one. Before the last step tells you: how many multiplications will the whole FFT have used, and how many would the direct method need?',
+        reveal: '32 against 256. Every level has 8 butterflies, half the number of samples, and 16 samples need 4 levels, so the FFT uses 4 × 8 = 32 multiplications. The direct method computes 16 outputs from 16 samples each: 16 × 16 = 256.' },
     ],
     run,
     report: (r, c) => {
@@ -453,6 +458,20 @@ export default {
       input: 'Eight samples of sin(2πj/8) + 0.5·sin(2π·3j/8): one cycle at amplitude 1 plus three cycles at amplitude 0.5. Print the magnitude of each output.',
       expected: 'bin 0: 0.0000\nbin 1: 4.0000\nbin 2: 0.0000\nbin 3: 2.0000\nbin 4: 0.0000\nbin 5: 2.0000\nbin 6: 0.0000\nbin 7: 4.0000',
     },
+    breakIt: [
+      { change: 'In the last line of the butterfly, the one that stores the difference, read the first entry back from the array instead of using the saved copy `u`. Bins 1 and 7 should both be 4. What will they be now?',
+        find: { python: 'a[s + k + m // 2] = u - v', javascript: 're[j] = ur - vr; im[j] = ui - vi;' },
+        replace: { python: 'a[s + k + m // 2] = a[s + k] - v', javascript: 're[j] = re[i] - vr; im[j] = im[i] - vi;' },
+        reveal: 'Bin 1 prints 2.0000 and bin 7 prints 0.0000. Bins 3 and 5 print 1.0607 and 0.5000 where both should be 2. The line before has already replaced the first entry with u + v, so the changed line stores (u + v) − v, which is just u. Every difference is lost, at every level. Save the old value before either entry is overwritten.' },
+      { change: 'In the reordering loop, change the test `i < r` to "i is not equal to r", so that a swap happens whenever the two positions differ. Where will the largest value in the output be?',
+        find: { python: 'if i < r:', javascript: 'if (i < r)' },
+        replace: { python: 'if i != r:', javascript: 'if (i !== r)' },
+        reveal: 'At bin 4, which prints 5.2426, although the signal has nothing at that frequency. The eight lines read 0.0000, 0.9182, 0.7071, 2.2168, 5.2426, 2.2168, 0.7071, 0.9182. Each pair is now swapped twice, once when the loop reaches `i` and again when it reaches `r`, so every sample ends up where it started. The reordering has undone itself, and the butterflies merge the wrong samples with each other.' },
+      { change: 'In the line that computes the twist factor, divide by the full length `n` instead of the block length `m`. Will bin 7 still equal bin 1, and bin 5 still equal bin 3?',
+        find: { python: 'k / m)', javascript: 'const angle = (-2 * Math.PI * k) / m;' },
+        replace: { python: 'k / n)', javascript: 'const angle = (-2 * Math.PI * k) / n;' },
+        reveal: 'No. Bins 1, 3, 5 and 7 print 4.8587, 0.7975, 3.0202 and 2.5761, where the correct values are 4, 2, 2 and 4. The level with blocks of 2 is unharmed, because it only uses k = 0, where the twist is 1 either way. The last level is unharmed too, because there `m` equals `n`. The damage is done in between, at blocks of 4: for k = 1 the twist should be a quarter turn, and dividing by 8 makes it an eighth of a turn.' },
+    ],
     python: {
       source: `import cmath
 import math
@@ -703,16 +722,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'A block of 32 samples contains a single sine wave that completes 20 cycles in the block. Where will the peak of the spectrum appear?',
-      options: ['At bin 20', 'At bin 12', 'At bin 16', 'Nowhere: the spectrum will be flat'],
+      q: 'A block of only 16 samples contains a single sine wave that completes 11 cycles in the block. Where will the peak of the spectrum appear?',
+      options: ['At bin 11', 'At bin 5', 'At bin 8', 'At bin 3'],
       answer: 1,
       explain: [
-        'The chart only goes up to bin 16, half the number of samples. Nothing faster can be distinguished.',
-        'Correct. With 32 samples, a wave of 20 cycles gives exactly the same samples as a wave of 32 − 20 = 12 cycles turned upside down. This is aliasing.',
-        'Bin 16 is the fastest wave that can be represented, one that flips at every sample. The folded frequency is 32 − 20, not 16.',
-        'The samples are far from constant, so the energy has to show up somewhere.',
+        'With 16 samples the chart only goes up to bin 8, half the number of samples. Nothing faster can be distinguished.',
+        'Correct. With 16 samples, a wave of 11 cycles gives exactly the same samples as a wave of 16 − 11 = 5 cycles turned upside down. This is aliasing.',
+        'Bin 8 is the fastest wave that can be represented, one that flips at every sample. The folded frequency is 16 − 11, not 8.',
+        '11 is 3 above the limit of 8, but 3 is the distance, not the place. The fold works like a mirror at 8: the peak lands 3 below it, at bin 5.',
       ],
-      tryInput: { n: '32', f1: 20, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
+      tryInput: { n: '16', f1: 11, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
+      check: (r) => (r.n === 16 && r.peaks.join(',') === '5' && Math.abs(r.amplitude[5] - 1) < 1e-9) || `peaks at ${r.peaks.join(', ')}`,
     },
     {
       type: 'debug',
@@ -745,7 +765,8 @@ a[s + k + m // 2] = a[s + k] - v`,
     {
       type: 'challenge',
       title: 'Go back, then clean up a signal',
-      prompt: 'Write the inverse transform by reusing your forward FFT: take the complex conjugate of every entry, run the forward FFT, take the conjugate again and divide by n. Check that it restores a signal exactly, up to rounding. Then build a noisy signal from two sine waves, transform it, set to zero every bin whose size is below a quarter of the largest, and transform back. Plot the result against the noise-free signal. Explain why this works when the waves fit the window a whole number of times and works less well when they do not.',
+      prompt: 'Write the inverse transform by reusing your forward FFT: take the complex conjugate of every entry, run the forward FFT, take the conjugate again and divide by n. Check on the samples 6, 1, 4, 1 that it restores a signal exactly, up to rounding. Then clean up a signal, starting with a case you can check. Take 16 samples of sin(2π·2j/16) + 0.5·sin(2π·5j/16), for j from 0 to 15, and disturb them by adding 0.1 to the even-numbered samples and subtracting 0.1 from the odd-numbered ones. Transform the result, set to zero every bin whose size is below a quarter of the largest, and transform back. Find the largest gap between your output and the undisturbed signal. Do it again with the first wave at 2.5 cycles instead of 2. After that, try random noise and plot the result. Explain why this works when the waves fit the window a whole number of times and works less well when they do not.',
+      expect: 'The forward transform of 6, 1, 4, 1 is 12, 2, 8, 2, and the inverse must turn that back into 6, 1, 4, 1. In the 16-sample case the bin sizes are 8 at bins 2 and 14, 4 at bins 5 and 11, 1.6 at bin 8 and 0 everywhere else. A quarter of the largest is 2, so only bin 8 is set to zero. It held the whole disturbance and nothing else, and the output matches the undisturbed signal to rounding: the largest gap falls from 0.1 to 0. With the first wave at 2.5 cycles every bin is occupied. Eleven are kept (0 to 5 and 11 to 15), five are set to zero, and the largest gap rises from 0.1 to 0.186. The cleaned signal is now further from the truth than the disturbed one, because the bins that were zeroed held part of the leaked wave as well as the disturbance.',
       hints: ['For a real signal remember to keep both bin k and its mirror bin n − k, or the output will no longer be real.', 'A wave between two bins leaks into many bins, most of them small. Zeroing the small ones throws away part of the wave along with the noise.'],
     },
   ],
@@ -832,7 +853,27 @@ a[s + k + m // 2] = a[s + k] - v`,
         if ([3, 1, 2].some((v, k) => Math.abs(r.amplitude[k] - v) > 1e-12)) return `amounts ${r.amplitude.join(', ')}`;
         return (c['complex multiplications'] === 4 && r.swaps === 1) || `${c['complex multiplications']} multiplications, ${r.swaps} swaps`;
       } },
-    { name: 'the quiz prediction: 20 cycles in 32 samples appears at bin 12', input: { n: '32', f1: 20, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
+    { name: 'the quiz prediction: 11 cycles in 16 samples appears at bin 5', input: { n: '16', f1: 11, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
+      check: (r) => (r.peaks.join(',') === '5' && Math.abs(r.amplitude[5] - 1) < 1e-9 && r.amplitude.length === 9) || `peaks at ${r.peaks.join(', ')}` },
+    { name: 'things to try: doubling the amplitude of wave 2 changes only the bar at 5', input: { ...base, a2: 1.2 },
+      check: (r) => {
+        const want = { 2: 1, 5: 1.2, 9: 0.4 };
+        for (let k = 0; k <= 16; k++) if (Math.abs(r.amplitude[k] - (want[k] || 0)) > 1e-9) return `bin ${k} has amplitude ${r.amplitude[k]}`;
+        return true;
+      } },
+    { name: 'things to try: 4.5 cycles leaks into every bin, with 0.66 and 0.61 at bins 4 and 5', input: { n: '32', f1: 4.5, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
+      check: (r) => {
+        const two = (k) => r.amplitude[k].toFixed(2);
+        if (r.amplitude.length !== 17 || r.amplitude.some((v) => !(v > 0.01 && v < 1))) return `amplitudes ${r.amplitude.join(', ')}`;
+        return (two(4) === '0.66' && two(5) === '0.61' && two(3) === '0.25' && two(6) === '0.19' && two(15) === '0.03') || `bins 3 to 6: ${[3, 4, 5, 6].map(two).join(', ')}`;
+      } },
+    { name: 'things to try: under heavy noise 128 samples mark peaks 6 and 13, and 32 samples mark 2, 6, 11 and 13', input: { n: '128', f1: 6, a1: 1, f2: 13, a2: 0.6, f3: 9, a3: 0, noise: 0.6, custom: [] },
+      check: (r) => {
+        if (r.peaks.join(',') !== '6,13' || r.amplitude[6].toFixed(2) !== '1.00' || r.amplitude[13].toFixed(2) !== '0.61') return `128 samples: peaks ${r.peaks.join(', ')}`;
+        const s = run({ n: '32', f1: 6, a1: 1, f2: 13, a2: 0.6, f3: 9, a3: 0, noise: 0.6, seed: 7, custom: [] }, quiet);
+        return (s.peaks.join(',') === '2,6,11,13' && s.peaks.map((k) => s.amplitude[k].toFixed(2)).join(',') === '0.28,0.77,0.44,0.56') || `32 samples: peaks ${s.peaks.join(', ')}`;
+      } },
+    { name: 'things to try: 20 cycles in 32 samples appears at bin 12', input: { n: '32', f1: 20, a1: 1, a2: 0, a3: 0, noise: 0, custom: [] },
       check: (r) => (r.peaks.join(',') === '12' && Math.abs(r.amplitude[12] - 1) < 1e-9) || `peaks at ${r.peaks.join(', ')}` },
     { name: 'operation counts: (n/2) log2 n for the FFT and n² for the direct transform', input: { ...base, n: '16' },
       check: (r, c) => {

@@ -28,35 +28,52 @@ function greedyByRatio(weights, values, capacity) {
 
 const list = (xs) => (xs.length === 0 ? 'none' : xs.length === 1 ? String(xs[0]) : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
+// The same method, told two ways. A bag and its items is the classic picture; a budget and
+// its proposals is the same arithmetic in the words a business would use.
+const WORDS = {
+  bag: { one: 'item', many: 'items', room: 'capacity', size: 'bag size', cost: 'weight', worth: 'value', costs: 'weighs', yes: 'taken', no: 'left behind',
+    done: 'packed', take: 'take', Take: 'Take', Taking: 'Taking', grabbing: 'grabbing', cannot: 'cannot go in', nothing: 'nothing fits',
+    into: (W) => `into a bag that holds weight **${W}**`, bestIs: (b) => `The best load is worth **${b}**`,
+    tableTitle: 'Each cell: best total value using only the items named in its row, in a bag of the capacity at the top of its column' },
+  budget: { one: 'proposal', many: 'proposals', room: 'budget', size: 'budget', cost: 'cost', worth: 'benefit', costs: 'costs', yes: 'funded', no: 'left out',
+    done: 'funded', take: 'fund', Take: 'Fund', Taking: 'Funding', grabbing: 'funding', cannot: 'cannot be funded', nothing: 'nothing can be funded',
+    into: (W) => `from a budget of **${W}**`, bestIs: (b) => `The best plan brings a benefit of **${b}**`,
+    tableTitle: 'Each cell: best total benefit using only the proposals named in its row, with the budget at the top of its column' },
+};
+const cap = (word) => word.charAt(0).toUpperCase() + word.slice(1);
+
 function run(input, t) {
+  const V = WORDS[input.wording] || WORDS.bag;
+  const some = (k) => (k === 1 ? V.one : V.many);
+  const plain = V === WORDS.bag;   // the state panel keeps the pseudocode's own names in the classic telling
   const { weights, values } = resolveItems(input);
   const n = weights.length;
   const W = Math.max(0, Math.floor(Number(input.capacity) || 0));
   const K = Array.from({ length: n + 1 }, () => new Array(W + 1).fill(null));
   const taken = new Array(n).fill(null);   // null: undecided, true: taken, false: left behind
 
-  const tableLegend = [{ label: 'cell being filled', role: 'current' }, { label: 'cells it reads: skip (above) and take (above, further left)', role: 'compare' }, { label: 'traceback path', role: 'path' }];
-  const rowLabels = ['no items', ...weights.map((_, k) => (k === 0 ? 'item 1' : `items 1 to ${k + 1}`))];
+  const tableLegend = [{ label: 'cell being filled', role: 'current' }, { label: `cells it reads: skip (above) and ${V.take} (above, further left)`, role: 'compare' }, { label: 'traceback path', role: 'path' }];
+  const rowLabels = [`no ${V.many}`, ...weights.map((_, k) => (k === 0 ? `${V.one} 1` : `${V.many} 1 to ${k + 1}`))];
   const tableView = (roles) => ({
-    kind: 'table', corner: 'capacity', legend: tableLegend,
-    title: 'Each cell: best total value using only the items named in its row, in a bag of the capacity at the top of its column',
+    kind: 'table', corner: V.room, legend: tableLegend,
+    title: V.tableTitle,
     colLabels: Array.from({ length: W + 1 }, (_, c) => c), rowLabels,
     cells: K.map((row) => row.map((v) => (v === null ? '' : v))), roles,
   });
   const itemsView = (current) => {
     const role = (k) => (taken[k] === true ? 'done' : taken[k] === false ? 'dim' : k === current ? 'current' : current !== null && k < current ? 'visited' : 'default');
-    return { kind: 'rows', title: 'The items', legend: [{ label: 'item being considered', role: 'current' }, { label: 'taken ✓', role: 'done' }, { label: 'left behind ✗', role: 'dim' }], rows: [
-      { label: 'Item', cells: weights.map((_, k) => ({ t: k + 1, role: role(k) })) },
-      { label: 'Weight', cells: weights.map((w, k) => ({ t: w, role: role(k) })) },
-      { label: 'Value', cells: values.map((v, k) => ({ t: v, role: role(k) })) },
-      { label: 'Taken', cells: taken.map((x, k) => ({ t: x === true ? '✓' : x === false ? '✗' : '?', role: role(k) })) },
+    return { kind: 'rows', title: `The ${V.many}`, legend: [{ label: `${V.one} being considered`, role: 'current' }, { label: `${V.yes} ✓`, role: 'done' }, { label: `${V.no} ✗`, role: 'dim' }], rows: [
+      { label: cap(V.one), cells: weights.map((_, k) => ({ t: k + 1, role: role(k) })) },
+      { label: cap(V.cost), cells: weights.map((w, k) => ({ t: w, role: role(k) })) },
+      { label: cap(V.worth), cells: values.map((v, k) => ({ t: v, role: role(k) })) },
+      { label: cap(V.yes), cells: taken.map((x, k) => ({ t: x === true ? '✓' : x === false ? '✗' : '?', role: role(k) })) },
     ] };
   };
 
-  t.frame(() => ({ line: 0, note: `Choose from ${n} item${n === 1 ? '' : 's'} to get the most value into a bag that holds weight **${W}**. Each item is taken whole or left behind. The table has a row for each item and a column for each bag size from 0 to ${W}. A row allows its own item and all the items before it.`, views: [tableView({}), itemsView(null)], vars: { n, W } }));
+  t.frame(() => ({ line: 0, note: `Choose from ${n} ${some(n)} to get the most ${V.worth} ${V.into(W)}. Each ${V.one} is ${V.yes} whole or ${V.no}. The table has a row for each ${V.one} and a column for each ${V.size} from 0 to ${W}. A row allows its own ${V.one} and all the ${V.many} before it.`, views: [tableView({}), itemsView(null)], vars: plain ? { n, W } : { [V.many]: n, [V.room]: W } }));
 
   for (let c = 0; c <= W; c++) { K[0][c] = 0; t.count('cells filled'); }
-  t.frame(() => ({ line: [1, 2], note: `Top row: with no items allowed, nothing can be packed, so the best value is 0 for every capacity.`, views: [tableView(Object.fromEntries(K[0].map((_, c) => [`0,${c}`, 'current']))), itemsView(null)], vars: { n, W } }));
+  t.frame(() => ({ line: [1, 2], note: `Top row: with no ${V.many} allowed, nothing can be ${V.done}, so the best ${V.worth} is 0 for every ${V.room}.`, views: [tableView(Object.fromEntries(K[0].map((_, c) => [`0,${c}`, 'current']))), itemsView(null)], vars: plain ? { n, W } : { [V.many]: n, [V.room]: W } }));
 
   for (let i = 1; i <= n; i++) {
     const w = weights[i - 1], v = values[i - 1];
@@ -70,10 +87,10 @@ function run(input, t) {
       t.count('cells filled');
       t.frame(() => ({ line: fits ? [5, 8, 9, 10, 11, 12] : [5, 6, 7],
         note: fits
-          ? `Items 1 to ${i}, capacity ${c}. Skip item ${i}: the cell above gives ${skip}. Take item ${i}: it uses ${w} of the capacity and leaves ${c - w}, where the row above has ${rest}, so ${v} + ${rest} = ${take}. ${take > skip ? 'Taking is better' : take === skip ? 'The two tie' : 'Skipping is better'}: **${best}**.`
-          : `Items 1 to ${i}, capacity ${c}. Item ${i} weighs ${w}, more than ${c}, so it cannot go in. Copy the cell above: **${best}**.`,
+          ? `${cap(V.many)} 1 to ${i}, ${V.room} ${c}. Skip ${V.one} ${i}: the cell above gives ${skip}. ${V.Take} ${V.one} ${i}: it uses ${w} of the ${V.room} and leaves ${c - w}, where the row above has ${rest}, so ${v} + ${rest} = ${take}. ${take > skip ? `${V.Taking} is better` : take === skip ? 'The two tie' : 'Skipping is better'}: **${best}**.`
+          : `${cap(V.many)} 1 to ${i}, ${V.room} ${c}. ${cap(V.one)} ${i} ${V.costs} ${w}, more than ${c}, so it ${V.cannot}. Copy the cell above: **${best}**.`,
         views: [tableView(fits ? { [`${i - 1},${c}`]: 'compare', [`${i - 1},${c - w}`]: 'compare', [`${i},${c}`]: 'current' } : { [`${i - 1},${c}`]: 'compare', [`${i},${c}`]: 'current' }), itemsView(i - 1)],
-        vars: { i, c, 'w[i]': w, 'v[i]': v, 'K[i][c]': best } }));
+        vars: plain ? { i, c, 'w[i]': w, 'v[i]': v, 'K[i][c]': best } : { [V.one]: i, [V.room]: c, [V.cost]: w, [V.worth]: v, best } }));
     }
   }
 
@@ -82,7 +99,7 @@ function run(input, t) {
   const path = [[n, W]];
   const chosen = [];
   let c = W;
-  t.frame(() => ({ line: [13, 16], note: `The table is full. The bottom-right cell says the best value is **${best}**. To see which items earn it, walk up from that cell one row at a time: if a value differs from the cell above it, the row's item must have been taken.`, views: [tableView({ [`${n},${W}`]: 'current' }), itemsView(null)], vars: { c: W, best } }));
+  t.frame(() => ({ line: [13, 16], note: `The table is full. The bottom-right cell says the best ${V.worth} is **${best}**. To see which ${V.many} earn it, walk up from that cell one row at a time: if a value differs from the cell above it, the row's ${V.one} must have been ${V.yes}.`, views: [tableView({ [`${n},${W}`]: 'current' }), itemsView(null)], vars: plain ? { c: W, best } : { [V.room]: W, best } }));
   for (let i = n; i >= 1; i--) {
     const here = K[i][c], above = K[i - 1][c];
     const took = here !== above;
@@ -96,9 +113,9 @@ function run(input, t) {
       roles[`${i - 1},${c}`] = 'current';
       return { line: took ? [17, 18, 19, 20] : [17, 18],
         note: took
-          ? `Row for items 1 to ${i}, capacity ${from}: the value ${here} differs from the cell above (${above}), so **item ${i} was taken**. It weighs ${weights[i - 1]}, which leaves capacity ${c}.`
-          : `Row for items 1 to ${i}, capacity ${from}: the value ${here} is the same as the cell above, so item ${i} is not needed. Move up without changing the capacity.`,
-        views: [tableView(roles), itemsView(null)], vars: { i, c, taken: list(chosen) } };
+          ? `Row for ${V.many} 1 to ${i}, ${V.room} ${from}: the value ${here} differs from the cell above (${above}), so **${V.one} ${i} was ${V.yes}**. It ${V.costs} ${weights[i - 1]}, which leaves ${V.room} ${c}.`
+          : `Row for ${V.many} 1 to ${i}, ${V.room} ${from}: the value ${here} is the same as the cell above, so ${V.one} ${i} is not needed. Move up without changing the ${V.room}.`,
+        views: [tableView(roles), itemsView(null)], vars: plain ? { i, c, taken: list(chosen) } : { [V.one]: i, [V.room]: c, [V.yes]: list(chosen) } };
     });
   }
   const totalWeight = chosen.reduce((s, i) => s + weights[i - 1], 0);
@@ -106,8 +123,8 @@ function run(input, t) {
   t.frame(() => {
     const roles = {};
     for (const [pi, pc] of path) roles[`${pi},${pc}`] = 'path';
-    return { line: null, note: `The best load is worth **${best}**: ${chosen.length ? `item${chosen.length === 1 ? '' : 's'} ${list(chosen)}, with total weight ${totalWeight} of ${W}` : 'nothing fits'}. For comparison, grabbing the best value per unit of weight first would take ${greedy.chosen.length ? `item${greedy.chosen.length === 1 ? '' : 's'} ${list(greedy.chosen)}` : 'nothing'} for a value of ${greedy.value}${greedy.value < best ? ', which is worse' : ', the same on this input'}.`,
-      views: [tableView(roles), itemsView(null)], vars: { best, weight: totalWeight, W } };
+    return { line: null, note: `${V.bestIs(best)}: ${chosen.length ? `${some(chosen.length)} ${list(chosen)}, with total ${V.cost} ${totalWeight} of ${W}` : V.nothing}. For comparison, ${V.grabbing} the best ${V.worth} per unit of ${V.cost} first would ${V.take} ${greedy.chosen.length ? `${some(greedy.chosen.length)} ${list(greedy.chosen)}` : 'nothing'} for a ${V.worth} of ${greedy.value}${greedy.value < best ? ', which is worse' : ', the same on this input'}.`,
+      views: [tableView(roles), itemsView(null)], vars: plain ? { best, weight: totalWeight, W } : { best, [V.cost]: totalWeight, [V.room]: W } };
   });
 
   return { best, chosen, totalWeight, weights, values, capacity: W, rows: n + 1, cols: W + 1, table: K, greedyValue: greedy.value, greedyChosen: greedy.chosen };
@@ -213,6 +230,8 @@ export default {
       { id: 'weights', type: 'list', label: 'Or type your own weights', default: [], maxLength: 8, min: 1, max: 16, integer: true, placeholder: 'e.g. 1, 3, 4, 5',
         help: 'Whole numbers. Leave both lists empty to use random items.' },
       { id: 'values', type: 'list', label: 'and their values', default: [], maxLength: 8, min: 0, max: 99, integer: true, placeholder: 'e.g. 1, 4, 5, 7' },
+      { id: 'wording', type: 'select', label: 'Tell it as', default: 'bag', options: [{ value: 'bag', label: 'A bag and items' }, { value: 'budget', label: 'A budget and proposals' }],
+        help: 'The arithmetic is identical. Weight becomes cost, value becomes benefit and the bag becomes the budget.' },
     ],
     presets: [
       { label: 'Random items', values: { items: 5, capacity: 10, seed: 34, weights: [], values: [] } },
@@ -221,9 +240,12 @@ export default {
       { label: 'More items, larger bag', values: { items: 8, capacity: 16, seed: 9, weights: [], values: [] } },
     ],
     tryThis: [
-      'Load "Worked example: greedy goes wrong" and step to the last row. Item 1 has the best value for its weight, yet at capacity 5 taking item 3 wins by 22 to 16, and the traceback leaves item 1 behind.',
-      'Load "Random items" and raise the capacity one step at a time, watching the final value. It never goes down, and at capacity 16 every item fits, so the value stops at 49, the sum of all the values.',
-      'Keep the capacity fixed and move the number of items from 2 to 8. Each new item adds one row of W + 1 cells. Then double the capacity instead and see the number of columns double. The work is rows times columns.',
+      { ask: 'Load "Worked example: greedy goes wrong". At capacity 5 the greedy rule gets 16 where 22 is possible. Now change only the capacity, trying each value from 1 to 6. The last lines of the report give the best value and the greedy value. At which of the six capacities does greedy fall short?',
+        reveal: 'At 2, 4 and 5. At capacity 2 greedy takes item 1, worth 6, and then item 2 no longer fits, although item 2 alone is worth 10. At capacity 4 it gets 16 with items 1 and 2, where items 1 and 3 are worth 18. At capacity 5 it is 16 against 22. At 1, 3 and 6 the two agree, on 6, 16 and 28. Greedy goes wrong when taking its favourite item leaves space that the other items cannot use well. Whether that happens depends on the capacity as much as on the items.' },
+      { ask: 'Load "Random items" and raise the capacity one step at a time from 10 to 16, noting the best value at each step. Can the best value ever go down when the bag gets bigger? Will it go up at every step? And what will it be at 16?',
+        reveal: 'It never goes down, because a load that fits a smaller bag still fits a bigger one. It does not rise at every step either. The seven values are 36, 41, 41, 41, 41, 44, 49. From 11 to 14 the extra room is no use, because no better selection fits until 15. At 16 all five items fit, since their weights add up to exactly 16, so the value is 49, the sum of all the values. No bigger bag could improve on that.' },
+      { ask: 'Set the number of items to 4 and the capacity to 8. The report says the table has 5 rows by 9 columns, 45 cells. Work out the count before each of these changes: 8 items at capacity 8, and then 4 items at capacity 16. Which costs more, doubling the items or doubling the capacity?',
+        reveal: '81 cells for 8 items, which is 9 rows by 9 columns, and 85 cells for capacity 16, which is 5 rows by 17 columns. They cost about the same. Each new item adds one row of W + 1 cells, and each extra unit of capacity adds one column of n + 1 cells. The work is rows times columns, (n + 1) × (W + 1).' },
     ],
     run,
     report: (r, c) => `Best value: ${r.best} with ${r.chosen.length ? `item${r.chosen.length === 1 ? '' : 's'} ${list(r.chosen)}` : 'no items'} (total weight ${r.totalWeight} of ${r.capacity}).\nGreedy by value per weight: ${r.greedyValue} (${r.greedyChosen.length ? `item${r.greedyChosen.length === 1 ? '' : 's'} ${list(r.greedyChosen)}` : 'no items'}).\nWeights: ${r.weights.join(', ')}   Values: ${r.values.join(', ')}\nTable: ${r.rows} rows by ${r.cols} columns, ${c['cells filled'] || 0} cells filled.`,
@@ -316,6 +338,16 @@ export default {
       input: 'Two small problems. Weights 1, 2, 3 with values 6, 10, 12 and capacity 5. Weights 1, 3, 4, 5 with values 1, 4, 5, 7 and capacity 7. For each: the best value, the items chosen, what the greedy rule would get, and the last row of the table.',
       expected: 'capacity 5: best value 22 with items 2 3; greedy gets 16\n  last row: 0 6 10 16 18 22\ncapacity 7: best value 9 with items 2 3; greedy gets 8\n  last row: 0 1 1 4 5 7 8 9',
     },
+    breakIt: [
+      { change: 'In the line that takes the item, read the current row instead of the row above: change `K[i - 1][c - w]` to `K[i][c - w]`. What will the first problem report as its best value, and what does that number mean?',
+        find: { python: 'v + K[i - 1][c - w]', javascript: 'v + K[i - 1][c - w]' },
+        replace: { python: 'v + K[i][c - w]', javascript: 'v + K[i][c - w]' },
+        reveal: 'The first problem now prints "capacity 5: best value 30 with items 1" and "last row: 0 6 12 18 24 30". Thirty is item 1 taken five times, 5 × 6. A cell in the current row may already include item i, so adding item i to it uses the item twice, then three times, and so on. That answers a different problem, the one where every item is in unlimited supply. The second problem is the more dangerous one. It still prints the right best value, 9, but "with items 1 2", which are worth only 5 together, and its last row has a 2 at capacity 2 where the correct row has a 1. A test that checked only the best value of the second problem would pass.' },
+      { change: 'Allocate the table without the extra row and column: `n` rows in place of `n + 1`, and `capacity` columns in place of `capacity + 1`. What happens when the loops reach the edge of the table?',
+        find: { python: 'K = [[0] * (capacity + 1) for _ in range(n + 1)]', javascript: 'Array.from({ length: n + 1 }, () => new Array(capacity + 1).fill(0))' },
+        replace: { python: 'K = [[0] * capacity for _ in range(n)]', javascript: 'Array.from({ length: n }, () => new Array(capacity).fill(0))' },
+        reveal: 'Neither language prints a single line. Python stops with "IndexError: list index out of range" on the first item, as soon as the inner loop reaches column `capacity`, which no longer exists. JavaScript does not check where an array ends. It reads and writes past the end of each row without complaint and fails only when it reaches row `n`, with "TypeError: Cannot set properties of undefined (setting \'0\')". The table needs n + 1 rows and capacity + 1 columns because row 0, for no items, and column 0, for no room, are real cells that every other cell is built on.' },
+    ],
     python: {
       source: `def knapsack(weights, values, capacity):
     n = len(weights)
@@ -595,16 +627,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Four items have weights 1, 3, 4, 5 and values 1, 4, 5, 7. The bag holds weight 7. What is the best total value?',
-      options: ['8', '9', '10', '12'],
-      answer: 1,
+      q: 'Four items have weights 2, 4, 5, 7 and values 4, 7, 9, 10. The bag holds weight 9. What is the best total value?',
+      options: ['13', '14', '16', '19'],
+      answer: 2,
       explain: [
-        '8 is what the greedy rule gets: item 4 has the best value per weight, and after taking it only item 1 still fits.',
-        'Correct. Items 2 and 3 weigh 3 + 4 = 7 and are worth 4 + 5 = 9. No other selection that fits is worth more.',
-        'No selection of weight at most 7 reaches 10. Items 3 and 4 would be worth 12 but weigh 9.',
-        '12 needs items 3 and 4, which weigh 9. That is over the limit.',
+        '13 is what the greedy rule gets. Item 1 has the best value for its weight and item 3 the next best. After those two only 2 units of room are left, and nothing else fits.',
+        '14 is item 4, the most valuable single item, with item 1 added to fill the bag exactly. A full bag is not always the best bag: items 2 and 3 also weigh exactly 9 and are worth more.',
+        'Items 2 and 3 weigh 4 + 5 = 9 and are worth 7 + 9 = 16. No other selection that fits is worth more.',
+        '19 needs items 3 and 4, which weigh 12. That is over the limit.',
       ],
-      tryInput: { weights: [1, 3, 4, 5], values: [1, 4, 5, 7], capacity: 7 },
+      tryInput: { weights: [2, 4, 5, 7], values: [4, 7, 9, 10], capacity: 9 },
+      check: (r, c) => (r.best === 16 && r.chosen.join(',') === '2,3' && r.totalWeight === 9 && r.greedyValue === 13 && r.greedyChosen.join(',') === '1,3' ? matchesBrute(r, c) : `best ${r.best} with items ${r.chosen.join(',')}, greedy ${r.greedyValue} with items ${r.greedyChosen.join(',')}`),
     },
     {
       type: 'debug',
@@ -651,7 +684,8 @@ int main() {
     {
       type: 'challenge',
       title: 'When the capacity is huge',
-      prompt: 'Suppose the capacity is 1,000,000,000 but there are only 20 items, each worth at most 50. A table with a billion columns is out of the question. Build a table indexed by value instead: let least[v] be the smallest total weight of any selection worth exactly v, using the items seen so far. Process the items one at a time, and at the end report the largest v whose least[v] is at most the capacity. Check your program against the capacity-indexed version on small inputs, such as weights 1, 3, 4, 5 with values 1, 4, 5, 7 and capacity 7, where both must give 9.',
+      prompt: 'Suppose the capacity is 1,000,000,000 but there are only 20 items, each worth at most 50. A table with a billion columns is out of the question. Build a table indexed by value instead: let least[v] be the smallest total weight of any selection worth exactly v, using the items seen so far. Process the items one at a time, and at the end report the largest v whose least[v] is at most the capacity. First check your program against the capacity-indexed version on a small input: weights 1, 3, 4, 5 with values 1, 4, 5, 7 and capacity 7. Then run it on this large one: for i from 1 to 20, item i weighs 12,345,678 × i and is worth (7 × i) mod 50 + 1, and the capacity is 1,000,000,000.',
+      expect: 'On the small input both versions give 9, and the smallest weight that reaches 9 is 7. On the large one the best value is 357, reached with a total weight of 962,962,884 by items 1 to 7 and 11 to 14. The values add up to 540, so the array has 541 entries, however large the capacity is. Trying all 1,048,576 selections one by one gives the same 357.',
       hints: ['The total value is at most 20 × 50 = 1,000, so the array has 1,001 entries. Start with least[0] = 0 and every other entry at infinity.', 'For each item, loop v downward from the maximum to the item\'s value, and set least[v] to the smaller of least[v] and least[v − value] + weight. The downward loop is what keeps each item to one use.'],
     },
   ],
@@ -702,8 +736,28 @@ int main() {
       check: (r, c) => (r.weights.join(',') === '5,1,3,3,4' && r.values.join(',') === '8,5,12,9,15' && r.best === 36 && r.chosen.join(',') === '3,4,5' && r.greedyValue === 32 ? matchesBrute(r, c) : `got ${r.best} with items ${r.chosen.join(',')} from weights ${r.weights.join(',')} and values ${r.values.join(',')}; greedy ${r.greedyValue}`) },
     { name: 'worked example: every cell of the table, the chosen items and the greedy value', input: { weights: [1, 2, 3], values: [6, 10, 12], capacity: 5 },
       check: (r, c) => (JSON.stringify(r.table) === '[[0,0,0,0,0,0],[0,6,6,6,6,6],[0,6,10,16,16,16],[0,6,10,16,18,22]]' && r.best === 22 && r.chosen.join(',') === '2,3' && r.totalWeight === 5 && r.greedyValue === 16 && r.greedyChosen.join(',') === '1,2' ? matchesBrute(r, c) : `got ${r.best} with items ${r.chosen.join(',')}, table ${JSON.stringify(r.table)}`) },
-    { name: 'quiz: the small fixed example is 9 with items 2 and 3; greedy gets 8', input: { weights: [1, 3, 4, 5], values: [1, 4, 5, 7], capacity: 7 },
+    { name: 'the small fixed example (second problem of the code sample) is 9 with items 2 and 3; greedy gets 8', input: { weights: [1, 3, 4, 5], values: [1, 4, 5, 7], capacity: 7 },
       check: (r, c) => (r.best === 9 && r.chosen.join(',') === '2,3' && r.greedyValue === 8 && r.table[4].join(' ') === '0 1 1 4 5 7 8 9' ? matchesBrute(r, c) : `got ${r.best}, greedy ${r.greedyValue}`) },
+    { name: 'quiz prediction: weights 2, 4, 5, 7 and values 4, 7, 9, 10 at capacity 9 give 16 with items 2 and 3; greedy gets 13', input: { weights: [2, 4, 5, 7], values: [4, 7, 9, 10], capacity: 9 },
+      check: (r, c) => (r.best === 16 && r.chosen.join(',') === '2,3' && r.greedyValue === 13 && r.greedyChosen.join(',') === '1,3' && r.table[4][9] === 16 && r.table[4][8] < 16 ? matchesBrute(r, c) : `got ${r.best}, greedy ${r.greedyValue}`) },
+    { name: 'tryThis: on the worked example greedy falls short at capacities 2, 4 and 5 only', input: { weights: [1, 2, 3], values: [6, 10, 12], capacity: 6 },
+      check: (r, c) => {
+        const quiet = { count() {}, frame() {} };
+        const rows = [1, 2, 3, 4, 5, 6].map((capacity) => { const x = run({ weights: [1, 2, 3], values: [6, 10, 12], capacity }, quiet); return `${x.best}/${x.greedyValue}`; }).join(' ');
+        return rows === '6/6 10/6 16/16 18/16 22/16 28/28' ? matchesBrute(r, c) : `best/greedy by capacity: ${rows}`;
+      } },
+    { name: 'tryThis: the default items give 36, 41, 41, 41, 41, 44, 49 at capacities 10 to 16', input: { items: 5, capacity: 15, seed: 34, weights: [], values: [] },
+      check: (r, c) => {
+        const quiet = { count() {}, frame() {} };
+        const bests = [10, 11, 12, 13, 14, 15, 16].map((capacity) => run({ items: 5, capacity, seed: 34, weights: [], values: [] }, quiet).best).join(',');
+        return bests === '36,41,41,41,41,44,49' && r.weights.reduce((a, b) => a + b, 0) === 16 ? matchesBrute(r, c) : `best values ${bests}`;
+      } },
+    { name: 'tryThis: 4 items at capacity 8 fill 45 cells, 8 items 81, capacity 16 fills 85', input: { items: 4, capacity: 8, seed: 34, weights: [], values: [] },
+      check: (r, c) => {
+        const cells = (input) => { let n = 0; run(input, { count: (k) => { if (k === 'cells filled') n++; }, frame() {} }); return n; };
+        const more = cells({ items: 8, capacity: 8, seed: 34, weights: [], values: [] }), wide = cells({ items: 4, capacity: 16, seed: 34, weights: [], values: [] });
+        return (c['cells filled'] === 45 && r.rows === 5 && r.cols === 9 && more === 81 && wide === 85) || `${c['cells filled']}, ${more} and ${wide} cells`;
+      } },
     { name: 'matches brute force on 8 random items', input: { items: 8, capacity: 16, seed: 9, weights: [], values: [] }, check: matchesBrute },
     { name: 'matches brute force on another seed with a tight bag', input: { items: 7, capacity: 6, seed: 37, weights: [], values: [] }, check: matchesBrute },
     { name: 'matches brute force with duplicate items and a zero value', input: { weights: [2, 2, 2, 3, 3, 7], values: [3, 3, 0, 5, 5, 11], capacity: 9 }, check: matchesBrute },

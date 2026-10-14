@@ -418,12 +418,19 @@ export default {
       { label: 'A diagonal edge', values: { ...BASE, image: 'diagonal' } },
     ],
     tryThis: [
-      'Load "A single 1 on the right, over a dot" and note where the 9 lands in the output: one cell to the left of the dot, because the kernel copies whatever is on its right. Then load "The same, with the kernel turned". The 9 now lands one cell to the right. This kernel does not look the same after half a turn, so cross-correlation and strict convolution disagree.',
-      'Choose the blur kernel and switch "Turn the kernel" on and off. Nothing changes, because nine equal weights look the same after half a turn. Do the same with the horizontal Sobel kernel: every output number changes sign and nothing else.',
-      'Load "Blur a single dot". The single 9 becomes a three by three block of 1s. The total brightness is still 9, because the weights add up to 1. Blurring spreads brightness around without creating or losing any.',
-      'Load "A ramp under the horizontal Sobel". The output is 8 everywhere. The kernel compares columns two steps apart, which differ by 2, and its weights on each side add up to 4. Now switch to the blur or sharpen kernel on the same ramp: the middle of the image comes out unchanged.',
-      'Load "Sharpen an edge" and look at the two output columns beside the jump. One dips below the dark side (−4) and the other rises above the bright side (14). That overshoot is what makes a sharpened edge look crisp, and too much of it is what makes over-sharpened photos show pale outlines.',
-      'Type your own kernel: `0 0 0 0 1 0 0 0 0`. Every output number is the image number under the middle of the kernel, so the output is the image with its border removed. Then try `1 0 0 0 0 0 0 0 -1`, which subtracts the bottom right corner of each patch from the top left one, on the diagonal edge and on the square.',
+      { ask: 'Load "A single 1 on the right, over a dot". The image is 0 everywhere except for one 9 in the middle, and the kernel copies whatever lies under its right side. Will the 9 land on the dot\'s own place in the output, one cell to its left, or one cell to its right? Run it, then answer again for "The same, with the kernel turned".',
+        reveal: 'As written, the 9 lands one cell to the left of the dot, because the kernel standing there has the dot on its right. With the kernel turned, the 1 is on the left side and the 9 lands one cell to the right. This kernel does not look the same after half a turn, so cross-correlation and strict convolution disagree.' },
+      { ask: 'Choose the blur kernel on the default square and switch "Turn the kernel half a turn first" on. How many of the 49 output numbers change? Then answer the same question for the horizontal Sobel kernel.',
+        reveal: 'With the blur kernel none of them change, because nine equal weights look the same after half a turn. With the horizontal Sobel kernel the 29 zeros stay 0 and the other 20 numbers change sign and nothing else: the middle row 0, 32, 32, 0, −32, −32, 0 becomes 0, −32, −32, 0, 32, 32, 0.' },
+      { ask: 'Load "Blur a single dot". The image holds one 9 and eighty 0s. How many output cells will be above 0, and what will they add up to?',
+        reveal: 'Nine cells, a three by three block, and each holds 1. They add up to 9, the brightness of the dot, because the nine weights add up to 1. Blurring spreads brightness around without creating or losing any.' },
+      { ask: 'Load "A ramp under the horizontal Sobel". Every column is 1 brighter than the column to its left. Will the output rise from left to right like the image, or be one number everywhere? Which number?',
+        reveal: 'It is 8 everywhere. The kernel compares columns two steps apart, which differ by 2, and its weights on each side add up to 4. A steady slope gives a steady output. Now switch to the blur or the sharpen kernel on the same ramp: every row of the output reads 1 to 7, the middle of the image unchanged.' },
+      { ask: 'Load "Sharpen an edge". The image is 2 on the left and 8 on the right and nothing else. Will every output number lie between 2 and 8?',
+        reveal: 'No. Every row of the output reads 2, 2, −4, 14, 8, 8, 8. Beside the jump one column dips below the dark side, to −4, and the next rises above the bright side, to 14. That overshoot is what makes a sharpened edge look crisp, and too much of it is what makes over-sharpened photos show pale outlines.' },
+      { ask: 'Type your own kernel, `1 0 0 0 0 0 0 0 -1`, which subtracts the bottom right corner of each patch from the top left one, and choose the image with a diagonal edge. Will this kernel find the edge?',
+        input: { ...BASE, image: 'diagonal', custom: [1, 0, 0, 0, 0, 0, 0, 0, -1] },
+        reveal: 'No. All 49 output numbers are 0. The edge runs from top left to bottom right, so the two corners the kernel compares always lie on the same side of it. On the default square the same kernel gives −8 around the top left corner of the square and 8 around the bottom right corner. A kernel reports only the changes that lie in the direction it compares. For a kernel that changes nothing, type `0 0 0 0 1 0 0 0 0`: the output is the image with its border removed.' },
     ],
     run,
     report: (r, c) => {
@@ -513,6 +520,20 @@ export default {
       input: 'A 5 by 6 image that is dark (1) except for a bright block (9) in its lower right part. It is filtered with the blur kernel and both Sobel kernels, the two Sobel outputs are combined into edge strength, and the horizontal Sobel kernel is run once more turned half a turn.',
       expected: 'blur\n1.00 1.89 2.78 3.67\n1.00 2.78 4.56 6.33\n1.00 3.67 6.33 9.00\nsobel x\n0.00 8.00 8.00 0.00\n0.00 24.00 24.00 0.00\n0.00 32.00 32.00 0.00\nsobel y\n0.00 8.00 24.00 32.00\n0.00 8.00 24.00 32.00\n0.00 0.00 0.00 0.00\nedge strength\n0.00 11.31 25.30 32.00\n0.00 25.30 33.94 32.00\n0.00 32.00 32.00 0.00\nsobel x, kernel turned half a turn (convolution)\n0.00 -8.00 -8.00 0.00\n0.00 -24.00 -24.00 0.00\n0.00 -32.00 -32.00 0.00\nblur changed by the turn: no',
     },
+    breakIt: [
+      { change: 'In `convolve`, pass the kernel straight to `correlate` without turning it, which is what many library functions named "convolution" do. Which lines of the output will be different?',
+        find: { python: 'return correlate(image, half_turn(kernel))', javascript: 'return correlate(image, halfTurn(kernel));' },
+        replace: { python: 'return correlate(image, kernel)', javascript: 'return correlate(image, kernel);' },
+        reveal: 'The last block now prints 0.00 8.00 8.00 0.00, then 0.00 24.00 24.00 0.00, then 0.00 32.00 32.00 0.00. Those are the numbers of the "sobel x" block, where true convolution gives their negatives. Nothing else changes, and the last line still says "no", because the blur kernel looks the same after half a turn and cannot show the mistake. Only a kernel that is not symmetric can tell you whether a function turns it.' },
+      { change: 'Make the column loop in `correlate` visit every column of the image, as if the output were as wide as the image. What happens when the kernel reaches the right-hand border?',
+        find: { python: 'for c in range(len(image[0]) - kw + 1):', javascript: 'for (let c = 0; c + kw <= image[0].length; c++) {' },
+        replace: { python: 'for c in range(len(image[0])):', javascript: 'for (let c = 0; c < image[0].length; c++) {' },
+        reveal: 'Python stops with "IndexError: list index out of range" before it prints anything. When the left side of the kernel is on the fifth column, its right side needs a seventh, and each row has six. JavaScript does not stop. Reading past the end of a row gives `undefined`, the sum becomes NaN, and every row of every block gains two entries that read NaN, as in "1.00 1.89 2.78 3.67 NaN NaN". The output is narrower than the image, and the loop bound is the place where the program has to know that.' },
+      { change: 'Change the weights of the blur kernel from 1/9 to 1/10, so that they no longer add up to 1. What happens to the flat, dark part of the image, which should stay at 1.00?',
+        find: { python: 'BLUR = [[1 / 9] * 3 for _ in range(3)]', javascript: 'const BLUR = [0, 1, 2].map(() => [1 / 9, 1 / 9, 1 / 9]);' },
+        replace: { python: 'BLUR = [[1 / 10] * 3 for _ in range(3)]', javascript: 'const BLUR = [0, 1, 2].map(() => [1 / 10, 1 / 10, 1 / 10]);' },
+        reveal: 'The blur block becomes 0.90 1.70 2.50 3.30, then 0.90 2.50 4.10 5.70, then 0.90 3.30 5.70 8.10. Every number is nine tenths of what it was, so the flat dark area reads 0.90 and the fully bright corner 8.10 in place of 9.00. Nine weights of 1/10 add up to 0.9, and a blur whose weights do not add up to 1 darkens or brightens the whole picture. The other blocks do not use this kernel and are unchanged.' },
+    ],
     python: {
       source: `import math
 
@@ -706,6 +727,240 @@ int main() {
     return 0;
 }`,
     },
+    more: [{
+      title: 'Learning a kernel',
+      lead: 'The main program was handed the Sobel kernel. This one is handed only four tiny images and the numbers that kernel gave on them. It starts from nine weights of 0.1 and finds the kernel by gradient descent, with every slope written out by hand. It gets close, not exact: after 500 steps every weight is within 0.002 of the Sobel kernel.',
+      sample: {
+        input: 'Four images of 4 by 4 pixels, made of 1s and 9s: an edge running up and down, an edge running across, a bright bar and a bright cross. Each gives a 2 by 2 output, so there are 16 target numbers for 9 weights. The program makes the targets with the horizontal Sobel kernel and then uses that kernel again only for the last line. Training takes 500 steps at a rate of 0.004, and each loss is the mean squared error after the stated number of steps. More steps bring the weights closer still. The rate is close to the largest that works here: at 0.005 the loss ends up growing without limit. The choice of images matters too. Given the first image alone, and a rate of 0.001, the loss also falls to almost nothing, but the kernel that comes out has three equal rows and is nowhere near the Sobel kernel, because many kernels fit that one image.',
+        expected: 'kernel before training\n 0.100  0.100  0.100\n 0.100  0.100  0.100\n 0.100  0.100  0.100\nafter   0 steps: loss 421.970000\nafter  10 steps: loss 2.353169\nafter 100 steps: loss 0.004655\nafter 500 steps: loss 0.000010\nkernel after training\n-1.000  0.001  1.000\n-1.999 -0.002  2.001\n-1.001  0.001  0.999\nlargest difference from the Sobel kernel: 0.0020',
+      },
+      python: {
+        source: `def correlate(image, kernel):
+    """The sliding weighted sum of the main program: one number per position."""
+    out = []
+    for r in range(len(image) - 2):
+        row = []
+        for c in range(len(image[0]) - 2):
+            total = 0.0
+            for a in range(3):
+                for b in range(3):
+                    total += kernel[a][b] * image[r + a][c + b]
+            row.append(total)
+        out.append(row)
+    return out
+
+
+def show(title, kernel):
+    print(title)
+    for row in kernel:
+        print(" ".join(f"{w:6.3f}" for w in row))
+
+
+IMAGES = [
+    [[1, 1, 9, 9], [1, 1, 9, 9], [1, 1, 9, 9], [1, 1, 9, 9]],    # dark on the left, bright on the right
+    [[1, 1, 1, 1], [1, 1, 1, 1], [9, 9, 9, 9], [9, 9, 9, 9]],    # dark above, bright below
+    [[1, 9, 1, 1], [1, 9, 1, 1], [1, 9, 1, 1], [1, 9, 1, 1]],    # one bright bar
+    [[9, 1, 1, 9], [1, 9, 9, 1], [1, 9, 9, 1], [9, 1, 1, 9]],    # a bright cross
+]
+SOBEL_X = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+TARGETS = [correlate(image, SOBEL_X) for image in IMAGES]    # what the known kernel gives: 2 by 2 numbers per image
+OUTPUTS = 16    # four images, four output numbers each
+RATE = 0.004
+STEPS = 500
+
+
+def loss_and_slopes(kernel):
+    """Mean squared error over all the output numbers, and its slope for each of the 9 weights."""
+    loss = 0.0
+    slopes = [[0.0, 0.0, 0.0] for _ in range(3)]
+    for image, target in zip(IMAGES, TARGETS):
+        out = correlate(image, kernel)
+        for r in range(2):
+            for c in range(2):
+                error = out[r][c] - target[r][c]
+                loss += error * error / OUTPUTS
+                for a in range(3):
+                    for b in range(3):
+                        slopes[a][b] += 2 * error * image[r + a][c + b] / OUTPUTS
+    return loss, slopes
+
+
+kernel = [[0.1, 0.1, 0.1] for _ in range(3)]
+show("kernel before training", kernel)
+for step in range(STEPS + 1):
+    loss, slopes = loss_and_slopes(kernel)
+    if step in (0, 10, 100, STEPS):
+        print(f"after {step:3d} steps: loss {loss:.6f}")
+    if step < STEPS:
+        for a in range(3):
+            for b in range(3):
+                kernel[a][b] -= RATE * slopes[a][b]
+show("kernel after training", kernel)
+gap = max(abs(kernel[a][b] - SOBEL_X[a][b]) for a in range(3) for b in range(3))
+print(f"largest difference from the Sobel kernel: {gap:.4f}")`,
+      },
+      javascript: {
+        source: `// The sliding weighted sum of the main program: one number per position.
+function correlate(image, kernel) {
+  const out = [];
+  for (let r = 0; r + 3 <= image.length; r++) {
+    const row = [];
+    for (let c = 0; c + 3 <= image[0].length; c++) {
+      let total = 0;
+      for (let a = 0; a < 3; a++) {
+        for (let b = 0; b < 3; b++) total += kernel[a][b] * image[r + a][c + b];
+      }
+      row.push(total);
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+function show(title, kernel) {
+  console.log(title);
+  for (const row of kernel) console.log(row.map((w) => w.toFixed(3).padStart(6, " ")).join(" "));
+}
+
+const IMAGES = [
+  [[1, 1, 9, 9], [1, 1, 9, 9], [1, 1, 9, 9], [1, 1, 9, 9]],    // dark on the left, bright on the right
+  [[1, 1, 1, 1], [1, 1, 1, 1], [9, 9, 9, 9], [9, 9, 9, 9]],    // dark above, bright below
+  [[1, 9, 1, 1], [1, 9, 1, 1], [1, 9, 1, 1], [1, 9, 1, 1]],    // one bright bar
+  [[9, 1, 1, 9], [1, 9, 9, 1], [1, 9, 9, 1], [9, 1, 1, 9]],    // a bright cross
+];
+const SOBEL_X = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]];
+const TARGETS = IMAGES.map((image) => correlate(image, SOBEL_X));    // what the known kernel gives: 2 by 2 numbers per image
+const OUTPUTS = 16;    // four images, four output numbers each
+const RATE = 0.004;
+const STEPS = 500;
+
+// Mean squared error over all the output numbers, and its slope for each of the 9 weights.
+function lossAndSlopes(kernel) {
+  let loss = 0;
+  const slopes = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  for (let n = 0; n < IMAGES.length; n++) {
+    const image = IMAGES[n];
+    const out = correlate(image, kernel);
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 2; c++) {
+        const error = out[r][c] - TARGETS[n][r][c];
+        loss += error * error / OUTPUTS;
+        for (let a = 0; a < 3; a++) {
+          for (let b = 0; b < 3; b++) slopes[a][b] += 2 * error * image[r + a][c + b] / OUTPUTS;
+        }
+      }
+    }
+  }
+  return [loss, slopes];
+}
+
+const kernel = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]];
+show("kernel before training", kernel);
+for (let step = 0; step <= STEPS; step++) {
+  const [loss, slopes] = lossAndSlopes(kernel);
+  if ([0, 10, 100, STEPS].includes(step)) {
+    console.log("after " + String(step).padStart(3, " ") + " steps: loss " + loss.toFixed(6));
+  }
+  if (step < STEPS) {
+    for (let a = 0; a < 3; a++) {
+      for (let b = 0; b < 3; b++) kernel[a][b] -= RATE * slopes[a][b];
+    }
+  }
+}
+show("kernel after training", kernel);
+let gap = 0;
+for (let a = 0; a < 3; a++) {
+  for (let b = 0; b < 3; b++) gap = Math.max(gap, Math.abs(kernel[a][b] - SOBEL_X[a][b]));
+}
+console.log("largest difference from the Sobel kernel: " + gap.toFixed(4));`,
+      },
+      cpp: {
+        source: `#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <vector>
+
+using Grid = std::vector<std::vector<double>>;
+
+// The sliding weighted sum of the main program: one number per position.
+Grid correlate(const Grid& image, const Grid& kernel) {
+    Grid out;
+    for (size_t r = 0; r + 3 <= image.size(); ++r) {
+        std::vector<double> row;
+        for (size_t c = 0; c + 3 <= image[0].size(); ++c) {
+            double total = 0.0;
+            for (size_t a = 0; a < 3; ++a) {
+                for (size_t b = 0; b < 3; ++b) total += kernel[a][b] * image[r + a][c + b];
+            }
+            row.push_back(total);
+        }
+        out.push_back(row);
+    }
+    return out;
+}
+
+void show(const char* title, const Grid& kernel) {
+    std::printf("%s\\n", title);
+    for (const auto& row : kernel) std::printf("%6.3f %6.3f %6.3f\\n", row[0], row[1], row[2]);
+}
+
+const std::vector<Grid> IMAGES = {
+    {{1, 1, 9, 9}, {1, 1, 9, 9}, {1, 1, 9, 9}, {1, 1, 9, 9}},    // dark on the left, bright on the right
+    {{1, 1, 1, 1}, {1, 1, 1, 1}, {9, 9, 9, 9}, {9, 9, 9, 9}},    // dark above, bright below
+    {{1, 9, 1, 1}, {1, 9, 1, 1}, {1, 9, 1, 1}, {1, 9, 1, 1}},    // one bright bar
+    {{9, 1, 1, 9}, {1, 9, 9, 1}, {1, 9, 9, 1}, {9, 1, 1, 9}},    // a bright cross
+};
+const Grid SOBEL_X = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+const int OUTPUTS = 16;    // four images, four output numbers each
+const double RATE = 0.004;
+const int STEPS = 500;
+
+// Mean squared error over all the output numbers, and its slope for each of the 9 weights.
+double loss_and_slopes(const Grid& kernel, const std::vector<Grid>& targets, Grid& slopes) {
+    double loss = 0.0;
+    slopes = Grid(3, std::vector<double>(3, 0.0));
+    for (size_t n = 0; n < IMAGES.size(); ++n) {
+        const Grid& image = IMAGES[n];
+        const Grid out = correlate(image, kernel);
+        for (size_t r = 0; r < 2; ++r) {
+            for (size_t c = 0; c < 2; ++c) {
+                const double error = out[r][c] - targets[n][r][c];
+                loss += error * error / OUTPUTS;
+                for (size_t a = 0; a < 3; ++a) {
+                    for (size_t b = 0; b < 3; ++b) slopes[a][b] += 2 * error * image[r + a][c + b] / OUTPUTS;
+                }
+            }
+        }
+    }
+    return loss;
+}
+
+int main() {
+    std::vector<Grid> targets;    // what the known kernel gives: 2 by 2 numbers per image
+    for (const Grid& image : IMAGES) targets.push_back(correlate(image, SOBEL_X));
+    Grid kernel(3, std::vector<double>(3, 0.1)), slopes;
+    show("kernel before training", kernel);
+    for (int step = 0; step <= STEPS; ++step) {
+        const double loss = loss_and_slopes(kernel, targets, slopes);
+        if (step == 0 || step == 10 || step == 100 || step == STEPS) {
+            std::printf("after %3d steps: loss %.6f\\n", step, loss);
+        }
+        if (step < STEPS) {
+            for (size_t a = 0; a < 3; ++a) {
+                for (size_t b = 0; b < 3; ++b) kernel[a][b] -= RATE * slopes[a][b];
+            }
+        }
+    }
+    show("kernel after training", kernel);
+    double gap = 0.0;
+    for (size_t a = 0; a < 3; ++a) {
+        for (size_t b = 0; b < 3; ++b) gap = std::max(gap, std::fabs(kernel[a][b] - SOBEL_X[a][b]));
+    }
+    std::printf("largest difference from the Sobel kernel: %.4f\\n", gap);
+    return 0;
+}`,
+      },
+    }],
   },
 
   complexity: {
@@ -742,7 +997,7 @@ int main() {
     ],
     misunderstandings: [
       "\"Convolution and cross-correlation are two names for one thing.\" They differ by a half turn of the kernel. They give the same output only when the kernel looks the same after that turn. With any other kernel the outputs differ, sometimes just in sign, as with the Sobel kernels, and sometimes completely.",
-      "\"A convolutional neural network performs convolution.\" The operation in most neural network libraries is cross-correlation. It makes no difference to what a network can learn, because the weights are learned, and a network would simply learn the turned kernel. It matters only when you copy kernels from one program to another.",
+      "\"A convolutional neural network performs convolution.\" The operation in most neural network libraries is cross-correlation. It makes no difference to what a network can learn, because the weights are learned, as the program \"Learning a kernel\" in the code section learns one, and a network would simply learn the turned kernel. It matters only when you copy kernels from one program to another.",
       "\"The Sobel kernel finds the edges.\" It gives a number at every pixel that says how fast the brightness is changing there. Turning those numbers into clean, thin outlines takes further steps, such as blurring first, thinning the bands and choosing thresholds.",
       "\"A bigger output number means a brighter spot.\" For an edge kernel it means a bigger change in brightness. A flat white area and a flat black area both give 0.",
     ],
@@ -805,16 +1060,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the ramp image every column is 1 brighter than the column to its left: 0, 1, 2 and so on. What does the horizontal Sobel kernel give?',
-      options: ['0 everywhere, because a ramp has no edge', '1 everywhere, the difference between neighbouring columns', '8 everywhere', 'Numbers that grow from left to right, like the image'],
+      q: 'An image has four rows that all read 9, 7, 5, 3, 1, so each column is 2 darker than the column to its left. What does the horizontal Sobel kernel give?',
+      options: ['0 everywhere, because a slope is not an edge', '−8 everywhere', '−16 everywhere', '16 everywhere'],
       answer: 2,
       explain: [
-        'The kernel gives 0 only where its left and right columns hold the same numbers. On a ramp they never do.',
-        'The kernel compares columns two steps apart and adds three rows with weights 1, 2 and 1, so the result is larger than the plain difference.',
-        'The right column is 2 brighter than the left one, and the weights on each side add up to 4: 4 × 2 = 8. The slope is the same everywhere, so the output is too.',
-        'The output measures how fast the image changes, not how bright it is. A steady slope gives a steady number.',
+        'The kernel gives 0 only where its left and right columns hold the same numbers. On a slope they never do.',
+        'The sign is right, but the kernel compares columns two steps apart, and here those differ by 4, not by 2.',
+        'The right column of the kernel lies on numbers 4 smaller than the left column, and the weights on each side add up to 4: 4 × −4 = −16. The slope is the same everywhere, so the output is too.',
+        'The size is right. But the kernel subtracts what is on its left from what is on its right, and here the right side is the darker one, so the sums are negative.',
       ],
-      tryInput: { ...BASE, image: 'ramp', kernel: 'sobel-x' },
+      tryInput: { ...BASE, pixels: '97531 97531 97531 97531', kernel: 'sobel-x' },
+      check: (r) => (r.outRows === 2 && r.outCols === 3 && r.output.flat().every((v) => v === -16)) || `output ${JSON.stringify(r.output)}`,
     },
     {
       type: 'debug',
@@ -850,8 +1106,9 @@ int main() {
     {
       type: 'challenge',
       title: 'Keep the border',
-      prompt: 'Change `correlate` so that the output has the same size as the image. Try two kinds of padding: imagine zeros outside the image, or imagine that each border pixel is repeated outwards. Run the horizontal Sobel kernel on a flat image of 5s with each. One of them reports strong edges along the left and right borders, and the other reports none. Explain why, then decide which padding you would use before a blur and which before an edge detector.',
-      hints: ['You do not need to build a bigger image. Write a function that returns the pixel at (r, c), and decide inside it what to return when r or c is out of range.', 'With zeros outside, the kernel at the left border sees 0 on one side and 5 on the other, which looks like an edge.'],
+      prompt: 'Change `correlate` so that the output has the same size as the image. Try two kinds of padding: imagine zeros outside the image, or imagine that each border pixel is repeated outwards. Run the horizontal Sobel kernel, and then the blur kernel, on a flat image of 5s that is 4 rows by 5 columns, with each kind of padding. A flat image has no edges and a blur should leave it alone. Which outputs say so? Explain the ones that do not, then decide which padding you would use before a blur and which before an edge detector.',
+      expect: 'With zeros outside, the horizontal Sobel kernel gives 15, 0, 0, 0, −15 in the top and bottom rows and 20, 0, 0, 0, −20 in the two middle rows: an edge down each side that is not in the image. The blur gives 5 only at the six inner pixels, 3.33 along the sides and 2.22 in the corners, so the frame comes out darker. With the border pixels repeated, the Sobel kernel gives 0 at all 20 places and the blur gives 5 at all 20. Repeating the border is the better choice for both jobs, because it invents no jump in brightness at the border.',
+      hints: ['You do not need to build a bigger image. Write a function that returns the pixel at (r, c), and decide inside it what to return when r or c is out of range.', 'Work out by hand what the kernel sees when it is centred on a pixel of the left border, for each kind of padding.'],
     },
   ],
 
@@ -951,12 +1208,23 @@ int main() {
         return (ok && transposed && r.strength[3][3] === 0 && r.strength[0][0] === 0 && zeros === 25 && Math.abs(r.strength[2][2] - Math.sqrt(2 * 24 * 24)) < 1e-12 && c['kernel multiplications'] === 2 * 49 * 9 && c['edge strengths'] === 49)
           || `middle row of gx ${row}, ${zeros} zeros, ${c['kernel multiplications']} multiplications`;
       } },
-    { name: 'the predicted answer: the horizontal Sobel kernel gives 8 everywhere on a ramp, and blur and sharpen leave it unchanged', input: { ...BASE, image: 'ramp', kernel: 'sobel-x' },
+    { name: 'quoted in Try this: the horizontal Sobel kernel gives 8 everywhere on a ramp, and blur and sharpen leave it unchanged', input: { ...BASE, image: 'ramp', kernel: 'sobel-x' },
       check: (r) => {
         if (!r.output.flat().every((v) => v === 8)) return `Sobel on a ramp gave ${r.output[0].join(', ')}`;
         const inner = r.image.slice(1, -1).map((row) => row.slice(1, -1));
         const sharp = run({ ...BASE, image: 'ramp', kernel: 'sharpen' }, QUIET).output, blur = run({ ...BASE, image: 'ramp', kernel: 'blur' }, QUIET).output;
         return (gridsMatch(sharp, inner, 0) === true && gridsMatch(blur, inner, 1e-12) === true) || 'blur or sharpen changed the inside of a ramp';
+      } },
+    { name: 'the predicted answer: a ramp that falls by 2 per column gives −16 everywhere under the horizontal Sobel kernel', input: { ...BASE, pixels: '97531 97531 97531 97531', kernel: 'sobel-x' },
+      check: (r, c) => (r.output.length === 2 && r.output.every((row) => row.join(',') === '-16,-16,-16') && c['kernel multiplications'] === 54) || `output ${JSON.stringify(r.output)}` },
+    { name: 'quoted in Try this: a kernel that compares two opposite corners is blind to the diagonal edge, and turning the Sobel kernel flips 20 numbers on the square', input: { ...BASE, image: 'diagonal', custom: [1, 0, 0, 0, 0, 0, 0, 0, -1] },
+      check: (r) => {
+        if (!(r.output.flat().length === 49 && r.output.flat().every((v) => v === 0))) return `on the diagonal edge: ${JSON.stringify(r.output)}`;
+        const square = run({ ...BASE, custom: [1, 0, 0, 0, 0, 0, 0, 0, -1] }, QUIET).output.flat();
+        const sobel = run({ ...BASE, kernel: 'sobel-x' }, QUIET).output, turned = run({ ...BASE, kernel: 'sobel-x', flip: true }, QUIET).output;
+        const flipped = sobel.flat().filter((v, i) => v !== 0 && turned.flat()[i] === -v).length, zeros = sobel.flat().filter((v) => v === 0).length;
+        return (square.filter((v) => v === -8).length === 8 && square.filter((v) => v === 8).length === 8 && square.filter((v) => v === 0).length === 33
+          && flipped === 20 && zeros === 29 && sobel[3].join(',') === '0,32,32,0,-32,-32,0' && turned[3].join(',') === '0,-32,-32,0,32,32,0') || `square ${square.join(',')}; ${flipped} flipped, ${zeros} zeros`;
       } },
     { name: 'a single 1 on the right moves a dot one cell left, and one cell right once the kernel is turned', input: { ...BASE, image: 'dot', kernel: 'shift' },
       check: (r) => {

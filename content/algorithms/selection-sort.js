@@ -147,9 +147,12 @@ export default {
       { label: 'Reversed: few swaps', values: { custom: [8, 7, 6, 5, 4, 3, 2, 1] } },
     ],
     tryThis: [
-      'Load "Already sorted" and watch the comparison counter. Then load "Random list". With 10 items both runs make exactly 45 comparisons. Only the number of writes differs.',
-      'Load "Rotated by one" and then "Reversed". Both have 8 items, so both cost 28 comparisons. The first needs 7 swaps, the most possible. The second looks worse but needs only 4, because each swap puts two values in their final positions.',
-      'Follow the "min" marker through one round. Count how many times it moves. It moves only when a new smallest value is found, which happens less and less often as the search goes on.',
+      { ask: 'Load "Random list" and note the number of comparisons it took. Next you will load "Already sorted", which has the same 10 values in order. Before you do: will the sorted list take fewer comparisons, and by how many?',
+        reveal: 'It takes exactly the same number. Both runs make 45 comparisons. The random list needs 7 swaps (14 array writes) and the sorted list needs 0, so only the writes differ. Selection sort cannot tell that a list is in order without searching every unsorted part, so existing order saves it no comparisons.' },
+      { ask: 'The presets "Rotated by one" and "Reversed" both hold the numbers 1 to 8. In the first, only the 1 is out of place. In the second, every pair of values is in the wrong order. Before you load them: how many swaps will each one need?',
+        reveal: 'Rotated by one needs 7 swaps, the most a list of 8 can need. Reversed needs only 4. Both cost 28 comparisons. On the reversed list each swap puts two values into their final positions at once, the smallest left and the largest left. On the rotated list each swap fixes one position and pushes the displaced value one step along.' },
+      { ask: 'Load "Random list" and step forward to round 3, which starts with 97 as the smallest so far. Seven more values will be compared with the smallest so far in this round. How many of them will take over the "min" marker?',
+        reveal: 'Four: 70, then 52, then 41, and later 24. The first three comparisons all move the marker, and only one of the last four does. The marker moves only when a new smallest value is found, and that gets less likely the further the search has gone, because the value to beat keeps getting smaller.' },
     ],
     run,
     report: (r, c) => `Sorted ${r.sorted.length} values with ${c.comparisons || 0} comparisons and ${r.swaps} swaps (${c.writes || 0} array writes).\n[${r.sorted.join(', ')}]`,
@@ -223,6 +226,16 @@ export default {
       input: 'The list [29, 10, 14, 37, 13, 5, 31, 22]. Prints the sorted list and the number of swaps used.',
       expected: '5 10 13 14 22 29 31 37\nswaps: 4',
     },
+    breakIt: [
+      { change: 'In the comparison inside the inner loop, compare `a[j]` with `a[i]` instead of with the value at the minimum position. Will the list still come out sorted?',
+        find: { python: 'if a[j] < a[min_index]:', javascript: 'if (a[j] < a[minIndex]) {' },
+        replace: { python: 'if a[j] < a[i]:', javascript: 'if (a[j] < a[i]) {' },
+        reveal: 'No. It prints "22 5 10 29 13 14 31 37" and "swaps: 4". In round 1 every value is compared with 29, and the minimum position is overwritten each time one is smaller. The last value smaller than 29 is 22, so 22 goes to the front instead of 5. The scan now finds the last value smaller than `a[i]`, not the smallest value. The swap count is still 4, so that line gives no warning.' },
+      { change: 'Swap during the scan instead of once at the end. Replace the line that records the new minimum position with two lines: one that swaps `a[i]` with `a[j]`, and one that adds 1 to `swaps`. Which of the two printed lines will change?',
+        find: { python: 'min_index = j', javascript: 'minIndex = j;' },
+        replace: { python: 'a[i], a[j] = a[j], a[i]\n                swaps += 1', javascript: '[a[i], a[j]] = [a[j], a[i]];\n        swaps++;' },
+        reveal: 'Only the second. The list is still sorted, "5 10 13 14 22 29 31 37", but the program now prints "swaps: 14" instead of "swaps: 4". Every time the scan meets a value smaller than the one at position `i` it swaps at once, so a round can swap several times before the true smallest value arrives. The output is right and the one advantage of selection sort, very few writes, is gone.' },
+    ],
     python: {
       source: `def selection_sort(a):
     n = len(a)
@@ -392,16 +405,17 @@ int main() {
   quiz: [
     {
       type: 'predict',
-      q: 'The list 1, 2, 3, 4, 5, 6 is already sorted. How many comparisons will selection sort make?',
-      options: ['0', '5', '15', '36'],
+      q: 'In the list 1, 2, 3, 4, 5, 7, 6 only the last two values are out of order. How many comparisons and how many swaps will selection sort make?',
+      options: ['1 comparison and 1 swap', '6 comparisons and 1 swap', '21 comparisons and 1 swap', '21 comparisons and 6 swaps'],
       answer: 2,
       explain: [
-        'It makes 0 swaps, but it cannot know the list is sorted without searching each unsorted part.',
-        '5 is the cost of the first round alone. Four more rounds follow.',
-        'Correct. The rounds cost 5 + 4 + 3 + 2 + 1 = 15 comparisons, the same as for any list of six values.',
-        '36 is n × n. Each round is one comparison shorter than the last, so the total is n(n − 1)/2.',
+        'One comparison would be enough for a method that knew where the problem was. Selection sort does not know, so it searches the whole unsorted part in every round.',
+        '6 is the cost of the first round alone. Five more rounds follow, each one comparison shorter.',
+        'Correct. The rounds cost 6 + 5 + 4 + 3 + 2 + 1 = 21 comparisons, the same as for any list of seven values. The first five rounds find their smallest value already in place and swap nothing. Round 6 swaps the 6 with the 7.',
+        'The comparison count is right, but a round swaps only when the smallest value left is not already at the front of the unsorted part. That happens once here, in round 6.',
       ],
-      tryInput: { custom: [1, 2, 3, 4, 5, 6] },
+      tryInput: { custom: [1, 2, 3, 4, 5, 7, 6] },
+      check: (r, c) => (c.comparisons === 21 && r.swaps === 1 && c.writes === 2 && r.sorted.join(',') === '1,2,3,4,5,6,7') || `${c.comparisons} comparisons and ${r.swaps} swaps`,
     },
     {
       type: 'choice',
@@ -451,7 +465,8 @@ int main() {
     {
       type: 'challenge',
       title: 'A stable selection sort',
-      prompt: 'Rewrite selection sort so that it is stable. Instead of swapping `A[i]` with `A[min]`, take the minimum out, shift every value between `i` and `min − 1` one place to the right, and put the minimum at `i`. Sort a list of (key, label) pairs by key to check that equal keys keep their order. Then count array writes on a reversed list of 16 values and compare with the swap version.',
+      prompt: 'Rewrite selection sort so that it is stable. Instead of swapping `A[i]` with `A[min]`, take the minimum out, shift every value between `i` and `min − 1` one place to the right, and put the minimum at `i`. Sort the pairs (3, a), (1, b), (3, c), (2, d), (1, e) by their number to check that pairs with equal numbers keep their order. Then count array writes on the reversed list 16, 15, 14, down to 1, and compare with the swap version. Count one write for each value stored into the list, so a swap is two writes.',
+      expect: 'The pairs come out as (1, b), (1, e), (2, d), (3, a), (3, c), using 9 writes: b stays ahead of e and a stays ahead of c. The swap version gives (1, b), (1, e), (2, d), (3, c), (3, a), with the two 3s reversed. On the reversed list of 16 the stable version makes 135 writes, which is 16 + 15 + 14 and so on down to 2, because each round shifts the whole unsorted part. The swap version makes 16 writes (8 swaps). Both make 120 comparisons.',
       hints: ['Save `A[min]` in a variable before shifting, and shift from the right so nothing is overwritten.', 'The comparison count does not change. Think about what the new write count has in common with insertion sort.'],
     },
   ],

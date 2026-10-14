@@ -469,10 +469,14 @@ export default {
       { label: 'Noughts and crosses: X must block', values: { tree: 'ttt', leaves: [], pruning: true, order: 'given' } },
     ],
     tryThis: [
-      'Load "Worked example (9 endings)" and step through it, then load "Worked example, no pruning". Both end with the value 4. Count the endings examined: 6 with pruning, 9 without.',
-      'Load "Deeper tree" and note how many endings are examined. Then load "Deeper tree, best move first". The scores are the same but the moves are tried in a different order, and the count drops to 7 of 16, the fewest possible for this shape.',
-      'Load "Noughts and crosses: X must block". Watch what happens after X tries square 8: one reply by O is enough to rule the move out, and the other reply is never looked at.',
-      'In the worked example, type the three groups in the opposite order: 6, 3, 1, 2, 9, 8, 4, 7, 5. The value is still 4, but now nothing can be cut. Work out why before you run it.',
+      { ask: 'Load "Worked example (9 endings)" and step through it. At the end C shows the limit ≤2 and D shows ≤3, because the search stopped looking at each of them early. Then load "Worked example, no pruning", which looks at every ending. What exact values will C and D show, and will the value at the top change?',
+        reveal: 'C shows 2 and D shows 1. The top is still worth 4, found after 9 endings instead of 6. The limit on C happened to equal its true value. The limit on D did not: the search stopped at the 3 and never saw the 1. A position that was cut carries a limit and not a value, and a limit was all the search needed to know that Max should choose B.' },
+      { ask: 'Load "Deeper tree" and note how many of its 16 endings are examined. Then load "Deeper tree, best move first". The scores are the same, but at every position the best move is now tried first. How many endings will be examined this time, and will the value at the top change?',
+        reveal: 'The count drops from 11 of the 16 endings to 7, and the top position is worth 7 both times. Seven endings is the fewest possible for this shape. A cut needs a strong move already in hand to compare against, and trying the best move first puts the strongest one in hand at once. The order changes the work and never the value.' },
+      { ask: 'Load "Noughts and crosses: X must block". O threatens the diagonal 3, 5, 7. Watch what happens after X tries square 8. O has two replies to it. How many of them does the search look at before it gives up on square 8?',
+        reveal: 'One. The first reply O tries, square 7, completes the diagonal and wins. X already has a draw in hand from playing square 7, so one losing reply is enough to rule square 8 out, and the other reply, square 9, is never looked at. The same happens when X tries square 9. In all the search examines 4 of the 6 endings and skips 2.' },
+      { ask: 'In the worked example, type the three groups in the opposite order: 6, 3, 1, 2, 9, 8, 4, 7, 5. It is the same tree with the moves at the top tried in a different order. How many of the 9 endings will alpha-beta examine now, and what value will it find?',
+        reveal: 'All 9, and the value is still 4. The first group is worth only 1, so the second cannot be cut: its first ending, 2, is already better than 1. The second group turns out to be worth 2, and every ending of the third group is above 2. The best move came last, so the search never had a strong enough move in hand to cut against.' },
     ],
     run,
     report: (r) => `Value of the top position: ${r.value}. Best line of play: ${r.line.join(', ')}.\n${r.examined} of ${r.total} endings examined${r.pruning ? `, ${r.skipped} skipped in ${r.cuts} ${r.cuts === 1 ? 'cut' : 'cuts'}.` : '. Plain minimax always examines all of them.'}`,
@@ -559,6 +563,16 @@ export default {
       input: 'Three trees, each searched twice: by plain minimax and with alpha-beta pruning. The first is the worked example, with endings 4, 7, 5, 2, 9, 8, 6, 3, 1. The second is the same tree with its three groups in the opposite order. The third has 3 choices per move, is 6 moves deep, and has 729 scores from a small fixed generator.',
       expected: 'Worked example: minimax 4 after 9 endings, alpha-beta 4 after 6 endings\nSame tree, groups reversed: minimax 4 after 9 endings, alpha-beta 4 after 9 endings\nRandom tree, 6 moves deep: minimax 6 after 729 endings, alpha-beta 6 after 217 endings',
     },
+    breakIt: [
+      { change: 'Get the cut test for Max the wrong way round: change `best >= beta` to `best <= alpha`. Which of the three lines will show a wrong value?',
+        find: { python: 'if prune and best >= beta:', javascript: 'if (prune && best >= beta) break;' },
+        replace: { python: 'if prune and best <= alpha:', javascript: 'if (prune && best <= alpha) break;' },
+        reveal: 'The third: "Random tree, 6 moves deep: minimax 6 after 729 endings, alpha-beta 4 after 69 endings". The two searches must always agree, and here alpha-beta says 4 where plain minimax says 6. The changed test stops a Max position as soon as a move turns out no better than what Max already has, although a later move might be far better. The first line is damaged too, in a way that is easy to miss: "alpha-beta 4 after 4 endings". The value is right by luck. When C failed to beat B, the search gave up on the whole position and never looked at D. Neither language reports an error.' },
+      { change: 'Forget to raise alpha: delete the line that sets `alpha` to the larger of `alpha` and `best`. Will any value be wrong?',
+        find: { python: '            alpha = max(alpha, best)\n', javascript: '      alpha = Math.max(alpha, best);\n' },
+        replace: { python: '', javascript: '' },
+        reveal: 'No value is wrong, but much of the saving is gone. The first line now ends "alpha-beta 4 after 9 endings" instead of 6, and the third ends "alpha-beta 6 after 411 endings" instead of 217. Without that line `alpha` never rises, so a Min position is never told what Max has already secured and its cut test can never succeed. The cuts that remain are the ones at Max positions, which use `beta`. A test that only compares values would pass this program. Only the counts show the mistake.' },
+    ],
     python: {
       source: `def make_leaves(count, seed):
     """Fixed pseudo-random scores from 1 to 20, the same in every language."""
@@ -819,16 +833,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The worked example examined 6 of its 9 endings. Suppose the three groups are given in the opposite order: 6, 3, 1 first, then 2, 9, 8, then 4, 7, 5. What does alpha-beta do now?',
-      options: ['Examines 6 endings again and finds 4', 'Examines all 9 endings and finds 4', 'Examines 6 endings and finds a different value', 'Examines 3 endings and finds 4'],
+      q: 'The worked example examined 6 of its 9 endings. Suppose the scores inside each group are given in the opposite order: 5, 7, 4 under B, then 8, 9, 2 under C, then 1, 3, 6 under D. What does alpha-beta do now?',
+      options: ['Examines 6 endings again and finds 4', 'Examines 7 endings and finds 4', 'Examines all 9 endings and finds 4', 'Examines 5 endings and finds 4'],
       answer: 1,
       explain: [
-        'The cuts in the worked example depended on finding the best move, worth 4, first. Here it comes last, so the earlier groups cannot be judged against it.',
-        'The first group is worth only 1, so the second cannot be cut: its first ending, 2, is already better than 1. It turns out to be worth 2, and every ending of the third group is above 2. Nothing is cut. The value is still 4, because the order of the moves never changes the value.',
-        'The value cannot change. The tree is the same tree: only the order in which its branches are tried is different.',
-        'Three endings is one group. The search cannot know the other two groups are worse without looking at least at their first endings.',
+        'The moves at the top are tried in the same order as before, but the replies under them are not. Under C the low score, 2, now comes last, which costs two more endings. Under D the low score comes first, which saves one.',
+        'B is worth 4 after all three of its endings. Under C the search sees 8 and then 9, and only the last ending, 2, shows that C is worse than B, so nothing is left to skip. Under D the first ending, 1, is already below 4, and the 3 and the 6 are skipped. That makes 3 + 3 + 1 = 7 endings. The value is still 4, because the order of the moves never changes the value.',
+        'Nine would mean that nothing could be cut. D can still be cut: its first ending, 1, is already worse for Max than the 4 from B.',
+        'Five is the fewest this shape allows. It would need a score of 4 or less to come first under both C and D. Under C the first two endings are 8 and 9.',
       ],
-      tryInput: { tree: 'b3d2', leaves: REVERSED, pruning: true, order: 'given' },
+      tryInput: { tree: 'b3d2', leaves: [5, 7, 4, 8, 9, 2, 1, 3, 6], pruning: true, order: 'given' },
+      check: (r, c) => (r.value === 4 && c['endings examined'] === 7 && r.skipped === 2 && r.bestMove === 'B') || `value ${r.value}, examined ${c['endings examined']}, skipped ${r.skipped}`,
     },
     {
       type: 'debug',
@@ -884,12 +899,13 @@ int main() {
     {
       type: 'challenge',
       title: 'Play noughts and crosses perfectly',
-      prompt: 'Write a program that plays noughts and crosses from the empty board using minimax with alpha-beta pruning, searching every line to the end. Have it count the endings it examines for its first move, with pruning and without. Then change the scoring so that it prefers a quick win to a slow one and a slow loss to a quick one, and check that it never loses when you play against it.',
+      prompt: 'Write a program that plays noughts and crosses from the empty board using minimax with alpha-beta pruning, searching every line to the end. Let X move first, try the empty squares in order from 1 to 9, and score a win for X as 1, a draw as 0 and a loss as −1. Have it count the endings it examines for its first move, with pruning and without. Then change the scoring so that it prefers a quick win to a slow one and a slow loss to a quick one, and check that it never loses when you play against it.',
       hints: [
         'Represent the board as nine squares. A position is an ending if either player has three in a line or no square is empty.',
         'Score a win as 10 minus the number of moves played and a loss as that number minus 10. A draw scores 0.',
         'With best play by both sides the game is a draw, so the value of the empty board should come out as 0.',
       ],
+      expect: 'The empty board is worth 0, a draw, and so is every one of the nine first moves. Plain minimax examines 255,168 endings, one for each possible game. With alpha-beta, squares tried in order from 1 to 9 and scores of 1, 0 and −1, it examines 7,330. With the scoring from the second hint the value is still 0 and the pruned count is 8,453. The pruned counts depend on the order in which you try the squares. The 255,168 and the 0 do not. Played as X or as O against every possible sequence of opposing moves, a correct program never loses.',
     },
   ],
 
@@ -943,7 +959,9 @@ int main() {
       } },
     { name: 'the worked example without pruning examines all 9 endings and gives the same value', input: { tree: 'b3d2', leaves: WORKED, pruning: false, order: 'given' },
       check: (r, c) => (conclusionsHold(r) === true && r.value === 4 && c['endings examined'] === 9 && r.skipped === 0 && !c.cuts) || `value ${r.value}, examined ${c['endings examined']}` },
-    { name: 'the predicted run: with the groups reversed nothing is cut and the value is still 4', input: { tree: 'b3d2', leaves: REVERSED, pruning: true, order: 'given' },
+    { name: 'the quiz prediction: with each group reversed, 7 of 9 endings are examined and the value is still 4', input: { tree: 'b3d2', leaves: [5, 7, 4, 8, 9, 2, 1, 3, 6], pruning: true, order: 'given' },
+      check: (r, c) => (conclusionsHold(r) === true && r.value === 4 && c['endings examined'] === 7 && r.skipped === 2 && c.cuts === 1) || `value ${r.value}, examined ${c['endings examined']}, skipped ${r.skipped}` },
+    { name: 'with the groups reversed nothing is cut and the value is still 4', input: { tree: 'b3d2', leaves: REVERSED, pruning: true, order: 'given' },
       check: (r, c) => (conclusionsHold(r) === true && r.value === 4 && c['endings examined'] === 9 && r.skipped === 0) || `value ${r.value}, examined ${c['endings examined']}` },
     { name: 'alpha-beta agrees with plain minimax and with an independent reference on 1,600 seeded trees, and never examines more endings', input: { tree: 'b2d4', seed: 16, leaves: [], pruning: true, order: 'given' },
       check: (r) => {

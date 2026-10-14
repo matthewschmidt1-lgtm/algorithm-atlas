@@ -425,11 +425,17 @@ export default {
       { label: 'Season, Holt-Winters', values: { pattern: 'season', method: 'winters', alpha: 0.3, beta: 0.1, gamma: 0.3, noise: 6, seed: 1, custom: [] } },
     ],
     tryThis: [
-      'Load "A jump in demand, slow weight". Demand jumps from about 100 to about 130 at month 25. With α = 0.1 the forecast creeps upward and is still about 8 units short a year later. Now load "A jump in demand, fast weight". With α = 0.8 it has caught up within three months, but from then on it zigzags after every random bump.',
-      'Set the pattern to Steady and compare α = 0.1 with α = 0.8, reading the average miss in the output panel. On steady demand the slow weight does better, 4.5 against 5.2, because there is nothing to react to and reacting only copies noise. After the jump it was the other way round. No weight is best for every series.',
-      'Load "Growth, simple smoothing" and step to the end. Every forecast is too low, and the flat forecast for the year ahead misses by about 19 units a month. Load "Growth, with a trend": the figures are the same, and the miss falls to about 5, which is roughly what the randomness alone accounts for.',
-      'Load "Season, trend only". The forecast is a month late for every December peak, and at the end it mistakes the year-end climb for lasting growth and forecasts too high for the whole year ahead. Then load "Season, Holt-Winters" and watch the twelve bars in the lower chart settle toward the hollow dots, the true seasonal pattern that the method was never shown. The miss for the year ahead falls from about 14 units a month to about 5.',
-      'Keep "Season, Holt-Winters" and set the random ups and downs to 0. The forecast is now exact for all twelve months. Switch the method to Holt, then to Simple, to see what each one cannot represent.',
+      { ask: 'Load "A jump in demand, slow weight". Demand jumps from about 100 to about 130 at month 25, and with α = 0.1 the level moves a tenth of the way toward each new figure. A year after the jump, at month 36, how far below 130 will the level still be?',
+        reveal: 'About 8 units. The level is 122.4 after month 36, and over months 25 to 48 the forecasts made one month ahead miss by 12.3 units on average. Now load "A jump in demand, fast weight". With α = 0.8 the level is at about 129 after the first month of the jump and the average miss is 6.3. The price is that it then chases every random bump: the level goes up to about 138 in month 26 and back down to about 128 in month 27.' },
+      { ask: 'Set the pattern to Steady and run it with α = 0.1, then with α = 0.8, reading the average miss of the one-month forecasts in the output panel each time. After the jump the fast weight won. Which weight will have the smaller miss on steady demand?',
+        input: { pattern: 'steady', method: 'simple', alpha: 0.1, noise: 6, seed: 1, custom: [] },
+        reveal: 'The slow one, 4.5 against 5.2. On steady demand there is nothing to react to, so a fast weight only copies the random ups and downs into the forecast. After the jump it was the other way round, 12.3 for the slow weight against 6.3 for the fast one. No weight is best for every series.' },
+      { ask: 'Load "Growth, simple smoothing" and step to the end. Demand grows by about 2 units every month, and simple smoothing forecasts one flat number for the whole year ahead. How many of the next 12 months will come in above that number?',
+        reveal: 'All 12. The forecast is 194.5 for every month, and the figures that followed run from 196 to 230, so it misses by 18.6 units a month and every miss is on the low side. During the history the one-month forecasts are too low far more often than too high, for the same reason: the level is an average of older, smaller figures. Load "Growth, with a trend". The figures are the same and the miss for the year ahead falls to 5.2, close to the 4.8 that the randomness alone accounts for.' },
+      { ask: 'Load "Season, trend only". The history ends on a December peak, and Holt\'s method has no part for the calendar. Will its forecast for the year ahead run too high or too low?',
+        reveal: 'Too high, by 13.4 units a month on average. It takes the climb toward the December peak for lasting growth and carries it on in a straight line, so it starts the new year too high and misses the dip. Its average miss for the year is 13.8. Then load "Season, Holt-Winters" and watch the twelve bars in the lower chart settle toward the hollow dots, the true seasonal pattern that the method was never shown. The miss for the year ahead falls to 4.7, which is about what the randomness alone accounts for.' },
+      { ask: 'Keep "Season, Holt-Winters" and set the random ups and downs to 0. How large will the miss for the year ahead be now? Then switch the method to Holt, and after that to Simple. Will their misses also disappear?',
+        reveal: 'Holt-Winters misses by 0.0: the forecast is exact for all twelve months, because a straight line plus a fixed yearly pattern is exactly what it can represent. The other two do not improve. On the same figures Holt misses by 13.0 units a month and Simple by 14.5, with no randomness left to blame. What remains is the part of the pattern each method has no way to hold: the season for Holt, and both the season and the trend for Simple.' },
     ],
     run,
     report: (r, c) => {
@@ -535,6 +541,20 @@ export default {
       input: 'Twelve quarters of sales with growth and a yearly pattern of four quarters. The three methods each forecast the quarters that follow.',
       expected: 'simple, every quarter ahead: 135.71\nwith a trend, next 4 quarters: 158.93, 164.19, 169.45, 174.71\nwith a trend and a season, next 4 quarters: 113.52, 136.55, 150.01, 172.98',
     },
+    breakIt: [
+      { change: 'In `simple`, swap the two weights, so that `alpha` multiplies the old level and `1 - alpha` multiplies the new figure. The call still passes 0.3. Will the forecast move toward the early quarters or toward the latest ones?',
+        find: { python: 'level = alpha * actual + (1 - alpha) * level', javascript: 'level = alpha * actual + (1 - alpha) * level;' },
+        replace: { python: 'level = (1 - alpha) * actual + alpha * level', javascript: 'level = (1 - alpha) * actual + alpha * level;' },
+        reveal: 'Toward the latest ones. The first line becomes "simple, every quarter ahead: 152.23" in place of 135.71. The level now keeps 0.3 of what it held and takes 0.7 of each new figure, so a weight meant to be slow behaves as 0.7 would, and the forecast sits close to the last two quarters, 140 and 160. The other two lines do not change. Nothing fails, which is why this mistake is usually found only when someone notices that turning the weight down makes the forecast jumpier.' },
+      { change: 'In the last line of the Holt-Winters function, read the seasonal value of the quarter before the one being forecast: subtract 1 from the index inside `season[...]`. The level and the trend are untouched. What happens to the four forecasts?',
+        find: { python: 'season[(n + h - 1) % m]', javascript: 'season[(n + k) % m]' },
+        replace: { python: 'season[(n + h - 2) % m]', javascript: 'season[(n + k - 1) % m]' },
+        reveal: 'The last line becomes "164.16, 116.46, 139.49, 152.95" in place of "113.52, 136.55, 150.01, 172.98". Each quarter is given the seasonal value of the quarter before it. The first quarter of the year, the weakest, is handed the fourth quarter\'s peak and is forecast at 164.16, about 50 units above the sound forecast. The fourth quarter gets the third quarter\'s value and comes out 20 below it. The level and the trend are exactly as before. Only the calendar is wrong.' },
+      { change: 'Lose a quarter from the history: delete the sixth figure, 117, from `sales`, so that only 11 remain. Which of the three forecasts will suffer most?',
+        find: { python: 'sales = [80, 98, 115, 137, 88, 117, 125, 152, 102, 123, 140, 160]', javascript: 'const sales = [80, 98, 115, 137, 88, 117, 125, 152, 102, 123, 140, 160];' },
+        replace: { python: 'sales = [80, 98, 115, 137, 88, 125, 152, 102, 123, 140, 160]', javascript: 'const sales = [80, 98, 115, 137, 88, 125, 152, 102, 123, 140, 160];' },
+        reveal: 'The seasonal one. Simple smoothing barely moves, from 135.71 to 135.15, because it has no idea of the calendar. The trend forecast shifts by a few units, to 163.18, 169.68, 176.18, 182.67. The seasonal forecast becomes "142.80, 128.53, 152.54, 174.42" in place of "113.52, 136.55, 150.01, 172.98", so the quarter straight after the history is forecast 29 units higher than it was with the full history. From the gap onward every figure sits one place early, so each quarter is filed under the wrong season, and the seasonal values the method ends up with are blends of different quarters.' },
+    ],
     python: {
       source: `def simple(y, alpha):
     """A level only. Returns the forecast, which is the same for every period ahead."""
@@ -823,6 +843,10 @@ int main() {
         'Nothing in the method overshoots a steady climb. The forecast stays below it.',
       ],
       tryInput: { pattern: 'trend', method: 'simple', alpha: 0.3, noise: 0, seed: 1, custom: [] },
+      check: (r, c) => {
+        const last = r.steps[r.steps.length - 1];
+        return (r.steps.every((s) => s.error > 0) && Math.abs(last.error - 2 / 0.3) < 1e-4 && last.error.toFixed(1) === '6.7') || `the miss in the last month was ${last.error}`;
+      },
     },
     {
       type: 'debug',
@@ -857,7 +881,8 @@ average_miss = total_miss / (len(y) - 1)`,
     {
       type: 'challenge',
       title: 'Choose the weights honestly',
-      prompt: 'Generate or collect five years of monthly figures with a trend and a season. Using only the first four years, run Holt-Winters for every combination of α, β and γ from 0.1 to 0.9 in steps of 0.1 and keep the combination with the smallest sum of squared one-step-ahead misses. Then forecast the fifth year with those weights and measure the average miss. Compare it with two yardsticks on the same fifth year: "same as last month" and "same as the same month a year ago". Finally compare the miss on the fifth year with the fitted miss on the first four. Which is larger, and why?',
+      prompt: 'So that your answer can be checked, build five years of monthly figures from a rule. For month t from 1 to 60, take 100 + 2t, add the seasonal value for that calendar month from the list −10, −14, −4, 0, 4, 6, 2, −2, 0, 6, 12, 20, and add (37t mod 11) − 5 as a stand-in for randomness. The first three figures are 91, 93 and 98. Using only the first four years, run the program\'s Holt-Winters function with a season of 12 for every combination of α, β and γ from 0.1 to 0.9 in steps of 0.1. Keep the combination with the smallest sum of squared one-step-ahead misses over the 48 months, measuring each miss before that month\'s update. Then forecast the fifth year with those weights and measure the average size of the miss. Compare it with two yardsticks on the same fifth year: "same as last month", which repeats month 48 twelve times, and "same as the same month a year ago", which repeats the fourth year. Finally compare the miss on the fifth year with the fitted average miss on the first four. Which is larger, and why?',
+      expect: 'The smallest sum of squared misses is 582.89, at α = β = γ = 0.1, and the fitted average miss over the 48 months is 2.95 units. With those weights the forecast for the fifth year misses by 3.39 units a month on average. "Same as last month" misses by 12.50 and "same as the same month a year ago" by 24.33, so the method beats both easily. The yearly yardstick does worst because this series grows by 24 units a year and it cannot follow growth. The miss on the fifth year is the larger of the two, 3.39 against 2.95. The weights were chosen to make the fitted miss small, and the fifth year had no say in it.',
       hints: ['The fitted miss is almost always smaller: the weights were chosen to make it small, and the fifth year had no say.', 'The seasonal yardstick is hard to beat when the trend is weak. Report the ratio of your miss to its miss.'],
     },
   ],

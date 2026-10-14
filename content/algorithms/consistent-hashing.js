@@ -410,10 +410,16 @@ export default {
       { label: 'Six servers, many keys', values: { servers: 6, keys: 200, vnodes: 4, event: 'remove', seed: 9 } },
     ],
     tryThis: [
-      'Load "Add a fifth server" and step to the end. On the left, the haloed keys sit together on one arc, just before S5. On the right they are everywhere. Read the two "keys moved" lines on the board.',
-      'Keep the same settings and press Randomize a few times. The modulo count stays close to four fifths of the keys. The ring count jumps about, because with one position per server the size of the arc S5 lands in is a matter of luck.',
-      'Now raise "Positions per server" to 8 and randomize again. The ring count settles near one fifth of the keys, and the per-server counts on the board become much more even.',
-      'Switch to "Remove a server". On the ring only the departing server\'s keys move, and they go to the next position clockwise. Compare how many keys modulo hashing moves for the same change.',
+      { ask: 'Load "Add a fifth server". Sixty keys sit on four servers and S5 is about to join. Before you step to the end: roughly how many of the 60 keys will the ring move, and how many will hash mod n move?',
+        reveal: 'The ring moves 9 and hash mod n moves 48. On the left the nine haloed keys sit together on one arc, just before S5, and every one of them goes to S5. S4 drops from 18 keys to 9 and no other server changes. On the right the haloed keys are everywhere, because changing the divisor from 4 to 5 changes almost every remainder.' },
+      { ask: 'Set the number of keys to 200, keep one position per server, and add a fifth server with seed 1. Then run seeds 2, 3, 4 and 5 as well. Which count will change more from seed to seed: the keys the ring moves, or the keys hash mod n moves?',
+        input: { servers: 4, keys: 200, vnodes: 1, event: 'add', seed: 1 },
+        reveal: 'The ring\'s. Over the five seeds it moves 26, 53, 74, 24 and 26 keys. Hash mod n moves 148, 155, 169, 157 and 158, never far from four fifths of the 200. The ring moves far fewer every time, but how many is a matter of luck: with one position per server, S5 takes whatever lies on the single arc it happens to land in. With seed 3 that arc holds 74 keys.' },
+      { ask: 'Keep 200 keys and raise "Positions per server" to 8. Run seeds 1 to 5 again. Will the number of keys the ring moves still swing as widely? And will the keys per server before S5 joins be any more even?',
+        input: { servers: 4, keys: 200, vnodes: 8, event: 'add', seed: 1 },
+        reveal: 'The swing shrinks. The ring now moves 54, 55, 53, 44 and 44 keys, against anything from 24 to 74 with one position. One fifth of 200 is 40. S5\'s share is now the sum of eight small arcs, so one lucky or unlucky arc counts for less. The shares before S5 joins even out as well. With seed 3 and one position, one server held 131 keys and another held none. With eight positions the four servers hold 62, 43, 40 and 55.' },
+      { ask: 'Load "Remove a server". S4 is about to leave, and the board shows how many keys each server holds. How many keys will the ring move, and which servers will receive them?',
+        reveal: 'It moves 18, exactly the keys S4 held, and all of them go to one server: S2, the next position clockwise, which rises from 8 keys to 26. S1 and S3 keep their 21 and 13. Hash mod n moves 45 of the 60 for the same change.' },
     ],
     run,
     report: (r, c) => `${r.event === 'add' ? `Added S${r.server} to` : `Removed S${r.server} from`} ${r.servers} servers holding ${r.keys} keys (${r.vnodes} position${r.vnodes === 1 ? '' : 's'} per server).\nHash ring: ${r.movedRing} keys moved (${pct(r.movedRing, r.keys)}).   Hash mod n: ${r.movedMod} keys moved (${pct(r.movedMod, r.keys)}).\nKeys per server on the ring afterwards: ${Object.entries(r.countsAfter).map(([s, k]) => `S${s}=${k}`).join(', ')}\n${c['hash evaluations'] || 0} hash evaluations, ${c['lookup comparisons'] || 0} comparisons in ring lookups.`,
@@ -496,9 +502,19 @@ export default {
 
   code: {
     sample: {
-      input: 'Forty keys, four servers with eight ring positions each, then a fifth server is added. The same keys are also assigned by hash mod 4 and hash mod 5.',
-      expected: 'ring before: 8 18 6 8\nring after:  6 12 4 8 10\nring moved 10 of 40\nmodulo moved 32 of 40',
+      input: 'A hundred keys, four servers with eight ring positions each, then a fifth server is added. The same keys are also assigned by hash mod 4 and hash mod 5.',
+      expected: 'ring before: 19 40 15 26\nring after:  14 24 8 26 28\nring moved 28 of 100\nmodulo moved 86 of 100',
     },
+    breakIt: [
+      { change: 'In the owner lookup, take away the wrap-round: return the ring entry at the index the search gives, without `% len(ring)` (in C++, without the check for `ring.end()`). Will the program still print its four lines?',
+        find: { python: 'return ring[i % len(ring)][1]', javascript: 'return ring[lo % ring.length][1];' },
+        replace: { python: 'return ring[i][1]', javascript: 'return ring[lo][1];' },
+        reveal: 'No. It prints nothing and stops with an error: "IndexError: list index out of range" in Python, and "TypeError: Cannot read properties of undefined (reading \'1\')" in JavaScript. Keys 64 and 80 hash to positions beyond the last server position, so the search hands back an index one past the end of the list. The other 98 keys never reach that case, which is how this bug gets through a small test: with only keys 0 to 63 the program would run cleanly. On a ring, the entry after the last one is the first.' },
+      { change: 'Change `copies` from 8 to 1, so that each server has a single position on the ring. How will the 100 keys be shared among the four servers, and how many of the four will give keys to the newcomer?',
+        find: { python: 'copies = 8', javascript: 'const copies = 8;' },
+        replace: { python: 'copies = 1', javascript: 'const copies = 1;' },
+        reveal: 'It prints "ring before: 22 4 17 57", "ring after:  22 4 17 23 34" and "ring moved 34 of 100". One server holds 57 of the 100 keys and another holds 4, because each share is now a single arc of whatever length the hash happened to give it. When the fifth server joins it takes 34 keys, all of them from the overloaded server. The other three are not relieved at all. The modulo line still says 86, since that scheme never looks at the ring.' },
+    ],
     python: {
       source: `import bisect
 
@@ -524,9 +540,10 @@ def moved(before, after):
     return sum(1 for a, b in zip(before, after) if a != b)
 
 
-keys = range(40)
-old = build_ring([0, 1, 2, 3], 8)
-new = build_ring([0, 1, 2, 3, 4], 8)
+keys = range(100)
+copies = 8
+old = build_ring([0, 1, 2, 3], copies)
+new = build_ring([0, 1, 2, 3, 4], copies)
 ring_before = [ring_owner(old, k) for k in keys]
 ring_after = [ring_owner(new, k) for k in keys]
 mod_before = [mix32(k + 50000) % 4 for k in keys]
@@ -540,7 +557,8 @@ print(f"modulo moved {moved(mod_before, mod_after)} of {len(keys)}")`,
         { line: 13, text: 'Each server is hashed `copies` times. The ring is just the sorted list of (position, server) pairs.' },
         { line: 17, text: '`bisect_left` finds the first ring position at or after the key\'s hash, by binary search.' },
         { line: 18, text: 'The `%` wraps round: a key past the last position belongs to the first one.' },
-        { line: 31, text: 'The comparison scheme. The server count is inside the formula, which is exactly why changing it reshuffles nearly every key.' },
+        { line: 26, text: 'Eight positions per server. With one, each server\'s share would be a single arc whose length is a matter of luck.' },
+        { line: 32, text: 'The comparison scheme. The server count is inside the formula, which is exactly why changing it reshuffles nearly every key.' },
       ],
     },
     javascript: {
@@ -571,9 +589,10 @@ function ringOwner(ring, key) {
 const moved = (before, after) => before.filter((owner, k) => owner !== after[k]).length;
 const count = (owners, s) => owners.filter((owner) => owner === s).length;
 
-const keys = Array.from({ length: 40 }, (_, k) => k);
-const oldRing = buildRing([0, 1, 2, 3], 8);
-const newRing = buildRing([0, 1, 2, 3, 4], 8);
+const keys = Array.from({ length: 100 }, (_, k) => k);
+const copies = 8;
+const oldRing = buildRing([0, 1, 2, 3], copies);
+const newRing = buildRing([0, 1, 2, 3, 4], copies);
 const ringBefore = keys.map((k) => ringOwner(oldRing, k));
 const ringAfter = keys.map((k) => ringOwner(newRing, k));
 const modBefore = keys.map((k) => mix32(k + 50000) % 4);
@@ -613,8 +632,9 @@ int ringOwner(const Ring& ring, int key) {
 }
 
 int main() {
-    const int keys = 40;
-    Ring oldRing = buildRing(4, 8), newRing = buildRing(5, 8);
+    const int keys = 100;
+    const int copies = 8;
+    Ring oldRing = buildRing(4, copies), newRing = buildRing(5, copies);
     std::vector<int> before(4, 0), after(5, 0);
     int ringMoved = 0, modMoved = 0;
     for (int k = 0; k < keys; ++k) {
@@ -734,16 +754,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Sixty keys are spread over 4 servers by hash mod 4. A fifth server is added and the rule becomes hash mod 5. About how many keys change server?',
-      options: ['About 12, one fifth', 'About 30, one half', 'About 48, four fifths', 'All 60'],
+      q: 'A hundred and twenty keys are spread over 3 servers by hash mod 3. A fourth server is added and the rule becomes hash mod 4. About how many keys change server?',
+      options: ['About 30, one quarter', 'About 60, one half', 'About 90, three quarters', 'All 120'],
       answer: 2,
       explain: [
-        'One fifth is what the hash ring moves on average. Modulo hashing is far worse.',
-        'There is no reason for half. A key stays only if its remainders modulo 4 and modulo 5 agree.',
-        'Correct. A key stays only when hash mod 4 equals hash mod 5, which happens for 4 hash values out of every 20. The run on this page moves exactly 48 of the 60.',
-        'A few keys stay by coincidence: those whose two remainders happen to be equal.',
+        'One quarter is what the hash ring moves on average. In this run the ring moves 26 keys. Modulo hashing is far worse.',
+        'There is no reason for half. A key stays only if its remainders modulo 3 and modulo 4 agree.',
+        'Correct. A key stays only when hash mod 3 equals hash mod 4, which happens for 3 hash values out of every 12. So about three quarters move. This run moves 92 of the 120.',
+        'A few keys stay by coincidence: those whose two remainders happen to be equal. In this run 28 do.',
       ],
-      tryInput: { servers: 4, keys: 60, vnodes: 1, event: 'add', seed: 44 },
+      tryInput: { servers: 3, keys: 120, vnodes: 4, event: 'add', seed: 8 },
+      check: (r) => (r.keys === 120 && r.servers === 3 && r.movedMod === 92 && r.movedRing === 26) || `modulo ${r.movedMod}, ring ${r.movedRing}`,
     },
     {
       type: 'debug',
@@ -776,8 +797,9 @@ int main() {
     {
       type: 'challenge',
       title: 'Rendezvous hashing',
-      prompt: 'Implement the main alternative to the ring. For a key, compute a score hash(key, server) for every server and assign the key to the server with the highest score. Using 2000 keys, measure how many change server when you go from 8 servers to 9, and when one of the 8 is removed. Compare with the ring from this lesson at 1 position per server and at 64. Then compare how evenly each scheme spreads the keys.',
-      hints: ['Combine key and server id into one number before mixing, for example mix32(key * 31 + server * 7919).', 'When a server is added, a key moves only if the new server\'s score beats its current best. Argue why that happens with probability 1/(n + 1).', 'To measure balance, report the largest and smallest per-server counts.'],
+      prompt: 'Implement the main alternative to the ring. For a key, compute a score hash(key, server) for every server and assign the key to the server with the highest score. Use keys 0 to 1999, servers 0 to 7 and the score mix32(key × 31 + server × 7919), with `mix32` from the code on this page. Count how many keys change server when server 8 is added, and how many when server 7 is taken away from the original eight. Do the same with the ring from the code on this page, at 1 position per server and at 64. Then compare how evenly each scheme spreads the 2000 keys over the eight servers: report the largest and the smallest count.',
+      expect: 'Rendezvous hashing: adding server 8 moves 209 keys, all of them to server 8 and some from every old server. Removing server 7 moves 262, exactly the keys it held, and spreads them over the other seven. The eight counts run from 233 to 264. The ring with 1 position per server: adding moves 218, all taken from one server, and removing moves 39, all handed to one server. Its counts run from 37 to 589. The ring with 64 positions: adding moves 165, removing moves 249, and the counts run from 221 to 276. An even split would be 250 each, and one ninth of 2000 is about 222.',
+      hints: ['Combine key and server id into one number before mixing. The score in the prompt does this.', 'When a server is added, a key moves only if the new server\'s score beats its current best. Argue why that happens with probability 1/(n + 1).', 'To measure balance, report the largest and smallest per-server counts.'],
     },
   ],
 
@@ -824,6 +846,28 @@ int main() {
       check: (r) => checkEvent(r) },
     { name: 'the default run moves 9 of 60 keys on the ring and 48 of 60 with modulo', input: { servers: 4, keys: 60, vnodes: 1, event: 'add', seed: 44 },
       check: (r) => (r.movedRing === 9 && r.movedMod === 48) || `ring ${r.movedRing}, modulo ${r.movedMod}` },
+    { name: 'try-this: the default run takes all 9 moved keys from S4, and the removal hands all 18 of S4\'s keys to S2', input: {},
+      check: (r) => {
+        const b = r.countsBefore, a = r.countsAfter;
+        if (!(b[1] === 21 && b[2] === 8 && b[3] === 13 && b[4] === 18 && a[1] === 21 && a[2] === 8 && a[3] === 13 && a[4] === 9 && a[5] === 9)) return `add: before ${JSON.stringify(b)}, after ${JSON.stringify(a)}`;
+        const x = run({ servers: 4, keys: 60, vnodes: 1, event: 'remove', seed: 44 }, QUIET);
+        return (x.server === 4 && x.movedRing === 18 && x.movedMod === 45 && x.countsAfter[1] === 21 && x.countsAfter[2] === 26 && x.countsAfter[3] === 13) || `remove: ring ${x.movedRing}, modulo ${x.movedMod}, after ${JSON.stringify(x.countsAfter)}`;
+      } },
+    { name: 'try-this: 200 keys over seeds 1 to 5, with 1 position and with 8', input: {},
+      check: () => {
+        const runs = (vnodes) => [1, 2, 3, 4, 5].map((seed) => run({ servers: 4, keys: 200, vnodes, event: 'add', seed }, QUIET));
+        const one = runs(1), eight = runs(8);
+        const ring1 = one.map((x) => x.movedRing).join(','), mod1 = one.map((x) => x.movedMod).join(','), ring8 = eight.map((x) => x.movedRing).join(',');
+        if (ring1 !== '26,53,74,24,26' || mod1 !== '148,155,169,157,158' || ring8 !== '54,55,53,44,44') return `ring ${ring1}; modulo ${mod1}; ring with 8 positions ${ring8}`;
+        const shares = (x) => [1, 2, 3, 4].map((k) => x.countsBefore[k]).join(',');
+        return (shares(one[2]) === '52,17,0,131' && shares(eight[2]) === '62,43,40,55') || `seed 3 shares: ${shares(one[2])} and ${shares(eight[2])}`;
+      } },
+    { name: 'quiz: three servers become four, modulo moves 92 of 120 and the ring 26', input: { servers: 3, keys: 120, vnodes: 4, event: 'add', seed: 8 },
+      check: (r) => {
+        const verdict = checkEvent(r);
+        if (verdict !== true) return verdict;
+        return (r.movedMod === 92 && r.movedRing === 26) || `modulo ${r.movedMod}, ring ${r.movedRing}`;
+      } },
     { name: 'removing a server moves exactly the keys it held', input: { servers: 4, keys: 60, vnodes: 1, event: 'remove', seed: 44 },
       check: (r) => {
         const verdict = checkEvent(r);

@@ -173,10 +173,14 @@ export default {
       { label: 'Long stream', values: { n: 60, k: 5, seed: 3 } },
     ],
     tryThis: [
-      'Load "Four of twenty" and watch the third row. The ochre cells are the draws that keep the new item. Their number stays at 4 while the row grows longer, so each new item is less likely to get in than the one before.',
-      'Load "Long stream" and count the replacements in the second half of the stream compared with the first half. Replacements become rare, which is why faster versions of the algorithm skip ahead instead of drawing a number for every item.',
-      'Keep "Four of twenty" and press Randomize on the seed ten times, noting the final reservoir each time. Early and late items both turn up. No position in the stream is favoured.',
-      'Load "One item from a long stream". With a single slot, item i takes over with chance 1 in i. The held item changes often at first and then very rarely.',
+      { ask: 'Load "Four of twenty" and watch the third row, which lists the numbers the draw can come up with. The ochre cells are the draws that keep the new item. When item 5 arrives, 4 of its 5 cells are ochre. How many will be ochre when item 20 arrives, and what does that make its chance of getting in?',
+        reveal: 'Still 4, now out of 20 cells, so item 20 gets in with a chance of 4/20 = 0.2, where item 5 had 4/5. The number of ochre cells stays at 4 while the row grows longer, so each new item is less likely to get in than the one before. In this run items 5, 6, 7 and 8 all get in, and items 17, 18, 19 and 20 are all passed over.' },
+      { ask: 'Load "Long stream": 60 items and a reservoir of 5. Items 6 to 30 and items 31 to 60 are the two halves of the stream. Before you run it: which half will cause more replacements, and by how much?',
+        reveal: 'The first half, three times over. This run makes 12 replacements: 9 among items 6 to 30 and only 3 among items 31 to 60, at items 39, 40 and 48. Item i gets in with a chance of 5 in i, so replacements become rare as i grows. That is why faster versions of the algorithm skip ahead instead of drawing a number for every item.' },
+      { ask: 'Keep "Four of twenty" and press Randomize on the seed ten times, noting the final reservoir each time. Before you start: will the kept items come mostly from the first ten positions, mostly from the last ten, or from both alike?',
+        reveal: 'From both. No position in the stream is favoured, but ten runs are too few for the split to come out even. With seeds 1 to 10, for example, 16 of the 40 kept items are from positions 1 to 10 and 24 from positions 11 to 20, and item 4 is kept four times. The balance shows only over many runs: the code sample on this page samples 20,000 times, and every item is kept close to the same number of times.' },
+      { ask: 'Load "One item from a long stream": 40 items and a single slot. Item i takes over the slot with a chance of 1 in i. How many times do you expect the held item to change over the whole stream: about 4, about 20, or nearly 40?',
+        reveal: 'About 4. This run makes 5 replacements, at items 2, 3, 6, 7 and 12, and the average over many runs is 3.3. After item 12 nothing changes for the remaining 28 items. The held item changes often at first and then very rarely, because a chance of 1 in i shrinks quickly.' },
     ],
     run,
     report: (r, c) => `Kept ${r.reservoir.length} of ${r.n} items: ${r.reservoir.join(', ')}.\n${r.n > r.k ? `Each item had the same chance of being kept: ${r.k}/${r.n} = ${f3(r.k / r.n)}.` : 'The stream was no longer than the reservoir, so every item was kept.'}\n${c['random draws'] || 0} random draws, ${c.replacements || 0} replacements (${expectedReplacements(r.n, r.k).toFixed(1)} expected on average).`,
@@ -249,6 +253,20 @@ export default {
       input: 'Keep 5 of the numbers 1 to 1000 in one pass. Then check fairness: sample 3 of 10 items 20,000 times and count how often each item is kept (6000 expected each).',
       expected: '5 of 1000: 42 883 144 866 132\ntimes each of 10 items was kept: 5901 6049 5994 6022 6174 5934 6043 5895 6019 5969',
     },
+    breakIt: [
+      { change: 'Draw `j` from 1 to `k` instead of from 1 to `i`. Which five numbers of the 1,000 will the first line show?',
+        find: { python: 'rng.randint(1, i)', javascript: 'rng.randint(1, i)' },
+        replace: { python: 'rng.randint(1, k)', javascript: 'rng.randint(1, k)' },
+        reveal: 'Only numbers from the very end of the stream: "5 of 1000: 992 990 999 996 1000". The fairness line reads "1164 1188 1164 1730 2704 3926 5911 8891 13322 20000", where every count should be near 6000. Item 10, the last, is kept in all 20,000 runs. A draw from 1 to `k` is always a slot number, so every new item gets in and the older ones are flushed out.' },
+      { change: 'Draw `j` from 1 to `i - 1` instead of from 1 to `i`, as if the random function left out its upper bound. The first line still looks like a plausible sample. What does the fairness count show?',
+        find: { python: 'rng.randint(1, i)', javascript: 'rng.randint(1, i)' },
+        replace: { python: 'rng.randint(1, i - 1)', javascript: 'rng.randint(1, i - 1)' },
+        reveal: 'The first line, "5 of 1000: 741 969 746 690 967", gives nothing away. The fairness line does: "4380 4539 4445 6662 6613 6656 6708 6632 6719 6646". Items 1, 2 and 3 are kept about 4,450 times each and the other seven about 6,650 times, where all ten should be near 6,000. Each item now gets in a little too often, with a chance of `k` in `i - 1`. The worst case is item 4: its draw runs from 1 to 3, so it always gets in and always throws out one of the first three. An off-by-one in the draw does not crash and does not look wrong. It shows only when you count over many runs.' },
+      { change: 'Keep the draw as it is, but always overwrite the first slot: store the new item at position 0 of the reservoir instead of at position `j - 1`. Which items will the fairness count favour?',
+        find: { python: 'reservoir[j - 1] = item', javascript: 'reservoir[j - 1] = item;' },
+        replace: { python: 'reservoir[0] = item', javascript: 'reservoir[0] = item;' },
+        reveal: 'Items 2 and 3. The fairness line reads "181 20000 20000 502 1040 1674 2559 3363 4712 5969": those two are kept in every one of the 20,000 runs. The first line is "5 of 1000: 883 2 3 4 5", where 2, 3, 4 and 5 never left the slots they started in. Only the first slot is ever overwritten, so whatever sits in the others can never be thrown out. Each new item still gets in with the right chance, and the count for item 10, 5969, is the same as in the correct program. Letting items in fairly is not enough. The item that leaves has to be chosen fairly too.' },
+    ],
     python: {
       source: `class Lcg:
     """A small random number generator (Park-Miller). Integer arithmetic only,
@@ -473,16 +491,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The reservoir has room for 5 items, but the stream ends after only 3. What does the reservoir contain?',
-      options: ['Nothing, because the reservoir never filled', 'A random 2 of the 3 items', 'All 3 items', '3 items and 2 repeats'],
-      answer: 2,
+      q: 'The reservoir has room for 7 items and the stream has 30. Which items end up in the reservoir depends on the seed. How many random numbers does the run draw?',
+      options: ['30, one for every item', '23, one for every item after the first 7', '7, one for every slot', 'It depends on the seed'],
+      answer: 1,
       explain: [
-        'Items enter the reservoir as they arrive. Nothing waits for it to be full.',
-        'No item is ever removed while there is still room.',
-        'Correct. Each of the first k items goes straight in. With fewer than k items the sample is the whole stream, and no random number is drawn.',
-        'Slots that were never filled stay empty. Items are not duplicated.',
+        'The first 7 items go straight into the empty slots. No decision is needed for them, so nothing is drawn.',
+        'Correct. Items 1 to 7 fill the reservoir without a draw. Each of the 23 items after that gets exactly one draw, which settles both whether it gets in and which slot it takes.',
+        '7 is the size of the reservoir. A draw is made for an item of the stream, not for a slot, and one draw does both jobs: it decides whether the item gets in and which slot it takes.',
+        'The seed changes which numbers come up, and so how many items get in. It does not change how many draws are made: one for every item after the seventh, whatever came up before.',
       ],
-      tryInput: { n: 3, k: 5, seed: 3 },
+      tryInput: { n: 30, k: 7, seed: 9 },
+      check: (r, c) => (c['random draws'] === 23 && r.draws === 23 && r.reservoir.length === 7 && r.log.slice(0, 7).every((e) => e.j === null)) || `${c['random draws']} draws, reservoir of ${r.reservoir.length}`,
     },
     {
       type: 'debug',
@@ -519,7 +538,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Sampling with weights',
-      prompt: 'Each item now comes with a positive weight, and heavier items should be more likely to be sampled. Implement the method of Efraimidis and Spirakis: give each item the key u^(1/w), where u is a fresh uniform random number between 0 and 1 and w is the item\'s weight, and keep the k items with the largest keys. Test it with k = 1 on three items of weights 1, 2 and 7 over many runs, and check that they are chosen about 10%, 20% and 70% of the time.',
+      prompt: 'Each item now comes with a positive weight, and heavier items should be more likely to be sampled. Implement the method of Efraimidis and Spirakis: give each item the key u^(1/w), where u is a fresh uniform random number between 0 and 1 and w is the item\'s weight, and keep the k items with the largest keys. Test it with k = 1 on three items of weights 1, 2 and 7. Repeat the sampling 100,000 times and report the share of the runs in which each item was the one chosen.',
+      expect: 'The shares come out close to 10%, 20% and 70%. With k = 1 an item is chosen with a chance equal to its weight divided by the total weight, which is 10 here. Three runs of 100,000 samples each, using Python\'s own random numbers, gave 10.0%, 20.0%, 70.0%, then 9.8%, 20.0%, 70.2%, then 10.2%, 20.0%, 69.8%. Yours will differ in the same small way. A share that is off by more than about half a percentage point points to a bug. With all three weights set to 1, each item should be chosen about a third of the time: one run gave 33.2%, 33.4% and 33.4%.',
       hints: ['A min-heap of size k, ordered by key, lets you compare each new key with the smallest key currently held.', 'With all weights equal, the method reduces to keeping the k largest of n uniform random numbers, which is a uniform sample.'],
     },
   ],
@@ -614,8 +634,28 @@ int main() {
         const mean = sum / 2000, want = expectedReplacements(200, 10);
         return Math.abs(mean - want) < 0.6 || `mean ${mean.toFixed(2)}, expected ${want.toFixed(2)}`;
       } },
-    { name: 'quiz: a stream shorter than the reservoir is kept whole, with no random draws', input: { n: 3, k: 5, seed: 3 },
+    { name: 'a stream shorter than the reservoir is kept whole, with no random draws', input: { n: 3, k: 5, seed: 3 },
       check: (r, c) => (r.reservoir.join() === '1,2,3' && c['random draws'] === 0 && c.replacements === 0) || `reservoir ${r.reservoir}` },
+    { name: 'the predict question: 7 of 30 always takes 23 random draws', input: { n: 30, k: 7, seed: 9 },
+      check: (r, c) => {
+        for (let s = 1; s <= 50; s++) if (run({ n: 30, k: 7, seed: s }, QUIET).draws !== 23) return `seed ${s} did not make 23 draws`;
+        return c['random draws'] === 23 || `${c['random draws']} draws`;
+      } },
+    { name: 'try-this numbers: four of twenty admits items 5 to 8 and passes over 17 to 20', input: { n: 20, k: 4, seed: 3 },
+      check: (r) => ([5, 6, 7, 8].every((i) => r.log[i - 1].kept) && [17, 18, 19, 20].every((i) => !r.log[i - 1].kept)) || 'the pattern of kept items changed' },
+    { name: 'try-this numbers: the long stream makes 9 replacements up to item 30 and 3 after', input: { n: 60, k: 5, seed: 3 },
+      check: (r) => {
+        const at = r.log.filter((e) => e.j !== null && e.kept).map((e) => e.i);
+        return (at.filter((i) => i <= 30).length === 9 && at.filter((i) => i > 30).join() === '39,40,48') || `replacements at ${at}`;
+      } },
+    { name: 'try-this numbers: one slot, 40 items, replacements at 2, 3, 6, 7 and 12', input: { n: 40, k: 1, seed: 12 },
+      check: (r) => (r.log.filter((e) => e.j !== null && e.kept).map((e) => e.i).join() === '2,3,6,7,12' && r.reservoir.join() === '12' && expectedReplacements(40, 1).toFixed(1) === '3.3') || `reservoir ${r.reservoir}` },
+    { name: 'try-this numbers: seeds 1 to 10 keep 16 items from the first half of twenty', input: { n: 20, k: 4, seed: 1 },
+      check: () => {
+        let first = 0, fours = 0;
+        for (let s = 1; s <= 10; s++) for (const item of run({ n: 20, k: 4, seed: s }, QUIET).reservoir) { if (item <= 10) first++; if (item === 4) fours++; }
+        return (first === 16 && fours === 4) || `${first} from the first half, item 4 kept ${fours} times`;
+      } },
     { name: 'the worked example: 2 of 6 with seed 1', input: { n: 6, k: 2, seed: 1 },
       check: (r) => (r.log.slice(2).map((e) => e.j).join() === '2,1,3,6' && r.log[2].evicted === 2 && r.log[3].evicted === 1 && r.reservoir.join() === '4,3') || `draws ${r.log.map((e) => e.j).join(',')}, reservoir ${r.reservoir}` },
   ],

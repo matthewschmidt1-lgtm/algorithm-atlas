@@ -224,10 +224,15 @@ export default {
       { label: 'Nothing in common', values: { a: 'abc', b: 'xyz' } },
     ],
     tryThis: [
-      'Load "Not next to each other". All of "ace" is found inside "abcde" although its letters are separated there. A subsequence may skip letters. A substring may not.',
-      'Load "Textbook example" and step through the traceback. The answer shown is BCBA, but BDAB and BCAB are also common subsequences of length 4. Ties in the table are where the alternatives branch off.',
-      'Load "sunday and saturday". The common subsequence has 5 letters, so insertions and deletions alone need 6 + 8 − 2 × 5 = 4 changes. The edit distance lesson gets 3 for the same pair, because it may substitute one letter for another.',
-      'Type "character" as the first string and the same word backwards, "retcarahc", as the second. The result has length 5. Comparing a word with its own reverse always gives the length of the longest subsequence of the word that reads the same in both directions, here "carac".',
+      { ask: 'Load "Not next to each other": ace and abcde. In abcde the letters a, c and e are kept apart by b and d. How long will the longest common subsequence be?',
+        reveal: '3, the whole of "ace". A subsequence may skip letters as long as the order is kept. A substring may not: the longest stretch the two words share side by side is a single letter.' },
+      { ask: 'Load "Textbook example": ABCBDAB and BDCABA. Before you step through it, find a common subsequence of length 4 by eye. Will the traceback return the same one you found?',
+        reveal: 'It returns BCBA. BDAB and BCAB are also common subsequences of length 4, so yours may differ and still be right. Ties in the table are where the alternatives branch off. When the cell above and the cell to the left are equal, this traceback moves up, and a different rule would give a different answer of the same length.' },
+      { ask: 'Load "sunday and saturday". The edit distance lesson turns one into the other with 3 edits, one of them a substitution. Here only insertions and deletions are allowed. How many will it take?',
+        reveal: '4. The common subsequence is "suday", 5 letters, so the count is 6 + 8 − 2 × 5 = 4: delete the n, and insert a, t and r. That is one more than the edit distance, because replacing n with r now has to be done as a deletion and an insertion.' },
+      { ask: 'Type `character` as the first string and the same word backwards, `retcarahc`, as the second. A common subsequence of a word and its reverse reads the same in both directions. How long will the longest one be?',
+        input: { a: 'character', b: 'retcarahc' },
+        reveal: '5: "carac". Comparing a word with its own reverse always gives the length of the longest subsequence of the word that reads the same forwards and backwards.' },
     ],
     run,
     report: (r, c) => `Longest common subsequence of "${r.a}" and "${r.b}": "${r.lcs}" (length ${r.length})\nTable: ${r.rows} rows by ${r.cols} columns, ${c['cells filled'] || 0} cells filled.\nInsertions and deletions needed to turn the first into the second: ${r.indelDistance}.`,
@@ -317,9 +322,23 @@ export default {
 
   code: {
     sample: {
-      input: 'Three pairs of strings: (stone, longest), (ABCBDAB, BDCABA) and (sunday, saturday). For each, one longest common subsequence, its length, and the number of insertions and deletions separating the pair.',
-      expected: 'stone / longest: one, length 3, 6 insertions and deletions apart\nABCBDAB / BDCABA: BCBA, length 4, 5 insertions and deletions apart\nsunday / saturday: suday, length 5, 4 insertions and deletions apart',
+      input: 'Four pairs of strings: (stone, longest), (ABCBDAB, BDCABA), (sunday, saturday) and (abcde, ace). For each, one longest common subsequence, its length, and the number of insertions and deletions separating the pair.',
+      expected: 'stone / longest: one, length 3, 6 insertions and deletions apart\nABCBDAB / BDCABA: BCBA, length 4, 5 insertions and deletions apart\nsunday / saturday: suday, length 5, 4 insertions and deletions apart\nabcde / ace: ace, length 3, 2 insertions and deletions apart',
     },
+    breakIt: [
+      { change: 'In the traceback, decide whether to keep a letter from the numbers alone: replace the test that the two letters are equal with `L[i][j] == L[i - 1][j - 1] + 1`. Which of the four answers will no longer be a common subsequence?',
+        find: { python: 'if a[i - 1] == b[j - 1]:\n            kept.append', javascript: 'if (a[i - 1] === b[j - 1]) {\n      kept.push' },
+        replace: { python: 'if L[i][j] == L[i - 1][j - 1] + 1:\n            kept.append', javascript: 'if (L[i][j] === L[i - 1][j - 1] + 1) {\n      kept.push' },
+        reveal: 'The last one. It now prints "abcde / ace: cde", and there is no d in ace. The second line changes as well, from BCBA to BCAB, which happens to be another correct answer, and the other two lines stay the same. A cell can be one more than its diagonal neighbour without the two letters matching, because the value may have been carried in from above or from the left. At the cell for "abcd" and "ac" the letters d and c differ, yet the cell holds 2 and its diagonal neighbour holds 1, so the traceback keeps the d. The letters themselves have to be compared.' },
+      { change: 'At the end of the traceback, return the kept letters in the order they were collected, without reversing them. What will the first line print in place of "one"?',
+        find: { python: '"".join(reversed(kept))', javascript: 'kept.reverse().join("")' },
+        replace: { python: '"".join(kept)', javascript: 'kept.join("")' },
+        reveal: 'It prints "eno". The four answers come out as eno, ABCB, yadus and eca, each one backwards. The lengths and the counts of changes are still right, because they come from the table and not from the traceback. The traceback walks from the end of the strings to the start, so it meets the last shared letter first.' },
+      { change: 'In the function that fills the table, change the mismatch case so that it sets the cell to 0 instead of taking the larger neighbour. That is the rule for the longest common substring. What length will the program report for stone and longest?',
+        find: { python: 'L[i][j] = max(L[i - 1][j], L[i][j - 1])', javascript: 'L[i][j] = Math.max(L[i - 1][j], L[i][j - 1]);' },
+        replace: { python: 'L[i][j] = 0', javascript: 'L[i][j] = 0;' },
+        reveal: 'It prints "stone / longest: st, length 0, 12 insertions and deletions apart". With a mismatch resetting the cell to 0, a cell counts only the matching letters that end exactly there, side by side. The corner cell then holds the length of the ending the two strings share: nothing for stone and longest, 3 for sunday and saturday (the "day"), and 1 for abcde and ace. The longest common substring is the largest cell anywhere in the table, not the corner. The traceback was written for the other rule, so it wanders through the zeros and collects letters such as "st" that mean nothing.' },
+    ],
     python: {
       source: `def lcs_table(a, b):
     m, n = len(a), len(b)
@@ -347,7 +366,7 @@ def lcs_string(a, b, L):
     return "".join(reversed(kept))
 
 
-for a, b in [("stone", "longest"), ("ABCBDAB", "BDCABA"), ("sunday", "saturday")]:
+for a, b in [("stone", "longest"), ("ABCBDAB", "BDCABA"), ("sunday", "saturday"), ("abcde", "ace")]:
     L = lcs_table(a, b)
     length = L[len(a)][len(b)]
     changes = len(a) + len(b) - 2 * length
@@ -393,7 +412,7 @@ function lcsString(a, b, L) {
   return kept.reverse().join("");
 }
 
-for (const [a, b] of [["stone", "longest"], ["ABCBDAB", "BDCABA"], ["sunday", "saturday"]]) {
+for (const [a, b] of [["stone", "longest"], ["ABCBDAB", "BDCABA"], ["sunday", "saturday"], ["abcde", "ace"]]) {
   const L = lcsTable(a, b);
   const length = L[a.length][b.length];
   const changes = a.length + b.length - 2 * length;
@@ -444,7 +463,7 @@ std::string lcsString(const std::string& a, const std::string& b, const Table& L
 
 int main() {
     std::vector<std::pair<std::string, std::string>> pairs = {
-        {"stone", "longest"}, {"ABCBDAB", "BDCABA"}, {"sunday", "saturday"}};
+        {"stone", "longest"}, {"ABCBDAB", "BDCABA"}, {"sunday", "saturday"}, {"abcde", "ace"}};
     for (const auto& [a, b] : pairs) {
         Table L = lcsTable(a, b);
         int length = L[a.size()][b.size()];
@@ -557,20 +576,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'How long is the longest common subsequence of "sunday" and "saturday"?',
-      options: ['3', '4', '5', '6'],
+      q: 'How long is the longest common subsequence of "thursday" and "tuesday"?',
+      options: ['4', '5', '6', '7'],
       answer: 2,
       explain: [
-        'There is a longer one. Try starting with the s and ending with "day".',
-        'Close. "sday" has 4 letters, but one more letter fits.',
-        'Correct. "suday" appears in both in order: s, then u, then d, a, y.',
-        'Six would need all of "sunday" to appear inside "saturday", but saturday has no n.',
+        'There is a longer one. "sday" has 4 letters and ends both words, but the t and the u near the front are shared as well.',
+        'Close. "tsday" and "usday" each have 5 letters, but t and u can both be used, because u comes after t in each word.',
+        '"tusday" appears in both in order: t, then u, then s, d, a, y. Thursday leaves out its h and r, and tuesday leaves out its e.',
+        'Seven would need all of "tuesday" to appear inside "thursday", but thursday has no e.',
       ],
-      tryInput: { a: 'sunday', b: 'saturday' },
+      tryInput: { a: 'thursday', b: 'tuesday' },
+      check: (r) => (r.length === 6 && r.lcs === 'tusday' && r.indelDistance === 3) || `got "${r.lcs}" of length ${r.length}`,
     },
     {
       type: 'debug',
-      q: 'This traceback sometimes returns a string that is too short, or keeps letters that do not match. Which line is wrong?',
+      q: 'This traceback always returns a string of the right length, but sometimes its letters are not a common subsequence at all. Which line is wrong?',
       code: `def lcs_string(a, b, L):
     i, j = len(a), len(b)
     kept = []
@@ -607,7 +627,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Build a tiny diff',
-      prompt: 'Write a program that takes two lists of lines and prints a diff: each line prefixed with a space if it is in the longest common subsequence, with "-" if it is only in the first list, and with "+" if it is only in the second. Use the LCS table on lines instead of characters. Then make the function that computes only the length use two rows of the table instead of the whole thing.',
+      prompt: 'Write a program that takes two lists of lines and prints a diff: each line prefixed with a space if it is in the longest common subsequence, with "-" if it is only in the first list, and with "+" if it is only in the second. Use the LCS table on lines instead of characters. Then make the function that computes only the length use two rows of the table instead of the whole thing. Test both on the lists milk, eggs, flour, sugar, butter and milk, flour, honey, butter, salt.',
+      expect: 'The diff has seven lines: milk unchanged, "- eggs", flour unchanged, "+ honey", "- sugar", butter unchanged, "+ salt". Three lines are kept, two removed and two added. Your program may print "- sugar" before "+ honey". Both orders are correct, because the two changes sit between the same pair of unchanged lines. The two-row function returns 3 for these lists, and for the pairs in the code sample it returns the same lengths as the full table: 3, 4, 5 and 3.',
       hints: ['Extend the traceback: moving up emits a "-" line, moving left emits a "+" line, and moving diagonally emits an unchanged line. Do not stop when one index reaches 0; emit the remaining lines of the other list.', 'For the two-row version, the row for i depends only on the row for i − 1, so swap two arrays after each row.'],
     },
   ],
@@ -671,6 +692,8 @@ int main() {
       check: (r) => (r.lcs === 'ace' && r.length === 3) || `got "${r.lcs}"` },
     { name: 'tryThis: a word against its reverse gives its longest palindromic subsequence length', input: { a: 'character', b: 'retcarahc' },
       check: (r) => (r.length === 5 && r.lcs === 'carac') || `got "${r.lcs}"` },
+    { name: 'code sample: abcde and ace share all of ace', input: { a: 'abcde', b: 'ace' },
+      check: (r, c) => (r.lcs === 'ace' && r.length === 3 && r.indelDistance === 2 ? matchesBrute(r, c) : `got "${r.lcs}"`) },
     { name: 'nothing in common', input: { a: 'abc', b: 'xyz' },
       check: (r, c) => (r.length === 0 && r.lcs === '' && r.indelDistance === 6 && c['cells filled'] === 16) || `got "${r.lcs}"` },
     { name: 'empty string', input: { a: '', b: 'abc' },

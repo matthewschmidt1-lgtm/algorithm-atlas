@@ -192,10 +192,14 @@ export default {
       { label: 'Primes up to 200', values: { n: 200, optimized: true } },
     ],
     tryThis: [
-      'Run "Primes up to 100" and watch which primes do any crossing out. Only 2, 3, 5 and 7 are needed, because 11 × 11 is already more than 100.',
-      'Step slowly through the multiples of 3. Every second one (12, 18, 24 and so on) is already crossed out, and the note says so. Those repeated crossings are why the cost is a little more than one step per number.',
-      'Load "Up to 100 without the shortcuts" and compare the crossings counter at the end: 146 against 104. The answer is the same. The shortcuts remove work that could never change it.',
-      'Raise the limit from 100 to 200. The number of crossings slightly more than doubles, while the last prime that has to be used only moves from 7 to 13.',
+      { ask: 'Load "Primes up to 100". There are 25 primes up to 100, and 74 other numbers that have to be crossed out. How many of the 25 primes will do any crossing out?',
+        reveal: 'Only four: 2, 3, 5 and 7. The next prime is 11, and 11 × 11 = 121 is already more than 100. Every number up to 100 that is not prime has a prime factor of 7 or less, so those four passes remove them all.' },
+      { ask: 'In "Primes up to 100", step slowly through the pass for 3. It starts at 9 and visits every third number up to 99, which makes 31 numbers. How many of the 31 had already been crossed out by 2?',
+        reveal: '15 of them, every second one: 12, 18, 24 and so on up to 96. The note says so each time. The sieve does not look before it crosses out, so those steps are repeated work. Over the whole run 30 of the 104 crossings are repeats, which is why the cost is a little more than one step per number.' },
+      { ask: 'With both shortcuts on, the run up to 100 takes 104 crossings. Load "Up to 100 without the shortcuts". Will the count be about the same, about half as much again, or several times larger? And will the list of primes change?',
+        reveal: 'It takes 146 crossings against 104, about 40 percent more, and 15 primes do the crossing out where four were enough. The list of primes is exactly the same. The shortcuts remove work that could never change the answer.' },
+      { ask: 'At a limit of 100 the run takes 104 crossings and the last prime used is 7. Raise the limit to 200. Will the crossings double? And how far will the last prime used move?',
+        reveal: 'The crossings slightly more than double, from 104 to 232. The last prime that has to be used only moves from 7 to 13, because 13 × 13 = 169 is under 200 and 17 × 17 = 289 is not. Doubling the limit adds two primes to the work, 11 and 13.' },
     ],
     run,
     report: (r, c) => `${r.count} primes up to ${r.n}, found with ${c.crossings || 0} crossings. Primes used for crossing out: ${r.sievingPrimes.join(', ')}.\n${r.primes.length <= 60 ? r.primes.join(' ') : `${r.primes.slice(0, 60).join(' ')} ... (${r.primes.length - 60} more)`}`,
@@ -261,7 +265,7 @@ export default {
     ],
     correctness: 'Two things must be shown. No prime is crossed out: a number is crossed out only as m = p × p + j × p = (p + j) × p with p at least 2 and p + j at least 2, which is a product of two numbers greater than 1 and therefore composite. Every composite number up to n is crossed out: let m be composite and let q be its smallest prime factor. Then m = q × k where every prime factor of k is at least q, so k ≥ q and m ≥ q × q. That gives q × q ≤ m ≤ n, so the loop reaches p = q. At that moment q is still a candidate, because by the first part no prime is ever crossed out. The inner loop then crosses out q × q, q × q + q and so on, which includes m since m is a multiple of q that is at least q × q. So the numbers left as candidates are exactly the primes.',
     mistakes: [
-      'Starting the inner loop at p instead of at p × p or 2 × p. That crosses out p itself, and the result contains no primes at all.',
+      'Starting the inner loop at p instead of at p × p or 2 × p. That crosses out p itself, so every prime the outer loop reaches is lost. With the outer loop stopping at √n those are the primes up to √n. With an outer loop that runs all the way to n, the result contains no primes at all.',
       'Stopping the outer loop while p × p < n instead of p × p ≤ n. When n is the square of a prime, such as 49, it is then wrongly reported as prime.',
       'Treating 1 as prime, or forgetting to exclude 0 and 1 when the array is indexed from 0.',
       'An array of size n instead of n + 1, so the number n itself has no mark.',
@@ -271,9 +275,23 @@ export default {
 
   code: {
     sample: {
-      input: 'The limit n = 50.',
-      expected: 'primes up to 50: 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47\ncount: 15\ncrossings: 45',
+      input: 'The limit n = 49, which is 7 × 7, the square of a prime.',
+      expected: 'primes up to 49: 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47\ncount: 15\ncrossings: 43',
     },
+    breakIt: [
+      { change: 'In the test on the outer loop, change `p * p <= n` to `p * p < n`. The limit is 49. Which number will be wrongly reported as prime?',
+        find: { python: 'while p * p <= n:', javascript: 'p * p <= n; p++' },
+        replace: { python: 'while p * p < n:', javascript: 'p * p < n; p++' },
+        reveal: '49. It prints "primes up to 49: 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 49" and "count: 16". 49 is 7 × 7, so 7 is the only prime that can cross it out. With `<` the loop stops when p reaches 7, because 7 × 7 is not less than 49, and 7 never takes its turn. The crossings fall from 43 to 42, and the one that is missing is the one that mattered. With a limit of 50 the same mistake would not show at all, which is why this program uses 49.' },
+      { change: 'Start the inner loop at `p` instead of at `p * p`. Which primes will be missing from the list?',
+        find: { python: 'm = p * p', javascript: 'let m = p * p;' },
+        replace: { python: 'm = p', javascript: 'let m = p;' },
+        reveal: '2, 3, 5 and 7. It prints "primes up to 49: 11 13 17 19 23 29 31 37 41 43 47" and "count: 11", with 56 crossings where there were 43. Each of the four small primes crossed itself out as the first step of its own pass. The larger primes survive only because the outer loop stops at 7 and they never get a turn. In a version whose outer loop runs all the way to n, every prime crosses itself out and the list comes back empty.' },
+      { change: 'Before the loops start, 0 and 1 are both ruled out. Stop ruling out 1, and leave 0 ruled out. What will the list of primes begin with?',
+        find: { python: 'is_candidate[0] = is_candidate[1] = False', javascript: '  isCandidate[1] = false;\n' },
+        replace: { python: 'is_candidate[0] = False', javascript: '' },
+        reveal: 'With 1. It prints "primes up to 49: 1 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47" and "count: 16". Nothing in the sieve ever crosses out 1, because every number crossed out is a multiple of some p that is at least 2. Left as a candidate, 1 is reported as prime. It has to be ruled out by hand: a prime has exactly two divisors, and 1 has only one.' },
+    ],
     python: {
       source: `def sieve(n):
     is_candidate = [True] * (n + 1)
@@ -288,12 +306,12 @@ export default {
                 crossings += 1
                 m += p
         p += 1
-    primes = [k for k in range(2, n + 1) if is_candidate[k]]
+    primes = [k for k in range(n + 1) if is_candidate[k]]
     return primes, crossings
 
 
-primes, crossings = sieve(50)
-print("primes up to 50: " + " ".join(str(k) for k in primes))
+primes, crossings = sieve(49)
+print("primes up to 49: " + " ".join(str(k) for k in primes))
 print(f"count: {len(primes)}")
 print(f"crossings: {crossings}")`,
       notes: [
@@ -319,14 +337,14 @@ print(f"crossings: {crossings}")`,
     }
   }
   const primes = [];
-  for (let k = 2; k <= n; k++) {
+  for (let k = 0; k <= n; k++) {
     if (isCandidate[k]) primes.push(k);
   }
   return { primes, crossings };
 }
 
-const { primes, crossings } = sieve(50);
-console.log("primes up to 50: " + primes.join(" "));
+const { primes, crossings } = sieve(49);
+console.log("primes up to 49: " + primes.join(" "));
 console.log("count: " + primes.length);
 console.log("crossings: " + crossings);`,
     },
@@ -335,7 +353,7 @@ console.log("crossings: " + crossings);`,
 #include <vector>
 
 int main() {
-    const int n = 50;
+    const int n = 49;
     std::vector<bool> is_candidate(n + 1, true);
     is_candidate[0] = false;
     is_candidate[1] = false;
@@ -349,10 +367,10 @@ int main() {
         }
     }
     std::vector<int> primes;
-    for (int k = 2; k <= n; ++k) {
+    for (int k = 0; k <= n; ++k) {
         if (is_candidate[k]) primes.push_back(k);
     }
-    std::cout << "primes up to 50:";
+    std::cout << "primes up to 49:";
     for (int k : primes) std::cout << " " << k;
     std::cout << "\\n";
     std::cout << "count: " << primes.size() << "\\n";
@@ -464,16 +482,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'With a limit of 50 and both shortcuts on, which is the largest prime whose multiples get crossed out?',
-      options: ['5', '7', '23', '47'],
+      q: 'With a limit of 130 and both shortcuts on, which is the largest prime whose multiples get crossed out?',
+      options: ['7', '11', '13', '127'],
       answer: 1,
       explain: [
-        '5 × 5 = 25 is within the limit, but so is the square of the next prime.',
-        'Correct. 7 × 7 = 49 is at most 50, so 7 takes a turn and crosses out 49. The next prime is 11, and 11 × 11 = 121 is far past 50.',
-        '23 × 2 = 46 is within the limit, but 46 is even and was crossed out by 2 long before. With the shortcut, 23 would start at 23 × 23 = 529.',
-        '47 is the largest prime up to 50, but it crosses nothing out. Its first multiple is 94.',
+        '7 is the last prime used for a limit of 100. With a limit of 130 the square of the next prime, 11 × 11 = 121, fits as well.',
+        'Correct. 11 × 11 = 121 is at most 130, so 11 takes a turn. It crosses out 121 and nothing else, since the next multiple, 132, is past the limit. The next prime is 13, and 13 × 13 = 169 is past 130 too.',
+        '13 × 13 = 169 is past the limit, so 13 never takes a turn. Its multiples up to 130, such as 26, 39, 65 and 91, each have a smaller prime factor and were crossed out by 2, 3, 5 or 7.',
+        '127 is the largest prime up to 130, but it crosses nothing out. Its first multiple is 254.',
       ],
-      tryInput: { n: 50, optimized: true },
+      tryInput: { n: 130, optimized: true },
+      check: (r) => (r.sievingPrimes.join(',') === '2,3,5,7,11' && r.primes[r.primes.length - 1] === 127 && matchesTrialDivision(r) === true) || `primes used ${r.sievingPrimes.join(',')}`,
     },
     {
       type: 'debug',
@@ -519,7 +538,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Smallest prime factors',
-      prompt: 'Change the sieve so that instead of a true-or-false mark it stores, for every number from 2 to n, the smallest prime that divides it. A prime stores itself. Then write a function that uses this table to print the prime factorization of any number up to n without doing any trial division, for example 360 = 2 × 2 × 2 × 3 × 3 × 5. Build the table for n = 1,000,000 and factor a few numbers.',
+      prompt: 'Change the sieve so that instead of a true-or-false mark it stores, for every number from 2 to n, the smallest prime that divides it. A prime stores itself. Then write a function that uses this table to print the prime factorization of any number up to n without doing any trial division, for example 360 = 2 × 2 × 2 × 3 × 3 × 5. Build the table for n = 1,000,000. Use it to factor 999,999 and 1,000,000, and count how many numbers in the table store themselves.',
+      expect: 'The table entry for 999,999 is 3, and 999,999 = 3 × 3 × 3 × 7 × 11 × 13 × 37. The entry for 1,000,000 is 2, and its factorization is six 2s and six 5s. Exactly 78,498 numbers store themselves: those are the primes up to 1,000,000, and the largest is 999,983.',
       hints: [
         'When p crosses out m, record p only if m has no entry yet. Because primes are processed in increasing order, the first one to reach m is its smallest prime factor.',
         'To factor m, look up its smallest prime factor q, output q, replace m by m ÷ q, and repeat until m is 1.',
@@ -575,7 +595,20 @@ int main() {
       check: (r, c) => (matchesTrialDivision(r) === true && r.count === 25 && c.crossings === 146) || `count ${r.count}, crossings ${c.crossings}` },
     { name: 'the worked example: 10 primes up to 30 with 24 crossings', input: { n: 30, optimized: true },
       check: (r, c) => (r.primes.join(',') === '2,3,5,7,11,13,17,19,23,29' && c.crossings === 24 && r.sievingPrimes.join(',') === '2,3,5') || `primes ${r.primes.join(',')}, crossings ${c.crossings}` },
-    { name: 'the predict question: with limit 50 the last prime used is 7', input: { n: 50, optimized: true },
+    { name: 'the predict question: with limit 130 the last prime used is 11, which crosses out only 121', input: { n: 130, optimized: true },
+      check: (r, c) => (matchesTrialDivision(r) === true && r.sievingPrimes.join(',') === '2,3,5,7,11' && r.count === 31 && c.crossings === 140 && 11 * 12 > 130) || `primes used ${r.sievingPrimes.join(',')}, crossings ${c.crossings}` },
+    { name: 'the code sample: 15 primes up to 49 with 43 crossings', input: { n: 49, optimized: true },
+      check: (r, c) => (r.count === 15 && c.crossings === 43 && r.sievingPrimes.join(',') === '2,3,5,7') || `count ${r.count}, crossings ${c.crossings}` },
+    { name: 'things to try: up to 100, 30 of the 104 crossings are repeats, 15 of them among the 31 in the pass for 3', input: { n: 100, optimized: true },
+      check: (r, c) => {
+        const composites = r.n - 1 - r.count;
+        let visited = 0, even = 0;
+        for (let m = 9; m <= 100; m += 3) { visited++; if (m % 2 === 0) even++; }
+        return (composites === 74 && c.crossings - composites === 30 && visited === 31 && even === 15) || `${composites} composites, ${c.crossings} crossings, ${even} of ${visited}`;
+      } },
+    { name: 'things to try: without the shortcuts 15 primes do the crossing out', input: { n: 100, optimized: false },
+      check: (r) => r.sievingPrimes.length === 15 || `${r.sievingPrimes.length} primes used` },
+    { name: 'with limit 50 the last prime used is 7', input: { n: 50, optimized: true },
       check: (r) => (r.sievingPrimes[r.sievingPrimes.length - 1] === 7 && r.count === 15) || `last prime used ${r.sievingPrimes[r.sievingPrimes.length - 1]}` },
     { name: 'the try-this case: limit 200 uses primes up to 13', input: { n: 200, optimized: true },
       check: (r, c) => (r.sievingPrimes[r.sievingPrimes.length - 1] === 13 && c.crossings === 232) || `last prime ${r.sievingPrimes[r.sievingPrimes.length - 1]}, crossings ${c.crossings}` },

@@ -323,11 +323,16 @@ export default {
       { label: 'A random graph', values: { ...DEFAULTS, edges: '', nodes: 9, density: 0.3, seed: 3 } },
     ],
     tryThis: [
-      'Run the default and watch the row for D in the table. D is two steps from A. Its value is (0, 0) at the start and after round 1, and (0.0278, 0) after round 2. E and F, three steps away, stay at (0, 0) until round 3. Then lower the number of rounds to 2: E and F end at (0, 0), and no choice of weights could change that.',
-      'Load "Two marked nodes: which is nearer?". A carries a mark in its first number and F a mark in its second. With the "compete" weights, a neighbour\'s first number pushes a node\'s second number down, and the other way round. After three rounds A, B and C have a positive first number and a second number of 0, and D, E and F the reverse. These hand-picked weights make each node side with the nearer mark. A trained network would have to find weights like that for itself.',
-      'Load "Many rounds make the nodes alike". After round 1 the first numbers run from 0 to 0.5. After round 8 they run only from 0.0594 to 0.2265, and they keep closing in as rounds are added. Repeated averaging washes out the differences between nodes. This is called over-smoothing, and it is one reason practical networks use few rounds.',
-      'Load "Every node starts the same". With the mean, every node ends each round with (1, 1): a node with two neighbours and a node with three cannot be told apart. Switch "How a node combines its neighbours" to the sum. Now C and D, which have three neighbours, pull ahead of the others. The sum can count neighbours and the mean cannot.',
-      'Load "Neighbours only: a node forgets itself". After round 1, A holds (0, 0): it has thrown away its own mark and kept only what B had. In round 2 half of the mark comes back to A, but only because B hands it back. Without a term for its own value, a node keeps nothing of its own from one round to the next. This is why the rule normally includes the node\'s own value.',
+      { ask: 'Run the default and watch the row for D in the table. D is two steps from A, the only node that starts with a mark. After which round will D first hold something other than (0, 0)? And E and F, which are three steps away?',
+        reveal: 'D holds (0, 0) at the start and after round 1, and (0.0278, 0) after round 2. E and F stay at (0, 0) until round 3, when both become (0.0069, 0). Now lower the number of rounds to 2: E and F end at (0, 0), and no choice of weights could change that, because a value moves along one edge per round.' },
+      { ask: 'Load "Two marked nodes: which is nearer?". A carries a mark in its first number and F a mark in its second. With the "compete" weights, a neighbour\'s first number pushes a node\'s second number down, and the other way round. After three rounds, which nodes will have a first number above zero, and which a second?',
+        reveal: 'A, B and C end with a first number above zero and a second number of 0: (0.2951, 0), (0.2795, 0) and (0.1678, 0). D, E and F end the other way round, with the same three numbers in reverse order. Each node has sided with the nearer mark. These weights were picked by hand to do that. The program "Training it" in the code section does not pick them by hand. It starts from small weights that get two of six nodes wrong on a similar task, and gradient descent finds weights that get all six right. The neighbour weights it finds have the same pattern of signs as the "compete" weights.' },
+      { ask: 'Load "Many rounds make the nodes alike". After round 1 the first numbers of the six nodes run from 0 to 0.5. After round 8, will they be spread wider or narrower?',
+        reveal: 'Narrower. After round 8 they run only from 0.0594 to 0.2265, and they keep closing in as rounds are added. Repeated averaging washes out the differences between nodes. This is called over-smoothing, and it is one reason practical networks use few rounds.' },
+      { ask: 'Load "Every node starts the same". C and D have three neighbours and the other four nodes have two. With the mean, will C and D end with different numbers from the rest? Then switch "How a node combines its neighbours" to the sum and answer again.',
+        reveal: 'With the mean they do not. Every node holds (1, 1) after every round, so a node with two neighbours and a node with three cannot be told apart. With the sum, C and D end at (3.5, 3.5) and the others at (2.5, 2.5). The sum can count neighbours and the mean cannot.' },
+      { ask: 'Load "Neighbours only: a node forgets itself". A starts with the mark (1, 0), and this rule has no term for a node\'s own value. What will A hold after round 1?',
+        reveal: 'A holds (0, 0). It has thrown away its own mark and kept only what B had, which was nothing, while B now holds (0.5, 0). In round 2 A holds (0.5, 0) again, but only because B hands the mark back, and B itself drops to (0, 0). Without a term for its own value, a node keeps nothing of its own from one round to the next. This is why the rule normally includes the node\'s own value.' },
     ],
     run,
     report: (r, c) => `${r.rounds} ${r.rounds === 1 ? 'round' : 'rounds'} of message passing on ${r.ids.length} nodes, combining neighbours by their ${r.combine}.\nFinal values: ${r.ids.map((id) => `${id} ${pair(r.final[id])}`).join(', ')}\n${c.messages || 0} neighbour values read and ${c['node updates'] || 0} node updates.\nThis is a forward calculation with fixed, hand-chosen weights. Nothing was trained.`,
@@ -348,7 +353,7 @@ export default {
   },
 
   logic: {
-    intuition: 'A node cannot see the whole graph. It sees itself and its direct neighbours. But its neighbours are doing the same thing at the same time, so by the end of one round each neighbour\'s value already contains something of that neighbour\'s own surroundings. In the second round, reading a neighbour means reading a summary of what lies behind it. Every round pushes the edge of what a node can know one step further out. The weights decide what is kept and what is thrown away in each mixing. Training chooses them so that, after the last round, the numbers at each node are the ones the task needs.',
+    intuition: 'A node cannot see the whole graph. It sees itself and its direct neighbours. But its neighbours are doing the same thing at the same time, so by the end of one round each neighbour\'s value already contains something of that neighbour\'s own surroundings. In the second round, reading a neighbour means reading a summary of what lies behind it. Every round pushes the edge of what a node can know one step further out. The weights decide what is kept and what is thrown away in each mixing. Training chooses them so that, after the last round, the numbers at each node are the ones the task needs: the program "Training it" in the code section does this for one round on a graph of six nodes.',
     steps: [
       'Give every node its starting numbers, its features.',
       'For each node, gather the current numbers of its neighbours and combine them into one summary. Here the summary is their mean.',
@@ -369,7 +374,7 @@ export default {
     ],
     decisions: [
       { title: 'How should a node combine its neighbours?', text: 'With something that gives the same answer whatever order the neighbours come in, and that works for any number of them: a mean, a sum or a maximum. The choice matters. A mean cannot tell how many neighbours there are, and a sum can. This page uses the mean and offers the sum for comparison.' },
-      { title: 'Where do the weights come from?', text: 'On this page they are fixed numbers chosen so that the arithmetic can be followed by hand. In a real graph neural network they start as random numbers and are adjusted by [backpropagation](#/algorithm/backpropagation) and gradient descent, using graphs for which the right answers are known. Nothing on this page is trained.' },
+      { title: 'Where do the weights come from?', text: 'On this page they are fixed numbers chosen so that the arithmetic can be followed by hand. In a real graph neural network they start as random numbers and are adjusted by [backpropagation](#/algorithm/backpropagation) and gradient descent, using graphs for which the right answers are known. The demonstration trains nothing, and the program "Training it" in the code section trains one round on a graph of six nodes, starting from fixed numbers and with every gradient written out by hand.' },
       { title: 'Why do all nodes switch at once?', text: 'So that every node in a round reads values from the same earlier round. If a node used a neighbour\'s new value straight away, the result would depend on the order in which the nodes were visited, and information could travel several steps in one round along that order.' },
       { title: 'Should a node include its own value?', text: 'Usually yes. Without the term for the node\'s own value, a node forgets what it held as soon as it listens. Some designs treat the node as one of its own neighbours instead, which has a similar effect.' },
       { title: 'How many rounds?', text: 'Enough for the information a node needs to reach it, and no more. Each round widens the view by one step, but repeated averaging also makes nodes more alike. Networks in practice often use two or three rounds.' },
@@ -404,6 +409,16 @@ export default {
       input: 'Six nodes forming two triangles, A-B-C and D-E-F, joined by the edge C-D. A starts with (1, 0) and every other node with (0, 0). Three rounds with the fixed "compete" weights and the mean of the neighbours. The last line follows D, which is two steps from A.',
       expected: 'start:   A(1.0000,0.0000) B(0.0000,0.0000) C(0.0000,0.0000) D(0.0000,0.0000) E(0.0000,0.0000) F(0.0000,0.0000)\nround 1: A(0.5000,0.0000) B(0.2500,0.0000) C(0.1667,0.0000) D(0.0000,0.0000) E(0.0000,0.0000) F(0.0000,0.0000)\nround 2: A(0.3542,0.0000) B(0.2917,0.0000) C(0.2083,0.0000) D(0.0278,0.0000) E(0.0000,0.0000) F(0.0000,0.0000)\nround 3: A(0.3021,0.0000) B(0.2865,0.0000) C(0.2164,0.0000) D(0.0486,0.0000) E(0.0069,0.0000) F(0.0069,0.0000)\nfirst number of D, round by round: 0.0000 0.0000 0.0278 0.0486',
     },
+    breakIt: [
+      { change: 'In `one_round`, write each new value straight into `h`: where the empty table for the new values is created, use `h` itself. D is two steps from A. After which round will D now first hold something other than 0?',
+        find: { python: 'new_h = {}', javascript: 'const newH = {};' },
+        replace: { python: 'new_h = h', javascript: 'const newH = h;' },
+        reveal: 'After round 1, one round too early. That line now reads A(0.5000,0.0000) B(0.1250,0.0000) C(0.1042,0.0000) D(0.0174,0.0000) E(0.0043,0.0000) F(0.0054,0.0000), and the last line begins 0.0000 0.0174. The nodes are updated in the order A to F, and each one reads values written a moment earlier in the same round, so the mark of A crosses the whole graph in one round along that order. B is wrong as well: it holds 0.1250 where it should hold 0.2500, because it read the new value of A, 0.5, where it should have read the old one, 1. Visit the nodes from F back to A and the numbers change again: D is back at 0.0000 after round 1. A result that depends on the order of the nodes is the sign of this mistake.' },
+      { change: 'Store each edge in one direction only: delete the line that adds `a` to the neighbours of `b`. Which node is left with no neighbours, and what does the program do when it reaches that node?',
+        find: { python: '    neighbours[a].append(b)\n    neighbours[b].append(a)', javascript: '  neighbours[a].push(b);\n  neighbours[b].push(a);' },
+        replace: { python: '    neighbours[a].append(b)', javascript: '  neighbours[a].push(b);' },
+        reveal: 'F is left with no neighbours, because both edges that touch it are written with F second. Python prints the "start:" line and then stops with "ZeroDivisionError: float division by zero", when the mean for F divides by the number of its neighbours. JavaScript does not stop. There 0 divided by 0 is NaN, so round 1 ends with F(NaN,NaN), and the NaN spreads to every node that reads F: D and E in round 2, and C, which reads D, in round 3. In that JavaScript output, look at B and C in round 1 too. They read 0.0000, where the correct program has 0.2500 and 0.1667. They no longer hear from A, because the edges to A now lead one way only.' },
+    ],
     python: {
       source: `NODES = ["A", "B", "C", "D", "E", "F"]
 EDGES = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D"), ("D", "E"), ("D", "F"), ("E", "F")]
@@ -451,7 +466,7 @@ for k in range(1, ROUNDS + 1):
     show(f"round {k}:", h)
 print("first number of D, round by round: " + " ".join(f"{x:.4f}" for x in d_first))`,
       notes: [
-        { line: 3, text: 'The weights are fixed numbers written into the program. Nothing in this program learns. A trained network would arrive at its weights by backpropagation.' },
+        { line: 3, text: 'The weights are fixed numbers written into the program. Nothing in this program learns. The second program, "Training it", starts from other numbers and learns its weights.' },
         { line: 15, text: 'New values go into a separate dictionary. Every node in this round reads `h`, the values from the end of the previous round.' },
         { line: 21, text: 'The mean of the neighbours, number by number. It is the same whatever order the neighbours were stored in.' },
         { line: 26, text: 'The linear map: each new number is a weighted sum of the node\'s own two numbers and the two numbers of the mean.' },
@@ -581,6 +596,282 @@ int main() {
     return 0;
 }`,
     },
+    more: [{
+      title: 'Training it',
+      lead: 'The main program ran one round after another with weights written in by hand. This one starts from small fixed weights and learns them by gradient descent, on a task that no node can do from its own numbers: say which triangle it is in, when one node in each triangle carries the mark of the other. It is tested on the same six nodes it learned from, so it shows that training can find such weights, not that they would hold up on another graph.',
+      sample: {
+        input: 'The six nodes and seven edges of the main program. A, C and E start with (1, 0) and B, D and F with (0, 1), so B and E carry the mark of the other triangle, and B, D and F look the same from their own numbers. One round of message passing gives each node two numbers. The chance that the node is in triangle D-E-F is taken from the second number minus the first, and the loss is the average cross-entropy over the six nodes. Training runs 500 steps at a rate of 1, first with all eight weights and then with the four neighbour weights held at 0. Each line gives the loss, the chance for every node and how many of the six land on the right side of 0.5. With the neighbours, all six are right after 10 steps and the loss is still falling when the program stops. The neighbour weights end positive from a number to itself and negative across, the pattern of the hand-set "compete" weights. Without the neighbours the loss stops at 0.6365 with B and E wrong.',
+        expected: 'own numbers and neighbours\n  before training: loss 0.6904  A 0.48  B 0.55  C 0.47  D 0.53  E 0.45  F 0.52  right 4 of 6\n  after  10 steps: loss 0.4659  A 0.30  B 0.43  C 0.38  D 0.62  E 0.57  F 0.70  right 6 of 6\n  after 100 steps: loss 0.1161  A 0.03  B 0.13  C 0.16  D 0.84  E 0.87  F 0.97  right 6 of 6\n  after 500 steps: loss 0.0261  A 0.00  B 0.03  C 0.04  D 0.96  E 0.97  F 1.00  right 6 of 6\n  weights after training: own 4.38 -2.04 / -2.04 4.38, neighbours 6.09 -3.76 / -3.76 6.09\nown numbers only\n  before training: loss 0.6777  A 0.48  B 0.52  C 0.48  D 0.52  E 0.48  F 0.52  right 4 of 6\n  after  10 steps: loss 0.6387  A 0.36  B 0.64  C 0.36  D 0.64  E 0.36  F 0.64  right 4 of 6\n  after 100 steps: loss 0.6365  A 0.33  B 0.67  C 0.33  D 0.67  E 0.33  F 0.67  right 4 of 6\n  after 500 steps: loss 0.6365  A 0.33  B 0.67  C 0.33  D 0.67  E 0.33  F 0.67  right 4 of 6\n  weights after training: own 0.69 -0.02 / -0.02 0.69, neighbours 0.00 0.00 / 0.00 0.00',
+      },
+      python: {
+        source: `import math
+
+NODES = ["A", "B", "C", "D", "E", "F"]
+EDGES = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D"), ("D", "E"), ("D", "F"), ("E", "F")]
+# Each node starts with (1, 0) or (0, 1). In each triangle one node carries the other triangle's mark.
+START = {"A": [1, 0], "B": [0, 1], "C": [1, 0], "D": [0, 1], "E": [1, 0], "F": [0, 1]}
+TRUTH = {"A": 0, "B": 0, "C": 0, "D": 1, "E": 1, "F": 1}    # 1 for the nodes of triangle D-E-F
+RATE = 1.0
+STEPS = 500
+
+neighbours = {v: [] for v in NODES}
+for a, b in EDGES:
+    neighbours[a].append(b)
+    neighbours[b].append(a)
+MEAN = {}    # the mean of each node's neighbours' starting numbers
+for v in NODES:
+    total = [0, 0]
+    for u in neighbours[v]:
+        total[0] += START[u][0]
+        total[1] += START[u][1]
+    MEAN[v] = [total[0] / len(neighbours[v]), total[1] / len(neighbours[v])]
+
+
+def forward(v, w_self, w_nb):
+    """One round at node v, then the chance that v belongs to triangle D-E-F."""
+    h = []
+    for i in range(2):
+        z = 0.0
+        for j in range(2):
+            z += w_self[i][j] * START[v][j]
+            z += w_nb[i][j] * MEAN[v][j]
+        h.append(max(0.0, z))    # ReLU, as in the main program
+    chance = 1 / (1 + math.exp(h[0] - h[1]))    # above 0.5 when the second number is the larger
+    return h, chance
+
+
+def report(step, w_self, w_nb):
+    label = "before training" if step == 0 else f"after {step:3d} steps"
+    loss, right, text = 0.0, 0, ""
+    for v in NODES:
+        chance = forward(v, w_self, w_nb)[1]
+        loss -= math.log(chance if TRUTH[v] == 1 else 1 - chance) / len(NODES)
+        right += 1 if (chance > 0.5) == (TRUTH[v] == 1) else 0
+        text += f"  {v} {chance:.2f}"
+    print(f"  {label}: loss {loss:.4f}{text}  right {right} of 6")
+
+
+def train_step(w_self, w_nb, use_neighbours):
+    """Find the slope of the loss for every weight, then move each weight a little downhill."""
+    g_self = [[0.0, 0.0], [0.0, 0.0]]
+    g_nb = [[0.0, 0.0], [0.0, 0.0]]
+    for v in NODES:
+        h, chance = forward(v, w_self, w_nb)
+        d_h = [TRUTH[v] - chance, chance - TRUTH[v]]    # slope of this node's loss for its two numbers
+        for i in range(2):
+            if h[i] > 0:    # a number that ReLU cut to 0 sends no slope back
+                for j in range(2):
+                    g_self[i][j] += d_h[i] * START[v][j] / len(NODES)
+                    g_nb[i][j] += d_h[i] * MEAN[v][j] / len(NODES)
+    for i in range(2):
+        for j in range(2):
+            w_self[i][j] -= RATE * g_self[i][j]
+            if use_neighbours:
+                w_nb[i][j] -= RATE * g_nb[i][j]
+
+
+def row(w):
+    return f"{w[0][0]:.2f} {w[0][1]:.2f} / {w[1][0]:.2f} {w[1][1]:.2f}"
+
+
+for use_neighbours in (True, False):
+    print("own numbers and neighbours" if use_neighbours else "own numbers only")
+    w_self = [[0.2, 0.1], [0.1, 0.2]]
+    w_nb = [[0.1, 0.2], [0.2, 0.1]] if use_neighbours else [[0.0, 0.0], [0.0, 0.0]]
+    for step in range(STEPS + 1):
+        if step > 0:
+            train_step(w_self, w_nb, use_neighbours)
+        if step in (0, 10, 100, STEPS):
+            report(step, w_self, w_nb)
+    print(f"  weights after training: own {row(w_self)}, neighbours {row(w_nb)}")`,
+      },
+      javascript: {
+        source: `const NODES = ["A", "B", "C", "D", "E", "F"];
+const EDGES = [["A", "B"], ["A", "C"], ["B", "C"], ["C", "D"], ["D", "E"], ["D", "F"], ["E", "F"]];
+// Each node starts with (1, 0) or (0, 1). In each triangle one node carries the other triangle's mark.
+const START = { A: [1, 0], B: [0, 1], C: [1, 0], D: [0, 1], E: [1, 0], F: [0, 1] };
+const TRUTH = { A: 0, B: 0, C: 0, D: 1, E: 1, F: 1 };    // 1 for the nodes of triangle D-E-F
+const RATE = 1.0;
+const STEPS = 500;
+
+const neighbours = {};
+for (const v of NODES) neighbours[v] = [];
+for (const [a, b] of EDGES) {
+  neighbours[a].push(b);
+  neighbours[b].push(a);
+}
+const MEAN = {};    // the mean of each node's neighbours' starting numbers
+for (const v of NODES) {
+  const total = [0, 0];
+  for (const u of neighbours[v]) {
+    total[0] += START[u][0];
+    total[1] += START[u][1];
+  }
+  MEAN[v] = [total[0] / neighbours[v].length, total[1] / neighbours[v].length];
+}
+
+// One round at node v, then the chance that v belongs to triangle D-E-F.
+function forward(v, wSelf, wNb) {
+  const h = [];
+  for (let i = 0; i < 2; i++) {
+    let z = 0;
+    for (let j = 0; j < 2; j++) {
+      z += wSelf[i][j] * START[v][j];
+      z += wNb[i][j] * MEAN[v][j];
+    }
+    h.push(Math.max(0, z));    // ReLU, as in the main program
+  }
+  const chance = 1 / (1 + Math.exp(h[0] - h[1]));    // above 0.5 when the second number is the larger
+  return [h, chance];
+}
+
+function report(step, wSelf, wNb) {
+  const label = step === 0 ? "before training" : "after " + String(step).padStart(3, " ") + " steps";
+  let loss = 0, right = 0, text = "";
+  for (const v of NODES) {
+    const chance = forward(v, wSelf, wNb)[1];
+    loss -= Math.log(TRUTH[v] === 1 ? chance : 1 - chance) / NODES.length;
+    right += (chance > 0.5) === (TRUTH[v] === 1) ? 1 : 0;
+    text += "  " + v + " " + chance.toFixed(2);
+  }
+  console.log("  " + label + ": loss " + loss.toFixed(4) + text + "  right " + right + " of 6");
+}
+
+// Find the slope of the loss for every weight, then move each weight a little downhill.
+function trainStep(wSelf, wNb, useNeighbours) {
+  const gSelf = [[0, 0], [0, 0]];
+  const gNb = [[0, 0], [0, 0]];
+  for (const v of NODES) {
+    const [h, chance] = forward(v, wSelf, wNb);
+    const dH = [TRUTH[v] - chance, chance - TRUTH[v]];    // slope of this node's loss for its two numbers
+    for (let i = 0; i < 2; i++) {
+      if (h[i] > 0) {    // a number that ReLU cut to 0 sends no slope back
+        for (let j = 0; j < 2; j++) {
+          gSelf[i][j] += dH[i] * START[v][j] / NODES.length;
+          gNb[i][j] += dH[i] * MEAN[v][j] / NODES.length;
+        }
+      }
+    }
+  }
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      wSelf[i][j] -= RATE * gSelf[i][j];
+      if (useNeighbours) wNb[i][j] -= RATE * gNb[i][j];
+    }
+  }
+}
+
+function row(w) {
+  return w[0][0].toFixed(2) + " " + w[0][1].toFixed(2) + " / " + w[1][0].toFixed(2) + " " + w[1][1].toFixed(2);
+}
+
+for (const useNeighbours of [true, false]) {
+  console.log(useNeighbours ? "own numbers and neighbours" : "own numbers only");
+  const wSelf = [[0.2, 0.1], [0.1, 0.2]];
+  const wNb = useNeighbours ? [[0.1, 0.2], [0.2, 0.1]] : [[0, 0], [0, 0]];
+  for (let step = 0; step <= STEPS; step++) {
+    if (step > 0) trainStep(wSelf, wNb, useNeighbours);
+    if ([0, 10, 100, STEPS].includes(step)) report(step, wSelf, wNb);
+  }
+  console.log("  weights after training: own " + row(wSelf) + ", neighbours " + row(wNb));
+}`,
+      },
+      cpp: {
+        source: `#include <algorithm>
+#include <cmath>
+#include <cstdio>
+
+const int N = 6;    // nodes A..F are 0..5
+const int EDGES[7][2] = {{0, 1}, {0, 2}, {1, 2}, {2, 3}, {3, 4}, {3, 5}, {4, 5}};
+// Each node starts with (1, 0) or (0, 1). In each triangle one node carries the other triangle's mark.
+const double START[N][2] = {{1, 0}, {0, 1}, {1, 0}, {0, 1}, {1, 0}, {0, 1}};
+const int TRUTH[N] = {0, 0, 0, 1, 1, 1};    // 1 for the nodes of triangle D-E-F
+const double RATE = 1.0;
+const int STEPS = 500;
+
+double MEAN[N][2];    // the mean of each node's neighbours' starting numbers
+
+// One round at node v, then the chance that v belongs to triangle D-E-F.
+double forward(int v, const double w_self[2][2], const double w_nb[2][2], double h[2]) {
+    for (int i = 0; i < 2; ++i) {
+        double z = 0.0;
+        for (int j = 0; j < 2; ++j) {
+            z += w_self[i][j] * START[v][j];
+            z += w_nb[i][j] * MEAN[v][j];
+        }
+        h[i] = std::max(0.0, z);    // ReLU, as in the main program
+    }
+    return 1 / (1 + std::exp(h[0] - h[1]));    // above 0.5 when the second number is the larger
+}
+
+void report(int step, const double w_self[2][2], const double w_nb[2][2]) {
+    double loss = 0.0, chance[N], h[2];
+    int right = 0;
+    for (int v = 0; v < N; ++v) {
+        chance[v] = forward(v, w_self, w_nb, h);
+        loss -= std::log(TRUTH[v] == 1 ? chance[v] : 1 - chance[v]) / N;
+        right += (chance[v] > 0.5) == (TRUTH[v] == 1) ? 1 : 0;
+    }
+    if (step == 0) std::printf("  before training: loss %.4f", loss);
+    else std::printf("  after %3d steps: loss %.4f", step, loss);
+    for (int v = 0; v < N; ++v) std::printf("  %c %.2f", 'A' + v, chance[v]);
+    std::printf("  right %d of 6\\n", right);
+}
+
+// Find the slope of the loss for every weight, then move each weight a little downhill.
+void train_step(double w_self[2][2], double w_nb[2][2], bool use_neighbours) {
+    double g_self[2][2] = {{0, 0}, {0, 0}}, g_nb[2][2] = {{0, 0}, {0, 0}}, h[2];
+    for (int v = 0; v < N; ++v) {
+        const double chance = forward(v, w_self, w_nb, h);
+        const double d_h[2] = {TRUTH[v] - chance, chance - TRUTH[v]};    // slope of this node's loss for its two numbers
+        for (int i = 0; i < 2; ++i) {
+            if (h[i] > 0) {    // a number that ReLU cut to 0 sends no slope back
+                for (int j = 0; j < 2; ++j) {
+                    g_self[i][j] += d_h[i] * START[v][j] / N;
+                    g_nb[i][j] += d_h[i] * MEAN[v][j] / N;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            w_self[i][j] -= RATE * g_self[i][j];
+            if (use_neighbours) w_nb[i][j] -= RATE * g_nb[i][j];
+        }
+    }
+}
+
+int main() {
+    int count[N] = {0, 0, 0, 0, 0, 0};
+    for (const auto& e : EDGES) {
+        for (int side = 0; side < 2; ++side) {    // each edge is read both ways
+            const int v = e[side], u = e[1 - side];
+            MEAN[v][0] += START[u][0];
+            MEAN[v][1] += START[u][1];
+            count[v] += 1;
+        }
+    }
+    for (int v = 0; v < N; ++v) {
+        MEAN[v][0] /= count[v];
+        MEAN[v][1] /= count[v];
+    }
+    for (int run = 0; run < 2; ++run) {
+        const bool use_neighbours = run == 0;
+        std::printf("%s\\n", use_neighbours ? "own numbers and neighbours" : "own numbers only");
+        double w_self[2][2] = {{0.2, 0.1}, {0.1, 0.2}};
+        double w_nb[2][2] = {{0.1, 0.2}, {0.2, 0.1}};
+        if (!use_neighbours) w_nb[0][0] = w_nb[0][1] = w_nb[1][0] = w_nb[1][1] = 0.0;
+        for (int step = 0; step <= STEPS; ++step) {
+            if (step > 0) train_step(w_self, w_nb, use_neighbours);
+            if (step == 0 || step == 10 || step == 100 || step == STEPS) report(step, w_self, w_nb);
+        }
+        std::printf("  weights after training: own %.2f %.2f / %.2f %.2f, neighbours %.2f %.2f / %.2f %.2f\\n",
+                    w_self[0][0], w_self[0][1], w_self[1][0], w_self[1][1], w_nb[0][0], w_nb[0][1], w_nb[1][0], w_nb[1][1]);
+    }
+    return 0;
+}`,
+      },
+    }],
   },
 
   complexity: {
@@ -694,6 +985,7 @@ int main() {
         'Information moves one edge per round. E is four edges from A and would need four rounds.',
       ],
       tryInput: { ...DEFAULTS, edges: 'A-B, B-C, C-D, D-E', rounds: 2 },
+      check: (r) => (r.ids.filter((id) => r.final[id][0] > 0).join('') === 'ABC' && r.final.D[0] === 0 && r.final.E[0] === 0) || `first numbers above zero at ${r.ids.filter((id) => r.final[id][0] > 0).join('')}`,
     },
     {
       type: 'debug',
@@ -727,7 +1019,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Two graphs it cannot tell apart',
-      prompt: 'Run the demonstration on a ring of six nodes (A-B, B-C, C-D, D-E, E-F, F-A) and then on two separate triangles (A-B, B-C, C-A, D-E, E-F, F-D), each time with every node starting at (1, 1). Try the mean and the sum, and any of the weight sets. The final values are identical in the two graphs. Explain why no number of rounds and no choice of weights can separate them. Then find a starting feature you could give each node that would let message passing tell the two graphs apart.',
+      prompt: 'Run the demonstration on a ring of six nodes (A-B, B-C, C-D, D-E, E-F, F-A) and then on two separate triangles (A-B, B-C, C-A, D-E, E-F, F-D), each time with every node starting at (1, 1), the default weights and three rounds. Compare the final values in the two graphs. Then try the sum in place of the mean, and the "average" weights. Explain what you find, and say whether more rounds or other weights could change it. Then find starting numbers that would let message passing tell the two graphs apart.',
+      expect: 'With the default weights and three rounds, every node of both graphs ends at (0.125, 0.125), with the mean and with the sum alike. With the "average" weights and the mean, every node of both graphs stays at (1, 1). No number of rounds and no weights can separate the two graphs: in both, every node has two neighbours that hold exactly what it holds, so all nodes stay equal round after round. Starting numbers that do separate them: mark a single node. With "One marked node" and three rounds, D ends above zero in the ring, where it is three steps from A, and D, E and F end at (0, 0) in the two triangles, where no path leads to them from A.',
       hints: ['In both graphs every node has exactly two neighbours, and to begin with every neighbour looks the same as every other node.', 'If all nodes hold the same value before a round and all have the same number of neighbours, they all hold the same value after it.', 'A feature that depends on something further than the direct neighbours would do it, for instance whether the node lies on a triangle.'],
     },
   ],

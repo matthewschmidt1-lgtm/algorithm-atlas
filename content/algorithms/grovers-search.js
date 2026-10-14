@@ -179,7 +179,7 @@ export default {
       "For box 2 it is 0.5 − (−0.5) = 1. The amplitudes are now 0, 0, 1, 0.",
       "Look. The chances are 0, 0, 1 × 1 = 1, and 0. Box 2 is seen with certainty.",
     ],
-    result: "One use of the test was enough. An ordinary search opens boxes one at a time and needs 2.25 tests on average, since after three wrong boxes the fourth must be the one. Four is a special size: with more boxes the best chance falls a little short of certain, and more rounds are needed.",
+    result: "One use of the test was enough. An ordinary search opens boxes one at a time and needs 2.5 tests on average if it tests every box it opens. Skipping the last test, since after three wrong boxes the fourth must be the one, brings that to 2.25. Four is a special size: with more boxes the best chance falls a little short of certain, and more rounds are needed.",
     tryInput: { qubits: 2, marked: 2, iterations: 1 },
   },
 
@@ -216,10 +216,14 @@ export default {
       { label: '8 items: the best is only 94.5%', values: { qubits: 3, marked: 6, iterations: 0 } },
     ],
     tryThis: [
-      'Load "16 items, best number of rounds" and step through one round slowly. After the oracle, check that no probability has changed. After the diffusion step, check that the marked bar has grown and each other bar has shrunk by a small amount.',
-      'Load "16 items, twice too many rounds". The probability climbs to 96.1% at round 3, then falls to about 2% at round 6. More work gives a worse answer, because each round turns the state by the same angle whether or not it has passed the top.',
-      'Raise the qubits from 2 to 6 with rounds left at 0, and note the best number of rounds each time: 1, 2, 3, 4, 6. The number of items doubles at every step, and the rounds grow only about 1.4 times.',
-      'Load "8 items: the best is only 94.5%" and press Randomize on the measurement seed a number of times. About one run in eighteen returns a wrong item. The algorithm is probabilistic, which is why a real run ends by checking its answer.',
+      { ask: 'Load "16 items, best number of rounds" and step through the first round slowly. Every item starts with a chance of 6.25%. What will the marked item\'s chance be straight after the oracle? And after the diffusion step that follows?',
+        reveal: 'After the oracle it is still 6.25%. The oracle turns the marked amplitude from 0.25 into −0.25, and the chance is the amplitude multiplied by itself, so nothing a measurement could show has changed. After diffusion it is 47.3%. The marked bar has grown from 0.25 to 0.6875, and each of the other fifteen has shrunk from 0.25 to 0.1875.' },
+      { ask: 'Load "16 items, twice too many rounds". Three rounds is the best number for 16 items, and this preset runs six. What will the marked item\'s chance be at the end?',
+        reveal: 'About 2%, lower than the 6.25% it started with. The chance climbs to 96.1% at round 3, drops to 58.2% at round 4 and 12.5% at round 5, and ends at 2.0%. More work gives a worse answer, because each round turns the state by the same angle whether or not it has passed the top.' },
+      { ask: 'Leave rounds at 0 and raise the qubits from 2 to 6, one step at a time. Each step doubles the number of items. Does the best number of rounds double as well?',
+        reveal: 'No. For 4, 8, 16, 32 and 64 items the best number of rounds is 1, 2, 3, 4 and 6. Sixteen times as many items need only six times as many rounds. The rounds grow with the square root of the number of items, about 1.4 times for each doubling. A search that tests the items one by one doubles its work every time.' },
+      { ask: 'Load "8 items: the best is only 94.5%" and run it with the measurement seed set to 1, 2, 3 and so on up to 20. In how many of the 20 runs will the measurement return a wrong item?',
+        reveal: 'One. Seed 7 returns item 1, and the other nineteen return item 6. The chance of a wrong item is 5.5% on every run, about one in eighteen, so one miss in 20 is typical, though another 20 seeds could give none or several. Seeds 1 to 60 give four. The algorithm is probabilistic, which is why a real run ends by checking its answer.' },
     ],
     run,
     report: (r, c) => `N = ${r.N} items (${r.qubits} qubits), marked item ${r.marked}.\nAfter ${r.iterations} round${r.iterations === 1 ? '' : 's'} (${c['oracle calls'] || 0} oracle call${r.iterations === 1 ? '' : 's'}) the marked item would be measured with probability ${pc(r.finalProbability)}.\nBest number of rounds for this size: ${r.best}. A classical search needs about ${f4((r.N + 1) / 2)} tests on average.\nThis run's measurement returned item ${r.outcome} (${r.success ? 'correct' : 'wrong'}).\nThis was a classical simulation that updated all ${r.N} amplitudes in every round.`,
@@ -296,6 +300,20 @@ export default {
       input: 'Eight items (three qubits) with item 5 marked. Print the marked item\'s amplitude, its probability and the total probability after 0 to 4 rounds.',
       expected: 'rounds=0 amplitude=0.354 probability=0.125 total=1.000\nrounds=1 amplitude=0.884 probability=0.781 total=1.000\nrounds=2 amplitude=0.972 probability=0.945 total=1.000\nrounds=3 amplitude=0.575 probability=0.330 total=1.000\nrounds=4 amplitude=-0.110 probability=0.012 total=1.000\nbest number of rounds: 2\npredicted probability there: 0.945',
     },
+    breakIt: [
+      { change: 'In the diffusion line, change `2 * mean - x` to `mean - x`. Watch the last column. What will `total` be after one round, and after four?',
+        find: { python: 'a = [2 * mean - x for x in a]', javascript: 'a = a.map((x) => 2 * mean - x);' },
+        replace: { python: 'a = [mean - x for x in a]', javascript: 'a = a.map((x) => mean - x);' },
+        reveal: 'The total drops to 0.437 after one round and goes on falling: 0.246, 0.138, then 0.078 after four. It should be 1.000 on every line. The probability column never gets above 0.383. Without the factor 2 the step is not a mirror image. It shrinks the state, so the squares stop adding up to 1 and the numbers are no longer probabilities of anything. The last two lines still say 2 rounds and 0.945, because they come from the formula and not from the simulation.' },
+      { change: 'Take the diffusion step out. In the same line, change `2 * mean - x` to plain `x`, so that a round is the oracle and nothing else. What will the probability column show?',
+        find: { python: 'a = [2 * mean - x for x in a]', javascript: 'a = a.map((x) => 2 * mean - x);' },
+        replace: { python: 'a = [x for x in a]', javascript: 'a = a.map((x) => x);' },
+        reveal: 'Every line shows probability=0.125, one in eight, the same as a blind guess. The amplitude column flips between 0.354 and -0.354 and the total stays at 1.000. The oracle marks the item with a sign, and a sign cannot be seen in a measurement. It takes the diffusion step to turn that sign into a larger amplitude. The oracle acts on the whole state at once, and on its own it finds nothing.' },
+      { change: 'Run twice as many rounds "to be safe": put `2 *` in front of the rounded value in the line that computes `best`. What will the predicted probability on the last line be?',
+        find: { python: 'best = round(math.pi / (4 * theta) - 0.5)', javascript: 'const best = Math.round(Math.PI / (4 * theta) - 0.5);' },
+        replace: { python: 'best = 2 * round(math.pi / (4 * theta) - 0.5)', javascript: 'const best = 2 * Math.round(Math.PI / (4 * theta) - 0.5);' },
+        reveal: 'The last two lines become "best number of rounds: 4" and "predicted probability there: 0.012". The table above them says the same: 0.945 after 2 rounds, 0.012 after 4. Twice the best count turns the state almost half a turn, to where the marked amplitude is close to zero again. Extra rounds are not a safety margin.' },
+    ],
     python: {
       source: `import math
 
@@ -485,16 +503,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'With 16 items, 3 rounds give the marked item a 96.1% chance. What is the chance after 6 rounds?',
-      options: ['About 99.9%', 'Still about 96%', 'About 50%', 'About 2%'],
-      answer: 3,
+      q: 'With 32 items the best number of rounds is 4, which gives the marked item a 99.9% chance. What is the chance after 12 rounds, three times the best number?',
+      options: ['Above 99.9%, because more rounds can only help', 'About 93%', 'About 50%', 'About 1%'],
+      answer: 1,
       explain: [
-        'More rounds do not keep improving the odds. Each round turns the state by a fixed angle, and it has passed the top.',
-        'The state does not stop at its best point. It keeps turning.',
-        'It is at 58% after round 4, on the way down, but by round 6 it is much lower.',
-        'Correct. Three rounds turn the state almost a quarter turn, to the top. Six rounds turn it almost half a turn, back to nearly flat: the chance is about 2%.',
+        'More rounds do not keep improving the odds. Each round turns the state by the same fixed angle, and after round 4 it has passed the top.',
+        'Correct. Four rounds turn the state almost a quarter turn, to the top. Eight turn it almost half a turn, where the chance is 1.4%. Twelve turn it almost three quarters of a turn, and the chance is back up at 92.9%. The marked amplitude is negative there, −0.964, but the chance is its square.',
+        'It passes 54.6% at round 6 on the way down and 65.8% at round 11 on the way back up. By round 12 it is higher.',
+        'That is where it stands after 8 rounds, twice the best number. It does not stay there. The state keeps turning, and the chance climbs again.',
       ],
-      tryInput: { qubits: 4, marked: 5, iterations: 6 },
+      tryInput: { qubits: 5, marked: 20, iterations: 12 },
+      check: (r, c) => (r.N === 32 && r.best === 4 && r.iterations === 12 && c['oracle calls'] === 12 && Math.abs(r.finalProbability - 0.92905) < 0.0001 && Math.abs(r.probs[4] - 0.99918) < 0.0001 && Math.abs(r.probs[8] - 0.01445) < 0.0001 && Math.abs(r.amplitudes[20] + 0.964) < 0.0005) || `probability ${r.finalProbability} after ${r.iterations} rounds`,
     },
     {
       type: 'debug',
@@ -540,7 +559,8 @@ for _ in range(k):
     {
       type: 'challenge',
       title: 'More than one marked item',
-      prompt: 'Extend the simulation so that a set of M items is marked: the oracle flips the sign of each of them, and success means measuring any one. Confirm by experiment that the success probability after k rounds is sin²((2k + 1)θ) with sin θ = √(M/N), and find the best number of rounds for N = 64 and M = 1, 2, 4, 8 and 16. Then explain two special cases from the formula: M = N/4, where one round succeeds with certainty, and M = N/2, where no number of rounds changes the probability from one half.',
+      prompt: 'Extend the simulation so that a set of M items is marked: the oracle flips the sign of each of them, and success means measuring any one. Confirm by experiment that the success probability after k rounds is sin²((2k + 1)θ) with sin θ = √(M/N). Then take N = 64 with the first M items marked, and for M = 1, 2, 4, 8 and 16 find the number of rounds at which the probability first peaks, and the probability there. Finally run M = 32. What happens in the two special cases M = N/4 and M = N/2, and how does the formula explain it?',
+      expect: 'For N = 64 the probability first peaks after 6, 4, 3, 2 and 1 rounds for M = 1, 2, 4, 8 and 16, at 0.997, 0.999, 0.961, 0.945 and exactly 1. Those round counts are what round(π/(4θ) − 1/2) gives, and at every round the simulated probability agrees with sin²((2k + 1)θ) to about fifteen decimal places. M = 16 is N/4: θ is 30 degrees, one round turns the state to 90 degrees, and success is certain. M = 32 is N/2: the probability is 0.5 before the first round and after every round, because θ is 45 degrees and sin² of any odd multiple of 45 degrees is one half.',
       hints: ['The success probability is the sum of the squares of the marked amplitudes.', 'For M = N/4, sin θ = 1/2, so θ is 30 degrees and 3θ is a quarter turn.', 'For M = N/2, θ is 45 degrees. What is sin² of any odd multiple of 45 degrees?'],
     },
   ],
@@ -595,7 +615,19 @@ for _ in range(k):
       check: (r) => (Math.abs(r.finalProbability - 1) < 1e-12 && r.amplitudes.every((v, i) => Math.abs(v - (i === 2 ? 1 : 0)) < 1e-12) && r.outcome === 2 && Math.abs(r.probs[0] - 0.25) < 1e-12) || `probability ${r.finalProbability}, amplitudes ${r.amplitudes.join(', ')}` },
     { name: 'default run quotes: 47.3% after one round, 96.1% after three', input: { qubits: 4, marked: 5, iterations: 0 },
       check: (r) => (Math.abs(r.probs[1] - 121 / 256) < 1e-12 && Math.abs(r.probs[3] - 0.96132) < 1e-5 && Math.abs(r.amplitudes[5] ** 2 - r.probs[3]) < 1e-15) || `got ${r.probs[1]} and ${r.probs[3]}` },
-    { name: 'the quiz prediction: 16 items, 6 rounds, about 2%', input: { qubits: 4, marked: 5, iterations: 6 },
+    { name: 'try-this: one round on 16 items lifts the marked amplitude to 0.6875 and leaves the others at 0.1875', input: { qubits: 4, marked: 5, iterations: 1 },
+      check: (r) => (Math.abs(r.amplitudes[5] - 0.6875) < 1e-12 && r.amplitudes.every((v, i) => i === 5 || Math.abs(v - 0.1875) < 1e-12) && Math.abs(r.probs[0] - 0.0625) < 1e-12) || `amplitudes ${r.amplitudes.join(', ')}` },
+    { name: 'try-this: 16 items stand at 58.2% after round 4 and 12.5% after round 5', input: { qubits: 4, marked: 5, iterations: 6 },
+      check: (r) => (Math.abs(r.probs[4] - 0.5817) < 0.0001 && Math.abs(r.probs[5] - 0.12549) < 0.0001) || `got ${r.probs[4]} and ${r.probs[5]}` },
+    { name: 'try-this: of measurement seeds 1 to 20 on 8 items only seed 7 is wrong, and four of seeds 1 to 60 are', input: {},
+      check: () => {
+        const wrong = [];
+        for (let seed = 1; seed <= 60; seed++) { const r = run({ qubits: 3, marked: 6, iterations: 0, seed }, QUIET); if (!r.success) wrong.push(`${seed}:${r.outcome}`); }
+        return wrong.join(' ') === '7:1 35:0 43:7 45:4' || `wrong seeds ${wrong.join(' ')}`;
+      } },
+    { name: 'quiz: 32 items, 12 rounds, back up at 92.9% after 1.4% at round 8', input: { qubits: 5, marked: 20, iterations: 12 },
+      check: (r) => (Math.abs(r.finalProbability - predicted(32, 12)) < 1e-12 && Math.abs(r.finalProbability - 0.92905) < 0.0001 && Math.abs(r.probs[6] - 0.54589) < 0.0001 && Math.abs(r.probs[8] - 0.01445) < 0.0001 && Math.abs(r.probs[11] - 0.65762) < 0.0001 && r.amplitudes[20] < 0) || `probability ${r.finalProbability}` },
+    { name: 'things to try: 16 items, 6 rounds, about 2%', input: { qubits: 4, marked: 5, iterations: 6 },
       check: (r) => (Math.abs(r.finalProbability - 0.0204) < 0.0005 && r.probs[3] > 0.96) || `probability ${r.finalProbability}` },
     { name: 'formula and normalization hold for every size from 2 to 6 qubits and up to 24 rounds', input: {},
       check: () => {

@@ -1,9 +1,10 @@
 // Scaled dot-product self-attention, one head, on a handful of tokens.
 //
-// What this lesson runs: the forward calculation softmax(Q Kᵀ / √d) V, exactly as defined, on
-// vectors and matrices that were WRITTEN BY HAND for this page. Nothing is trained and nothing
+// What the demonstration runs: the forward calculation softmax(Q Kᵀ / √d) V, exactly as defined, on
+// vectors and matrices that were WRITTEN BY HAND for this page. Nothing is trained there and nothing
 // is predicted. It is one attention step, not a transformer and not a language model, and the
-// lesson says so wherever a reader might think otherwise.
+// lesson says so wherever a reader might think otherwise. The only training on the page is the
+// second code sample (code.more), which fits one head to a toy copying task.
 
 const D = 4;   // every vector on this page has four entries
 
@@ -381,11 +382,16 @@ export default {
       { label: 'One word, three times', values: { ...DEFAULTS, tokens: 'the the the' } },
     ],
     tryThis: [
-      'Run the default and compare rows 1 and 4 of the attention table, the two copies of "the". They are identical, and so are their outputs. Then load "With position information" and compare the same two rows: they now differ. Position information is the only thing that told them apart.',
-      'Load "Same words, shuffled". The tokens are in a different order, and each word\'s row holds the same weights as before, moved to the new columns. With no position information, the calculation treats the sentence as a bag of words.',
-      'Load "Causal mask". Row 1 can see only itself, so its whole weight is 1 on its own token. Now the two copies of "the" get different outputs even without position information, because the second one can see more tokens.',
-      'Load "No scaling" and look at the row for "cat". Its largest weight rises from 0.498 to 0.765. The scores were twice as large, and softmax turns larger gaps between scores into more lopsided weights.',
-      'Load "One word, three times". Every score is the same, so every weight is one third, and each output is simply the value of "the".',
+      { ask: 'Run the default and compare rows 1 and 4 of the attention table, the two copies of "the". Then load "With position information". What will happen to those two rows?',
+        reveal: 'In the default run the two rows are identical, 0.169, 0.279, 0.103, 0.169, 0.279, and so are the two outputs. With position information they separate: row 1 puts 0.897 on "dog", while row 4 puts only 0.109 on "dog" and 0.320 on "cat". Position information is the only thing that told the two copies apart.' },
+      { ask: 'Load "Same words, shuffled". The five words are the same, in a different order. In the default run "saw" gave 0.375 to "dog" and 0.375 to "cat". What will it give them now?',
+        reveal: 'The same: 0.375 each, and 0.084 to each of the other three. Every word\'s row holds the same weights as before, moved to the new columns, and every output vector is unchanged. With no position information, the calculation treats the sentence as a bag of words.' },
+      { ask: 'Load "Causal mask". Each token may now look only at itself and the tokens before it, and there is still no position information. Will the two copies of "the" get the same output this time?',
+        reveal: 'No. Row 1 can see only itself, so its whole weight is 1 on its own token and its output is 0, 0, 1, 0. The second "the" spreads its weight over four tokens, 0.235, 0.387, 0.143, 0.235, and its output is 0.775, 0.143, 0.470, 0.775. The two copies are the same word, but they no longer see the same tokens.' },
+      { ask: 'Load "No scaling" and look at the row for "cat". With scaling, its largest weight was 0.498, on itself. Will that weight go up or down?',
+        reveal: 'Up, to 0.765, while the weight it gives each "the" falls from 0.067 to 0.014. Without the division by 2 every score is twice as large, and softmax turns larger gaps between scores into more lopsided weights.' },
+      { ask: 'Load "One word, three times". All three tokens are "the". What will the nine weights be, and what will each output be?',
+        reveal: 'Every weight is 0.333. All three keys are the same, so every score in a row is the same and softmax shares the weight equally. Each output is 0, 0, 1, 0, which is simply the value of "the".' },
     ],
     run,
     report: (r, c) => `Tokens: ${r.tokens.join(' ')}\nOne head, vectors of ${r.d} numbers.${r.positions ? ' Position vectors added.' : ' No position information.'}${r.mask ? ' Causal mask on.' : ''}${r.scale ? ` Scores divided by ${num(r.divisor)}.` : ' Scores not scaled.'}\n\nAttention weights (row: the token looking, column: the token looked at):\n${r.weights.map((row, i) => `  ${r.labels[i].padEnd(9)} ${row.map(f3).join('  ')}`).join('\n')}\n\nOutput vectors:\n${r.outputs.map((o, i) => `  ${r.labels[i].padEnd(9)} ${o.map(f3).join('  ')}`).join('\n')}\n\n${c['scores computed'] || 0} query-key scores computed. The vectors and matrices were chosen by hand. Nothing here was trained.`,
@@ -409,7 +415,7 @@ export default {
   },
 
   logic: {
-    intuition: 'Attention is a soft version of looking something up. An ordinary lookup takes a query, finds the one stored key that equals it, and returns that key\'s value. Attention replaces "equals" with "how well does it match", measured by a dot product, and returns a weighted average of all the values. Because every step is smooth arithmetic, the matrices that produce queries, keys and values can be adjusted by [backpropagation](#/algorithm/backpropagation) until the lookups are useful.\n\nOne attention step only moves information between positions. A transformer puts it inside a block and repeats the block many times:\n\n- **Position information.** Before the first block, each token\'s vector is combined with a vector that depends on its position. Without this the model could not tell "dog saw cat" from "cat saw dog".\n- **Several heads.** A layer runs several attention steps side by side, each with its own three matrices, and joins their outputs. Different heads can attend to different things.\n- **Residual connection.** The output of the attention layer is added to its input. Each block therefore adjusts the vectors instead of replacing them.\n- **Feed-forward layer.** Each token\'s vector is then passed, on its own, through a small two-layer network. The same network is used at every position. This has a residual connection too.\n- **Normalization.** The vectors are rescaled around these steps, which keeps training stable.\n\nTo produce text, the vector at the last position after the final block is turned into one score for every token in the vocabulary. Softmax turns the scores into probabilities, one token is picked, it is added to the end of the input, and the whole calculation runs again for the next one.',
+    intuition: 'Attention is a soft version of looking something up. An ordinary lookup takes a query, finds the one stored key that equals it, and returns that key\'s value. Attention replaces "equals" with "how well does it match", measured by a dot product, and returns a weighted average of all the values. Every step is smooth arithmetic, so the matrices that produce queries, keys and values do not have to be written by hand: [backpropagation](#/algorithm/backpropagation) can adjust them until the lookups are useful. The second program in the code section, "Training it", does this for one head on a small copying task and prints the attention weights before and after.\n\nOne attention step only moves information between positions. A transformer puts it inside a block and repeats the block many times:\n\n- **Position information.** Before the first block, each token\'s vector is combined with a vector that depends on its position. Without this the model could not tell "dog saw cat" from "cat saw dog".\n- **Several heads.** A layer runs several attention steps side by side, each with its own three matrices, and joins their outputs. Different heads can attend to different things.\n- **Residual connection.** The output of the attention layer is added to its input. Each block therefore adjusts the vectors instead of replacing them.\n- **Feed-forward layer.** Each token\'s vector is then passed, on its own, through a small two-layer network. The same network is used at every position. This has a residual connection too.\n- **Normalization.** The vectors are rescaled around these steps, which keeps training stable.\n\nTo produce text, the vector at the last position after the final block is turned into one score for every token in the vocabulary. Softmax turns the scores into probabilities, one token is picked, it is added to the end of the input, and the whole calculation runs again for the next one.',
     steps: [
       'Turn every token into a vector by looking it up in a table. If position information is used, combine it with the token\'s vector now.',
       'From each token\'s vector compute three more with three matrices: its query, its key and its value.',
@@ -466,9 +472,19 @@ export default {
 
   code: {
     sample: {
-      input: 'One attention step on the five tokens "the dog saw the cat", with the same hand-written vectors and matrices as the demonstration: no position information, no mask, scores divided by 2. This is a forward calculation with fixed numbers. Nothing is trained. The programs print the attention weights, with the sum of each row, and then the output vector of each token.',
+      input: 'One attention step on the five tokens "the dog saw the cat", with the same hand-written vectors and matrices as the demonstration: no position information, no mask, scores divided by 2. This is a forward calculation with fixed numbers. Nothing is trained here: the second program, further down, does that. The programs print the attention weights, with the sum of each row, and then the output vector of each token.',
       expected: 'weights (row: the token looking, column: the token looked at)\nthe  0.169 0.279 0.103 0.169 0.279  sum 1.000\ndog  0.110 0.181 0.299 0.110 0.299  sum 1.000\nsaw  0.084 0.375 0.084 0.084 0.375  sum 1.000\nthe  0.169 0.279 0.103 0.169 0.279  sum 1.000\ncat  0.067 0.183 0.183 0.067 0.498  sum 1.000\noutputs\nthe  1.396 0.103 0.339 1.676\ndog  1.261 0.299 0.220 1.560\nsaw  1.873 0.084 0.167 2.248\nthe  1.396 0.103 0.339 1.676\ncat  1.862 0.183 0.135 2.360',
     },
+    breakIt: [
+      { change: 'In the line that computes a row of scores, delete the division by `scale`, so that each score is the bare dot product. The row for "cat" gives 0.498 to "cat" itself. Will that weight rise or fall?',
+        find: { python: 'dot(queries[i], keys[j]) / scale', javascript: 'dot(queries[i], keys[j]) / scale' },
+        replace: { python: 'dot(queries[i], keys[j])', javascript: 'dot(queries[i], keys[j])' },
+        reveal: 'It rises to 0.765. The row for "cat" now prints `0.014 0.104 0.104 0.014 0.765`, and the first number of its output goes from 1.862 to 2.502. Every score is twice as large as before, and softmax turns larger gaps between scores into more lopsided weights. Nothing crashes and every row still adds up to 1. With vectors of four numbers the damage is mild. With the hundreds of entries of a real model the scores are far larger, the weight piles onto one token, and training slows down.' },
+      { change: 'In the same line, swap the two indices so that it reads `dot(queries[j], keys[i])`. Token i now shows its key while every other token does the asking. Every row will still add up to 1. Which rows of weights change?',
+        find: { python: 'dot(queries[i], keys[j])', javascript: 'dot(queries[i], keys[j])' },
+        replace: { python: 'dot(queries[j], keys[i])', javascript: 'dot(queries[j], keys[i])' },
+        reveal: 'All five. The row for "saw" changes from `0.084 0.375 0.084 0.084 0.375` to `0.119 0.322 0.119 0.119 0.322`, and its output from 1.873, 0.084, 0.167, 2.248 to 1.611, 0.119, 0.237, 1.933. The table of scores has been turned on its side: row i now holds the scores that belong in column i. Each token is weighing the others by how hard they were looking for it, not by what it was looking for. Every row still prints `sum 1.000` and nothing crashes, so the check at the end of each line does not catch it.' },
+    ],
     python: {
       source: `import math
 
@@ -499,9 +515,10 @@ def attention(tokens):
     keys = [times(W_K, v) for v in x]
     values = [times(W_V, v) for v in x]
     scale = math.sqrt(len(keys[0]))
+    n = len(tokens)
     weights, outputs = [], []
-    for q in queries:
-        row = softmax([dot(q, k) / scale for k in keys])
+    for i in range(n):
+        row = softmax([dot(queries[i], keys[j]) / scale for j in range(n)])
         weights.append(row)
         outputs.append([sum(w * v[c] for w, v in zip(row, values)) for c in range(len(values[0]))])
     return weights, outputs
@@ -522,8 +539,8 @@ for token, out in zip(TOKENS, outputs):
         { line: 4, text: 'The vectors and the three matrices below are fixed numbers written by hand. In a trained model they would be learned.' },
         { line: 21, text: 'Softmax: every exponential is positive, and dividing by their total makes the row add up to 1.' },
         { line: 26, text: 'Each token\'s query, key and value come from its own vector, through three different matrices.' },
-        { line: 32, text: 'One row of the attention table: this token\'s query against every key, divided by the square root of the key length, then softmax.' },
-        { line: 34, text: 'The output is the weighted sum of the value vectors, worked out one entry at a time.' },
+        { line: 33, text: 'One row of the attention table: the query of token i against the key of every token j, divided by the square root of the key length, then softmax.' },
+        { line: 35, text: 'The output is the weighted sum of the value vectors, worked out one entry at a time.' },
       ],
     },
     javascript: {
@@ -548,10 +565,11 @@ function attention(tokens) {
   const keys = x.map((v) => times(W_K, v));
   const values = x.map((v) => times(W_V, v));
   const scale = Math.sqrt(keys[0].length);
+  const n = tokens.length;
   const weights = [];
   const outputs = [];
-  for (const q of queries) {
-    const row = softmax(keys.map((k) => dot(q, k) / scale));
+  for (let i = 0; i < n; i++) {
+    const row = softmax(keys.map((_, j) => dot(queries[i], keys[j]) / scale));
     weights.push(row);
     outputs.push(values[0].map((_, c) => row.reduce((sum, w, j) => sum + w * values[j][c], 0)));
   }
@@ -616,10 +634,11 @@ int main() {
         values.push_back(times(W_V, VECTORS[t]));
     }
     const double scale = std::sqrt(static_cast<double>(keys[0].size()));
+    const std::size_t n = keys.size();
     Mat weights, outputs;
-    for (const Vec& q : queries) {
+    for (std::size_t i = 0; i < n; ++i) {
         Vec scores;
-        for (const Vec& k : keys) scores.push_back(dot(q, k) / scale);
+        for (std::size_t j = 0; j < n; ++j) scores.push_back(dot(queries[i], keys[j]) / scale);
         Vec row = softmax(scores);
         Vec out(values[0].size(), 0.0);
         for (std::size_t j = 0; j < values.size(); ++j)
@@ -644,6 +663,262 @@ int main() {
     return 0;
 }`,
     },
+    more: [
+      {
+        title: 'Training it',
+        lead: 'The first program uses matrices that were written by hand. This one starts from small arbitrary numbers and learns them. The task is about the smallest one that needs attention: three tokens each carry a number, one of the three is marked, and a fourth token must answer with the number on the marked one. Which token matters changes from one sequence to the next, so no fixed blend of the three numbers can do it. The gradients are written out by hand, as in the [backpropagation](#/algorithm/backpropagation) lesson. Before training the asking token spreads its weight almost evenly and gives the marked token slightly less than the others. After 3,000 steps of gradient descent it puts more than 0.96 of its weight on the marked token, wherever the marker is, on numbers it never trained on. The answers come out close but not exact, because a little weight is still left on the other tokens.',
+        sample: {
+          input: 'One attention head and the asking token only. A token is three numbers: a marker (1 on the marked token), the number it carries, and a flag that is 1 on the asking token. W_Q and W_K are 2 by 3, so queries and keys have 2 entries and scores are divided by √2. W_V is a single row, so each value is one number. All 15 weights start from small fixed numbers. Training uses four triples of numbers with the marker on each position in turn, 12 sequences in all, a squared-error loss and a learning rate of 0.5. The printed loss is the average over the 12 sequences during that epoch. The weights shown before and after are for a fifth triple, 0.3, −0.6, 0.7, which is never trained on: four weights in each row, for the three number tokens and then the asking token itself.',
+          expected: 'before training\n  marker on token 1: weights 0.244 0.253 0.253 0.251  answer 0.019  wanted 0.3\n  marker on token 2: weights 0.253 0.244 0.253 0.251  answer 0.021  wanted -0.6\n  marker on token 3: weights 0.253 0.253 0.244 0.251  answer 0.018  wanted 0.7\nepoch    1: loss 0.37265\nepoch   10: loss 0.36798\nepoch  100: loss 0.00464\nepoch 1000: loss 0.00013\nepoch 3000: loss 0.00003\nafter training\n  marker on token 1: weights 0.965 0.012 0.011 0.011  answer 0.305  wanted 0.3\n  marker on token 2: weights 0.011 0.969 0.010 0.011  answer -0.595  wanted -0.6\n  marker on token 3: weights 0.012 0.013 0.964 0.012  answer 0.702  wanted 0.7',
+        },
+        python: {
+          source: `import math
+
+# A token is three numbers: [marker, number, asking]. Three tokens carry a number each and
+# one of them is marked. A fourth token asks. Its answer should be the marked token's number.
+TRAIN = [[0.9, -0.5, 0.2], [-0.7, 0.4, 0.8], [0.1, 0.6, -0.9], [-0.3, -0.8, 0.5]]
+TEST = [0.3, -0.6, 0.7]                      # never used for training
+W_Q = [[0.1, -0.2, 0.3], [-0.3, 0.2, 0.1]]   # makes the query: 2 entries
+W_K = [[-0.2, 0.1, -0.1], [0.1, -0.3, 0.2]]  # makes each key: 2 entries
+W_V = [0.1, 0.2, -0.1]                       # makes each value: 1 number
+RATE = 0.5
+SCALE = math.sqrt(2)                         # the square root of the key length
+
+
+def sequence(numbers, marked):
+    return [[1.0 if j == marked else 0.0, numbers[j], 0.0] for j in range(3)] + [[0.0, 0.0, 1.0]]
+
+
+def forward(x):
+    """One attention step for the asking token, x[3]."""
+    q = [sum(W_Q[r][c] * x[3][c] for c in range(3)) for r in range(2)]
+    keys = [[sum(W_K[r][c] * x[j][c] for c in range(3)) for r in range(2)] for j in range(4)]
+    values = [sum(W_V[c] * x[j][c] for c in range(3)) for j in range(4)]
+    exps = [math.exp((q[0] * k[0] + q[1] * k[1]) / SCALE) for k in keys]
+    total = sum(exps)
+    weights = [e / total for e in exps]
+    answer = sum(weights[j] * values[j] for j in range(4))
+    return q, keys, values, weights, answer
+
+
+def train_one_epoch():
+    """Forward and backward through all 12 training sequences, then one update."""
+    g_q = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+    g_k = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+    g_v = [0.0, 0.0, 0.0]
+    loss = 0.0
+    for numbers in TRAIN:
+        for marked in range(3):
+            x = sequence(numbers, marked)
+            q, keys, values, weights, answer = forward(x)
+            error = answer - numbers[marked]
+            loss += error * error
+            d_answer = 2 * error
+            for j in range(4):
+                # A higher score for token j moves weight onto it, pulling the answer towards its value.
+                d_score = d_answer * weights[j] * (values[j] - answer)
+                for c in range(3):
+                    g_v[c] += d_answer * weights[j] * x[j][c]
+                    for r in range(2):
+                        g_q[r][c] += d_score * keys[j][r] / SCALE * x[3][c]
+                        g_k[r][c] += d_score * q[r] / SCALE * x[j][c]
+    for c in range(3):
+        W_V[c] -= RATE * g_v[c] / 12
+        for r in range(2):
+            W_Q[r][c] -= RATE * g_q[r][c] / 12
+            W_K[r][c] -= RATE * g_k[r][c] / 12
+    return loss / 12
+
+
+def show_test(title):
+    print(title)
+    for marked in range(3):
+        weights, answer = forward(sequence(TEST, marked))[3:]
+        row = " ".join(f"{w:.3f}" for w in weights)
+        print(f"  marker on token {marked + 1}: weights {row}  answer {answer:.3f}  wanted {TEST[marked]:.1f}")
+
+
+show_test("before training")
+for epoch in range(1, 3001):
+    loss = train_one_epoch()
+    if epoch in (1, 10, 100, 1000, 3000):
+        print(f"epoch {epoch:4d}: loss {loss:.5f}")
+show_test("after training")`,
+        },
+        javascript: {
+          source: `// A token is three numbers: [marker, number, asking]. Three tokens carry a number each and
+// one of them is marked. A fourth token asks. Its answer should be the marked token's number.
+const TRAIN = [[0.9, -0.5, 0.2], [-0.7, 0.4, 0.8], [0.1, 0.6, -0.9], [-0.3, -0.8, 0.5]];
+const TEST = [0.3, -0.6, 0.7];                      // never used for training
+const W_Q = [[0.1, -0.2, 0.3], [-0.3, 0.2, 0.1]];   // makes the query: 2 entries
+const W_K = [[-0.2, 0.1, -0.1], [0.1, -0.3, 0.2]];  // makes each key: 2 entries
+const W_V = [0.1, 0.2, -0.1];                       // makes each value: 1 number
+const RATE = 0.5;
+const SCALE = Math.sqrt(2);                         // the square root of the key length
+
+function sequence(numbers, marked) {
+  const items = numbers.map((number, j) => [j === marked ? 1 : 0, number, 0]);
+  return [...items, [0, 0, 1]];
+}
+
+// One attention step for the asking token, x[3].
+function forward(x) {
+  const q = W_Q.map((row) => row[0] * x[3][0] + row[1] * x[3][1] + row[2] * x[3][2]);
+  const keys = x.map((v) => W_K.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]));
+  const values = x.map((v) => W_V[0] * v[0] + W_V[1] * v[1] + W_V[2] * v[2]);
+  const exps = keys.map((k) => Math.exp((q[0] * k[0] + q[1] * k[1]) / SCALE));
+  const total = exps.reduce((sum, e) => sum + e, 0);
+  const weights = exps.map((e) => e / total);
+  const answer = weights.reduce((sum, w, j) => sum + w * values[j], 0);
+  return { q, keys, values, weights, answer };
+}
+
+// Forward and backward through all 12 training sequences, then one update.
+function trainOneEpoch() {
+  const gQ = [[0, 0, 0], [0, 0, 0]];
+  const gK = [[0, 0, 0], [0, 0, 0]];
+  const gV = [0, 0, 0];
+  let loss = 0;
+  for (const numbers of TRAIN) {
+    for (let marked = 0; marked < 3; marked++) {
+      const x = sequence(numbers, marked);
+      const { q, keys, values, weights, answer } = forward(x);
+      const error = answer - numbers[marked];
+      loss += error * error;
+      const dAnswer = 2 * error;
+      for (let j = 0; j < 4; j++) {
+        // A higher score for token j moves weight onto it, pulling the answer towards its value.
+        const dScore = dAnswer * weights[j] * (values[j] - answer);
+        for (let c = 0; c < 3; c++) {
+          gV[c] += dAnswer * weights[j] * x[j][c];
+          for (let r = 0; r < 2; r++) {
+            gQ[r][c] += dScore * keys[j][r] / SCALE * x[3][c];
+            gK[r][c] += dScore * q[r] / SCALE * x[j][c];
+          }
+        }
+      }
+    }
+  }
+  for (let c = 0; c < 3; c++) {
+    W_V[c] -= RATE * gV[c] / 12;
+    for (let r = 0; r < 2; r++) {
+      W_Q[r][c] -= RATE * gQ[r][c] / 12;
+      W_K[r][c] -= RATE * gK[r][c] / 12;
+    }
+  }
+  return loss / 12;
+}
+
+function showTest(title) {
+  console.log(title);
+  for (let marked = 0; marked < 3; marked++) {
+    const { weights, answer } = forward(sequence(TEST, marked));
+    const row = weights.map((w) => w.toFixed(3)).join(" ");
+    console.log("  marker on token " + (marked + 1) + ": weights " + row + "  answer " + answer.toFixed(3) + "  wanted " + TEST[marked].toFixed(1));
+  }
+}
+
+showTest("before training");
+for (let epoch = 1; epoch <= 3000; epoch++) {
+  const loss = trainOneEpoch();
+  if ([1, 10, 100, 1000, 3000].includes(epoch)) {
+    console.log("epoch " + String(epoch).padStart(4, " ") + ": loss " + loss.toFixed(5));
+  }
+}
+showTest("after training");`,
+        },
+        cpp: {
+          source: `#include <cmath>
+#include <cstdio>
+
+// A token is three numbers: {marker, number, asking}. Three tokens carry a number each and
+// one of them is marked. A fourth token asks. Its answer should be the marked token's number.
+const double TRAIN[4][3] = {{0.9, -0.5, 0.2}, {-0.7, 0.4, 0.8}, {0.1, 0.6, -0.9}, {-0.3, -0.8, 0.5}};
+const double TEST[3] = {0.3, -0.6, 0.7};               // never used for training
+double W_Q[2][3] = {{0.1, -0.2, 0.3}, {-0.3, 0.2, 0.1}};   // makes the query: 2 entries
+double W_K[2][3] = {{-0.2, 0.1, -0.1}, {0.1, -0.3, 0.2}};  // makes each key: 2 entries
+double W_V[3] = {0.1, 0.2, -0.1};                          // makes each value: 1 number
+const double RATE = 0.5;
+const double SCALE = std::sqrt(2.0);                       // the square root of the key length
+
+double x[4][3], q[2], keys[4][2], values[4], weights[4];   // one sequence and its forward pass
+
+void sequence(const double numbers[3], int marked) {
+    for (int j = 0; j < 3; ++j) { x[j][0] = j == marked ? 1 : 0; x[j][1] = numbers[j]; x[j][2] = 0; }
+    x[3][0] = 0; x[3][1] = 0; x[3][2] = 1;
+}
+
+// One attention step for the asking token, x[3]. Returns its answer.
+double forward() {
+    for (int r = 0; r < 2; ++r) q[r] = W_Q[r][0] * x[3][0] + W_Q[r][1] * x[3][1] + W_Q[r][2] * x[3][2];
+    double total = 0, answer = 0;
+    for (int j = 0; j < 4; ++j) {
+        for (int r = 0; r < 2; ++r) keys[j][r] = W_K[r][0] * x[j][0] + W_K[r][1] * x[j][1] + W_K[r][2] * x[j][2];
+        values[j] = W_V[0] * x[j][0] + W_V[1] * x[j][1] + W_V[2] * x[j][2];
+        weights[j] = std::exp((q[0] * keys[j][0] + q[1] * keys[j][1]) / SCALE);
+        total += weights[j];
+    }
+    for (int j = 0; j < 4; ++j) { weights[j] /= total; answer += weights[j] * values[j]; }
+    return answer;
+}
+
+// Forward and backward through all 12 training sequences, then one update.
+double train_one_epoch() {
+    double g_q[2][3] = {{0, 0, 0}, {0, 0, 0}}, g_k[2][3] = {{0, 0, 0}, {0, 0, 0}}, g_v[3] = {0, 0, 0}, loss = 0;
+    for (int s = 0; s < 4; ++s) {
+        for (int marked = 0; marked < 3; ++marked) {
+            sequence(TRAIN[s], marked);
+            double answer = forward();
+            double error = answer - TRAIN[s][marked];
+            loss += error * error;
+            double d_answer = 2 * error;
+            for (int j = 0; j < 4; ++j) {
+                // A higher score for token j moves weight onto it, pulling the answer towards its value.
+                double d_score = d_answer * weights[j] * (values[j] - answer);
+                for (int c = 0; c < 3; ++c) {
+                    g_v[c] += d_answer * weights[j] * x[j][c];
+                    for (int r = 0; r < 2; ++r) {
+                        g_q[r][c] += d_score * keys[j][r] / SCALE * x[3][c];
+                        g_k[r][c] += d_score * q[r] / SCALE * x[j][c];
+                    }
+                }
+            }
+        }
+    }
+    for (int c = 0; c < 3; ++c) {
+        W_V[c] -= RATE * g_v[c] / 12;
+        for (int r = 0; r < 2; ++r) {
+            W_Q[r][c] -= RATE * g_q[r][c] / 12;
+            W_K[r][c] -= RATE * g_k[r][c] / 12;
+        }
+    }
+    return loss / 12;
+}
+
+void show_test(const char* title) {
+    std::printf("%s\\n", title);
+    for (int marked = 0; marked < 3; ++marked) {
+        sequence(TEST, marked);
+        double answer = forward();
+        std::printf("  marker on token %d: weights %.3f %.3f %.3f %.3f  answer %.3f  wanted %.1f\\n",
+                    marked + 1, weights[0], weights[1], weights[2], weights[3], answer, TEST[marked]);
+    }
+}
+
+int main() {
+    show_test("before training");
+    for (int epoch = 1; epoch <= 3000; ++epoch) {
+        double loss = train_one_epoch();
+        if (epoch == 1 || epoch == 10 || epoch == 100 || epoch == 1000 || epoch == 3000) {
+            std::printf("epoch %4d: loss %.5f\\n", epoch, loss);
+        }
+    }
+    show_test("after training");
+    return 0;
+}`,
+        },
+      },
+    ],
   },
 
   complexity: {
@@ -748,29 +1023,36 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The sequence "the dog saw the cat" contains "the" twice. With no position information and no mask, how do the outputs for the two copies compare?',
-      options: ['They are exactly the same', 'They differ, because each "the" stands next to different words', 'The second is larger, because it comes later', 'They are the same size but point in opposite directions'],
-      answer: 0,
+      q: 'Type "the the the" and switch on "Add position information". All three tokens are the same word. What will the table of weights look like?',
+      options: ['Every weight is one third. The three tokens are the same word, so nothing can separate them', 'No weight is one third, and the three rows all differ from each other', 'The weights are uneven, but the three rows are equal to each other, because all three tokens ask the same question', 'Each token puts its whole weight on itself'],
+      answer: 1,
       explain: [
-        'Both start from the same vector, so they make the same query and the same key, meet the same set of keys, and get the same weights. Nothing in the calculation records where a token stands.',
-        'The layer has no notion of "next to". Every token is compared with every token, whatever lies between them.',
-        'Nothing in the calculation counts positions unless position information is added.',
-        'Identical inputs to the same arithmetic give identical results.',
+        'The words are the same but the vectors are not. Each position adds its own vector, so the three tokens now make three different queries and three different keys.',
+        'Each "the" starts from a different vector, so it asks a different question and shows a different key. Row 1 is 0.053, 0.433, 0.515. Row 2 is 0.173, 0.548, 0.279. Row 3 is 0.431, 0.397, 0.172. Position information is all that separates them.',
+        'Equal rows would need equal queries. A query is made from the token\'s vector, and that vector now includes the position, so each token asks something different.',
+        'Nothing here makes a token prefer itself. The first "the" gives itself only 0.053.',
       ],
-      tryInput: { ...DEFAULTS },
+      tryInput: { tokens: 'the the the', positions: true, mask: false, scale: true },
+      check: (r) => { const f = (row) => row.map((w) => w.toFixed(3)).join(' '); return (f(r.weights[0]) === '0.053 0.433 0.515' && f(r.weights[1]) === '0.173 0.548 0.279' && f(r.weights[2]) === '0.431 0.397 0.172') || r.weights.map(f).join(' / '); },
     },
     {
       type: 'predict',
-      q: 'Now switch on the causal mask, still with no position information. Are the outputs for the two copies of "the" still the same?',
-      options: ['Yes, because they are still the same word', 'No. The first can see only itself, and the second can see four tokens', 'No, because the mask changes the vector of each token', 'Yes, because the mask only affects the last token'],
+      q: 'Type "cat cat cat" and switch on the causal mask, with no position information. What will the three rows of weights be, and will the three tokens get the same output?',
+      options: ['Every weight is one third, as it would be without the mask, and the outputs are the same', 'Row 1 is 1, 0, 0. Row 2 is one half, one half, 0. Row 3 is one third each. The three outputs are the same', 'Row 1 is 1, 0, 0. Row 2 is one half, one half, 0. Row 3 is one third each. So the three outputs differ', 'Each row has one third on every token it may see and 0 on the rest, so rows 1 and 2 add up to less than 1'],
       answer: 1,
       explain: [
-        'The same word starts from the same vector, but the two copies no longer look at the same tokens.',
-        'The first "the" puts its whole weight on itself. The second spreads its weight over itself and the three tokens before it. Different weights give different outputs.',
-        'The mask changes nothing about the vectors. It only removes some tokens from view.',
-        'The mask affects every row except the last, which can see everything anyway.',
+        'The mask hides later tokens. Token 1 cannot put any weight on tokens 2 and 3, so its row cannot be one third each.',
+        'Every score is equal, so each token shares its weight equally among the tokens it may see: one of them, then two, then three. The rows differ, but every token hands over the same value, 3, 0, 0, 4, and any blend of equal values is that value.',
+        'The rows are right, but different weights do not have to give different outputs. Every token here carries the same value, 3, 0, 0, 4, so every blend of them comes out the same. Under a mask, two copies of a word get different outputs only when they blend different words.',
+        'That is what happens when the mask is applied after softmax. Applied before it, the hidden scores are removed and the visible tokens share the whole weight, so every row still adds up to 1.',
       ],
-      tryInput: { ...DEFAULTS, mask: true },
+      tryInput: { tokens: 'cat cat cat', positions: false, mask: true, scale: true },
+      check: (r) => {
+        const close = (a, b) => Math.abs(a - b) < 1e-9;
+        const rows = close(r.weights[0][0], 1) && close(r.weights[1][0], 0.5) && close(r.weights[1][1], 0.5) && r.weights[1][2] === 0 && r.weights[2].every((w) => close(w, 1 / 3));
+        const outputs = r.outputs.every((o) => o.every((v, c) => close(v, [3, 0, 0, 4][c])));
+        return (rows && outputs) || `weights ${JSON.stringify(r.weights)}, outputs ${JSON.stringify(r.outputs)}`;
+      },
     },
     {
       type: 'debug',
@@ -805,7 +1087,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Two heads and a sense of order',
-      prompt: 'Extend the sample program in two ways. First, add a second head: a second set of three matrices of your own choosing. Run both heads on the same tokens, join each token\'s two outputs end to end into one vector of eight numbers, and print it. Second, add position vectors before the queries, keys and values are made, using sine and cosine of the position as the demonstration does. Check three things with your program: every row of weights in both heads adds up to 1, the two copies of "the" get the same output without position vectors, and they get different outputs with them.',
+      prompt: 'Extend the sample program in two ways. First, add a second head: a second set of three matrices. Any matrices will do. To get numbers you can check, build the second head from the first by passing the matrices round: its queries are made by W_K, its keys by W_V and its values by W_Q. Run both heads on "the dog saw the cat", join each token\'s two outputs end to end into one vector of eight numbers, and print it. Second, add position vectors before the queries, keys and values are made, as the demonstration does: the token at position p, counted from 0, has sin p, cos p, sin(p/100) and cos(p/100) added to its four numbers. Check three things with your program: every row of weights in both heads adds up to 1, the two copies of "the" get the same output without position vectors, and they get different outputs with them.',
+      expect: 'Without position vectors, "saw" gets 1.873, 0.084, 0.167, 2.248, 1.584, 0.708, 0.531, 0.354, and both copies of "the" get 1.396, 0.103, 0.339, 1.676, 0.534, 1.542, 1.335, 0.153. With position vectors the first "the" gets 3.662, 0.494, 0.033, 3.905, 0.762, 1.317, 2.024, 0.287 and the second gets 2.149, −0.012, 0.490, 3.497, −0.798, 0.905, 2.415, 0.219. In both runs every row of weights in both heads adds up to 1. The first four numbers of each vector are the first head, so they should match what the demonstration shows.',
       hints: ['Write attention so that it takes the three matrices as arguments. Each head is then one call.', 'To test the "same output" claim, compare the vectors entry by entry instead of comparing printed text, which can hide small differences.'],
     },
   ],
@@ -910,6 +1193,15 @@ int main() {
       check: (r) => {
         const first = [0, 1, 1, 1], third = [Math.sin(2), 1 + Math.cos(2), Math.sin(0.02), Math.cos(0.02)];   // "the" at position 0, "saw" at position 2
         return (r.X[0].every((v, c) => near(v, first[c])) && r.X[2].every((v, c) => near(v, third[c]))) || `vectors with position: ${r.X[0]} and ${r.X[2]}`;
+      } },
+    { name: 'the numbers quoted in the things to try', input: { ...DEFAULTS, positions: true },
+      check: (r) => {
+        const f = (row) => row.map((w) => w.toFixed(3)).join(' ');
+        const masked = run({ ...DEFAULTS, mask: true }, QUIET), bare = run({ ...DEFAULTS, scale: false }, QUIET), shuffled = run({ ...DEFAULTS, tokens: 'cat the saw dog the' }, QUIET);
+        if (f(r.weights[0]) !== '0.009 0.897 0.053 0.013 0.028' || f(r.weights[3]) !== '0.272 0.109 0.103 0.196 0.320') return `with positions: ${f(r.weights[0])} and ${f(r.weights[3])}`;
+        if (f(masked.weights[3]) !== '0.235 0.387 0.143 0.235 0.000' || f(masked.outputs[3]) !== '0.775 0.143 0.470 0.775' || f(masked.outputs[0]) !== '0.000 0.000 1.000 0.000') return `masked: ${f(masked.weights[3])}, ${f(masked.outputs[3])}`;
+        if (bare.weights[4][0].toFixed(3) !== '0.014') return `unscaled, cat on the: ${bare.weights[4][0]}`;
+        return (f(shuffled.weights[2]) === '0.375 0.084 0.084 0.375 0.084' && f(shuffled.outputs[2]) === '1.873 0.084 0.167 2.248') || `shuffled: ${f(shuffled.weights[2])}`;
       } },
     { name: 'the feed-forward layer of the original block has twice the weights of its attention layer', input: {},
       check: () => { const d = 512, ff = 2048; return (2 * d * ff === 2 * (4 * d * d)) || 'the ratio quoted in the text is wrong'; } },

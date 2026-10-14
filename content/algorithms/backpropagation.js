@@ -353,11 +353,16 @@ export default {
       { label: 'Learning rate too small', values: { ...DEFAULTS, rate: 0.05 } },
     ],
     tryThis: [
-      'Step through the first ten frames slowly. In the forward frames, check one multiplication yourself. In the backward frames, notice that every error signal is built from one that is already known, and that no weight is changed until the passes are finished.',
-      'Load "One hidden unit: not enough". A single hidden unit can only draw a straight boundary, and no straight line separates the XOR corners. The loss stops falling at about 0.5 and a quarter of the points stay on the wrong side. Backpropagation is working correctly here. The network is too small.',
-      'Load "Two hidden units: enough, with luck". Two units can solve XOR, and with this seed they do not: after 200 epochs only 25 of 40 points are right. Press Randomize a few times. Over the seeds 1 to 30, two hidden units reach all 40 points 20 times and four hidden units all 30 times. The gradients are equally exact in every one of those runs. Where gradient descent ends up depends on where it starts.',
-      'Load "Learning rate too small". The gradients are exactly the same as in the default run at the start, but each step is twenty times shorter, and 200 epochs are not enough. The loss curve is still falling when training stops.',
-      'On the default run, raise the learning rate to 5. The loss jumps upwards a few times in the early epochs. The gradient only says which way is downhill for a small step, and a step this long can overshoot.',
+      { ask: 'Step through the first ten frames slowly, and check one multiplication in the forward frames yourself. Pause when the forward pass gives the output ŷ for the ringed example, whose true label is 1. Will the error signal at the output be positive or negative? And how many of the 17 weights will have changed by the time the backward frames end?',
+        reveal: 'Negative. The output is 0.283 and the error signal is the output minus the label: 0.283 − 1 = −0.717. Every later error signal is built from that one. The signal at h₁ is −0.717 × 0.57 × 0.477 = −0.195, with no new forward pass. And none of the 17 weights has changed. The first update comes only after both passes have been run for all 40 examples, and it takes the loss from 0.731 to 0.714.' },
+      { ask: 'Load "One hidden unit: not enough". A single hidden unit can only draw a straight boundary, and the XOR points sit in four groups at the corners of a square. How many of the 40 points will end up on the correct side?',
+        reveal: '30 of 40. No straight line separates the XOR corners, so the best the network can do is put three of the four groups on the correct side. The loss stops falling at about 0.5: it is 0.536 after 100 epochs and 0.512 after 200. Backpropagation is working correctly here. The network is too small.' },
+      { ask: 'Load "Two hidden units: enough, with luck". Two hidden units can represent XOR. With this seed, will they learn it in 200 epochs? Then press Randomize a few times and guess: out of the seeds 1 to 30, how many reach all 40 points?',
+        reveal: 'With seed 1 they do not: after 200 epochs only 25 of 40 points are right and the loss is stuck at 0.362. Over the seeds 1 to 30, two hidden units reach all 40 points 20 times, and four hidden units do it all 30 times. The gradients are equally exact in every one of those runs. Where gradient descent ends up depends on where it starts.' },
+      { ask: 'Load "Learning rate too small". The gradients at the start are exactly the same as in the default run, but each step is twenty times shorter. The default run gets all 40 points right in 200 epochs. How many will this one get right?',
+        reveal: 'Only 23 of 40. In 200 epochs the loss has crept from 0.731 to 0.683, and the curve is still falling when training stops. Raise the epochs to 1,000 and the same run reaches 40 of 40 with a loss of 0.272. Nothing is wrong with the gradients. The steps are too short for the time allowed.' },
+      { ask: 'On the default run the loss falls in every one of the 200 epochs. Raise the learning rate to 5. Will the loss still fall in every epoch?',
+        reveal: 'No. It rises in six of the early epochs: 9, 10, 11, 15, 16 and 17. At epoch 11 it reaches 0.956, higher than the 0.731 it started at. The gradient only says which way is downhill for a small step, and a step this long can overshoot. This run recovers and ends with all 40 points right and a loss of 0.003, but nothing guarantees that a run recovers.' },
     ],
     run,
     report: (r, c) => `Accuracy ${Math.round(r.accuracy * r.points.length)} of ${r.points.length} points (${(r.accuracy * 100).toFixed(0)}%).\nLoss ${f3(r.initialLoss)} at the start, ${f3(r.loss)} after ${r.epochs} epochs.\n${r.weights} weights, ${c['weight updates'] || 0} updates, ${(c['network passes'] || 0).toLocaleString('en-US')} passes through the network (forward and backward).`,
@@ -438,6 +443,20 @@ export default {
       input: 'A network with 2 inputs, 2 tanh hidden units and 1 sigmoid output learns XOR from its four cases, starting from fixed weights, with a learning rate of 1 for 2,000 epochs. The printed loss is the average over the four cases during that epoch.',
       expected: 'epoch    1: loss 0.7233\nepoch   10: loss 0.6987\nepoch  100: loss 0.5481\nepoch  500: loss 0.0086\nepoch 1000: loss 0.0036\nepoch 2000: loss 0.0017\n0 xor 0: output 0.0012, target 0\n0 xor 1: output 0.9978, target 1\n1 xor 0: output 0.9978, target 1\n1 xor 1: output 0.0011, target 0',
     },
+    breakIt: [
+      { change: 'In the line that computes the error signal at a hidden unit, leave out the slope of tanh, the factor `(1 - h * h)`, so the signal is only the output error times the weight. The program will still run. What will the four outputs be after 2,000 epochs?',
+        find: { python: 'd_hidden = d_out * w2[j] * (1 - h[j] * h[j])', javascript: 'const dHidden = dOut * w2[j] * (1 - h[j] * h[j]);' },
+        replace: { python: 'd_hidden = d_out * w2[j]', javascript: 'const dHidden = dOut * w2[j];' },
+        reveal: 'All four are close to one half. The program prints "epoch 2000: loss 0.6932" and outputs of 0.4978, 0.4982, 0.5019 and 0.5024. A loss of 0.693 is what a network gets by answering 0.5 to everything, so it has learned nothing. Without the slope, the first-layer weights are moved in a direction that is not the gradient, and the steps no longer lead downhill. Nothing crashed and nothing looked wrong in the first epoch, which still printed 0.7233.' },
+      { change: 'In the line that adds to the gradient of a first-layer weight, change `+=` to `=`, so each example overwrites the gradient left by the one before. What does the network learn now?',
+        find: { python: 'g_w1[j][i] += d_hidden * x[i]', javascript: 'gW1[j][i] += dHidden * x[i];' },
+        replace: { python: 'g_w1[j][i] = d_hidden * x[i]', javascript: 'gW1[j][i] = dHidden * x[i];' },
+        reveal: 'Nothing. The loss ends at 0.6931 and all four outputs print as 0.5000. Each first-layer gradient now holds only what the last example, 1 xor 1, left there. The other three cases have no say in the first layer, so it never learns to tell them apart. The loss does fall a little at first, to 0.6900 at epoch 100, which is enough to make a broken run look like a slow one.' },
+      { change: 'In that same line, swap the two indices of the gradient, so it reads `[i][j]` where it read `[j][i]`. Nothing crashes, because both run from 0 to 1. Will the network still learn all four cases?',
+        find: { python: 'g_w1[j][i] += d_hidden * x[i]', javascript: 'gW1[j][i] += dHidden * x[i];' },
+        replace: { python: 'g_w1[i][j] += d_hidden * x[i]', javascript: 'gW1[i][j] += dHidden * x[i];' },
+        reveal: 'No. Each gradient is now applied to the wrong weight: the one from input 1 to hidden unit 0 moves by the amount worked out for the weight from input 0 to hidden unit 1. The loss falls to 0.2494 at epoch 500 and then goes back up, to 0.4421 at epoch 1000. From there the languages drift apart, because the run is so unsteady that tiny rounding differences grow. Python ends with loss 0.3555 and an output of 0.6172 for 1 xor 1. JavaScript ends with loss 0.3248 and 0.5678, and a C++ build can give a third set of digits. Each of them calls 1 xor 1 more likely 1 than 0, and its target is 0.' },
+    ],
     python: {
       source: `import math
 
@@ -710,16 +729,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The XOR dataset has four groups of points at the corners of a square, with opposite corners sharing a class. A network with a single hidden unit is trained on 40 of these points. How many does it end up classifying correctly?',
-      options: ['All 40', 'About 30, three of the four corners', 'About 20, no better than guessing', 'None'],
-      answer: 1,
+      q: 'On XOR, a network with a single hidden unit cannot get every point right. Now the dataset is the separable one: 60 points in two groups that a straight line can split. A network with a single hidden unit is trained on them for 200 epochs. How many of the 60 does it end up classifying correctly?',
+      options: ['All 60', 'About 45, three quarters of them, as on XOR', 'About 30, no better than guessing', 'None'],
+      answer: 0,
       explain: [
-        'One hidden unit can only produce a straight boundary, and no straight line separates opposite corners from the other two.',
-        'Correct. The best a straight boundary can do is cut off one corner, getting three groups right and one wrong: 30 of 40. The gradients are exact. The network is too small.',
-        'It does better than guessing, because three of the four groups can be put on the right side.',
-        'Getting everything wrong would be as hard as getting everything right.',
+        'Correct. One hidden unit gives a straight boundary, and here a straight boundary is all that is needed. The loss falls from 0.678 to 0.006. One unit failed on XOR because of the shape of that data, not because one unit cannot learn.',
+        'Three quarters was the ceiling on XOR, where no straight line can separate the corners. These two groups can be split by a line, so nothing holds the network back.',
+        'The network starts near guessing, with a loss of 0.678. Each epoch then moves the boundary toward the gap between the groups, and it gets there.',
+        'Getting every point wrong would take a boundary in the right place with the two sides swapped. Gradient descent lowers the loss, and that arrangement has a far higher loss than guessing does.',
       ],
-      tryInput: { ...DEFAULTS, hidden: 1 },
+      tryInput: { ...DEFAULTS, dataset: 'separable', hidden: 1, points: 60 },
+      check: (r) => (r.points.length === 60 && r.hidden === 1 && r.accuracy === 1 && Math.abs(r.initialLoss - 0.678) < 0.0005 && Math.abs(r.loss - 0.006) < 0.0005) || `accuracy ${r.accuracy} on ${r.points.length} points, loss ${r.initialLoss} to ${r.loss}`,
     },
     {
       type: 'debug',
@@ -754,7 +774,8 @@ for j in range(2):
     {
       type: 'challenge',
       title: 'Add a layer and check it',
-      prompt: 'Extend the sample program to two hidden layers of three tanh units each. Derive the error signal for the new layer: it now receives error from several units in the layer above, so the contributions must be summed. Then write a gradient checker that nudges each weight by 0.00001 in both directions, and confirm that every analytic gradient agrees with the numerical one to at least six decimal places before you train anything.',
+      prompt: 'Extend the sample program to two hidden layers of three tanh units each. Derive the error signal for the new layer: it now receives error from several units in the layer above, so the contributions must be summed. Then write a gradient checker that nudges each weight by 0.00001 in both directions, and confirm that every analytic gradient agrees with the numerical one to at least six decimal places before you train anything. So that you can check your numbers, start from these weights. Into the first hidden layer: `w1 = [[0.5, -0.4], [0.3, 0.8], [-0.6, 0.2]]` and `b1 = [0.1, -0.2, 0.0]`. Into the second: `w2 = [[0.4, -0.5, 0.3], [-0.3, 0.6, 0.2], [0.7, 0.1, -0.4]]` and `b2 = [0.0, 0.1, -0.1]`, where `w2[k][j]` runs from unit j of the first layer to unit k of the second. Into the output: `w3 = [0.6, -0.7, 0.5]` and `b3 = 0.05`. Take the loss as the average over the four XOR cases, as the sample does.',
+      expect: 'With those starting weights the average loss over the four XOR cases is 0.7287 before any training. The gradient of that loss is +0.030097 for `w3[0]`, −0.030221 for `w2[0][1]` and +0.019763 for `w1[0][0]`. Across all 25 weights and biases, the two-sided check and the backward pass differ by less than 0.0000000001, so they agree to well past six decimal places. A one-sided check on the same weights is off by up to 0.0000012, which fails the six-decimal test although the backward pass is right. Trained for 2,000 epochs at a learning rate of 1, the network outputs 0.0005, 0.9990, 0.9999 and 0.0005 for the four cases.',
       hints: ['The error signal at a unit is the sum over the units it feeds of (their error signal × the connecting weight), all multiplied by the slope of its own activation.', 'Use the two-sided difference (loss(w + e) − loss(w − e)) / 2e. It is far more accurate than the one-sided version.'],
     },
   ],
@@ -826,6 +847,18 @@ for j in range(2):
       check: (r, c) => (r.accuracy === 1 && r.loss < 0.05 && r.loss < r.initialLoss / 10 && c['network passes'] === 2 * 40 * 200 && c['weight updates'] === 200) || `accuracy ${r.accuracy}, loss ${r.loss}` },
     { name: 'with a small learning rate the loss never rises', input: { ...DEFAULTS, rate: 0.05 },
       check: (r) => (r.losses.every((v, i) => i === 0 || v <= r.losses[i - 1]) && r.accuracy < 1) || 'the loss rose, or the slow run unexpectedly finished learning' },
+    { name: 'one hidden unit separates a separable set of 60 points (quiz prediction)', input: { ...DEFAULTS, dataset: 'separable', hidden: 1, points: 60 },
+      check: (r) => (r.accuracy === 1 && r.points.length === 60 && r.loss < 0.01 && r.losses.every((v, i) => i === 0 || v <= r.losses[i - 1])) || `accuracy ${r.accuracy}, loss ${r.loss}` },
+    { name: 'a learning rate of 5 makes the loss rise in epochs 9, 10, 11, 15, 16 and 17 and still ends at 40 of 40 (quoted in Things to try)', input: { ...DEFAULTS, rate: 5 },
+      check: (r) => {
+        const rises = r.losses.map((v, i) => (i > 0 && v > r.losses[i - 1] ? i : 0)).filter(Boolean);
+        return (rises.join(',') === '9,10,11,15,16,17' && Math.abs(r.losses[11] - 0.956) < 0.0005 && r.accuracy === 1 && Math.abs(r.loss - 0.003) < 0.0005) || `rises at ${rises}, loss at epoch 11 ${r.losses[11]}, final ${r.loss}`;
+      } },
+    { name: 'the small learning rate ends at 23 of 40 after 200 epochs and 40 of 40 after 1,000 (quoted in Things to try)', input: { ...DEFAULTS, rate: 0.05, epochs: 1000 },
+      check: (r) => {
+        const short = run({ ...DEFAULTS, rate: 0.05 }, QUIET);
+        return (Math.round(short.accuracy * 40) === 23 && Math.abs(short.loss - 0.683) < 0.0005 && r.accuracy === 1 && Math.abs(r.loss - 0.272) < 0.0005) || `200 epochs: ${short.accuracy}, ${short.loss}. 1,000 epochs: ${r.accuracy}, ${r.loss}`;
+      } },
     { name: 'one hidden unit gets three of the four XOR corners', input: { ...DEFAULTS, hidden: 1 },
       check: (r) => (r.accuracy === 0.75 && r.loss > 0.45) || `accuracy ${r.accuracy}, loss ${r.loss}` },
     { name: 'two hidden units on seed 1 end at 25 of 40', input: { ...DEFAULTS, hidden: 2, seed: 1 },

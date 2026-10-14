@@ -247,9 +247,12 @@ export default {
       { label: 'Plain recursion, n = 20', values: { n: 20, method: 'naive' } },
     ],
     tryThis: [
-      'Load "Plain recursion, n = 6" and step to the end. Count the forest green circles: there are 7, one for each of fib(0) to fib(6). Every brick red circle is work that had already been done. Then load "Same n with a memo" and see which parts of the faint tree are never touched.',
-      'With plain recursion, raise n from 4 to 5 to 6 and read the "calls" counter each time: 9, 15, 25. Each new total is the sum of the previous two, plus one. Switch the method to the memo and repeat: 7, 9, 11.',
-      'Load "Plain recursion, n = 20" and look at the strip of request counts. fib(1) alone is requested 6,765 times. Switch to the bottom-up table and the same answer takes 19 additions.',
+      { ask: 'Load "Plain recursion, n = 6". The finished tree has 25 circles, one for each request. Before you step to the end: how many of them will be forest green, an answer worked out for the first time, and how many brick red? Then load "Same n with a memo". How many of the 25 circles will stay faint, never requested at all?',
+        reveal: 'Under plain recursion 7 circles are forest green, one for each of fib(0) to fib(6), and the other 18 are brick red. Every brick red circle is work that had already been done. With the memo, 14 circles stay faint. Three requests, for fib(2), fib(3) and fib(4), are answered from the memo, and the 2, 4 and 8 requests that would have followed them never happen.' },
+      { ask: 'With plain recursion, set n to 5 and then to 6 and read the "calls" counter each time. Before you set n to 7: how many calls will it make? Then switch the method to the memo and ask yourself the same question for 5, 6 and 7.',
+        reveal: 'Plain recursion makes 15 calls, then 25, then 41. Each new total is the sum of the previous two, plus one: 15 + 25 + 1 = 41. The call for fib(7) is one request, and it sets off everything fib(6) needs and everything fib(5) needs. With the memo the totals are 9, 11 and 13. Raising n by one adds only two calls: one that computes the new value and one lookup.' },
+      { ask: 'Load "Plain recursion, n = 20". The answer is fib(20) = 6,765 and the run makes 21,891 calls. Look at the strip of request counts: how many of those calls will be requests for fib(1) alone? Then switch the method to the bottom-up table. How many additions will the same answer take?',
+        reveal: 'fib(1) is requested 6,765 times, the same number as the answer. That is no accident. Plain recursion builds fib(20) by adding up 1s, and every 1 comes from a request for fib(1). The bottom-up table reaches the same 6,765 with 19 additions and no calls.' },
     ],
     run,
     report: (r, c) => `fib(${r.n}) = ${r.value}\n${METHODS.find((m) => m.value === r.method).label}: ${(c.calls || 0).toLocaleString('en-US')} calls, ${(c.additions || 0).toLocaleString('en-US')} additions.\nDistinct subproblems: ${r.distinct} (fib(0) to fib(${r.n})).`,
@@ -333,6 +336,20 @@ export default {
       input: 'fib(20) by plain recursion and with a memo, counting calls; then the bottom-up table up to fib(10), and fib(90).',
       expected: 'naive:     fib(20) = 6765 after 21891 calls\nmemoized:  fib(20) = 6765 after 39 calls\nbottom-up: 0 1 1 2 3 5 8 13 21 34 55\nbottom-up: fib(90) = 2880067194370816120',
     },
+    breakIt: [
+      { change: 'Give every call its own memo. As the first line inside the memoized function, set `memo` to a new memo that holds only fib(0) = 0 and fib(1) = 1. How many calls will the "memoized" line report?',
+        find: { python: '    if n in memo:', javascript: '  if (memo.has(n)) return memo.get(n);' },
+        replace: { python: '    memo = {0: 0, 1: 1}\n    if n in memo:', javascript: '  memo = new Map([[0, 0], [1, 1]]);\n  if (memo.has(n)) return memo.get(n);' },
+        reveal: 'It prints "memoized:  fib(20) = 6765 after 21891 calls", exactly the count of plain recursion. The answer is still right, which is why this mistake is easy to miss. Each call writes its result into a memo that no other call ever reads, so nothing is ever found there except the two starting values.' },
+      { change: 'In the bottom-up loop, add `table[i - 1]` and `table[i]` instead of `table[i - 1]` and `table[i - 2]`. Position `i` is the cell being filled. What will the program do?',
+        find: { python: 'table.append(table[i - 1] + table[i - 2])', javascript: 'table.push(table[i - 1] + table[i - 2]);' },
+        replace: { python: 'table.append(table[i - 1] + table[i])', javascript: 'table.push(table[i - 1] + table[i]);' },
+        reveal: 'It crashes on the first pass of the loop. Python prints the naive and memoized lines and then stops with "IndexError: list index out of range". JavaScript stops with "TypeError: Cannot mix BigInt and other types, use explicit conversions", because reading a cell that does not exist yet gives `undefined`, which cannot be added to a number. The cause is the same in both: the cell at position `i` is read before it has been written. A table can only be filled in an order where everything a cell needs is already there.' },
+      { change: 'Make the table hold floating-point numbers instead of exact whole numbers. In Python, start it with `0.0` and `1.0`. In JavaScript, drop the `n` from `0n` and `1n`. In C++, store `double` instead of `long long`. Which digits of fib(90) will survive?',
+        find: { python: 'table = [0, 1]', javascript: 'const table = [0n, 1n];' },
+        replace: { python: 'table = [0.0, 1.0]', javascript: 'const table = [0, 1];' },
+        reveal: 'The first 16. JavaScript prints "bottom-up: fib(90) = 2880067194370816000" where the exact value ends in 120, and its other three lines do not change at all. Python prints "bottom-up: fib(90) = 2.880067194370816e+18", and the short table becomes "0.0 1.0 1.0 2.0" and so on up to "55.0". A 64-bit floating-point number holds about 16 significant digits and fib(90) has 19, so the last digits are rounded away. No error is raised. The small values in the table are still exact, so a test on small n would pass.' },
+    ],
     python: {
       source: `def fib_naive(n, count):
     count[0] += 1
@@ -570,6 +587,7 @@ int main() {
         '177 is what plain recursion needs: 2·fib(11) − 1.',
       ],
       tryInput: { n: 10, method: 'memo' },
+      check: (r, c) => (r.value === 55 && c.calls === 19 && c.additions === 9 && c['memo hits'] === 10) || `${c.calls} calls, ${c.additions} additions`,
     },
     {
       type: 'debug',
@@ -606,7 +624,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Two variables, then three steps',
-      prompt: 'First rewrite the bottom-up method so that it keeps only two numbers and no table, and check that it prints the same fib(90). Then solve a new problem with the same method: in how many ways can you climb a staircase of n stairs if each move goes up 1, 2 or 3 stairs? Write the recurrence, decide the base cases, and fill a table. For n = 10 the answer is 274.',
+      prompt: 'First rewrite the bottom-up method so that it keeps only two numbers and no table, and check that it prints the same fib(90). Then solve a new problem with the same method: in how many ways can you climb a staircase of n stairs if each move goes up 1, 2 or 3 stairs? Write the recurrence, decide the base cases, and fill a table. Print the number of ways for every n from 1 to 10.',
+      expect: 'The two-variable version prints fib(90) = 2880067194370816120, the same as the table. For the stairs, n = 1 to 10 gives 1, 2, 4, 7, 13, 24, 44, 81, 149, 274. Each number is the sum of the three before it, starting from one way to climb no stairs. If your n = 3 is not 4, write the four ways out by hand: 1+1+1, 1+2, 2+1 and 3.',
       hints: ['For the first part, after each step the pair (previous, current) becomes (current, previous + current).', 'For the stairs, think about the last move. It was 1, 2 or 3 stairs, so ways(n) = ways(n − 1) + ways(n − 2) + ways(n − 3), with ways(0) = 1 because there is one way to climb no stairs: do nothing.'],
     },
   ],
@@ -671,6 +690,25 @@ int main() {
       check: (r, c) => (r.value === 55 && c.calls === 19 && naiveCalls(10) === 177) || `got ${c.calls} calls` },
     { name: 'tryThis numbers: 9, 15, 25 calls and fib(1) requested 6,765 times for n = 20', input: { n: 20, method: 'naive' },
       check: (r, c) => (naiveCalls(4) === 9 && naiveCalls(5) === 15 && naiveCalls(6) === 25 && r.times[1] === 6765 && c.calls === 21891 && naiveCalls(30) === 2692537) || `fib(1) was requested ${r.times[1]} times` },
+    { name: 'tryThis numbers: plain recursion for n = 7 makes 41 calls, 15 + 25 + 1', input: { n: 7, method: 'naive' },
+      check: (r, c) => (r.value === 13 && c.calls === 41 && naiveCalls(5) + naiveCalls(6) + 1 === 41) || `got ${c.calls} calls` },
+    { name: 'tryThis numbers: the memo for n = 7 makes 13 calls', input: { n: 7, method: 'memo' },
+      check: (r, c) => (r.value === 13 && c.calls === 13) || `got ${c.calls} calls` },
+    { name: 'tryThis numbers: the n = 6 tree ends with 7 first-time answers and 18 repeats', input: { n: 6, method: 'naive' },
+      check: (r, c, run) => {
+        const nodes = run.frames[run.frames.length - 1].views[0].nodes;
+        const first = nodes.filter((x) => x.role === 'done').length;
+        const repeat = nodes.filter((x) => x.role === 'alert').length;
+        return (nodes.length === 25 && first === 7 && repeat === 18) || `${first} first-time answers and ${repeat} repeats`;
+      } },
+    { name: 'tryThis numbers: with the memo, 14 of the 25 circles for n = 6 are never requested', input: { n: 6, method: 'memo' },
+      check: (r, c, run) => {
+        const nodes = run.frames[run.frames.length - 1].views[0].nodes;
+        const faint = nodes.filter((x) => x.role === 'dim').length;
+        return (nodes.length === 25 && faint === 14 && c.calls === 11) || `${faint} faint circles, ${c.calls} calls`;
+      } },
+    { name: 'tryThis numbers: the table for n = 20 takes 19 additions', input: { n: 20, method: 'table' },
+      check: (r, c) => (r.value === 6765 && c.additions === 19 && !c.calls) || `got ${c.additions} additions` },
     { name: 'base cases n = 0 and n = 1', input: { n: 0, method: 'table' },
       check: (r, c) => (r.value === 0 && !c.additions) || `fib(0) gave ${r.value}` },
     { name: 'n = 1 with a memo is a single lookup', input: { n: 1, method: 'memo' },

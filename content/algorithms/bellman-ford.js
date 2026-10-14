@@ -272,10 +272,14 @@ export default {
       { label: 'Negative cycle', values: { edges: 'A>B:1, B>C:2, C>D:-4, D>B:1, C>E:3' } },
     ],
     tryThis: [
-      'Load "Unlucky edge order" and then "Lucky edge order". It is the same chain of four roads. Listed from the far end backwards, each pass can only extend the known region by one node. Listed from the start, a single pass does everything. Compare the relaxation counts.',
-      'Load "A negative edge that pays off" and watch D. It is set to 3 in pass 1 and corrected to 2 in pass 2. Dijkstra\'s algorithm would have declared C final at cost 2 before the edge from B was seen, which is why it refuses negative weights.',
-      'Load "Negative cycle". The distances of B, C and D keep dropping on every pass. Then change `C>D:-4` to `C>D:-3`, which makes the loop total zero, and run it again: the passes settle and an answer appears.',
-      'Run the default graph here and in the Dijkstra lesson. The distances agree. Compare the number of relaxations each needed.',
+      { ask: 'Load "Unlucky edge order" and then "Lucky edge order". It is the same chain of four roads, listed from the far end backwards in one and from the start in the other. Both runs find the same distances. How many passes will each one need?',
+        reveal: 'The unlucky order needs all 4 passes plus the final check, 20 relaxations in all. Listed from the far end backwards, each pass can extend the known region by only one node. The lucky order needs 2 passes and 8 relaxations: the first pass does everything, and the second confirms that nothing changes.' },
+      { ask: 'Load "A negative edge that pays off". D is set to 3 in pass 1 and corrected to 2 in pass 2, and the run takes 3 passes. Now type the same four roads in another order: `A>B:5, B>C:-4, A>C:2, C>D:1`. How many passes will it take, and will D ever hold the wrong value 3?',
+        reveal: 'Two passes, and D is never 3. With A>B and B>C checked first, C is already down to 1 when C>D is reached, so D gets 2 straight away and pass 2 only confirms it: 8 relaxations in place of 12. The wrong first value came from the order of the list, and the repeated passes exist to repair whatever the order gets wrong. Dijkstra\'s algorithm has no second pass. It would have declared C final at cost 2 before the edge from B was seen, which is why it refuses negative weights.' },
+      { ask: 'Load "Negative cycle". The loop B, C, D, B totals 2 − 4 + 1 = −1, and the run ends with no distance for B, C, D or E. Now change `C>D:-4` to `C>D:-3`, which makes the loop total exactly zero. Will the run still report a cycle, and what will it say about E?',
+        reveal: 'No cycle is reported. The run stops after 2 passes and 10 relaxations, with E at distance 6 by the route A → B → C → E. A loop that totals zero can be walked for nothing, but it never lowers a cost, so the distances settle. Only a loop that totals less than zero keeps every pass busy. With −4 the run uses all 4 passes, and the final check still finds an edge that improves.' },
+      { ask: 'Load "Same graph as Dijkstra". Dijkstra\'s algorithm finds these distances with 22 edge relaxations. Bellman-Ford will find the same distances. Will it need fewer relaxations, the same number, or more?',
+        reveal: 'More: 44, exactly twice as many. The graph has 11 two-way edges, which makes 22 one-way entries in the edge list, and Bellman-Ford scans the whole list on every pass. Here it needs 2 passes, one that finds every distance and one that changes nothing. Dijkstra relaxes each entry once. And two passes is a lucky case: the limit for a graph of 8 nodes is 7.' },
     ],
     run,
     report: (r, c) => (r.negativeCycle
@@ -361,9 +365,23 @@ export default {
 
   code: {
     sample: {
-      input: 'A directed graph with edges A>B:4, A>C:2, C>B:-1, B>D:3, C>D:5, D>E:-2, B>E:4. Shortest paths from A and the route to E. Then the same graph with the edge D>C:-3 added, which creates a negative cycle.',
-      expected: 'A:0 B:1 C:2 D:4 E:2\nA -> C -> B -> D -> E\nafter adding D>C:-3: negative cycle',
+      input: 'A directed graph with edges A>B:4, A>C:2, C>B:-1, B>D:3, C>D:5, D>E:-2, B>E:4, and two nodes F and G that cannot be reached from A, joined by F>G:-5. Shortest paths from A and the route to E. Then the same graph with the edge D>C:-3 added, which creates a negative cycle.',
+      expected: 'A:0 B:1 C:2 D:4 E:2 F:none G:none\nA -> C -> B -> D -> E\nafter adding D>C:-3: negative cycle',
     },
+    breakIt: [
+      { change: 'Use a large number for infinity in place of the real one: set `INF` to 1000000000, written `10**9` in Python and `1e9` in JavaScript. F and G still cannot be reached from A. What will the first line say about them?',
+        find: { python: 'INF = float("inf")', javascript: 'const INF = Infinity;' },
+        replace: { python: 'INF = 10**9', javascript: 'const INF = 1e9;' },
+        reveal: 'It prints "A:0 B:1 C:2 D:4 E:2 F:none G:999999995". G cannot be reached, yet it now has a distance. The edge from F to G has weight −5, and 1000000000 − 5 is smaller than 1000000000, so "not reached, minus 5" passed for an improvement. With a real infinity this cannot happen, because infinity plus any weight is still infinity. With a stand-in number, every edge that leaves an unreached node has to be skipped. The C++ version already uses a stand-in, and its test `dist[e.u] != INF` is that guard.' },
+      { change: 'Remove the final scan: where the loop after the passes finds an edge that still improves, make it do nothing, so the function always returns its distances. What will the last line say about the graph with D>C:-3 added?',
+        find: { python: 'return None, None  # a negative cycle can be reached', javascript: 'return null;  // a negative cycle can be reached' },
+        replace: { python: 'break', javascript: 'break;' },
+        reveal: 'It prints "after adding D>C:-3: no negative cycle". The cycle is there: C to B to D and back to C totals −1 + 3 − 3 = −1. The passes ran, the distances of B, C and D dropped on every one of them, and the function returned whatever numbers it had reached when the passes ran out. Those numbers are not distances. The final scan is the only thing that tells a finished answer from an interrupted one.' },
+      { change: 'Make the edge between C and B two-way: next to the entry from C to B, add an entry from B to C with the same weight, −1. What will the first line of output be?',
+        find: { python: '("C", "B", -1),', javascript: '["C", "B", -1],' },
+        replace: { python: '("C", "B", -1), ("B", "C", -1),', javascript: '["C", "B", -1], ["B", "C", -1],' },
+        reveal: 'There is none. The program stops with an error before it prints anything: "TypeError: \'NoneType\' object is not subscriptable" in Python, "TypeError: Cannot read properties of null (reading \'dist\')" in JavaScript. A two-way edge of weight −1 can be walked there and back for −2, as often as you like, so it is a negative cycle all on its own. The function said so by returning no distances, and the code that prints the first line was not expecting that. The C++ version ignores the false that its function returns, then never finishes: it follows the "came from" links round the loop for ever. Check for a negative cycle before you use the distances.' },
+    ],
     python: {
       source: `INF = float("inf")
 
@@ -394,12 +412,12 @@ def path_to(prev, target):
     return route[::-1]
 
 
-nodes = ["A", "B", "C", "D", "E"]
+nodes = ["A", "B", "C", "D", "E", "F", "G"]  # nothing leads from A to F or G
 edges = [("A", "B", 4), ("A", "C", 2), ("C", "B", -1), ("B", "D", 3),
-         ("C", "D", 5), ("D", "E", -2), ("B", "E", 4)]
+         ("C", "D", 5), ("D", "E", -2), ("B", "E", 4), ("F", "G", -5)]
 
 dist, prev = bellman_ford(nodes, edges, "A")
-print(" ".join(f"{v}:{dist[v]}" for v in nodes))
+print(" ".join(f"{v}:{dist[v] if dist[v] < INF else 'none'}" for v in nodes))
 print(" -> ".join(path_to(prev, "E")))
 
 dist, prev = bellman_ford(nodes, edges + [("D", "C", -3)], "A")
@@ -412,8 +430,10 @@ print("after adding D>C:-3: " + ("negative cycle" if dist is None else "no negat
       ],
     },
     javascript: {
-      source: `function bellmanFord(nodes, edges, source) {
-  const dist = new Map(nodes.map((v) => [v, Infinity]));
+      source: `const INF = Infinity;
+
+function bellmanFord(nodes, edges, source) {
+  const dist = new Map(nodes.map((v) => [v, INF]));
   const prev = new Map();
   dist.set(source, 0);
   for (let pass = 1; pass <= nodes.length - 1; pass++) {
@@ -439,12 +459,13 @@ function pathTo(prev, target) {
   return route;
 }
 
-const nodes = ["A", "B", "C", "D", "E"];
+const nodes = ["A", "B", "C", "D", "E", "F", "G"];  // nothing leads from A to F or G
 const edges = [["A", "B", 4], ["A", "C", 2], ["C", "B", -1], ["B", "D", 3],
-  ["C", "D", 5], ["D", "E", -2], ["B", "E", 4]];
+  ["C", "D", 5], ["D", "E", -2], ["B", "E", 4], ["F", "G", -5]];
 
 const result = bellmanFord(nodes, edges, "A");
-console.log(nodes.map((v) => v + ":" + result.dist.get(v)).join(" "));
+const show = (d) => (d < INF ? String(d) : "none");
+console.log(nodes.map((v) => v + ":" + show(result.dist.get(v))).join(" "));
 console.log(pathTo(result.prev, "E").join(" -> "));
 
 const second = bellmanFord(nodes, edges.concat([["D", "C", -3]]), "A");
@@ -453,6 +474,7 @@ console.log("after adding D>C:-3: " + (second === null ? "negative cycle" : "no 
     cpp: {
       source: `#include <iostream>
 #include <limits>
+#include <string>
 #include <vector>
 
 struct Edge { int u, v, w; };
@@ -482,13 +504,14 @@ bool bellmanFord(int n, const std::vector<Edge>& edges, int source,
 }
 
 int main() {
-    const int n = 5;  // nodes A..E are 0..4
+    const int n = 7;  // nodes A..G are 0..6; nothing leads from A to F or G
     std::vector<Edge> edges = {{0, 1, 4}, {0, 2, 2}, {2, 1, -1}, {1, 3, 3},
-                               {2, 3, 5}, {3, 4, -2}, {1, 4, 4}};
+                               {2, 3, 5}, {3, 4, -2}, {1, 4, 4}, {5, 6, -5}};
     std::vector<int> dist, prev;
     bellmanFord(n, edges, 0, dist, prev);
     for (int v = 0; v < n; ++v) {
-        std::cout << static_cast<char>('A' + v) << ":" << dist[v] << (v + 1 < n ? " " : "\\n");
+        std::string shown = dist[v] == INF ? "none" : std::to_string(dist[v]);
+        std::cout << static_cast<char>('A' + v) << ":" << shown << (v + 1 < n ? " " : "\\n");
     }
     std::vector<int> route;
     for (int v = 4; v != -1; v = prev[v]) route.insert(route.begin(), v);
@@ -604,16 +627,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The one-way roads are A>B:1, B>C:2, C>D:-4, D>B:1 and C>E:3. What does the algorithm report for the distance from A to E?',
-      options: ['6', '5', 'No shortest distance: a negative cycle can be reached', 'E is unreachable'],
+      q: 'The one-way roads are A>B:2, A>C:4, C>D:1, D>C:-2, D>E:3 and B>E:7. What does the algorithm report for the distance from A to E?',
+      options: ['9', '8', 'No shortest distance: a negative cycle can be reached', 'E is unreachable'],
       answer: 2,
       explain: [
-        '6 is the cost of going straight along A, B, C, E. But the route can first go round B, C, D, B, which lowers the cost each time.',
-        '5 is the cost after one trip round the loop. A second trip gives 4, a third gives 3, and it never stops.',
-        'Correct. The loop B, C, D, B totals 2 − 4 + 1 = −1. E can be reached from the loop, so its cost can be pushed as low as you like.',
-        'E can be reached through C.',
+        '9 is the cost of A, B, E, which stays clear of the loop. But E can also be reached through C and D, and that way can be made as cheap as you like.',
+        '8 is the cost of A, C, D, E with no trip round the loop. One trip round C, D, C first gives 7, a second gives 6, and it never stops.',
+        'The loop C, D, C totals 1 − 2 = −1. E can be reached from D, so its cost can be pushed as low as you like. A and B keep their distances, 0 and 2, because the loop cannot reach them.',
+        'E can be reached, through B and through D.',
       ],
-      tryInput: { edges: 'A>B:1, B>C:2, C>D:-4, D>B:1, C>E:3' },
+      tryInput: { edges: 'A>B:2, A>C:4, C>D:1, D>C:-2, D>E:3, B>E:7' },
+      check: (r) => (!!r.negativeCycle && r.cycleWeight === -1 && [...r.negativeCycle].sort().join('') === 'CD' && r.dist.E === -Infinity && r.dist.A === 0 && r.dist.B === 2) || `cycle ${r.negativeCycle && r.negativeCycle.join('')}, E=${r.dist.E}, B=${r.dist.B}`,
     },
     {
       type: 'debug',
@@ -649,7 +673,8 @@ for _ in range(len(nodes) - 1):
     {
       type: 'challenge',
       title: 'Only recheck what changed',
-      prompt: 'A pass wastes time on edges that leave nodes whose distance did not change. Write a version that keeps a queue of nodes whose distance was lowered. Take a node from the queue, relax only the edges leaving it, and add any node whose distance drops (if it is not already waiting). Count relaxations and compare with the plain version on the presets of this page. Then add negative-cycle detection: decide how your version can tell that it will never stop.',
+      prompt: 'A pass wastes time on edges that leave nodes whose distance did not change. Write a version that keeps a queue of nodes whose distance was lowered. Take a node from the queue, relax only the edges leaving it, and add any node whose distance drops (if it is not already waiting). Count relaxations, one for every edge you check, and compare with the plain version on three presets of this page: "Unlucky edge order", "Lucky edge order" and "A negative edge that pays off". Then add negative-cycle detection: decide how your version can tell that it will never stop, and try it on the preset "Negative cycle".',
+      expect: 'The queue version needs 4 relaxations on "Unlucky edge order", 4 on "Lucky edge order" and 5 on "A negative edge that pays off", where the plain version on this page needs 20, 8 and 12. The distances are the same: E is 4 on both chains, and B, C and D are 5, 1 and 2 on the third. The order of the edge list no longer matters, because a node is rechecked only when its own distance has dropped. On "Negative cycle" a version with no detection never stops. One that counts how often each node enters the queue, and gives up when a node enters for the fifth time in this graph of five nodes, stops after 17 relaxations with B as the node that went over.',
       hints: ['Keep a flag per node saying whether it is currently in the queue.', 'Count how many times each node has entered the queue. In a graph without negative cycles, no node needs to enter more than V − 1 times.'],
     },
   ],
@@ -699,7 +724,7 @@ for _ in range(len(nodes) - 1):
       check: (r) => (matchesReference(r) === true && r.dist.E === 2 && r.path.join('') === 'ACBDE') || `${matchesReference(r)}; E=${r.dist.E} via ${r.path.join('')}` },
     { name: 'the worked example', input: { edges: 'A>C:2, C>D:1, A>B:5, B>C:-4' },
       check: (r, c) => (r.dist.B === 5 && r.dist.C === 1 && r.dist.D === 2 && r.path.join('') === 'ABCD' && r.passes === 3 && r.earlyExit && c.relaxations === 12) || `got C=${r.dist.C} D=${r.dist.D} via ${r.path.join('')} in ${r.passes} passes, ${c.relaxations} relaxations` },
-    { name: 'the predicted negative cycle', input: { edges: 'A>B:1, B>C:2, C>D:-4, D>B:1, C>E:3' },
+    { name: 'a negative cycle that the source can reach is reported', input: { edges: 'A>B:1, B>C:2, C>D:-4, D>B:1, C>E:3' },
       check: (r) => (r.negativeCycle && r.cycleWeight === -1 && [...r.negativeCycle].sort().join('') === 'BCD' && r.dist.E === -Infinity && r.dist.A === 0 && r.path.length === 0) || `cycle ${r.negativeCycle && r.negativeCycle.join('')}, weight ${r.cycleWeight}, E=${r.dist.E}` },
     { name: 'a zero-weight cycle is not reported', input: { edges: 'A>B:1, B>C:2, C>D:-3, D>B:1, C>E:3' },
       check: (r) => (!r.negativeCycle && r.dist.E === 6 && matchesReference(r) === true) || `E=${r.dist.E}` },

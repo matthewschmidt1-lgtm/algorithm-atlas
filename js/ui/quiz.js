@@ -31,7 +31,9 @@ export function createQuiz(lesson, { onTry = null } = {}) {
         h('p.quiz-type', TYPE_LABEL.challenge),
         h('h3', q.title),
         h('div.prose', { html: `<p>${rich(q.prompt)}</p>` }),
-        (q.hints || []).length ? h('details.fold', h('summary', q.hints.length === 1 ? 'Show a hint' : `Show ${q.hints.length} hints`), h('div.fold-body', h('ul.prose-list', q.hints.map((t) => h('li', { html: rich(t) }))))) : null);
+        (q.hints || []).length ? h('details.fold', h('summary', q.hints.length === 1 ? 'Show a hint' : `Show ${q.hints.length} hints`), h('div.fold-body', h('ul.prose-list', q.hints.map((t) => h('li', { html: rich(t) }))))) : null,
+        // what a correct solution gives, so the learner can tell whether theirs is one
+        q.expect ? h('details.fold', h('summary', 'Check your answer'), h('div.fold-body', h('p', { html: rich(q.expect) }))) : null);
     }
     const name = nextId('q');
     const feedback = h('div.quiz-feedback', { 'aria-live': 'polite', hidden: true });

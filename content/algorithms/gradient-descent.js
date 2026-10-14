@@ -133,7 +133,7 @@ export default {
       "At x = 1 the slope is 2. A quarter of 2 is 0.5, so step from 1 down to 0.5.",
       "At x = 0.5 the slope is 1. A quarter of 1 is 0.25, so step from 0.5 down to 0.25.",
     ],
-    result: "The guesses were 4, 2, 1, 0.5, 0.25. Each step halves the distance to the true lowest point, which is at x = 0. The steps get shorter without being told to, because the slope gets gentler near the bottom.",
+    result: "The guesses were 4, 2, 1, 0.5, 0.25. Each step halves the distance to the true lowest point, which is at x = 0. A step turns x into x − rate × 2 × x, which is (1 − 2 × rate) × x, so with a rate of one quarter every step multiplies the distance by one half. Whatever the rate, every step multiplies by that same number: the distance shrinks when the size of the number is below 1 and grows when it is above 1. The steps get shorter without being told to, because the slope gets gentler near the bottom.",
   },
 
   terms: [
@@ -163,18 +163,22 @@ export default {
     ],
     presets: [
       { label: 'Steady descent', values: { landscape: 'bowl', rate: 0.1, momentum: 0, steps: 60 } },
-      { label: 'Step too large: divergence', values: { landscape: 'bowl', rate: 1.05, momentum: 0, steps: 40 } },
+      { label: 'Step too large: divergence', values: { landscape: 'bowl', rate: 1.1, momentum: 0, steps: 80 } },
       { label: 'Zig-zag in a narrow valley', values: { landscape: 'valley', rate: 0.15, momentum: 0, steps: 80 } },
-      { label: 'Same valley with momentum', values: { landscape: 'valley', rate: 0.05, momentum: 0.8, steps: 80 } },
+      { label: 'Same valley with momentum', values: { landscape: 'valley', rate: 0.15, momentum: 0.5, steps: 80 } },
       { label: 'Four minima', values: { landscape: 'himmelblau', rate: 0.005, momentum: 0, steps: 120 } },
       { label: 'Curved valley', values: { landscape: 'rosenbrock', rate: 0.004, momentum: 0.8, steps: 300 } },
       { label: 'Trapped by ripples', values: { landscape: 'rastrigin', rate: 0.002, momentum: 0, steps: 80 } },
     ],
     tryThis: [
-      'On the round bowl, raise the learning rate slowly from 0.1. Below 0.5 the path heads straight in. Between 0.5 and 1 every step overshoots to the opposite side but lands closer, so it still converges. Just above 1 it diverges. The limit is 2 divided by the curvature, which is 2 here.',
-      'Load "Zig-zag in a narrow valley". The steep direction forces a small learning rate, so progress along the gentle direction is slow. Then load "Same valley with momentum" and compare the number of steps.',
-      'Load "Four minima" and move the start position sliders. The method always converges to a minimum, but which one depends entirely on where it begins.',
-      'Load "Trapped by ripples". Descent stops in the nearest dip, far above the global minimum at the centre. No learning rate fixes this; it is a limit of following the local slope.',
+      { ask: 'On the round bowl the slope in each direction is 2 × the position, as in the worked example. So one step multiplies the distance from the centre by (1 − 2 × rate). Work that number out for learning rates 0.25, 0.5, 0.76 and 1.1 before you run them. Which rate lands on the centre in a single step? Which one jumps to the far side on every step and still gets there? And what is the largest rate that can converge at all?',
+        reveal: 'The multipliers are 0.5, 0, −0.52 and −1.2. At 0.25 each step halves the distance and the run converges in 13 steps. At 0.5 the multiplier is 0, so the first step lands exactly on the centre: 1 step. At 0.76 the minus sign throws the point to the far side each time, but only 0.52 times as far out, and it converges in 14 steps. At 1.1 every step lands 1.2 times farther out: after 60 steps the loss is 3.46e+10, and with the maximum raised to 300 the page reports "Diverged after 71 steps". The dividing line is a multiplier of −1, which is rate 1. Set it and the point jumps between (−2.55, 2.1) and (2.55, −2.1) for ever, with the loss stuck at 10.912. So the limit is 1, and 1 is 2 divided by 2. The 2 underneath is the curvature of this bowl, the number that turns a position into a slope. On a surface that curves more sharply the limit is smaller by the same factor.' },
+      { ask: 'Load "Zig-zag in a narrow valley" and note how many steps it takes. "Same valley with momentum" keeps the valley, the start and the learning rate of 0.15, and adds momentum 0.5, so each step also carries half of the step before it. Before you load it: will it need more steps or fewer, and roughly how many?',
+        reveal: 'Fewer: 25 steps against 49, about half, with nothing changed but the momentum. Along the valley floor every step points the same way, so the carried-over half adds to the next step and the path covers ground faster. Across the valley the steps keep changing side, so the carried-over half works against the next step and the swings die out sooner. More momentum is not better without limit. Raise it to 0.9 with the maximum steps at 300 and the same run takes 160 steps, because the point now swings far past the minimum along the valley as well and has to come back.' },
+      { ask: 'Load "Four minima". All four hollow circles mark points where the loss is exactly 0, so none is better than another. The run ends at one of them. Now slide the horizontal start position from −0.85 to 0.85 and change nothing else. Will it end at the same one?',
+        reveal: 'No. From the left it stops at (−2.805, 3.131) after 27 steps. From the right it stops at (3.000, 2.000) after 68 steps. Move the vertical start to −0.7 as well and it finds a third, (3.584, −1.848), after 63 steps. Every one of these runs converges. Which minimum it converges to is decided by where it starts, because each step only looks at the slope under the current point.' },
+      { ask: 'Load "Trapped by ripples". The lowest point is at the centre, where the loss is 0. Where will the descent stop, and how far above 0? Then change the learning rate to 0.001, to 0.004 and to 0.01. Does any of them get it to the centre?',
+        reveal: 'It stops at (−2.985, 2.985) with loss 17.909, in the dip nearest to where it started, after 10 steps. Rates 0.001 and 0.004 end in exactly the same dip, after 27 and 20 steps. At 0.01 the steps are too long for dips this sharp: the path never settles, and after 80 steps the loss is 20.704, higher than before. Changing the rate does not get it to the centre. Stopping in the nearest dip is a limit of following the local slope, not a setting to tune.' },
     ],
     run,
     report: (r, c) => `${r.status === 'converged' ? 'Converged' : r.status === 'diverged' ? 'Diverged' : 'Stopped at the step limit'} after ${r.steps} steps.\nFinal position: (${f4(r.x)}, ${f4(r.y)})   Final loss: ${f4(r.bestValue)}\n${c['gradient evaluations'] || 0} gradient evaluations.`,
@@ -248,9 +252,23 @@ export default {
 
   code: {
     sample: {
-      input: 'Minimize f(x, y) = (x − 3)² + 2(y + 1)² from (0, 0) with learning rate 0.1, printing every fifth step.',
-      expected: 'step  0: x=0.0000 y=0.0000 loss=11.0000\nstep  5: x=2.0170 y=-0.9222 loss=0.9785\nstep 10: x=2.6779 y=-0.9940 loss=0.1038\nstep 15: x=2.8944 y=-0.9995 loss=0.0111\nstep 20: x=2.9654 y=-1.0000 loss=0.0012\nstep 25: x=2.9887 y=-1.0000 loss=0.0001\nstep 30: x=2.9963 y=-1.0000 loss=0.0000',
+      input: 'First check the gradient formula at the point (1, 2) against slopes measured from the loss itself. Then minimize f(x, y) = (x − 3)² + 2(y + 1)² from (0, 0) with learning rate 0.1, printing every fifth step.',
+      expected: 'gradient at (1, 2): formula (-4.0000, 12.0000), measured (-4.0000, 12.0000), agree to 4 decimals: yes\nstep  0: x=0.0000 y=0.0000 loss=11.0000\nstep  5: x=2.0170 y=-0.9222 loss=0.9785\nstep 10: x=2.6779 y=-0.9940 loss=0.1038\nstep 15: x=2.8944 y=-0.9995 loss=0.0111\nstep 20: x=2.9654 y=-1.0000 loss=0.0012\nstep 25: x=2.9887 y=-1.0000 loss=0.0001\nstep 30: x=2.9963 y=-1.0000 loss=0.0000',
     },
+    breakIt: [
+      { change: 'In the gradient, change the `4` in `4 * (y + 1)` to `2`, the kind of slip made when working out a slope by hand. Will the descent still reach the minimum at (3, −1), and which line of the output gives the mistake away?',
+        find: { python: 'return 2 * (x - 3), 4 * (y + 1)', javascript: '[2 * (x - 3), 4 * (y + 1)]' },
+        replace: { python: 'return 2 * (x - 3), 2 * (y + 1)', javascript: '[2 * (x - 3), 2 * (y + 1)]' },
+        reveal: 'The first line now reads "formula (-4.0000, 6.0000), measured (-4.0000, 12.0000), agree to 4 decimals: NO". The descent itself still heads for the minimum: it ends with "step 30: x=2.9963 y=-0.9988 loss=0.0000", only a little behind in y. A gradient that is wrong by a factor still points downhill, so the loss falls and nothing looks broken. The check is the only line that catches it, which is why you compare a hand-written gradient with measured slopes before trusting a run.' },
+      { change: 'In the update of x, change `-=` to `+=`, so that x moves with the gradient instead of against it. The gradient check runs first. Will it catch this?',
+        find: { python: 'x -= rate * gx', javascript: 'x -= rate * gx;' },
+        replace: { python: 'x += rate * gx', javascript: 'x += rate * gx;' },
+        reveal: 'No. The first line still ends "agree to 4 decimals: yes", because the gradient is right. The mistake is in what the loop does with it. x now climbs away from 3: the output goes "step  5: x=-4.4650 y=-0.9222 loss=55.7377" and ends "step 30: x=-709.1289 y=-1.0000 loss=507127.6292". y, whose update still subtracts, settles at −1 as before. A loss that rises on every step, whatever small rate you use, is the sign of a flipped update.' },
+      { change: 'Change the learning rate from `0.1` to `0.6`. On the round bowl in the demonstration a rate of 0.6 converges in 6 steps. Will it converge here?',
+        find: { python: 'rate = 0.1', javascript: 'const rate = 0.1;' },
+        replace: { python: 'rate = 0.6', javascript: 'const rate = 0.6;' },
+        reveal: 'It does not. x is fine, reaching 3.0000 by step 10, but y swings from side to side and grows: "step  5: x=3.0010 y=-6.3782 loss=57.8509", ending "step 30: x=3.0000 y=24200.4324 loss=1171418656.1142". This function curves twice as sharply in y as the bowl does: the slope in y is 4 × (y + 1), so each step multiplies the distance in y by 1 − 4 × 0.6 = −1.4. The limit here is 2/4 = 0.5. A rate that worked on one surface says nothing about another with different curvature.' },
+    ],
     python: {
       source: `def loss(x, y):
     return (x - 3) ** 2 + 2 * (y + 1) ** 2
@@ -259,6 +277,14 @@ export default {
 def grad(x, y):
     return 2 * (x - 3), 4 * (y + 1)
 
+
+# Check the formula in grad against slopes measured from loss itself.
+h = 1e-5
+fx, fy = grad(1.0, 2.0)
+mx = (loss(1.0 + h, 2.0) - loss(1.0 - h, 2.0)) / (2 * h)
+my = (loss(1.0, 2.0 + h) - loss(1.0, 2.0 - h)) / (2 * h)
+verdict = "yes" if abs(fx - mx) < 0.00005 and abs(fy - my) < 0.00005 else "NO"
+print(f"gradient at (1, 2): formula ({fx:.4f}, {fy:.4f}), measured ({mx:.4f}, {my:.4f}), agree to 4 decimals: {verdict}")
 
 x, y = 0.0, 0.0
 rate = 0.1
@@ -270,13 +296,22 @@ for step in range(31):
     y -= rate * gy`,
       notes: [
         { line: 6, text: 'The gradient is the pair of partial derivatives. For this function they can be written by hand; in machine learning they come from automatic differentiation.' },
-        { line: 10, text: 'The learning rate. This function\'s largest curvature is 4, so any rate below 2/4 = 0.5 converges.' },
-        { line: 15, text: 'The update: move against the gradient. The minus sign is the whole algorithm.' },
+        { line: 12, text: 'A slope measured without any formula: nudge x a little each way and divide the change in loss by the distance between the two points. If the hand-written gradient is right, the two numbers match. The point (1, 2) is arbitrary; any point where neither slope is zero will do.' },
+        { line: 18, text: 'The learning rate. This function\'s largest curvature is 4, so any rate below 2/4 = 0.5 converges.' },
+        { line: 23, text: 'The update: move against the gradient. The minus sign is the whole algorithm.' },
       ],
     },
     javascript: {
       source: `const loss = (x, y) => (x - 3) ** 2 + 2 * (y + 1) ** 2;
 const grad = (x, y) => [2 * (x - 3), 4 * (y + 1)];
+
+// Check the formula in grad against slopes measured from loss itself.
+const h = 1e-5;
+const [fx, fy] = grad(1, 2);
+const mx = (loss(1 + h, 2) - loss(1 - h, 2)) / (2 * h);
+const my = (loss(1, 2 + h) - loss(1, 2 - h)) / (2 * h);
+const verdict = Math.abs(fx - mx) < 0.00005 && Math.abs(fy - my) < 0.00005 ? "yes" : "NO";
+console.log("gradient at (1, 2): formula (" + fx.toFixed(4) + ", " + fy.toFixed(4) + "), measured (" + mx.toFixed(4) + ", " + my.toFixed(4) + "), agree to 4 decimals: " + verdict);
 
 let x = 0, y = 0;
 const rate = 0.1;
@@ -291,19 +326,30 @@ for (let step = 0; step <= 30; step++) {
 }`,
     },
     cpp: {
-      source: `#include <cstdio>
+      source: `#include <cmath>
+#include <cstdio>
+#include <utility>
 
 double loss(double x, double y) { return (x - 3) * (x - 3) + 2 * (y + 1) * (y + 1); }
 
+std::pair<double, double> grad(double x, double y) { return {2 * (x - 3), 4 * (y + 1)}; }
+
 int main() {
+    // Check the formula in grad against slopes measured from loss itself.
+    const double h = 1e-5;
+    auto [fx, fy] = grad(1.0, 2.0);
+    double mx = (loss(1.0 + h, 2.0) - loss(1.0 - h, 2.0)) / (2 * h);
+    double my = (loss(1.0, 2.0 + h) - loss(1.0, 2.0 - h)) / (2 * h);
+    const char* verdict = std::fabs(fx - mx) < 0.00005 && std::fabs(fy - my) < 0.00005 ? "yes" : "NO";
+    std::printf("gradient at (1, 2): formula (%.4f, %.4f), measured (%.4f, %.4f), agree to 4 decimals: %s\\n", fx, fy, mx, my, verdict);
+
     double x = 0.0, y = 0.0;
     const double rate = 0.1;
     for (int step = 0; step <= 30; ++step) {
         if (step % 5 == 0) {
             std::printf("step %2d: x=%.4f y=%.4f loss=%.4f\\n", step, x, y, loss(x, y));
         }
-        double gx = 2 * (x - 3);
-        double gy = 4 * (y + 1);
+        auto [gx, gy] = grad(x, y);
         x -= rate * gx;
         y -= rate * gy;
     }
@@ -410,16 +456,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'On the round bowl f(x, y) = x² + y², what happens with learning rate 1.05 and no momentum?',
-      options: ['It converges in one step', 'It converges slowly', 'Each step overshoots to the far side, a little farther out each time, and it diverges', 'It stops immediately because the gradient is zero'],
-      answer: 2,
+      q: 'The narrow valley is f(x, y) = ½x² + 6y². Its slope is 1 × x along the valley and 12 × y across it. On the round bowl a learning rate of 0.18 converges in 20 steps. What happens in the narrow valley with learning rate 0.18, no momentum and up to 120 steps?',
+      options: ['It converges, a little more slowly than on the bowl', 'It settles along the valley, but the swings across it grow until the run is stopped as diverged', 'It flies off in both directions at once', 'It reaches the valley floor quickly and then stalls there, short of the minimum'],
+      answer: 1,
       explain: [
-        'One-step convergence happens at η = 0.5 for this function, where the step lands exactly on the minimum.',
-        'Slow convergence is what a very small rate gives.',
-        'Correct. Each step multiplies the position by (1 − 2η) = −1.1, so it flips sides and grows by 10 percent every step.',
-        'The gradient is zero only at the minimum itself.',
+        'It would if 0.18 were below the limit for this surface. The limit is 2 divided by the largest curvature, and across the valley that is 2/12, about 0.167. The bowl\'s limit of 1 does not carry over.',
+        'Each step multiplies x by 1 − 0.18 = 0.82, so x shrinks to 0. It multiplies y by 1 − 12 × 0.18 = −1.16, so y changes side and grows by 16 percent every step. The page reports "Diverged after 91 steps", with x at 0 and y past a million.',
+        'Each direction has its own multiplier. Along the valley it is 1 − 0.18 = 0.82, which shrinks x on every step. Only y, with a multiplier of −1.16, grows.',
+        'That is the picture for a rate that is safe but small. Here the trouble is the opposite: the rate is too large for the steep direction, where each step multiplies y by −1.16.',
       ],
-      tryInput: { landscape: 'bowl', rate: 1.05, momentum: 0, steps: 40 },
+      tryInput: { landscape: 'valley', rate: 0.18, momentum: 0, steps: 120 },
+      check: (r) => (r.status === 'diverged' && r.steps === 91 && Math.abs(r.x) < 1e-6 && Math.abs(r.y) > 1e6) || `status ${r.status} after ${r.steps} steps at (${r.x}, ${r.y})`,
     },
     {
       type: 'debug',
@@ -452,7 +499,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Find the stability limit, then beat it',
-      prompt: 'For f(x, y) = ½x² + 6y², determine by experiment the largest learning rate that still converges, and explain the value using the curvature in each direction. Then implement a backtracking line search: start each step with a large trial rate and halve it until the loss decreases by at least half of what the gradient predicts. Compare the number of gradient evaluations against the best fixed rate.',
+      prompt: 'For f(x, y) = ½x² + 6y², determine by experiment the largest learning rate that still converges, and explain the value using the curvature in each direction. Start every run from (1, 1) and stop when the length of the gradient falls below 0.001. Then implement a backtracking line search: start each step with a trial rate of 1 and halve it until the loss decreases by at least half of what the gradient predicts. Count its gradient evaluations and compare them with a fixed rate of 0.15.',
+      expect: 'The largest rate that converges is just under 1/6, about 0.1667. Each step multiplies y by (1 − 12 × rate), which reaches −1 at rate 2/12. Along the valley the multiplier is (1 − rate), which causes no trouble. From (1, 1), a fixed rate of 0.15 converges in 45 steps (46 gradient evaluations), 0.16 takes 113 steps, and 0.17 is past the limit and never converges. Backtracking from a trial rate of 1 converges in 40 steps (41 gradient evaluations) and ends near (0.00066, −0.00003). On the way it tests 151 trial rates, each costing one loss evaluation. So it saves little over a well-chosen fixed rate. What it saves is having to find that rate.',
       hints: ['Along y the update multiplies y by (1 − 12η). When does its absolute value exceed 1?', 'The sufficient-decrease test is f(x − ηg) ≤ f(x) − ½η‖g‖².'],
     },
   ],
@@ -503,6 +551,47 @@ int main() {
       check: (r) => r.losses.every((v, i) => i === 0 || v <= r.losses[i - 1] + 1e-12) || 'loss increased' },
     { name: 'reaches a Himmelblau minimum', input: { landscape: 'himmelblau', rate: 0.005, momentum: 0, steps: 300 },
       check: (r) => r.bestValue < 1e-4 || `final loss ${r.bestValue}` },
+    { name: 'the narrow valley without momentum takes 49 steps at rate 0.15', input: { landscape: 'valley', rate: 0.15, momentum: 0, steps: 80 },
+      check: (r) => (r.status === 'converged' && r.steps === 49) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'the same valley at the same rate with momentum 0.5 takes 25 steps', input: { landscape: 'valley', rate: 0.15, momentum: 0.5, steps: 80 },
+      check: (r) => (r.status === 'converged' && r.steps === 25) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'on the bowl one step multiplies the distance by (1 − 2 × rate): the loss ratio is that number squared', input: { landscape: 'bowl', rate: 0.76, momentum: 0, steps: 10 },
+      check: (r) => r.losses.slice(1).every((v, i) => Math.abs(v / r.losses[i] - 0.52 * 0.52) < 1e-9) || `loss ratios ${r.losses.slice(1, 4).map((v, i) => v / r.losses[i])}` },
+    { name: 'bowl at rate 0.5 lands on the centre in one step', input: { landscape: 'bowl', rate: 0.5, momentum: 0, steps: 60 },
+      check: (r) => (r.status === 'converged' && r.steps === 1 && r.bestValue === 0) || `status ${r.status}, steps ${r.steps}, loss ${r.bestValue}` },
+    { name: 'bowl at rate 0.25 converges in 13 steps', input: { landscape: 'bowl', rate: 0.25, momentum: 0, steps: 60 },
+      check: (r) => (r.status === 'converged' && r.steps === 13) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'bowl at rate 0.6 converges in 6 steps (quoted by the code sample break-it)', input: { landscape: 'bowl', rate: 0.6, momentum: 0, steps: 60 },
+      check: (r) => (r.status === 'converged' && r.steps === 6) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'bowl at rate 0.76 overshoots and converges in 14 steps', input: { landscape: 'bowl', rate: 0.76, momentum: 0, steps: 60 },
+      check: (r) => (r.status === 'converged' && r.steps === 14) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'bowl at rate 1 sits exactly on the limit: the loss never changes', input: { landscape: 'bowl', rate: 1, momentum: 0, steps: 60 },
+      check: (r) => (r.status === 'budget' && r.losses.every((v) => Math.abs(v - 10.9125) < 1e-9) && Math.abs(r.x + 2.55) < 1e-9 && Math.abs(r.y - 2.1) < 1e-9) || `status ${r.status}, loss ${r.bestValue}, at (${r.x}, ${r.y})` },
+    { name: 'bowl at rate 1.1 is reported as diverged after 71 steps', input: { landscape: 'bowl', rate: 1.1, momentum: 0, steps: 300 },
+      check: (r) => (r.status === 'diverged' && r.steps === 71) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'the narrow valley at rate 0.18 diverges across the valley after 91 steps while x goes to 0', input: { landscape: 'valley', rate: 0.18, momentum: 0, steps: 120 },
+      check: (r) => (r.status === 'diverged' && r.steps === 91 && Math.abs(r.x) < 1e-6 && Math.abs(r.y) > 1e6) || `status ${r.status}, steps ${r.steps}, at (${r.x}, ${r.y})` },
+    { name: 'too much momentum is slower: 0.9 takes 160 steps in the narrow valley at rate 0.15', input: { landscape: 'valley', rate: 0.15, momentum: 0.9, steps: 300 },
+      check: (r) => (r.status === 'converged' && r.steps === 160) || `status ${r.status}, steps ${r.steps}` },
+    { name: 'four minima: starting on the right ends at (3, 2) after 68 steps', input: { landscape: 'himmelblau', rate: 0.005, momentum: 0, steps: 120, startX: 0.85 },
+      check: (r) => (r.status === 'converged' && r.steps === 68 && Math.hypot(r.x - 3, r.y - 2) < 1e-3) || `status ${r.status}, steps ${r.steps}, at (${r.x}, ${r.y})` },
+    { name: 'ripples: rates 0.001 to 0.004 all stop in the dip at (−2.985, 2.985), loss 17.909', input: { landscape: 'rastrigin', rate: 0.004, momentum: 0, steps: 80 },
+      check: (r) => (r.status === 'converged' && r.steps === 20 && Math.abs(r.bestValue - 17.909) < 1e-3 && Math.hypot(r.x + 2.985, r.y - 2.985) < 1e-3) || `status ${r.status}, steps ${r.steps}, loss ${r.bestValue}` },
+    { name: 'Things to try: the other figures quoted for the bowl, the four minima and the ripples', input: { landscape: 'himmelblau', rate: 0.005, momentum: 0, steps: 120 },
+      check: (r) => {
+        const q = { count() {}, frame() {} };
+        const go = (input) => run({ landscape: 'bowl', rate: 0.1, momentum: 0, steps: 60, startX: -0.85, startY: 0.7, ...input }, q);
+        const third = go({ landscape: 'himmelblau', rate: 0.005, steps: 120, startX: 0.85, startY: -0.7 });
+        const hot = go({ rate: 1.1 });
+        const rip = [0.002, 0.001, 0.004].map((rate) => go({ landscape: 'rastrigin', rate, steps: 80 }));
+        const wild = go({ landscape: 'rastrigin', rate: 0.01, steps: 80 }), wilder = go({ landscape: 'rastrigin', rate: 0.01, steps: 300 });
+        const ok = r.status === 'converged' && r.steps === 27 && Math.hypot(r.x + 2.805, r.y - 3.131) < 1e-3
+          && third.status === 'converged' && third.steps === 63 && Math.hypot(third.x - 3.584, third.y + 1.848) < 1e-3
+          && hot.status === 'budget' && Math.abs(hot.bestValue / 1e10 - 3.46) < 5e-3
+          && rip.every((x) => x.status === 'converged' && Math.abs(x.bestValue - 17.909) < 1e-3 && Math.hypot(x.x + 2.985, x.y - 2.985) < 1e-3) && rip.map((x) => x.steps).join(',') === '10,27,20'
+          && wild.status === 'budget' && Math.abs(wild.bestValue - 20.704) < 5e-4 && wilder.status === 'budget';
+        return ok || `four minima ${r.steps} and ${third.steps} steps; bowl at 1.1: ${hot.bestValue}; ripples ${rip.map((x) => x.steps)}; rate 0.01: ${wild.status} ${wild.bestValue}`;
+      } },
     { name: 'momentum converges in the narrow valley', input: { landscape: 'valley', rate: 0.05, momentum: 0.8, steps: 300 },
       check: (r) => (r.status === 'converged' && r.bestValue < 1e-5) || `status ${r.status}, loss ${r.bestValue}` },
   ],

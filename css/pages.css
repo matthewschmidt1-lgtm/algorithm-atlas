@@ -259,6 +259,19 @@ a.ref:hover { color: var(--accent); border-color: var(--accent); }
 .try-list { counter-reset: tr; display: grid; gap: var(--s-3); max-width: 760px; }
 .try-list li { counter-increment: tr; position: relative; padding-left: 34px; color: var(--text-2); }
 .try-list li::before { content: counter(tr); position: absolute; left: 0; top: 2px; width: 22px; height: 22px; border: 1px solid var(--line-2); border-radius: 50%; display: grid; place-items: center; font-size: 0.76rem; color: var(--text-2); }
+.try-lead { margin-bottom: var(--s-3); max-width: 760px; }
+.try-this > .small { margin-top: var(--s-5); }
+.try-ask { color: var(--text); }
+.try-set { margin-top: 8px; }
+.try-reveal { margin-top: 6px; }
+.try-reveal > summary { cursor: pointer; width: fit-content; font-size: 0.9rem; font-weight: 550; color: var(--forest-ink); }
+.try-reveal > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+.try-reveal > p { margin-top: 6px; padding: 10px 14px; background: var(--bg-2); border-radius: var(--r-2); }
+.break-it { margin-top: var(--s-6); }
+.break-it h3, .code-more h3 { font-size: 1.2rem; margin-bottom: var(--s-2); }
+.break-it > .muted, .code-more > .muted { max-width: 760px; margin-bottom: var(--s-3); }
+.code-more { margin-top: var(--s-7); }
+.decide-alts { gap: 10px; }
 
 .terms { display: grid; gap: 0; max-width: 760px; border-top: 1px solid var(--line-2); }
 .terms > div { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr); gap: var(--s-4); padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -818,3 +831,4 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .case-read { display: grid; gap: 8px; max-width: 68ch; margin-bottom: var(--s-4); color: var(--text-2); }
 .case-read strong { color: var(--text); }
 .case-sec[id] { scroll-margin-top: calc(var(--nav-h) + 20px); }
+.case-n { display: inline-block; min-width: 1.6em; color: var(--text-3); font-weight: 400; font-variant-numeric: tabular-nums; }

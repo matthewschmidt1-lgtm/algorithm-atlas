@@ -251,10 +251,14 @@ export default {
       { label: 'Worked example: three points', values: { custom: [-1, -1, 0, 0.5, 1, 0.5], rate: 0.5, steps: 40 } },
     ],
     tryThis: [
-      'Run the default and watch the first few steps. The line swings up quickly, then the steps shrink by themselves as the gradient gets smaller near the best line. Compare the final slope and intercept with the formula\'s values in the output panel.',
-      'Raise the learning rate slowly from 0.2. Around 0.5 the fit takes far fewer steps. Close to 1 the line starts to bounce above and below the data. Just past 1 each bounce is bigger than the last and the loss climbs. The limit is 2 divided by the largest curvature of the loss surface, which is about 2 for this data.',
-      'Load "No noise: a perfect fit". Every residual shrinks to nothing and the loss reaches zero. Now raise the noise. The smallest possible loss (the dashed line in the lower chart) rises, because no straight line can remove scatter.',
-      'Load "Tiny steps: not finished". Sixty steps are not enough at this learning rate. Read the gap between the two lines in the final frame, then raise the maximum steps until they meet.',
+      { ask: 'Run the default and watch the first few steps. Every step uses the same learning rate, 0.2. Will every step move the line by the same amount? And how many steps will it take before the line stops moving?',
+        reveal: 'The steps shrink by themselves. The first takes the loss from 0.388 to 0.253 and the second to 0.174, and by the end a step changes the loss only in the ninth decimal place. A step is the learning rate times the gradient, and the gradient gets smaller as the line nears the best one. The run converges after 36 steps at y = 0.752·x + 0.091, the same line the formula gives.' },
+      { ask: 'The default converges in 36 steps at a learning rate of 0.2. Raise the rate to about 0.5, then 0.8, then 1.0, then 1.1. Before each run, decide: will it take fewer steps or more, and will it converge at all?',
+        reveal: 'At 0.5 it takes 11 steps, and at 0.6 only 8. At 0.8 it takes 16: the line now overshoots and has to come back. At 1.0 it bounces above and below the data by nearly the same amount each time and has not settled after 60 steps. At 1.1 each bounce is bigger than the last, and the run is stopped as diverged at step 51 with the loss past a million. The limit is 2 divided by the largest curvature of the loss surface. That curvature is about 2 for this data, which puts the limit near 1.' },
+      { ask: 'Load "No noise: a perfect fit" and note the smallest possible loss and the number of steps. Now raise the noise to 0.6. Which of the two numbers will change?',
+        reveal: 'Only the loss. With no noise the line is y = 0.700·x + 0.100 and the loss is 0.000, because every point lies on it. With noise 0.6 the smallest possible loss rises to 0.271, and no straight line can remove that scatter. The step count stays at 36 both times. Noise moves the points up and down, and the speed of descent is set by where the points sit from left to right.' },
+      { ask: 'Load "Tiny steps: not finished". The learning rate is 0.02, a tenth of the default, and the default needed 36 steps. Will raising the maximum steps to 200, the most the slider allows, be enough to finish?',
+        reveal: 'No. After 60 steps the slope is 0.562 against the formula\'s 0.752. After 200 it is 0.744, close but still not converged. The loss is already 0.059 to three decimals, yet the gradient has not fallen below the tolerance. A small learning rate never goes wrong. It only costs steps, and here it costs more than ten times as many.' },
     ],
     run,
     report: (r) => `Gradient descent: ${lineText(r.w, r.b)}   (${r.status === 'converged' ? 'converged' : r.status === 'diverged' ? 'diverged' : 'stopped at the step limit'} after ${r.steps} steps)\nLeast squares formula: ${lineText(r.closedForm.w, r.closedForm.b)}\nMean squared error: ${f3(r.loss)} (smallest possible: ${f3(r.closedForm.loss)}) on ${r.n} points.`,
@@ -332,6 +336,16 @@ export default {
       input: 'Fit a line to the five points (−2, −3.1), (−1, −0.9), (0, 1.2), (1, 2.8), (2, 5.0) by gradient descent with learning rate 0.1, printing every tenth step, then print the closed-form answer.',
       expected: 'step  0: w=0.0000 b=0.0000 mse=8.9400\nstep 10: w=1.9780 b=0.8926 mse=0.0316\nstep 20: w=1.9899 b=0.9885 mse=0.0199\nstep 30: w=1.9900 b=0.9988 mse=0.0198\nstep 40: w=1.9900 b=0.9999 mse=0.0198\nstep 50: w=1.9900 b=1.0000 mse=0.0198\nstep 60: w=1.9900 b=1.0000 mse=0.0198\nclosed form: w=1.9900 b=1.0000 mse=0.0198',
     },
+    breakIt: [
+      { change: 'Inside the descent loop, compute the residual the other way round, as observed minus predicted: `y - (w * x + b)`. Leave the update lines as they are. Where will `w` be after 10 steps?',
+        find: { python: 'r = w * x + b - y\n        gw += 2 * r * x / n', javascript: 'const r = w * xs[i] + b - ys[i];\n    gw += 2 * r * xs[i] / n;' },
+        replace: { python: 'r = y - (w * x + b)\n        gw += 2 * r * x / n', javascript: 'const r = ys[i] - (w * xs[i] + b);\n    gw += 2 * r * xs[i] / n;' },
+        reveal: 'Step 10 prints "w=-55.5717 b=-5.1917 mse=6665.0506", and by step 60 the slope is below minus a billion. Turning the residual round flips the sign of both gradients. The update still subtracts them, so every step now moves uphill, and the farther the line is from the data the bigger the next step. The last line is unchanged, "closed form: w=1.9900 b=1.0000 mse=0.0198", because the formula does not use this loop.' },
+      { change: 'In the line that builds the slope\'s gradient `gw`, leave out the factor x, so that it adds `2 * r / n` just as the intercept\'s line does. Will the descent still converge, and if so, to what?',
+        find: { python: 'gw += 2 * r * x / n', javascript: 'gw += 2 * r * xs[i] / n;' },
+        replace: { python: 'gw += 2 * r / n', javascript: 'gw += 2 * r / n;' },
+        reveal: 'It converges, to the wrong line. Every row shows the same number for `w` and `b`, ending at "step 60: w=1.0000 b=1.0000 mse=1.9800", against the closed form\'s w=1.9900 with mse 0.0198. Without the factor x the slope and the intercept receive identical updates from the same start, so they can never differ. The loop stops moving when the average residual is zero, which is the intercept\'s condition alone. Nothing in the output looks alarming: the loss falls steadily and settles, at a value a hundred times too high.' },
+    ],
     python: {
       source: `xs = [-2.0, -1.0, 0.0, 1.0, 2.0]
 ys = [-3.1, -0.9, 1.2, 2.8, 5.0]
@@ -580,16 +594,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'On the default 24 points, what happens with a learning rate of 1.05?',
-      options: ['It converges in a couple of steps', 'It converges, but slowly', 'The line swings above and below the data, a little farther each time, and the loss ends higher than it started', 'Nothing moves, because the gradient is zero'],
+      q: 'Three points: (−1.5, −1), (0, 0.5) and (1.5, 0.5). They are the points of the worked example with the outer two moved farther from the middle. The learning rate is 0.8, which converges in 16 steps on the default data. What happens here?',
+      options: ['It converges in fewer steps, because three points are easier to fit than 24', 'It converges, but slowly', 'The slope overshoots to the far side of its best value, farther each time, and the loss ends higher than it started', 'Nothing moves, because the gradient is zero'],
       answer: 2,
       explain: [
-        'A larger rate is only faster up to a limit. Here the fastest fixed rate is near 0.6.',
-        'Slow convergence is what a very small rate gives.',
-        'Correct. The curvature in the intercept direction is about 2, so each step multiplies the intercept\'s error by about 1 − 1.05 × 2 = −1.1. It flips sign and grows by 10 percent per step.',
-        'The gradient is zero only at the least squares line, and the starting line is far from it.',
+        'The number of points does not set the speed. What matters is how steeply the loss curves, and moving the outer points outward makes it curve more steeply in the slope direction.',
+        'Slow convergence is what a rate far below the limit gives. This rate is above the limit for these points.',
+        'Correct. The curvature in the slope direction is 2 times the average of x², which is 2 × 1.5 = 3 here. Each step multiplies the slope\'s error by 1 − 0.8 × 3 = −1.4, so it flips sign and grows by 40 percent. The loss goes 0.5, 0.86, 1.57 and passes a million at step 22, where the run is stopped as diverged. The limit for these points is 2 ÷ 3, about 0.67. A rate that is safe on one dataset can be too large on another.',
+        'The gradient is zero only at the least squares line, which is y = 0.5 × x here, and the starting line is flat.',
       ],
-      tryInput: { points: 24, noise: 0.25, seed: 3, rate: 1.05, steps: 60, custom: [] },
+      tryInput: { custom: [-1.5, -1, 0, 0.5, 1.5, 0.5], rate: 0.8, steps: 60 },
+      check: (r) => (r.status === 'diverged' && r.steps === 22 && r.loss > 1e6 && r.w < -800 && Math.abs(r.losses[1] - 0.86) < 1e-9 && Math.abs(r.closedForm.w - 0.5) < 1e-12) || `status ${r.status} after ${r.steps} steps, loss ${r.loss}, w ${r.w}`,
     },
     {
       type: 'debug',
@@ -626,7 +641,8 @@ for step in range(1000):
     {
       type: 'challenge',
       title: 'Make descent indifferent to where the data sit',
-      prompt: 'Take any dataset and add 10 to every x value. Show by experiment that gradient descent with the best fixed learning rate now needs thousands of steps, while the closed form is unaffected. Then standardize x (subtract its mean and divide by its standard deviation) before fitting, run descent again, and convert the fitted slope and intercept back to the original units. Explain the difference in step counts using the two curvatures of the loss surface.',
+      prompt: 'Take the five points of the code sample and add 10 to every x value, so that x runs from 8 to 12. Start from w = 0 and b = 0, use the best fixed learning rate, which is 2 divided by the sum of the two curvatures, and count the steps until the mean squared error is within 0.0001 of the closed form\'s. Do the same for the original points and compare. Then standardize x (subtract its mean and divide by its standard deviation, the one that divides by n) before fitting, run descent again with a learning rate of 0.5, and convert the fitted slope and intercept back to the original units. Explain the difference in step counts using the two curvatures of the loss surface.',
+      expect: 'Original points: curvatures 4 and 2, best rate 0.3333, and 6 steps. With 10 added to x: the closed form gives w = 1.9900, b = −18.9000 and the same mse, 0.0198, at no extra cost. The curvatures are 205.96 and 0.0388, a ratio of about 5,300, the best rate is 0.009709, and descent needs 15,111 steps. Standardized (mean 10, standard deviation 1.4142): both curvatures are exactly 2, so a learning rate of 0.5 lands on the answer in a single step, at slope 2.8143 and intercept 1.0000 in the standardized units. Converted back, that is w = 1.9900 and b = −18.9000 again.',
       hints: [
         'The curvatures are the eigenvalues of the 2-by-2 matrix 2 × [[mean of x², mean of x], [mean of x, 1]].',
         'If z = (x − m) / s and the fit is y = a·z + c, then in the original units the slope is a / s and the intercept is c − a·m / s.',
@@ -686,7 +702,16 @@ for step in range(1000):
       check: (r) => (Math.abs(r.closedForm.w - 0.75) < 1e-12 && Math.abs(r.closedForm.b) < 1e-12 && Math.abs(r.closedForm.loss - 0.125) < 1e-12
         && Math.abs(r.losses[0] - 0.5) < 1e-12 && Math.abs(r.losses[1] - 0.5 / 3) < 1e-12 && Math.abs(r.w - 0.75) < 1e-3)
         || `closed form (${r.closedForm.w}, ${r.closedForm.b}) loss ${r.closedForm.loss}; losses ${r.losses.slice(0, 2)}; w ${r.w}` },
-    { name: 'a learning rate of 1.05 makes the loss grow (quiz prediction)', input: { points: 24, noise: 0.25, seed: 3, rate: 1.05, steps: 60, custom: [] },
+    { name: 'three wide points at rate 0.8: the slope error grows by a factor of 1.4 per step and the run diverges at step 22 (quiz prediction)', input: { custom: [-1.5, -1, 0, 0.5, 1.5, 0.5], rate: 0.8, steps: 60 },
+      check: (r) => {
+        if (r.status !== 'diverged' || r.steps !== 22) return `status ${r.status} after ${r.steps} steps`;
+        // loss = 0.125 + 1.5 (w − 0.5)², and the slope error is multiplied by 1 − 0.8 × 3 = −1.4 each step
+        const want = (k) => 0.125 + 1.5 * (0.5 * Math.pow(1.4, k)) ** 2;
+        return [0, 1, 2, 5].every((k) => Math.abs(r.losses[k] - want(k)) < 1e-9 * want(k)) || `losses ${r.losses.slice(0, 6)}`;
+      } },
+    { name: 'rates quoted in "Things to try": 11 steps at 0.5, and 16 at 0.8', input: { points: 24, noise: 0.25, seed: 3, rate: 0.5, steps: 60 },
+      check: (r) => (r.status === 'converged' && r.steps === 11) || `status ${r.status} after ${r.steps} steps` },
+    { name: 'a learning rate of 1.05 makes the loss grow (the "Step too large" preset)', input: { points: 24, noise: 0.25, seed: 3, rate: 1.05, steps: 60, custom: [] },
       check: (r) => (r.status !== 'converged' && r.loss > r.initialLoss && r.losses[r.losses.length - 1] > r.losses[r.losses.length - 2]) || `status ${r.status}, loss ${r.loss} from ${r.initialLoss}` },
   ],
 };

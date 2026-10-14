@@ -156,6 +156,8 @@ function newtonFit(pts) {
 }
 
 const EXAMPLE = [-1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 1, 1];
+// Class 1 in the middle, class 0 on either side: not XOR, and still beyond a single line.
+const SANDWICH = [-1, 0, 0, 1, 0, 0, 0, 0.2, 1, 0, -0.2, 1];
 
 export default {
   meta: {
@@ -251,10 +253,14 @@ export default {
       { label: 'Worked example: four points', values: { custom: EXAMPLE, rate: 4, steps: 10 } },
     ],
     tryThis: [
-      'Run the default. The boundary swings into roughly the right place in the first few steps. After that the line barely moves, but the shading keeps sharpening as the weights grow: the model is becoming more confident, not changing its mind. Brick rings mark the points left on the wrong side.',
-      'Load "XOR: a line cannot do it". The loss hardly leaves 0.693, the value for pure guessing, and the accuracy stays near 50 percent. Descent converges, to a model that has learned almost nothing. Then run [k-nearest neighbours](#/algorithm/knn) on the same dataset.',
-      'Load "Separable: the weights never stop growing" and watch the last number in the readout, the length of the weight vector. The accuracy reaches 100 percent early, yet the loss keeps falling and the weights keep growing, and the shaded edge hardens toward a cliff. There is no finite set of best weights here.',
-      'Load "Tiny learning rate" and compare the boundary after 100 steps with the default run. The direction is found early, but the loss has far to go. Then raise the rate to 10 on the XOR preset and watch the loss chart jump: the steps have become too long.',
+      { ask: 'Run the default. The boundary swings into roughly the right place in the first few steps. How many more steps will training go on for, and if the line has stopped moving, what is still changing?',
+        reveal: 'It runs for 81 steps. After the first step the weights are (0.73, 0.57). At the end they are (3.27, 2.61), which points in almost the same direction and is four and a half times as long. Meanwhile the loss falls from 0.518 to 0.340 and the shading sharpens. The model is becoming more confident, not changing its mind. It ends with 33 of the 40 points on the correct side, and brick rings mark the other 7.' },
+      { ask: 'Load "XOR: a line cannot do it". Opposite corners share a class. The loss starts at 0.693, the value for pure guessing. How far below that will training take it, and how many of the 40 points will end on the correct side?',
+        reveal: 'The loss ends at 0.692 and 20 of the 40 points are on the correct side: 50 percent. Descent converges after only 16 steps, with weights of 0.10 and −0.03, to a model that has learned almost nothing. The pulls of opposite corners cancel. More steps would not help, because the limit is the shape of the boundary. Then run [k-nearest neighbours](#/algorithm/knn) on its XOR preset, where every point is classified correctly from the others.' },
+      { ask: 'Load "Separable: the weights never stop growing" and watch the last number in the readout, the length of the weight vector. Every point is on the correct side early in the run. Once the accuracy is 100 percent, will the weights settle and the loss level off?',
+        reveal: 'Neither does. The length of the weight vector is 4.2 after 10 steps, 9.3 after 100, 11.4 after 200 and 12.7 after 300, and the loss falls from 0.128 to 0.027, 0.016 and 0.011 at the same steps. The run stops only because it reaches the step limit. Larger weights make every correct prediction more confident, which always lowers the loss a little more, so the shaded edge hardens toward a cliff and there is no finite set of best weights.' },
+      { ask: 'Load "Tiny learning rate". The rate is 0.05, eighty times smaller than the default 4. After 100 steps, will fewer points be on the correct side than the 33 of 40 the default reached? Then load the XOR preset and raise the rate to 10, the top of the slider. Will the loss still creep downward?',
+        reveal: 'The accuracy is the same, 33 of 40, because the direction of the boundary is found early. What lags is the confidence: the weights are only (0.73, 0.57), about where the default was after a single step, and the loss is 0.518 against 0.340. On XOR at a rate of 10 the loss does not creep down. It dips slightly, then climbs, and after 100 steps it is 1.038, well above the 0.693 it started from. The steps have become too long.' },
     ],
     run,
     report: (r, c) => `Training accuracy: ${pct(r.accuracy)} (${r.correct} of ${r.n} training points on the correct side of the boundary).\nBoundary: ${f2(r.w[0])}·x ${term(r.w[1])}·y ${term(r.b)} = 0\nCross-entropy loss: ${f3(r.loss)} (started at ${f3(r.initialLoss)})\n${r.status === 'converged' ? 'Converged' : 'Stopped at the step limit'} after ${r.steps} steps, ${c['gradient evaluations'] || 0} gradient evaluations.`,
@@ -319,6 +325,20 @@ export default {
       input: 'Train on eight labelled points, which no straight line separates perfectly, with learning rate 1, printing the weights and loss at steps 0, 1, 10, 100 and 1000, then the training accuracy.',
       expected: 'step    0: w1=0.000 w2=0.000 b=0.000 loss=0.6931\nstep    1: w1=0.125 w2=0.219 b=0.000 loss=0.6341\nstep   10: w1=0.616 w2=1.348 b=-0.071 loss=0.4590\nstep  100: w1=0.476 w2=3.007 b=-0.354 loss=0.4017\nstep 1000: w1=0.403 w2=3.173 b=-0.378 loss=0.4013\ntraining accuracy: 6 of 8',
     },
+    breakIt: [
+      { change: 'Compute the error the other way round, as label minus probability, and leave the three update lines alone. What will the loss do at step 1 and at step 10?',
+        find: { python: 'err = sigmoid(w1 * x + w2 * y + b) - label', javascript: 'const err = sigmoid(w1 * x + w2 * y + b) - label;' },
+        replace: { python: 'err = label - sigmoid(w1 * x + w2 * y + b)', javascript: 'const err = label - sigmoid(w1 * x + w2 * y + b);' },
+        reveal: 'The loss rises: 0.7611 at step 1 and 2.6014 at step 10, where the correct program had 0.6341 and 0.4590. Turning the error round flips the sign of all three gradients, and the update still subtracts them, so every step moves uphill and the weights run away in the wrong direction. Then the two languages part. Python stops at step 100 with "ValueError: math domain error": a probability has rounded to exactly 1, and the loss asks for the logarithm of zero. JavaScript carries on, prints "loss=Infinity" at steps 100 and 1000 with w2 at −498.233, and ends with "training accuracy: 1 of 8".' },
+      { change: 'In the `loss` function, leave out the sigmoid, so that `p` is the raw score `w1 * x + w2 * y + b`. The training loop is not touched. What does the very first line of output show?',
+        find: { python: 'p = sigmoid(w1 * x + w2 * y + b)', javascript: 'const p = sigmoid(w1 * x + w2 * y + b);' },
+        replace: { python: 'p = w1 * x + w2 * y + b', javascript: 'const p = w1 * x + w2 * y + b;' },
+        reveal: 'In Python the program prints nothing at all and stops with "ValueError: math domain error". At step 0 every weight is zero, so every raw score is 0, and the loss asks for the logarithm of 0. JavaScript does not stop. Its first line ends "loss=Infinity", steps 1 and 10 print 1.0537 and 0.2774, which mean nothing, and steps 100 and 1000 print "loss=NaN", because the logarithm of a negative number is not a number. The weights in every row are the correct ones and the last line still reads "training accuracy: 6 of 8", since training never calls this function. A raw score is not a probability. Only the sigmoid keeps it between 0 and 1, where the logarithm is defined.' },
+      { change: 'Change the label of the fourth point, (0.5, 0.5), from 0 to 1. A straight line can now separate the two classes. Will the weights settle sooner than before?',
+        find: { python: '(0.5, 0.5, 0)', javascript: '[0.5, 0.5, 0]' },
+        replace: { python: '(0.5, 0.5, 1)', javascript: '[0.5, 0.5, 1]' },
+        reveal: 'They never settle. Compare steps 100 and 1000: w2 goes from 5.097 to 10.231, the loss from 0.0542 to 0.0081, and the last line reads "training accuracy: 8 of 8". Before the change the same two rows barely differed: w2 went from 3.007 to 3.173 and the loss from 0.4017 to 0.4013. With every point on its correct side, larger weights make every prediction more confident, and that always lowers the loss a little more. The growing numbers are not a bug, and they are not a sign of a better model either. There is no finite best answer, which is why separable data needs a step limit or regularization.' },
+    ],
     python: {
       source: `import math
 
@@ -578,20 +598,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The XOR dataset has class 0 in the top-right and bottom-left corners and class 1 in the other two. What training accuracy does logistic regression reach on it?',
-      options: ['Close to 100 percent, given enough steps', 'About 75 percent: it gets three of the four corners', 'About 50 percent, no better than guessing', '0 percent'],
+      q: 'Four points, and this is not the XOR pattern. Class 1 sits in the middle, at (0, 0.2) and (0, −0.2). Class 0 sits on either side, at (−1, 0) and (1, 0). Starting from zero weights with a learning rate of 4, what does logistic regression do?',
+      options: ['It closes a boundary around the middle pair and gets all four points right', 'It settles on a line that cuts off one of the outer points and gets three of the four right', 'Nothing: the weights never leave zero, every point keeps a probability of 0.5, and the loss stays at 0.693', 'The weights grow without limit, as they do on separable data'],
       answer: 2,
       explain: [
-        'More steps cannot help. The limit is the shape of the boundary, not the amount of training.',
-        'A line that cuts off a single corner would score about this, but training does not find it. The pulls from opposite corners cancel and the weights stay near zero.',
-        'Correct. The pulls from opposite corners cancel, the weights stay near zero, and the loss stays near 0.693, the value for guessing.',
-        'Getting everything wrong would itself require a boundary that separates the classes.',
+        'The model has one straight boundary and cannot bend it around a group. Getting all four right would take two cuts, one on each side of the middle pair.',
+        'Such a line exists, and it would get three right. But training minimizes the loss, not the number of mistakes, and the loss is lowest at zero weights: any tilt that pushes one outer point toward class 0 pushes the other toward class 1 by the same amount.',
+        'Correct. Every error starts at plus or minus 0.5. Multiplied by x they cancel between the two outer points, multiplied by y they cancel between the two middle points, and on their own they cancel between the classes. All three gradients are exactly zero, so descent stops before its first step. The page counts a probability of exactly one half as class 1, so it reports 2 of 4 correct.',
+        'Weights grow without limit only when some line puts every point on its correct side. No line does that here.',
       ],
-      tryInput: { dataset: 'xor', points: 40, seed: 1, rate: 2, steps: 100, custom: [] },
+      tryInput: { custom: SANDWICH, rate: 4, steps: 100 },
+      check: (r) => (r.status === 'converged' && r.steps === 0 && r.w[0] === 0 && r.w[1] === 0 && r.b === 0 && r.correct === 2 && Math.abs(r.loss - Math.log(2)) < 1e-12) || `status ${r.status} after ${r.steps} steps, weights ${r.w}, bias ${r.b}, ${r.correct} correct`,
     },
     {
       type: 'debug',
-      q: 'This training loop crashes with a math domain error inside the logarithm after a few steps. What is wrong?',
+      q: 'This training loop runs without any error. But on the eight points of this lesson\'s program the loss stops falling at about 0.62 and the finished model gets 5 of 8 right, where the correct loop reaches 0.40 and 6 of 8. What is wrong?',
       code: `for step in range(1000):
     g1 = g2 = g0 = 0.0
     for x, y, label in points:
@@ -608,7 +629,7 @@ int main() {
       answer: 1,
       explain: [
         'They are correctly reset once per step.',
-        'Correct. Without the sigmoid, p is a raw score that can be negative or greater than 1. The update is then the one for linear regression, and a loss that takes the logarithm of p or 1 − p fails.',
+        'Correct. Without the sigmoid, p is a raw score that can be negative or greater than 1. The update is then the one for linear regression: it fits a straight line to the labels 0 and 1 and settles on different weights. Nothing crashes, which is what makes this slip hard to spot.',
         'With a subtraction in the update, probability minus label is the right sign.',
         'A small rate would only be slow.',
       ],
@@ -628,7 +649,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Give the model the feature it lacks',
-      prompt: 'Logistic regression fails on XOR because no straight line in (x, y) separates the classes. Add a third feature, the product x × y, so the score becomes w₁x + w₂y + w₃xy + b. Train on the XOR dataset and report the accuracy. Explain why the classes are linearly separable in the new three-feature space, and draw what the decision boundary looks like back in the original two dimensions.',
+      prompt: 'Logistic regression fails on XOR because no straight line in (x, y) separates the classes. Add a third feature, the product x × y, so the score becomes w₁x + w₂y + w₃xy + b. Test it first on the four exact XOR points: (−1, −1) and (1, 1) in class 0, (−1, 1) and (1, −1) in class 1. Start from zero weights, use a learning rate of 1, and run 100 steps, with and without the new feature. Then train on a larger XOR dataset and report the accuracy. Explain why the classes are linearly separable in the new three-feature space, and draw what the decision boundary looks like back in the original two dimensions.',
+      expect: 'On the four exact XOR points without the product feature, nothing moves: all weights stay at 0, the loss stays at 0.6931 and every point gets probability 0.5. With it, w₁, w₂ and b stay at 0 and only w₃ moves: −0.5 after one step, −2.2632 after 10 and −4.5892 after 100. After one step all four points are already on the correct side. After 100 steps the loss is 0.0101, and the probability of class 1 is 0.010 for the two class 0 points and 0.990 for the two class 1 points. The boundary is where x × y = 0, which is the two axes.',
       hints: [
         'In two opposite corners x and y have the same sign, so their product is positive. In the other two it is negative.',
         'The boundary in the original plane is where w₃xy plus the smaller terms equals zero: roughly the two axes.',
@@ -705,7 +727,15 @@ int main() {
         if (Math.abs(sigmoid(1) - 0.731) > 1e-3 || Math.abs(r.losses[1] + Math.log(sigmoid(1))) > 1e-12) return `loss after one step ${r.losses[1]}`;
         return r.accuracy === 1 || `accuracy ${r.accuracy}`;
       } },
-    { name: 'XOR stays at chance (quiz prediction)', input: { dataset: 'xor', points: 40, seed: 1, rate: 2, steps: 100, custom: [] },
+    { name: 'class 1 between two class 0 points: the gradient is exactly zero at the start and nothing is learned (quiz prediction)', input: { custom: SANDWICH, rate: 4, steps: 100 },
+      check: (r) => {
+        if (r.steps !== 0 || r.status !== 'converged' || r.w[0] !== 0 || r.w[1] !== 0 || r.b !== 0) return `status ${r.status} after ${r.steps} steps, weights ${r.w}, bias ${r.b}`;
+        if (isLinearlySeparable(r.points)) return 'these points should not be linearly separable';
+        const ref = newtonFit(r.points);
+        const refLoss = crossEntropy(r.points, ref[0], ref[1], ref[2]);
+        return (Math.abs(refLoss - Math.log(2)) < 1e-9 && r.correct === 2) || `Newton optimum ${refLoss}, ${r.correct} correct`;
+      } },
+    { name: 'XOR stays at chance (the XOR preset)', input: { dataset: 'xor', points: 40, seed: 1, rate: 2, steps: 100, custom: [] },
       check: (r) => (r.accuracy >= 0.4 && r.accuracy <= 0.6 && r.loss > 0.68 && r.status === 'converged' && !isLinearlySeparable(r.points)) || `accuracy ${r.accuracy}, loss ${r.loss}, status ${r.status}` },
     { name: 'separable data: perfect accuracy, falling loss, weights still growing', input: { dataset: 'separable', points: 40, seed: 1, rate: 4, steps: 300, custom: [] },
       check: (r) => {

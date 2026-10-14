@@ -231,10 +231,14 @@ export default {
       { label: 'Hub and spokes (slow to settle)', values: { edges: 'B>A, C>A, D>A, E>A, A>B', damping: 0.85 } },
     ],
     tryThis: [
-      'Load "One good link beats two". Two pages link to C and only one links to D, yet D finishes first. C has a single outgoing link, so it hands its whole rank to D. Then add the link `C>A` to the list and watch D lose half of what C was giving it.',
-      'Load "A pair that only link to each other". C and D pass rank back and forth and never give any away through links. Lower the damping factor from 0.85 to 0.5 and their combined share falls, because more rank is taken from every page and spread evenly.',
-      'Load "Hub and spokes" and watch the "Change" row. The signs flip every round as rank sloshes between A and B, and the size of the change shrinks by a factor of about 0.85 each time. That factor is the damping factor.',
-      'Move the tolerance slider toward smaller values and note the number of rounds. Each extra factor of ten in precision costs about the same number of additional rounds.',
+      { ask: 'Load "One good link beats two" and run it. Then add the link `C>A` to the list, so that C has two outgoing links instead of one. Which page will finish first now, and what will happen to D?',
+        reveal: 'C finishes first with 0.391. D falls from 0.412 to 0.258 and ends level with A. With one outgoing link, C handed D everything it passed on. With two, it splits that between D and A, and half of what C passes on is not enough to stay ahead of C.' },
+      { ask: 'Load "A pair that only link to each other". C and D pass rank back and forth and never give any away through links. Lower the damping factor from 0.85 to 0.5. Will the share of rank that C and D hold between them go up or down?',
+        reveal: 'Down, from about 0.89 to about 0.69. At 0.85 C settles at 0.4625 and D at 0.4306. At 0.5 they settle at 0.375 and 0.3125. The damping factor is the share of rank that follows links, and links are the only way the pair keeps hold of rank. At 0.5 half of every page\'s rank is taken each round and spread evenly, so A and B get more of it.' },
+      { ask: 'Load "Hub and spokes" and watch the "Change" row under A. The sign flips every round as rank moves back and forth between A and B. By what factor does the size of the change shrink from one round to the next?',
+        reveal: 'By 0.85, the damping factor. A\'s changes in the first three rounds are +0.5100, −0.4335 and +0.3685, each 0.85 times the one before. No graph can settle more slowly than that, which is why these five pages need 58 rounds when the default seven pages need 24.' },
+      { ask: 'On the default graph the tolerance is 0.0001 and the run takes 24 rounds. Move the tolerance slider toward smaller values and note the number of rounds. How many extra rounds will each further factor of ten in precision cost?',
+        reveal: 'About 6 each time: 24 rounds at 0.0001, 30 at 0.00001, 35 at 0.000001, 41 at 0.0000001 and 47 at 0.00000001. The price is steady because every round shrinks the change by about the same factor. On "Hub and spokes", where that factor is the full 0.85, each factor of ten costs 14 rounds: 44, 58 and 72 rounds at 0.001, 0.0001 and 0.00001.' },
     ],
     run,
     report: (r, c) => `${r.converged ? `Converged after ${r.iterations} rounds` : `Stopped at the limit of ${r.iterations} rounds`} (last total change ${r.delta.toExponential(2)}), damping factor ${r.damping}.\nRanks, highest first: ${r.order.map((id) => `${id}=${r.ranks[id].toFixed(4)}`).join(', ')}\nSum of ranks: ${Object.values(r.ranks).reduce((a, b) => a + b, 0).toFixed(6)}. ${r.deadEnds.length ? `Dead ends (rank redistributed evenly): ${r.deadEnds.join(', ')}.` : 'No dead ends.'} ${c['link contributions'] || 0} link contributions added up.`,
@@ -308,6 +312,16 @@ export default {
       input: 'Five pages: A links to B and C, B links to C, C links to A, D links to C and E, and E has no outgoing links (a dead end). Damping factor 0.85, stopping when the total change in a round is below 0.000001.',
       expected: 'rounds: 28\nA:0.3502 B:0.1884 C:0.3654 D:0.0396 E:0.0564\nsum: 1.0000\nranking: C A B E D',
     },
+    breakIt: [
+      { change: 'Stop sharing out the rank of the dead end: where `received` is first filled in, start every page at 0 instead of at its share of the dead-end rank. Which line of the output shows the damage most plainly?',
+        find: { python: 'received = {p: dead_end_rank / n for p in pages}', javascript: 'received[p] = deadEndRank / n;' },
+        replace: { python: 'received = {p: 0.0 for p in pages}', javascript: 'received[p] = 0;' },
+        reveal: 'The third line now reads "sum: 0.7578". The ranks print as "A:0.2653 B:0.1428 C:0.2769 D:0.0300 E:0.0428", every one of them smaller than before. E has no outgoing links, so whatever reaches E is dropped each round and almost a quarter of the rank leaks away. The ranking line still says "C A B E D" and the program still stops after 28 rounds, so only the sum gives the mistake away. That is why the sum is worth printing.' },
+      { change: 'Change the limit of 1000 rounds to 5, as if a fixed handful of rounds were enough. Which page will the program put first?',
+        find: { python: 'max_rounds=1000', javascript: 'maxRounds = 1000' },
+        replace: { python: 'max_rounds=5', javascript: 'maxRounds = 5' },
+        reveal: 'It prints "rounds: 5" and "ranking: A C B E D", with A at 0.3563 and C at 0.3546. The settled answer has C first, at 0.3654 against 0.3502 for A. After 5 rounds the ranks of A and C are still swinging past each other, and the run happened to stop while A was ahead. The sum is still 1.0000, so nothing in the output warns you that the ranks had not settled.' },
+    ],
     python: {
       source: `def pagerank(links, d=0.85, tolerance=1e-6, max_rounds=1000):
     pages = sorted(links)
@@ -545,20 +559,21 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Four pages have the links A>C, B>C and C>D. Two pages link to C and only one links to D. Which page ends with the highest rank?',
-      options: ['A', 'C, because it has the most incoming links', 'D', 'C and D tie'],
+      q: 'Six pages have the links A>D, B>D, C>D, D>E, D>F and E>F. Three pages link to D, two link to F and one links to E. Which page ends with the highest rank?',
+      options: ['D, because it has the most incoming links', 'E', 'F', 'D and F tie'],
       answer: 2,
       explain: [
-        'Nothing links to A, so it receives only the basic share and its part of the dead-end rank.',
-        'C does collect rank from A and B, but it does not keep it: each round it passes everything on.',
-        'Correct. C has a single outgoing link, so D receives the whole of what C passes on, on top of its own basic share. D ends near 0.41 and C near 0.34.',
-        'They are close but not equal. D gets everything C can give, plus the same basic share C gets.',
+        'D does have the most incoming links, but they come from A, B and C, which nothing links to, so each brings little. D ends second, near 0.26.',
+        'E gets only half of what D passes on, and then passes all of it to F. It ends third, near 0.18.',
+        'F gets half of what D passes on directly, and the other half arrives through E, which has a single outgoing link. F ends near 0.34, ahead of D near 0.26.',
+        'They are not close. F ends near 0.34 and D near 0.26, because everything D passes on reaches F, directly or through E.',
       ],
-      tryInput: { edges: 'A>C, B>C, C>D', damping: 0.85 },
+      tryInput: { edges: 'A>D, B>D, C>D, D>E, D>F, E>F', damping: 0.85 },
+      check: (r) => (r.order.join('') === 'FDEABC' && r.ranks.F.toFixed(2) === '0.34' && r.ranks.D.toFixed(2) === '0.26' && r.ranks.E.toFixed(2) === '0.18') || `order ${r.order.join('')}, F=${r.ranks.F}, D=${r.ranks.D}, E=${r.ranks.E}`,
     },
     {
       type: 'debug',
-      q: 'On a graph where some pages have no outgoing links, the ranks from this round add up to less than 1, and the total shrinks further every round. What is missing?',
+      q: 'On a graph where some pages have no outgoing links, the ranks add up to less than 1 after a round, and the total never gets back to 1. What is missing?',
       code: `for v in pages:
     new_rank[v] = (1 - d) / n
 for u in pages:
@@ -588,7 +603,8 @@ for u in pages:
     {
       type: 'challenge',
       title: 'Rank relative to one page',
-      prompt: 'Change the algorithm so that the random jump always lands on one chosen page instead of a uniformly random one: replace the (1 − d)/N term by (1 − d) for the chosen page and 0 for the others, and send the dead-end rank there too. This is personalized PageRank. Run it on a graph of your choice from two different chosen pages and compare the rankings with each other and with ordinary PageRank. What does a high score now mean?',
+      prompt: 'Change the algorithm so that the random jump always lands on one chosen page instead of a uniformly random one: replace the (1 − d)/N term by (1 − d) for the chosen page and 0 for the others, and send the dead-end rank there too. This is personalized PageRank. Run it on the five-page graph from the code sample above, with damping factor 0.85 and the same stopping rule, once with A as the chosen page and once with D. Print the five ranks to four decimal places each time, and compare the rankings with each other and with ordinary PageRank. What does a high score now mean?',
+      expect: 'With A as the chosen page: A:0.4522 B:0.1922 C:0.3556 D:0.0000 E:0.0000, so the ranking is A, C, B, with D and E level at zero. Nothing links to D and the jump no longer lands there, so D gets nothing, and E, which only D links to, gets nothing either. With D as the chosen page: A:0.2558 B:0.1087 C:0.3009 D:0.2348 E:0.0998, so the ranking is C, A, D, B, E. Both sets of ranks add up to 1.0000. Ordinary PageRank gives C, A, B, E, D on the same graph, with D last at 0.0396.',
       hints: ['The ranks should still add up to 1. Check that first.', 'A high score now means "easy to reach from the chosen page by following links", so pages near it rise and distant ones fall.'],
     },
   ],
@@ -651,7 +667,9 @@ for u in pages:
         return (Math.round(r.ranks.A * 120) === 43 && Math.round(r.ranks.B * 120) === 31 && Math.round(r.ranks.C * 120) === 46 && r.order.join('') === 'CAB'
           && r.ranks.A.toFixed(2) === '0.36' && r.ranks.B.toFixed(2) === '0.26' && r.ranks.C.toFixed(2) === '0.38') || `settled at ${JSON.stringify(r.ranks)}`;
       } },
-    { name: 'the predicted winner: one good link beats two', input: { edges: 'A>C, B>C, C>D', damping: 0.85 },
+    { name: 'the quiz prediction: F, with two incoming links, finishes ahead of D, which has three', input: { edges: 'A>D, B>D, C>D, D>E, D>F, E>F', damping: 0.85 },
+      check: (r) => (r.order.join('') === 'FDEABC' && r.ranks.F.toFixed(2) === '0.34' && r.ranks.D.toFixed(2) === '0.26' && r.ranks.E.toFixed(2) === '0.18' && matchesDirectSolve(r, 1e-3) === true) || `order ${r.order.join('')}, ranks ${JSON.stringify(r.ranks)}; ${matchesDirectSolve(r, 1e-3)}` },
+    { name: 'one good link beats two', input: { edges: 'A>C, B>C, C>D', damping: 0.85 },
       check: (r) => (r.order[0] === 'D' && r.order[1] === 'C' && r.ranks.D.toFixed(2) === '0.41' && r.ranks.C.toFixed(2) === '0.34') || `order ${r.order.join('')}, D=${r.ranks.D}, C=${r.ranks.C}` },
     { name: 'a single link with a dead end has the closed-form answer', input: { edges: 'A>B', damping: 0.85, tolerance: 1e-8, iterations: 200 },
       check: (r) => (Math.abs(r.ranks.A - 0.5 / 1.425) < 1e-6 && Math.abs(r.ranks.A + r.ranks.B - 1) < 1e-12) || `A=${r.ranks.A}` },

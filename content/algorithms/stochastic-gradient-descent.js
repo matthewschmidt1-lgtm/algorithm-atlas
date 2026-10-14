@@ -227,7 +227,9 @@ function run(input, t) {
     const prev = losses[losses.length - 1];
     path.push([w, b]);
     losses.push(loss);
-    if (loss > prev) rises++;
+    // a change far below anything the page can show is rounding, not a rise
+    const rose = loss - prev > 1e-12, still = Math.abs(loss - prev) <= 1e-12;
+    if (rose) rises++;
     if (!Number.isFinite(loss) || loss > 1e6) {
       status = 'diverged';
       t.frame(() => ({ line: [8, 9], note: `Step ${k + 1} threw the line far off the chart and the loss has passed a million. Each step is overshooting by more than the last. The learning rate is too large for this data: the run has **diverged**.`, views: views({ batch }), vars: { step: k + 1 } }));
@@ -237,13 +239,13 @@ function run(input, t) {
     t.frame(() => {
       const rateText = decay > 0 ? `the learning rate, which has shrunk from ${f3(eta0)} to ${f3(eta)},` : `the learning rate ${f3(eta)}`;
       let why = '';
-      if (loss > prev) {
+      if (rose) {
         why = full
           ? ' A rise with the full gradient means the step was too long: it jumped past the lowest point and landed higher on the far side.'
           : ` It rose because the step was chosen by ${plural(batch.length, 'point')} out of ${n}. A move that suits ${batch.length === 1 ? 'that point' : 'those points'} can be a bad move for the others.`;
       }
       return { line: [8, 9],
-        note: `Move against that gradient by ${rateText}: slope ${f3(w0)} → **${f3(w)}**, intercept ${f3(b0)} → **${f3(b)}**. Measured on all ${n} points, the loss ${loss <= prev ? 'fell' : 'rose'} from ${f3(prev)} to ${f3(loss)}.${why}`,
+        note: `Move against that gradient by ${rateText}: slope ${f3(w0)} → **${f3(w)}**, intercept ${f3(b0)} → **${f3(b)}**. Measured on all ${n} points, the loss ${still ? `stayed at ${f3(loss)}` : `${rose ? 'rose' : 'fell'} from ${f3(prev)} to ${f3(loss)}`}.${why}`,
         views: views({ batch }), vars: { step: k + 1, epoch, 'η': f3(eta), w: f3(w), b: f3(b), loss: f3(loss) } };
     });
   }
@@ -272,7 +274,7 @@ function run(input, t) {
         } else {
           rest = `The loss went up on ${rises} of the ${steps} steps. With a fixed learning rate the path does not come to rest: even at the best line the points still disagree with each other, so every batch still asks for a move.`;
         }
-        note = `Finished: ${plural(steps, 'step')} of ${plural(B, 'point')} each, so ${used} point gradients in total, the work of ${trim(used / n)} passes through the data. ${fit} ${fair} ${rest}`;
+        note = `Finished: ${plural(steps, 'step')} of ${n % B === 0 ? `${plural(B, 'point')} each` : `up to ${plural(B, 'point')} (the last batch of each pass holds whatever is left)`}, so ${used} point gradients in total, the work of ${trim(used / n)} passes through the data. ${fit} ${fair} ${rest}`;
       }
       return { line: 10, note, views: views(), vars: { w: f3(w), b: f3(b), loss: f3(finalLoss), 'best possible': f3(bestLoss) } };
     });
@@ -406,14 +408,19 @@ export default {
       { label: 'Worked example: four points', values: { ...EXAMPLE } },
     ],
     tryThis: [
-      'Load "One point per step" and play it. Then raise the batch size to 4, to 12 and to 24 and replay. Watch the terracotta path close in on the dashed path of plain gradient descent, and the ochre arrow close in on the ink arrow. At 24 the two paths are the same path.',
-      'Read the last frame at each batch size. It says how many point gradients the run used and what plain gradient descent would have achieved with the same number. Small batches reach a rough fit for far less work. Large batches are smoother but pay for every step.',
-      'Load "One point per step, shrinking rate". The early steps are as wild as before, but the later ones barely move the line, and the loss curve flattens onto the dashed green line. Set the decay back to 0 and the curve keeps twitching to the end.',
-      'Load "No scatter: the points agree". Every point now lies on one line, so at that line every single-point gradient is zero and the path comes to rest without any decay. The hovering in the other presets is caused by the points disagreeing, not by the sampling as such.',
-      'Change the seed. The data change and so does the shuffle, and the path takes a different route to the same neighbourhood.',
+      { ask: 'Load "One point per step" and play it to the end. The last frame says on how many of the 60 steps the loss went up. Now raise the batch size to 4, then 12, then 24, and replay each. Will the terracotta path move closer to the dashed path of plain gradient descent each time? And will the number of steps on which the loss went up fall steadily as the batch grows?',
+        reveal: 'The path does move closer each time, and at 24 the two paths are the same path. The count does not fall steadily. The loss went up on 27 of the 60 steps with one point, on 23 with batches of 4, on 24 with batches of 12, and on none with all 24. A larger batch makes each wrong turn smaller, not rarer. Near the best line, any batch short of the whole dataset still asks for a small move away from it. Only when every step sees every point is there nothing left to sample.' },
+      { ask: 'With one point per step, the 60 steps cost 60 point gradients. Plain gradient descent pays 24 point gradients for every step, so the same work buys it 2 steps. Which ends with the lower loss: 60 rough steps or 2 exact ones? Then load "Batches of 12", whose 720 point gradients would buy plain gradient descent 30 steps, and ask the same question.',
+        reveal: 'The rough steps win the first comparison by a wide margin: loss 0.067 against 0.174. The last frame of each run gives both numbers. With batches of 12 there is nothing between them: both reach 0.059, the best possible. "Batches of 4" sits in the middle, at 0.059 against 0.061 for the 10 steps that 240 point gradients would buy. Small batches reach a rough fit for far less work. Once the fit is already good, the cheap steps have no advantage left.' },
+      { ask: 'Load "One point per step, shrinking rate". It runs 120 steps and divides the learning rate by (1 + 0.1 × k) at step k. Then set the decay back to 0 and run the same 120 steps. The best possible loss on these points is 0.059. How close will each run end?',
+        reveal: 'With decay 0.1 the loss ends at 0.059, level with the best possible to three decimals, on the line y = 0.744·x + 0.084. The least squares line is y = 0.752·x + 0.091. By the end the learning rate has shrunk from 0.200 to 0.016, so one point can barely move the line. With decay 0 the loss ends at 0.065 and the line is y = 0.779·x + 0.165, still being knocked about. The early steps are as rough in one run as in the other. The difference is all in the late ones.' },
+      { ask: 'Load "No scatter: the points agree". All 24 points now lie exactly on one line. The learning rate is fixed, with no decay, and in the other presets a fixed rate left the line jittering to the end. Will it jitter here?',
+        reveal: 'No. The run ends on y = 0.700·x + 0.100 with loss 0.000, the line the points were generated from, and the steps shrink to nothing without being told to. At that line no single point has any gap left, so no point asks for a move. The jitter in the other presets comes from the points disagreeing with each other, not from the sampling as such.' },
+      { ask: 'Go back to "One point per step" and change the random seed from 3 to 4, then to 5. The data change and so does the shuffle. Will each run end close to its own least squares line?',
+        reveal: 'Two of the three do. Seed 3 ends at loss 0.067 where the best possible is 0.059, and seed 5 at 0.062 where the best is 0.055. Seed 4 ends at y = 0.766·x − 0.320 with loss 0.163, when its least squares line is y = 0.746·x − 0.006 with loss 0.065. With a fixed learning rate the run stops wherever the last step happened to leave it. One run of a random method is one draw, which is why results are reported over several seeds.' },
     ],
     run,
-    report: (r, c) => `${r.batchSize === r.n ? `Full batch of ${r.n}: plain gradient descent` : `Batches of ${r.batchSize} from ${r.n} points`}. ${r.status === 'diverged' ? 'Diverged' : 'Ran'} ${r.steps} steps, ${c['point gradients'] || 0} point gradients (${trim(r.used / r.n)} passes through the data).\nFinal line: ${lineText(r.w, r.b)}   loss ${f3(r.loss)}\nLeast squares line: ${lineText(r.closedForm.w, r.closedForm.b)}   loss ${f3(r.closedForm.loss)}`,
+    report: (r, c) => `${r.batchSize === r.n ? `Full batch of ${r.n}: plain gradient descent` : `Batches of ${r.n % r.batchSize === 0 ? '' : 'up to '}${r.batchSize} from ${r.n} points`}. ${r.status === 'diverged' ? 'Diverged' : 'Ran'} ${r.steps} steps, ${c['point gradients'] || 0} point gradients (${trim(r.used / r.n)} passes through the data).\nFinal line: ${lineText(r.w, r.b)}   loss ${f3(r.loss)}\nLeast squares line: ${lineText(r.closedForm.w, r.closedForm.b)}   loss ${f3(r.closedForm.loss)}`,
     experiment: {
       title: 'Work to reach a good fit as the dataset grows',
       note: 'Each point is a real run on generated data (scatter 0.25) with learning rate 0.1 and no decay, from the flat line. The run stops the first time the loss over all points is within 10 percent of the smallest possible loss, and the chart shows how many single-point gradients it had computed by then. Checking the loss over all points is done for this measurement only and is not counted. Full batch pays for every point at every step, so its cost grows in step with the data. The mini-batch runs need about the same number of gradients however many points there are. The one-point series is measured but no formula is claimed for it, because a single noisy run can cross the 10 percent line early or late by chance.',
@@ -491,6 +498,16 @@ export default {
       input: 'Fit a line to eight points with batches of 2 and then with the full batch of 8, from the same start and with the same shrinking learning rate, printing after every 16 point gradients so the two can be compared at equal work.',
       expected: 'batch 2 after 16 gradients: w=1.8613 b=0.9492 loss=0.0654\nbatch 2 after 32 gradients: w=2.0051 b=0.9756 loss=0.0240\nbatch 2 after 48 gradients: w=2.0285 b=0.9748 loss=0.0230\nbatch 8 after 16 gradients: w=1.0129 b=0.4908 loss=1.9238\nbatch 8 after 32 gradients: w=1.4824 b=0.7157 loss=0.5724\nbatch 8 after 48 gradients: w=1.7177 b=0.8268 loss=0.2015',
     },
+    breakIt: [
+      { change: 'Delete the line that divides `gw` and `gb` by the batch size, so the step uses the sum of the batch\'s gradients instead of their average. Which of the two runs will go wrong, the batches of 2 or the full batch of 8?',
+        find: { python: 'gw, gb = gw / len(batch), gb / len(batch)', javascript: 'gw /= batch.length;\n    gb /= batch.length;' },
+        replace: { python: 'pass', javascript: '' },
+        reveal: 'The full batch. Its three lines become "batch 8 after 16 gradients: w=-1.5933 b=-0.8400 loss=24.6480", then loss=40.6582, then loss=34.4166: the line has been thrown to the wrong side and stays there. A sum of 8 gradients is 8 times the average, so the starting learning rate of 0.1 is acting as 0.8. The batches of 2 only double their step and still end at loss=0.0232. This is why a rate tuned at one batch size blows up at a larger one when the average is missing.' },
+      { change: 'Make the gradient loop run over the first `size` points of the data every time, points 0 to `size − 1`, instead of over the points in `batch`. The batches of 2 now see the same two points on every step. What happens to their loss over all eight points?',
+        find: { python: 'for i in batch:', javascript: 'for (const i of batch) {' },
+        replace: { python: 'for i in range(size):', javascript: 'for (let i = 0; i < size; i++) {' },
+        reveal: 'It stays high: "batch 2 after 16 gradients: w=0.8519 b=-0.5998 loss=5.3215", then loss=5.1149, then loss=4.9623, where the shuffled run reached 0.0230. The line is being fitted to the points (−1.5, −2.1) and (−1.0, −1.2) alone, and nothing ever tells it about the other six. The three "batch 8" lines do not change at all, because the first 8 points are every point.' },
+    ],
     python: {
       source: `xs = [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
 ys = [-2.1, -1.2, 0.2, 0.8, 2.1, 2.9, 4.2, 4.9]
@@ -533,9 +550,10 @@ def train(size, steps, label):
             r = w * xs[i] + b - ys[i]
             gw += 2 * r * xs[i]
             gb += 2 * r
+        gw, gb = gw / len(batch), gb / len(batch)
         rate = 0.1 / (1 + 0.05 * k)
-        w -= rate * gw / len(batch)
-        b -= rate * gb / len(batch)
+        w -= rate * gw
+        b -= rate * gb
         used = (k + 1) * size
         if used % 16 == 0:
             print(f"{label} after {used} gradients: w={w:.4f} b={b:.4f} loss={loss(w, b):.4f}")
@@ -548,7 +566,7 @@ train(8, 6, "batch 8")`,
         { line: 34, text: 'A new epoch: every point has been used, so shuffle again and start dealing from the front.' },
         { line: 35, text: 'The mini-batch is the next few indices of the shuffled order. With size equal to n it is every point, and the loop below computes the full gradient.' },
         { line: 40, text: 'Each point contributes the gradient of its own squared gap. Nothing outside the batch is looked at.' },
-        { line: 43, text: 'Dividing by the batch size turns the sum into an average. Without it, the step would grow with the batch.' },
+        { line: 42, text: 'Dividing by the batch size turns the sum into an average. Without it, the step would grow with the batch.' },
       ],
     },
     javascript: {
@@ -599,9 +617,11 @@ function train(size, steps, label) {
       gw += 2 * r * xs[i];
       gb += 2 * r;
     }
+    gw /= batch.length;
+    gb /= batch.length;
     const rate = 0.1 / (1 + 0.05 * k);
-    w -= rate * gw / batch.length;
-    b -= rate * gb / batch.length;
+    w -= rate * gw;
+    b -= rate * gb;
     const used = (k + 1) * size;
     if (used % 16 === 0) {
       console.log(label + " after " + used + " gradients: w=" + w.toFixed(4) + " b=" + b.toFixed(4) + " loss=" + loss(w, b).toFixed(4));
@@ -663,9 +683,11 @@ void train(int size, int steps, const char* label) {
         }
         int count = end - pos;
         pos += size;
+        gw /= count;
+        gb /= count;
         double rate = 0.1 / (1 + 0.05 * k);
-        w -= rate * gw / count;
-        b -= rate * gb / count;
+        w -= rate * gw;
+        b -= rate * gb;
         int used = (k + 1) * size;
         if (used % 16 == 0) {
             std::printf("%s after %d gradients: w=%.4f b=%.4f loss=%.4f\\n", label, used, w, b, loss(w, b));
@@ -784,16 +806,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The default run uses 24 points, one point per step and a learning rate of 0.2, and its loss goes up on many steps. What happens if only the batch size is changed, to 24?',
-      options: ['The path gets noisier, because more points disagree', 'Nothing changes, because the same points are used in the end', 'The path becomes smooth and the loss never rises: it is exactly plain gradient descent', 'It diverges, because 24 gradients are added together'],
-      answer: 2,
+      q: 'The preset "One point per step, shrinking rate" divides the learning rate by (1 + 0.1 × k) at step k. After 120 steps its loss is 0.059, level with the best possible. Now shrink the rate five times as fast: decay 0.5, the same 120 steps, the same points. Where does the run end?',
+      options: ['Even closer to the least squares line, because the jitter is damped sooner', 'Short of the least squares line: the steps become tiny before the line has arrived', 'On exactly the same line as with decay 0.1, because decay only changes the route', 'Above the loss it started with, because shrinking this fast makes the run unstable'],
+      answer: 1,
       explain: [
-        'Averaging more points cancels more of their disagreement. Noise falls as the batch grows.',
-        'Using a point one at a time and using all of them together are different things. Each step now sees every point.',
-        'With every point in every batch there is nothing left to sample. Each step uses the full gradient, and at this learning rate the full gradient step always lowers the loss.',
-        'The batch gradient is an average, not a sum, so its size does not grow with the batch.',
+        'Damping the jitter sooner also damps the progress sooner. The run ends with slope 0.662 where the least squares slope is 0.752, and with loss 0.064 where decay 0.1 reached 0.059.',
+        'By step 120 the learning rate has shrunk from 0.200 to 0.003, and the line was still on its way. It ends at y = 0.662·x + 0.084 with loss 0.064, short of the least squares line y = 0.752·x + 0.091. A rate must shrink slowly enough that the steps still add up to the whole distance.',
+        'The decay sets the length of every step after the first, so it changes how far 120 steps can travel, not only the route. Decay 0.1 ends at slope 0.744 and decay 0.5 at slope 0.662.',
+        'A smaller rate only makes steps shorter, and shorter steps do not overshoot. The loss falls from 0.388 to 0.064. The trouble is too little movement, not too much.',
       ],
-      tryInput: { ...DEFAULTS, batch: 24 },
+      tryInput: { ...DEFAULTS, decay: 0.5, steps: 120 },
+      check: (r) => (Math.abs(r.w - 0.662) < 5e-4 && Math.abs(r.b - 0.084) < 5e-4 && Math.abs(r.loss - 0.0635) < 5e-4 && r.w < r.closedForm.w - 0.05 && Math.abs(r.losses[0] - 0.388) < 5e-4 && Math.abs(r.rates[119] - 0.003) < 5e-4) || `ended at slope ${r.w}, intercept ${r.b}, loss ${r.loss}`,
     },
     {
       type: 'debug',
@@ -831,7 +854,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Tame the noise three ways',
-      prompt: 'Starting from the code sample, fix the batch size at 1 and compare three ways of getting a precise answer from noisy steps, all given the same number of example gradients. First, a learning rate that shrinks like 1/(1 + decay × k). Second, a fixed learning rate, but report the average of all the parameter values visited in the second half of the run instead of the last one. Third, a fixed learning rate with the batch size doubled every epoch. For each, measure the distance from the least squares line, averaged over 20 seeds. Which is most accurate, and which was most sensitive to its settings?',
+      prompt: 'Starting from the code sample, with its eight points and its random number generator, compare three ways of getting a precise answer from noisy steps. Give each one 400 example gradients and a starting learning rate of 0.1. First, batches of 1 with the rate 0.1/(1 + 0.05 × k) at step k. Second, batches of 1 with the rate fixed at 0.1, but report the average of the parameter values visited after the first 200 gradients instead of the last one. Third, the rate fixed at 0.1 with the batch size starting at 1 and doubling at every epoch until it reaches 8. For each, measure the distance from the least squares line, which is the square root of (w − w*)² + (b − b*)², averaged over seeds 1 to 20. Which is most accurate, and which is most sensitive to its settings?',
+      expect: 'The least squares line has w* = 2.0333 and b* = 0.9667. Over seeds 1 to 20 the mean distances are: shrinking rate 0.0004, averaged second half 0.0046, doubling batch 0.000003. For scale, a fixed rate of 0.1 with batches of 1 and no averaging ends 0.053 away. Doubling wins here for a reason that would not carry over to a large dataset: by the fourth epoch the batch is all eight points, so its last 47 steps are plain gradient descent with no noise at all. The shrinking rate is the most sensitive to its setting. With decay 0.01 its distance is 0.0032 and with decay 0.2 it is 0.0056, eight and fourteen times worse than at 0.05.',
       hints: ['The average of the visited parameters can be kept as a running mean, so it needs no extra memory.', 'Averaging the iterates is known as Polyak-Ruppert averaging.', 'To compare fairly, count example gradients, not steps.'],
     },
   ],
@@ -936,10 +960,38 @@ int main() {
         return (order === '1,0,2,3' && samePath(r.path.slice(0, 5), want, 1e-12) && Math.abs(r.closedForm.w - 0.5) < 1e-12 && Math.abs(r.closedForm.b) < 1e-12
           && Math.abs(gd[0] - 0.125) < 1e-12 && Math.abs(gd[1]) < 1e-12) || `order ${order}, path ${JSON.stringify(r.path.slice(0, 5))}, one full step ${gd}`;
       } },
-    { name: 'quiz prediction: at batch size 24 the loss never rises, while at batch size 1 it does', input: { ...DEFAULTS, batch: 24 },
+    { name: 'at batch size 24 the loss never rises, while at batch size 1 it does', input: { ...DEFAULTS, batch: 24 },
       check: (r) => {
         const noisy = run({ ...DEFAULTS }, quiet);
         return (r.rises === 0 && r.losses.every((v, i) => i === 0 || v <= r.losses[i - 1]) && noisy.rises > 5) || `full batch rose ${r.rises} times, batch 1 rose ${noisy.rises} times`;
+      } },
+    { name: 'Things to try: the loss rises on 27, 23, 24 and 0 of 60 steps at batch sizes 1, 4, 12 and 24', input: { ...DEFAULTS },
+      check: (r) => {
+        const rises = [r.rises, ...[4, 12, 24].map((batch) => run({ ...DEFAULTS, batch }, quiet).rises)].join(',');
+        return rises === '27,23,24,0' || `rises ${rises}`;
+      } },
+    { name: 'Things to try: final losses at batch 1, 4, 12 against plain gradient descent given the same work (2, 10, 30 steps)', input: { ...DEFAULTS },
+      check: (r) => {
+        const f = (v) => v.toFixed(3);
+        const sgd = [r.loss, run({ ...DEFAULTS, batch: 4 }, quiet).loss, run({ ...DEFAULTS, batch: 12 }, quiet).loss].map(f).join(',');
+        const gd = referenceDescent(r.points, 0.2, 0, 30);
+        const mse = ([w, b]) => r.points.reduce((s, p) => s + (w * p.x + b - p.y) ** 2, 0) / r.points.length;
+        const plain = [2, 10, 30].map((k) => f(mse(gd[k]))).join(',');
+        return (sgd === '0.067,0.059,0.059' && plain === '0.174,0.061,0.059' && f(r.closedForm.loss) === '0.059') || `sgd ${sgd}, plain ${plain}`;
+      } },
+    { name: 'Things to try: 120 steps end at loss 0.059 with decay 0.1 and at 0.065 with decay 0', input: { ...DEFAULTS, decay: 0.1, steps: 120 },
+      check: (r) => {
+        const fixed = run({ ...DEFAULTS, steps: 120 }, quiet);
+        return (r.loss.toFixed(3) === '0.059' && r.w.toFixed(3) === '0.744' && r.b.toFixed(3) === '0.084' && r.rates[119].toFixed(3) === '0.016'
+          && fixed.loss.toFixed(3) === '0.065' && fixed.w.toFixed(3) === '0.779' && fixed.b.toFixed(3) === '0.165') || `decay: ${r.w}, ${r.b}, ${r.loss}; fixed: ${fixed.w}, ${fixed.b}, ${fixed.loss}`;
+      } },
+    { name: 'quiz prediction: decay 0.5 leaves the line short of the least squares line after 120 steps', input: { ...DEFAULTS, decay: 0.5, steps: 120 },
+      check: (r) => (r.w.toFixed(3) === '0.662' && r.b.toFixed(3) === '0.084' && r.loss.toFixed(3) === '0.064' && r.closedForm.w.toFixed(3) === '0.752' && r.rates[119].toFixed(3) === '0.003' && r.losses[0].toFixed(3) === '0.388') || `ended at (${r.w}, ${r.b}), loss ${r.loss}` },
+    { name: 'Things to try: seeds 4 and 5 end at losses 0.163 and 0.062, against best possible 0.065 and 0.055', input: { ...DEFAULTS, seed: 4 },
+      check: (r) => {
+        const five = run({ ...DEFAULTS, seed: 5 }, quiet);
+        return (r.loss.toFixed(3) === '0.163' && r.closedForm.loss.toFixed(3) === '0.065' && r.w.toFixed(3) === '0.766' && r.b.toFixed(3) === '-0.320' && r.closedForm.w.toFixed(3) === '0.746' && r.closedForm.b.toFixed(3) === '-0.006'
+          && five.loss.toFixed(3) === '0.062' && five.closedForm.loss.toFixed(3) === '0.055') || `seed 4: ${r.w}, ${r.b}, ${r.loss}; seed 5: ${five.loss}`;
       } },
     { name: 'with no scatter in the data a fixed learning rate comes to rest on the exact line', input: { ...DEFAULTS, noise: 0, steps: 300 },
       check: (r) => (Math.abs(r.w - r.closedForm.w) < 1e-3 && Math.abs(r.b - r.closedForm.b) < 1e-3 && r.loss < 1e-5) || `ended at (${r.w}, ${r.b}), loss ${r.loss}, closed form (${r.closedForm.w}, ${r.closedForm.b}) loss ${r.closedForm.loss}` },

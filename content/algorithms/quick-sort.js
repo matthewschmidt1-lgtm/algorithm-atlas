@@ -163,9 +163,12 @@ export default {
       { label: 'Same input, median of three', values: { order: 'sorted', pivot: 'median3', custom: [] } },
     ],
     tryThis: [
-      'Load the "Worst case" preset and watch the shaded range shrink by only one bar per partition. Then switch the pivot choice to median of three on the same input and compare the comparison counts.',
-      'Set the starting order to "Few distinct values". Every value equal to the pivot ends up on the right, so partitions become lopsided. This is why production sorts use three-way partitioning.',
-      'Double the number of items from 16 to 32 on random input. The comparisons should slightly more than double, the signature of n log n growth.',
+      { ask: 'Load "Worst case: sorted + last pivot" with 14 items and note the comparisons and the deepest recursion. Then load "Same input, median of three". The list is the same and only the rule for choosing the pivot has changed. Will the comparisons go down a little or a lot, and what will happen to the deepest recursion?',
+        reveal: 'The comparisons fall from 84 to 50 and the deepest recursion from 13 to 5. With the last element as pivot on a sorted list, the pivot is always the largest value in its range. Nothing lands on its right, so the shaded range barely shrinks from one partition to the next. Median of three looks at the first, middle and last values of the range and takes the one in between, which on a sorted list is the true middle value, so each partition cuts the range in half. The 50 includes 3 extra comparisons for every pivot chosen this way.' },
+      { ask: 'Load "Random list", set the number of items to 64 and note the comparisons and the deepest recursion. Then change the starting order to "Few distinct values". There are still 64 items, but only four different values among them. Will quick sort find that list easier?',
+        reveal: 'No, harder: 605 comparisons against 359, and the recursion goes 19 deep instead of 11. No value equal to the pivot is smaller than it, so every one of them ends up on its right and the partition is lopsided. A run of equal values is taken apart one value at a time. This is why production sorts use three-way partitioning, which sets all the values equal to the pivot aside in one step.' },
+      { ask: 'Load "Random list" and set the number of items to 16, then 32, then 64, noting the comparisons each time. A quadratic sort needs about four times as many comparisons each time the list doubles. What will quick sort need: double, somewhat more than double, or four times?',
+        reveal: 'It makes 43 comparisons, then 148, then 359. That is 3.4 times as many for the first doubling and 2.4 times for the second: more than double each time, and less than the four times of a quadratic sort. The factor is uneven because a single random list can be lucky or unlucky with its pivots.' },
     ],
     run,
     report: (r, c) => `Sorted ${r.sorted.length} values with ${c.comparisons || 0} comparisons and ${c.writes || 0} array writes. Deepest recursion: ${r.depth}.\n[${r.sorted.join(', ')}]`,
@@ -242,14 +245,33 @@ export default {
 
   code: {
     sample: {
-      input: 'The list [29, 10, 14, 37, 13, 5, 31, 22]',
-      expected: '5 10 13 14 22 29 31 37',
+      input: 'The list [29, 5, 14, 37, 13, 5, 31, 22], which holds the value 5 twice. Prints the sorted list and the number of comparisons made.',
+      expected: '5 5 13 14 22 29 31 37\ncomparisons: 16',
     },
+    breakIt: [
+      { change: 'Put the list in order before it is sorted: change the data to 5, 5, 13, 14, 22, 29, 31, 37. The pivot is still the last value of each range. What will the comparison count be?',
+        find: { python: 'data = [29, 5, 14, 37, 13, 5, 31, 22]', javascript: 'const data = [29, 5, 14, 37, 13, 5, 31, 22];' },
+        replace: { python: 'data = [5, 5, 13, 14, 22, 29, 31, 37]', javascript: 'const data = [5, 5, 13, 14, 22, 29, 31, 37];' },
+        reveal: 'The sorted line is the same, but the program prints "comparisons: 28" instead of 16. On a list that is already in order, the last value of every range is its largest, so each partition removes the pivot and nothing else. The ranges hold 8, 7, 6 and so on down to 2 values and cost 7 + 6 + 5 + 4 + 3 + 2 + 1 = 28 comparisons, the most that eight values can cost. Sorted and nearly sorted data is common in real work, which is why always taking the last element as pivot is a mistake.' },
+      { change: 'Make the first recursive call include the pivot: change `p - 1` to `p`. What happens when the pivot is the largest value in its range?',
+        find: { python: 'quicksort(a, lo, p - 1)', javascript: 'quicksort(a, lo, p - 1);' },
+        replace: { python: 'quicksort(a, lo, p)', javascript: 'quicksort(a, lo, p);' },
+        reveal: 'Nothing is printed. Python stops with "RecursionError: maximum recursion depth exceeded" and JavaScript with "RangeError: Maximum call stack size exceeded". The first partition puts 22 at position 4, and the changed call then asks for positions 0 to 4, which hold 5, 14, 13, 5, 22. The pivot is 22 again, it is the largest value there, and it stays at position 4. So the next call is on positions 0 to 4 once more, and the one after that, until the memory set aside for calls runs out. Leaving the pivot out of both calls is what makes every range smaller than the one before.' },
+      { change: 'Put the first call back, and make the second recursive call start at the pivot: change `p + 1` to `p`. The list holds 5 twice. Does that matter?',
+        find: { python: 'quicksort(a, p + 1, hi)', javascript: 'quicksort(a, p + 1, hi);' },
+        replace: { python: 'quicksort(a, p, hi)', javascript: 'quicksort(a, p, hi);' },
+        reveal: 'It does. Nothing is printed, and both programs stop as before, with "RecursionError: maximum recursion depth exceeded" in Python and "RangeError: Maximum call stack size exceeded" in JavaScript. The trouble is the range 5, 14, 13, 5 at positions 0 to 3. Its pivot is 5 and no value is smaller, so the pivot goes to position 0, and the changed call starts at the pivot: positions 0 to 3 again, for ever. Now change the first 5 in the data to 10. The same broken program prints "5 10 13 14 22 29 31 37" and "comparisons: 22". With no repeated values it only wastes comparisons, which is how this mistake gets through testing.' },
+    ],
     python: {
-      source: `def partition(a, lo, hi):
+      source: `comparisons = 0
+
+
+def partition(a, lo, hi):
+    global comparisons
     pivot = a[hi]
     i = lo
     for j in range(lo, hi):
+        comparisons += 1
         if a[j] < pivot:
             a[i], a[j] = a[j], a[i]
             i += 1
@@ -267,21 +289,27 @@ def quicksort(a, lo=0, hi=None):
     quicksort(a, p + 1, hi)
 
 
-data = [29, 10, 14, 37, 13, 5, 31, 22]
+data = [29, 5, 14, 37, 13, 5, 31, 22]
 quicksort(data)
-print(" ".join(str(x) for x in data))`,
+print(" ".join(str(x) for x in data))
+print("comparisons:", comparisons)`,
       notes: [
-        { line: 2, text: 'The last element of the range is the pivot. Production code would first swap a better-chosen pivot into this position.' },
-        { line: 5, text: 'The only comparison in the algorithm. Everything smaller than the pivot is swapped to the boundary `i`.' },
-        { line: 8, text: 'The pivot moves from the end to the boundary, which is its final sorted position.' },
-        { line: 18, text: 'The pivot at index `p` is excluded from both recursive calls. That is what guarantees progress.' },
+        { line: 5, text: 'Python needs this line before a function may change a variable that was created outside it.' },
+        { line: 6, text: 'The last element of the range is the pivot. Production code would first swap a better-chosen pivot into this position.' },
+        { line: 9, text: 'Every comparison with a pivot is counted, so the program can report how much work the sort did.' },
+        { line: 10, text: 'The only comparison in the algorithm. Everything smaller than the pivot is swapped to the boundary `i`.' },
+        { line: 13, text: 'The pivot moves from the end to the boundary, which is its final sorted position.' },
+        { line: 23, text: 'The pivot at index `p` is excluded from both recursive calls. That is what guarantees progress.' },
       ],
     },
     javascript: {
-      source: `function partition(a, lo, hi) {
+      source: `let comparisons = 0;
+
+function partition(a, lo, hi) {
   const pivot = a[hi];
   let i = lo;
   for (let j = lo; j < hi; j++) {
+    comparisons++;
     if (a[j] < pivot) {
       [a[i], a[j]] = [a[j], a[i]];
       i++;
@@ -298,19 +326,23 @@ function quicksort(a, lo = 0, hi = a.length - 1) {
   quicksort(a, p + 1, hi);
 }
 
-const data = [29, 10, 14, 37, 13, 5, 31, 22];
+const data = [29, 5, 14, 37, 13, 5, 31, 22];
 quicksort(data);
-console.log(data.join(" "));`,
+console.log(data.join(" "));
+console.log("comparisons: " + comparisons);`,
     },
     cpp: {
       source: `#include <iostream>
 #include <utility>
 #include <vector>
 
+int comparisons = 0;
+
 int partition(std::vector<int>& a, int lo, int hi) {
     int pivot = a[hi];
     int i = lo;
     for (int j = lo; j < hi; ++j) {
+        ++comparisons;
         if (a[j] < pivot) {
             std::swap(a[i], a[j]);
             ++i;
@@ -328,11 +360,12 @@ void quicksort(std::vector<int>& a, int lo, int hi) {
 }
 
 int main() {
-    std::vector<int> data = {29, 10, 14, 37, 13, 5, 31, 22};
+    std::vector<int> data = {29, 5, 14, 37, 13, 5, 31, 22};
     quicksort(data, 0, static_cast<int>(data.size()) - 1);
     for (std::size_t k = 0; k < data.size(); ++k) {
         std::cout << data[k] << (k + 1 < data.size() ? " " : "\\n");
     }
+    std::cout << "comparisons: " << comparisons << "\\n";
     return 0;
 }`,
     },
@@ -432,16 +465,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The list is already sorted and has 8 values. With the last element as pivot, how many comparisons will quick sort make?',
-      options: ['8', '24', '28', '64'],
-      answer: 2,
+      q: 'The list is 1, 3, 2, 6, 5, 7, 4 and the pivot is the last element of each range. How many comparisons will quick sort make?',
+      options: ['6', '10', '21', '49'],
+      answer: 1,
       explain: [
-        'A single partition of 8 values already costs 7 comparisons, and there are many more partitions to come.',
-        'About 24 is what a balanced n log₂ n run would give. Sorted input with a last-element pivot is not balanced.',
-        'Correct. Each partition removes only the pivot, so the ranges have sizes 8, 7, ... 2, costing 7 + 6 + ... + 1 = 28 comparisons.',
-        'n² overcounts. The exact worst case is n(n − 1) / 2.',
+        '6 is the first partition alone: each of the other six values is compared with the pivot 4. The two groups it leaves, 1, 3, 2 and 5, 7, 6, still have to be sorted.',
+        'Correct. The pivot 4 is the middle value, so the first partition costs 6 comparisons and leaves two groups of three: 1, 3, 2 and 5, 7, 6. Each of those has its middle value last, costs 2 comparisons and leaves only single values. 6 + 2 + 2 = 10.',
+        '21 is what the same seven values cost in sorted order: 6 + 5 + 4 + 3 + 2 + 1, because each pivot is then the largest value of its range. Here every pivot is the middle value of its range, so each partition splits the range in half.',
+        'n × n overcounts. Even the worst case for seven values is 7 × 6 / 2 = 21.',
       ],
-      tryInput: { size: 8, order: 'sorted', pivot: 'last', custom: [] },
+      tryInput: { custom: [1, 3, 2, 6, 5, 7, 4], pivot: 'last' },
+      check: (r, c) => (c.comparisons === 10 && r.depth === 3 && r.sorted.join(',') === '1,2,3,4,5,6,7') || `${c.comparisons} comparisons, depth ${r.depth}`,
     },
     {
       type: 'debug',
@@ -476,7 +510,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Three-way partitioning',
-      prompt: 'Modify `partition` so that it returns two indices and splits the range into three parts: smaller than, equal to, and larger than the pivot (the "Dutch national flag" scheme). Recurse only into the smaller and larger parts. Then sort a list in which every value is the same and confirm that the number of comparisons grows linearly rather than quadratically.',
+      prompt: 'Modify `partition` so that it returns two indices and splits the range into three parts: smaller than, equal to, and larger than the pivot (the "Dutch national flag" scheme). Recurse only into the smaller and larger parts. Test one partition on 4, 9, 4, 1, 7, 2, 4 with the last value as pivot. Then sort a list of 16 equal values and a list of 32 equal values, count how many values the partition examines, and compare with the partition from this lesson.',
+      expect: 'On 4, 9, 4, 1, 7, 2, 4 one partition around the last value, 4, puts the two smaller values in positions 0 and 1, the three 4s in positions 2 to 4, and the two larger values in positions 5 and 6, so it returns 2 and 4. The whole sort gives 1, 2, 4, 4, 4, 7, 9. On 16 equal values the partition examines each value once, 16 examinations if the pivot is checked against itself, and then both recursive calls are on empty ranges. On 32 equal values it is 32. The partition from this lesson makes 120 comparisons on 16 equal values and 496 on 32: four times the work for twice the values, where the three-way version only doubles.',
       hints: ['Keep three boundaries: `lt`, `i` and `gt`.', 'When `A[i]` equals the pivot, just advance `i`; when it is larger, swap it with `A[gt]` and shrink `gt` without advancing `i`.'],
     },
   ],
@@ -527,6 +562,24 @@ int main() {
       check: (r) => isSorted(r.sorted) || 'random-pivot run is wrong' },
     { name: 'sorted input with last pivot costs n(n-1)/2 comparisons', input: { size: 8, order: 'sorted', seed: 1, pivot: 'last' },
       check: (r, c) => c.comparisons === 28 || `expected 28 comparisons, got ${c.comparisons}` },
+    { name: '14 sorted values: 84 comparisons with the last pivot, depth 13', input: { size: 14, order: 'sorted', seed: 7, pivot: 'last' },
+      check: (r, c) => (c.comparisons === 84 && r.depth === 13) || `got ${c.comparisons} comparisons, depth ${r.depth}` },
+    { name: '14 sorted values: 50 comparisons with median of three, depth 5', input: { size: 14, order: 'sorted', seed: 7, pivot: 'median3' },
+      check: (r, c) => (c.comparisons === 50 && r.depth === 5) || `got ${c.comparisons} comparisons, depth ${r.depth}` },
+    { name: 'random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (16)', input: { size: 16, order: 'random', seed: 7, pivot: 'last' },
+      check: (r, c) => c.comparisons === 43 || `got ${c.comparisons} comparisons` },
+    { name: 'random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (32)', input: { size: 32, order: 'random', seed: 7, pivot: 'last' },
+      check: (r, c) => c.comparisons === 148 || `got ${c.comparisons} comparisons` },
+    { name: 'random lists of 16, 32 and 64 cost 43, 148 and 359 comparisons (64)', input: { size: 64, order: 'random', seed: 7, pivot: 'last' },
+      check: (r, c) => (c.comparisons === 359 && r.depth === 11) || `got ${c.comparisons} comparisons, depth ${r.depth}` },
+    { name: '64 values with four distinct keys cost 605 comparisons, depth 19', input: { size: 64, order: 'few', seed: 7, pivot: 'last' },
+      check: (r, c) => (c.comparisons === 605 && r.depth === 19 && new Set(r.sorted).size === 4) || `got ${c.comparisons} comparisons, depth ${r.depth}` },
+    { name: 'a list whose pivots are all medians costs 10 comparisons', input: { custom: [1, 3, 2, 6, 5, 7, 4], pivot: 'last' },
+      check: (r, c) => (c.comparisons === 10 && r.depth === 3) || `got ${c.comparisons} comparisons, depth ${r.depth}` },
+    { name: 'equal values are the worst case for this partition: 120 comparisons for 16', input: { custom: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7], pivot: 'last' },
+      check: (r, c) => c.comparisons === 120 || `got ${c.comparisons} comparisons` },
+    { name: 'the code sample input, with its two 5s, costs 16 comparisons', input: { custom: [29, 5, 14, 37, 13, 5, 31, 22], pivot: 'last' },
+      check: (r, c) => (c.comparisons === 16 && r.sorted.join(' ') === '5 5 13 14 22 29 31 37') || `got ${c.comparisons} comparisons` },
     { name: 'the worked example costs 6 comparisons', input: { custom: [4, 7, 2, 9, 5], pivot: 'last' },
       check: (r, c) => (c.comparisons === 6 && r.sorted.join(',') === '2,4,5,7,9') || `got ${c.comparisons} comparisons`},
     { name: 'handles custom input with duplicates and negatives', input: { custom: [3, -1, 3, 0, -7, 3], pivot: 'last' },

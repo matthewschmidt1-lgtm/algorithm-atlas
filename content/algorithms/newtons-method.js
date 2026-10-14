@@ -229,11 +229,16 @@ export default {
       { label: 'Horizontal tangent', values: { fn: 'sqrt2', x0: 0, tolerance: 1e-6, maxSteps: 20 } },
     ],
     tryThis: [
-      'Run "Square root of 2: fast" and watch the bar chart. The bars go roughly 0, 1, 3, 6, 12, 16: the number of correct digits about doubles at each step until the number format runs out.',
-      'Load "A cycle: 0, 1, 0, 1". The tangent at 0 leads to 1, and the tangent at 1 leads back to 0. Now move the starting guess to −2. From there the same function is solved in a few steps.',
-      'Load "Divergence on arctan" and then "Same arctan, closer start". Slide the starting guess between 1.2 and 1.5. Somewhere near 1.39 the behaviour flips from converging to running away.',
-      'Load "Triple root: slow". The curve is flat where it meets zero, and each step removes only one third of the remaining distance. The bars now climb in a straight line instead of doubling.',
-      'Keep "Square root of 2" and tighten the tolerance from 0.001 to 0.000000000001. The run needs only one or two more steps, because each step squares the error.',
+      { ask: 'Load "Square root of 2: fast" and step through the first two tangents, watching the bar chart of correct digits. The first three bars stand at about 0.4, 1.1 and 2.6. How tall will the next three be?',
+        reveal: 'About 5.7, 11.8 and 16. The number of correct digits roughly doubles at each step, because each step squares the error. The last bar stops at 16 only because that is all this number format can hold.' },
+      { ask: 'Load "A cycle: 0, 1, 0, 1" and watch the tangent at 0 lead to 1 and the tangent at 1 lead back to 0. Now move the starting guess to −2 and leave everything else alone, including the limit of 8 steps. Will the method still fail on this function?',
+        reveal: 'No. From −2 it converges in 4 steps, through −1.8, −1.76995 and −1.76929, to −1.769292354. The function is the same and only the start has changed. Near −2 the curve is steep and bends one way, so each tangent lands closer to the root than the one before.' },
+      { ask: 'Load "Divergence on arctan", which starts at 1.5 and runs away. Then load "Same arctan, closer start", which starts at 1.2 and converges. Somewhere between the two the behaviour flips. Before you slide the starting guess to find out: is the flip nearer 1.2 or nearer 1.5?',
+        reveal: 'Nearer 1.5: it is close to 1.39. From 1.35 the run still converges, in 8 steps. From 1.4 each guess lands farther out than the one before, on alternating sides: −1.41, 1.45, −1.55, 1.85, −2.89, 8.71, and after that it runs away. A change of 0.05 in the start separates an answer from no answer.' },
+      { ask: 'Load "Triple root: slow". The curve is flat where it meets zero. The square root of 2 took 5 steps at this tolerance. How many will this run take: about 5, about 10, or more than 30?',
+        reveal: '34 steps. Each step removes only one third of the remaining distance: 3.5, 3, 2.667, 2.444 and so on, so the bars climb in a straight line instead of doubling. The answer, 2.0000015, is also less exact than the tolerance of 0.000001 suggests. The last move was 0.00000077, and at this rate a move is only half of the distance still to go.' },
+      { ask: 'Load "Square root of 2: fast" and loosen the tolerance to 0.001. The run takes 4 steps. Now tighten the tolerance to 0.000000000001, a billion times stricter. How many steps will it take?',
+        reveal: '6 steps. Two more steps are enough for nine more digits, because each step squares the error. Even at 0.001 the answer was already right to 11 decimal places: the stopping test looks at the size of the last move, and the guess after that move is far better than the move itself.' },
     ],
     run,
     report: (r, c) => {
@@ -317,6 +322,20 @@ export default {
       input: 'Solve x² − 2 = 0 from the starting guess x = 1 with a tolerance of 10⁻⁹.',
       expected: 'step 1: x = 1.500000000000\nstep 2: x = 1.416666666667\nstep 3: x = 1.414215686275\nstep 4: x = 1.414213562375\nstep 5: x = 1.414213562373\nroot = 1.414213562373',
     },
+    breakIt: [
+      { change: 'In the update, add the correction to `x` instead of subtracting it. Will the guesses still settle on a root, only more slowly?',
+        find: { python: 'x -= change', javascript: 'x -= change;' },
+        replace: { python: 'x += change', javascript: 'x += change;' },
+        reveal: 'No. The guesses wander at first, 0.5, −1.25, −1.075, −0.682, 0.442, and then run away: step 50 prints x = −36121769.424. The program ends with the error "did not converge". With a plus sign every step moves away from the point where the tangent crosses zero. Once the guess is large, each step multiplies it by about one and a half, so it never comes back. The step limit is what stops the run.' },
+      { change: 'Change the derivative from `2 * x` to `x`, as if the factor 2 had been forgotten. The function is untouched. Will the program reach the square root of 2 more slowly, or not at all?',
+        find: { python: 'return 2 * x', javascript: 'const df = (x) => 2 * x;' },
+        replace: { python: 'return x', javascript: 'const df = (x) => x;' },
+        reveal: 'Not at all. The steps print x = 2, then 1, then 2, then 1, for all 50 steps, and the program ends with the error "did not converge". With the slope halved, every correction is twice as long as it should be. From x the update lands on 2 ÷ x, so 1 goes to 2 and 2 goes back to 1. A wrong derivative has turned the easiest problem on the page into a cycle. The step limit is the only thing that ends the run. Without it this would be an endless loop.' },
+      { change: 'Change the starting guess from 1 to 0.001, where the curve is almost flat. Where will the first step land?',
+        find: { python: 'newton(f, df, 1.0, 1e-9)', javascript: 'newton(f, df, 1, 1e-9)' },
+        replace: { python: 'newton(f, df, 0.001, 1e-9)', javascript: 'newton(f, df, 0.001, 1e-9)' },
+        reveal: 'On 1000.0005. At 0.001 the value is about −2 and the slope is only 0.002, so the correction is about a thousand. After that each step roughly halves the guess, 500, 250, 125, 62.5 and so on, and the fast convergence only returns near the root. The program still ends with "root = 1.414213562373", but after 15 steps instead of 5. This curve forgives a bad throw. On other curves a step like this can land where the method cycles or diverges.' },
+    ],
     python: {
       source: `def newton(f, df, x, tol, max_steps=50):
     for step in range(1, max_steps + 1):
@@ -501,16 +520,22 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'Newton\'s method is run on x³ − 2x + 2 from the starting guess 0. At x = 0 the value is 2 and the slope is −2. At x = 1 the value is 1 and the slope is 1. What happens?',
-      options: ['It converges to the root near −1.77 in a few steps', 'The guesses alternate between 0 and 1 for ever', 'The guesses run off to infinity', 'It stops at once because the slope is zero'],
+      q: 'Newton\'s method is run on x² − 2 from the starting guess 0.25. There the value is −1.9375 and the slope is 0.5. What happens?',
+      options: [
+        'The first step lands near 1.41, and the run finishes in two or three steps',
+        'The first step lands on 4.125, far beyond the root, and the run then converges to 1.41421 from there',
+        'The first step lands on −3.625, and the run converges to the negative root, −1.41421',
+        'It stops at once because the slope is too small to use',
+      ],
       answer: 1,
       explain: [
-        'It would from a start such as −2, but not from 0.',
-        'Correct. From 0 the step is 2 ÷ (−2) = −1, giving 0 − (−1) = 1. From 1 the step is 1 ÷ 1 = 1, giving 1 − 1 = 0. The guesses are back where they started.',
-        'The guesses stay bounded: they only ever visit 0 and 1.',
-        'The slope at 0 is −2, not zero.',
+        'The step is the value divided by the slope: −1.9375 ÷ 0.5 = −3.875. That is a long move, because the curve is nearly flat at 0.25. A short first step needs a steep tangent.',
+        'Correct. The step is −1.9375 ÷ 0.5 = −3.875, and 0.25 − (−3.875) = 4.125. The nearly flat tangent throws the guess far past the root. On this curve the method recovers, through 2.305, 1.586 and 1.4235, and has converged after 7 steps, two more than from a start of 1.',
+        'That adds the step instead of subtracting it: 0.25 + (−3.875) = −3.625. The update is x minus the value over the slope, which here moves to the right, to 4.125.',
+        'The method stops only for a slope of exactly zero, as it does from a start of 0. A slope of 0.5 can be used. It just makes for a long step.',
       ],
-      tryInput: { fn: 'cycle', x0: 0, tolerance: 1e-6, maxSteps: 8 },
+      tryInput: { fn: 'sqrt2', x0: 0.25, tolerance: 1e-6, maxSteps: 20 },
+      check: (r) => (r.status === 'converged' && r.iterations === 7 && r.xs[1] === 4.125 && Math.abs(r.root - Math.SQRT2) < 1e-12) || `status ${r.status} after ${r.iterations} steps, first step to ${r.xs[1]}`,
     },
     {
       type: 'debug',
@@ -544,7 +569,8 @@ for step in range(20):
     {
       type: 'challenge',
       title: 'Newton with a safety net',
-      prompt: 'Write a root finder that takes a bracket [a, b] with a sign change as well as the function and its derivative. At each step try a Newton step from the current guess. If the result lands outside the bracket, or the bracket did not shrink to less than half its previous width, take a bisection step instead. After every step, shrink the bracket using the sign of f at the new guess. Test it on x³ − 2x + 2 with the bracket [−2, 0] starting from x = 0, where plain Newton cycles, and on arctan(x) with the bracket [−1, 2] starting from 1.5, where plain Newton diverges.',
+      prompt: 'Write a root finder that takes a bracket [a, b] with a sign change as well as the function and its derivative. At each step try a Newton step from the current guess. If the result lands outside the bracket, take a bisection step instead. After every step, shrink the bracket using the sign of f at the new guess. Stop when a step moves the guess by no more than 10⁻⁹. Test it on x³ − 2x + 2 with the bracket [−2, 0] starting from x = 0, where plain Newton cycles, and on arctan(x) with the bracket [−1, 2] starting from 1.5, where plain Newton diverges. Count the steps of each kind.',
+      expect: 'Both runs converge. On x³ − 2x + 2 the answer is −1.7692923542, after 7 steps: 2 bisections and 5 Newton steps. The Newton step from 0 lands on 1, outside the bracket, so the first step is a bisection to −1. The Newton step from −1 lands on −4, so the second is a bisection to −1.5. From there every Newton step stays inside: −1.8421053, −1.7728269, −1.7693013, and then the root. On arctan(x) the answer is 0, after 5 steps: 1 bisection and 4 Newton steps. The Newton step from 1.5 lands on −1.694, outside the bracket, so the first step is a bisection. It goes to 0.5, or to 0.25 if you first move the right end of the bracket in to 1.5.',
       hints: ['Keep the invariant that f(a) and f(b) have opposite signs, exactly as in bisection.', 'A Newton step x − f(x)/f′(x) lies inside the bracket when (x − a) × f′(x) − f(x) and (x − b) × f′(x) − f(x) have opposite signs, which avoids a division when the slope is near zero.'],
     },
   ],
@@ -615,7 +641,36 @@ for step in range(20):
         }
         return true;
       } },
-    { name: 'the quiz prediction: x³ − 2x + 2 from 0 cycles between 0 and 1', input: { fn: 'cycle', x0: 0, tolerance: 1e-6, maxSteps: 8 },
+    { name: 'the quiz prediction: x² − 2 from 0.25 jumps to 4.125 and then converges in 7 steps', input: { fn: 'sqrt2', x0: 0.25, tolerance: 1e-6, maxSteps: 20 },
+      check: (r) => {
+        const shown = r.xs.slice(1, 5).map((v) => v.toFixed(4)).join(' ');
+        return (r.status === 'converged' && r.iterations === 7 && shown === '4.1250 2.3049 1.5863 1.4235' && Math.abs(r.root - Math.SQRT2) < 1e-12) || `status ${r.status}, guesses ${shown}`;
+      } },
+    { name: 'things to try: the bars of correct digits on x² − 2 are 0.4, 1.1, 2.6, 5.7, 11.8, 16', input: { fn: 'sqrt2', x0: 1, tolerance: 1e-6, maxSteps: 20 },
+      check: (r) => {
+        const bars = r.xs.map((v) => digitsRight(v, Math.SQRT2).toFixed(1)).join(' ');
+        return bars === '0.4 1.1 2.6 5.7 11.8 16.0' || `bars ${bars}`;
+      } },
+    { name: 'things to try: x³ − 2x + 2 from −2 converges in 4 steps within the limit of 8', input: { fn: 'cycle', x0: -2, tolerance: 1e-6, maxSteps: 8 },
+      check: (r) => (r.status === 'converged' && r.iterations === 4 && r.xs.map((v) => v.toFixed(5)).join(' ') === '-2.00000 -1.80000 -1.76995 -1.76929 -1.76929' && r.root.toFixed(9) === '-1.769292354') || `status ${r.status}, guesses ${r.xs.join(', ')}` },
+    { name: 'things to try: arctan converges from 1.35 in 8 steps and diverges from 1.4', input: { fn: 'atan', x0: 1.35, tolerance: 1e-6, maxSteps: 20 },
+      check: (r) => {
+        if (r.status !== 'converged' || r.iterations !== 8) return `from 1.35: status ${r.status} after ${r.iterations} steps`;
+        const far = run({ fn: 'atan', x0: 1.4, tolerance: 1e-6, maxSteps: 20 }, quiet);
+        const shown = far.xs.slice(1, 7).map((v) => v.toFixed(2)).join(' ');
+        return (far.status === 'diverged' && shown === '-1.41 1.45 -1.55 1.85 -2.89 8.71') || `from 1.4: status ${far.status}, guesses ${shown}`;
+      } },
+    { name: 'things to try: the triple root takes 34 steps and ends 0.0000015 from the root, twice the last move', input: { fn: 'triple', x0: 3.5, tolerance: 1e-6, maxSteps: 60 },
+      check: (r) => {
+        const n = r.xs.length - 1, move = Math.abs(r.xs[n] - r.xs[n - 1]);
+        return (r.iterations === 34 && r.root.toFixed(7) === '2.0000015' && move.toFixed(8) === '0.00000077' && Math.abs(r.error / move - 2) < 1e-6) || `${r.iterations} steps, root ${r.root}, last move ${move}`;
+      } },
+    { name: 'things to try: tolerance 0.001 takes 4 steps and is already right to 11 places, and 1e-12 takes 6', input: { fn: 'sqrt2', x0: 1, tolerance: 0.001, maxSteps: 20 },
+      check: (r) => {
+        const tight = run({ fn: 'sqrt2', x0: 1, tolerance: 1e-12, maxSteps: 20 }, quiet);
+        return (r.iterations === 4 && r.error < 5e-12 && tight.status === 'converged' && tight.iterations === 6) || `${r.iterations} steps with error ${r.error}, then ${tight.iterations}`;
+      } },
+    { name: 'the cycle preset: x³ − 2x + 2 from 0 cycles between 0 and 1', input: { fn: 'cycle', x0: 0, tolerance: 1e-6, maxSteps: 8 },
       check: (r) => (r.status === 'cycle' && r.root === null && r.xs.every((v, i) => v === i % 2)) || `status ${r.status}, guesses ${r.xs.join(', ')}` },
     { name: 'arctan diverges from 1.5 and converges from 1.2', input: { fn: 'atan', x0: 1.5, tolerance: 1e-6, maxSteps: 6 },
       check: (r) => {

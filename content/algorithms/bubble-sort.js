@@ -146,9 +146,12 @@ export default {
       { label: 'One small value at the end', values: { custom: [2, 3, 4, 5, 6, 7, 8, 1], earlyExit: true } },
     ],
     tryThis: [
-      'Load "One large value at the front" and then "One small value at the end". Both lists need exactly 7 swaps, but the first is finished after 13 comparisons and the second needs 28. Watch how far the out-of-place value travels in each pass.',
-      'Load "Already sorted" and note the comparison count. Then switch off "Stop when a pass makes no swaps" and run the same list again. The answer is the same, and the wasted comparisons are the cost of not checking.',
-      'Set the starting order to "Reversed". Every comparison now leads to a swap. This is the most work bubble sort can ever do on a list of that length.',
+      { ask: 'Load "One large value at the front", then "One small value at the end". Each list has a single value seven places away from where it belongs. Before you run them: will the two lists cost the same number of comparisons?',
+        reveal: 'No. Both lists need exactly 7 swaps, but the first is finished after 13 comparisons in 2 passes and the second needs 28 comparisons in 7 passes. A large value is carried all the way to the right in a single pass. A small value moves left by only one position per pass, so the 1 needs seven passes to get home.' },
+      { ask: 'Load "Already sorted" with 10 items and note the comparison count. Then switch off "Stop when a pass makes no swaps" and run the same list again. How many comparisons will it make this time?',
+        reveal: 'With the early exit the 10 values cost 9 comparisons in 1 pass. Without it they cost 45 comparisons in 9 passes, and there is still not a single swap. The answer is the same both times. The 36 extra comparisons are the cost of not checking.' },
+      { ask: 'Set the starting order to "Reversed" with 10 items. How many of the comparisons will lead to a swap?',
+        reveal: 'Every one of them. The 10 values cost 45 comparisons and 45 swaps over 9 passes, because every pair of values starts in the wrong order. This is the most work bubble sort can do on a list of that length.' },
     ],
     run,
     report: (r, c) => `Sorted ${r.sorted.length} values in ${r.passes} ${r.passes === 1 ? 'pass' : 'passes'} with ${c.comparisons || 0} comparisons and ${r.swaps} swaps (${c.writes || 0} array writes).\n[${r.sorted.join(', ')}]`,
@@ -221,46 +224,66 @@ export default {
 
   code: {
     sample: {
-      input: 'The list [29, 10, 14, 37, 13, 5, 31, 22]. Prints the sorted list and the number of passes used.',
-      expected: '5 10 13 14 22 29 31 37\npasses: 6',
+      input: 'The list [29, 10, 14, 37, 13, 5, 31, 22]. Prints the sorted list, the number of passes used and the number of comparisons made.',
+      expected: '5 10 13 14 22 29 31 37\npasses: 6\ncomparisons: 27',
     },
+    breakIt: [
+      { change: 'Let the inner loop run one step further, so that `j` reaches `end` itself: `range(end + 1)` in Python, `j <= end` in the other two. What will the last comparison of the first pass be reading?',
+        find: { python: 'for j in range(end):', javascript: 'j < end;' },
+        replace: { python: 'for j in range(end + 1):', javascript: 'j <= end;' },
+        reveal: 'It reads `a[j + 1]` one position past the end of the list. Python stops on the first pass with "IndexError: list index out of range" and prints nothing else. JavaScript does not stop: reading past the end gives `undefined`, the comparison with it is false, and the program prints the sorted list and "passes: 6" as before, but "comparisons: 33" instead of 27. That is one wasted comparison in each of the 6 passes, and no error to tell you. In C++ the same read is undefined behaviour.' },
+      { change: 'Move the line that sets `swapped` to false up, so that it runs once before the `while` loop instead of at the start of every pass. The list will still come out sorted. What will change?',
+        find: { python: '    while end > 0:\n        passes += 1\n        swapped = False', javascript: '  while (end > 0) {\n    passes++;\n    let swapped = false;' },
+        replace: { python: '    swapped = False\n    while end > 0:\n        passes += 1', javascript: '  let swapped = false;\n  while (end > 0) {\n    passes++;' },
+        reveal: 'The sorted list is the same, but the program prints "passes: 7" and "comparisons: 28" instead of 6 and 27. The first swap sets the flag to true and nothing ever sets it back, so the early exit can never fire and every pass runs. Here that wastes one pass. On a list that is already nearly sorted it wastes almost all of them.' },
+      { change: 'Delete the line that makes `end` one smaller after each pass. Will the list still be sorted, and what will the comparison count be?',
+        find: { python: '        end -= 1\n', javascript: '    end--;\n' },
+        replace: { python: '', javascript: '' },
+        reveal: 'The list is still sorted and it still takes 6 passes, but the program prints "comparisons: 42" instead of 27. Every pass now walks all 7 pairs, including the values at the right-hand end that earlier passes had already put in their final positions. Those comparisons can never lead to a swap.' },
+    ],
     python: {
       source: `def bubble_sort(a):
     end = len(a) - 1
     passes = 0
+    comparisons = 0
     while end > 0:
         passes += 1
         swapped = False
         for j in range(end):
+            comparisons += 1
             if a[j] > a[j + 1]:
                 a[j], a[j + 1] = a[j + 1], a[j]
                 swapped = True
         if not swapped:
             break
         end -= 1
-    return passes
+    return passes, comparisons
 
 
 data = [29, 10, 14, 37, 13, 5, 31, 22]
-passes = bubble_sort(data)
+passes, comparisons = bubble_sort(data)
 print(" ".join(str(x) for x in data))
-print("passes:", passes)`,
+print("passes:", passes)
+print("comparisons:", comparisons)`,
       notes: [
         { line: 2, text: '`end` is the last position that is still unsorted. Everything to its right is final.' },
-        { line: 6, text: 'The flag is reset at the start of every pass. Resetting it only once, before the loop, is a common bug.' },
-        { line: 8, text: 'The only comparison in the algorithm. The strict `>` keeps equal values in their original order.' },
-        { line: 11, text: 'The early exit: a pass without a swap proves the list is sorted.' },
-        { line: 13, text: 'The pass just finished put the largest remaining value at `end`, so the next pass can stop one position sooner.' },
+        { line: 7, text: 'The flag is reset at the start of every pass. Resetting it only once, before the loop, is a common bug.' },
+        { line: 9, text: 'Counting comparisons is how the work of a sort is measured. The count is printed at the end.' },
+        { line: 10, text: 'The only comparison in the algorithm. The strict `>` keeps equal values in their original order.' },
+        { line: 13, text: 'The early exit: a pass without a swap proves the list is sorted.' },
+        { line: 15, text: 'The pass just finished put the largest remaining value at `end`, so the next pass can stop one position sooner.' },
       ],
     },
     javascript: {
       source: `function bubbleSort(a) {
   let end = a.length - 1;
   let passes = 0;
+  let comparisons = 0;
   while (end > 0) {
     passes++;
     let swapped = false;
     for (let j = 0; j < end; j++) {
+      comparisons++;
       if (a[j] > a[j + 1]) {
         [a[j], a[j + 1]] = [a[j + 1], a[j]];
         swapped = true;
@@ -269,26 +292,29 @@ print("passes:", passes)`,
     if (!swapped) break;
     end--;
   }
-  return passes;
+  return [passes, comparisons];
 }
 
 const data = [29, 10, 14, 37, 13, 5, 31, 22];
-const passes = bubbleSort(data);
+const [passes, comparisons] = bubbleSort(data);
 console.log(data.join(" "));
-console.log("passes: " + passes);`,
+console.log("passes: " + passes);
+console.log("comparisons: " + comparisons);`,
     },
     cpp: {
       source: `#include <iostream>
 #include <utility>
 #include <vector>
 
-int bubbleSort(std::vector<int>& a) {
+std::pair<int, int> bubbleSort(std::vector<int>& a) {
     int end = static_cast<int>(a.size()) - 1;
     int passes = 0;
+    int comparisons = 0;
     while (end > 0) {
         ++passes;
         bool swapped = false;
         for (int j = 0; j < end; ++j) {
+            ++comparisons;
             if (a[j] > a[j + 1]) {
                 std::swap(a[j], a[j + 1]);
                 swapped = true;
@@ -297,16 +323,17 @@ int bubbleSort(std::vector<int>& a) {
         if (!swapped) break;
         --end;
     }
-    return passes;
+    return {passes, comparisons};
 }
 
 int main() {
     std::vector<int> data = {29, 10, 14, 37, 13, 5, 31, 22};
-    int passes = bubbleSort(data);
+    auto [passes, comparisons] = bubbleSort(data);
     for (std::size_t k = 0; k < data.size(); ++k) {
         std::cout << data[k] << (k + 1 < data.size() ? " " : "\\n");
     }
     std::cout << "passes: " << passes << "\\n";
+    std::cout << "comparisons: " << comparisons << "\\n";
     return 0;
 }`,
     },
@@ -408,16 +435,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The list is 6, 5, 4, 3, 2, 1. How many comparisons will bubble sort make before it finishes?',
-      options: ['5', '15', '30', '36'],
-      answer: 1,
+      q: 'The list is 2, 1, 4, 3, 6, 5, and the sort stops when a pass makes no swaps. How many comparisons will bubble sort make before it finishes?',
+      options: ['3', '5', '9', '15'],
+      answer: 2,
       explain: [
-        '5 is the cost of the first pass alone. That pass moves only the 6 into place.',
-        'Correct. The passes cover 6, 5, 4, 3 and 2 values, costing 5 + 4 + 3 + 2 + 1 = 15 comparisons, and every one of them causes a swap.',
-        '30 is the number of array writes: 15 swaps, each writing two positions.',
-        '36 is n × n. Each pass is one comparison shorter than the last, so the total is n(n − 1)/2.',
+        '3 is the number of swaps: one for each of the pairs 2 and 1, 4 and 3, 6 and 5. A pass compares every neighbouring pair, including the ones that are already in order.',
+        '5 is the cost of the first pass. That pass does leave the list sorted, but bubble sort cannot know it. It needs one more pass that comes back with no swaps.',
+        'Correct. The first pass makes 5 comparisons and 3 swaps, and the list is then in order. The second pass makes 4 comparisons, finds nothing to swap, and that is the signal to stop. 5 + 4 = 9.',
+        '15 is 5 + 4 + 3 + 2 + 1, the cost of running every pass. The early exit stops the work after the second pass, as soon as a pass makes no swaps.',
       ],
-      tryInput: { custom: [6, 5, 4, 3, 2, 1], earlyExit: true },
+      tryInput: { custom: [2, 1, 4, 3, 6, 5], earlyExit: true },
+      check: (r, c) => (c.comparisons === 9 && r.passes === 2 && r.swaps === 3) || `${c.comparisons} comparisons, ${r.passes} passes, ${r.swaps} swaps`,
     },
     {
       type: 'debug',
@@ -458,6 +486,7 @@ int main() {
       type: 'challenge',
       title: 'Cocktail shaker sort',
       prompt: 'Change bubble sort so that passes alternate direction: one pass left to right carrying the largest value to the right end, then one pass right to left carrying the smallest value to the left end. Shrink the unsorted part from both sides. Count comparisons on the list 2, 3, 4, 5, 6, 7, 8, 1, where plain bubble sort needs 28, and explain the difference.',
+      expect: 'On 2, 3, 4, 5, 6, 7, 8, 1 a version that follows the two hints makes 18 comparisons and 7 swaps, against 28 comparisons for plain bubble sort. It takes three passes. The forward pass makes 7 comparisons and moves the 8 to the right-hand end. The backward pass makes 6 comparisons and carries the 1 all the way to the front in one go. A last forward pass makes 5 comparisons, swaps nothing, and stops the sort. Plain bubble sort can move the 1 only one place per pass, so it needs seven passes. The number of swaps is the same in both, because each swap still fixes exactly one out-of-order pair.',
       hints: ['Keep two boundaries, `lo` and `hi`, and stop when they meet or when a pass in either direction makes no swaps.', 'The backward pass compares `A[j − 1]` with `A[j]` while `j` walks down from `hi` to `lo + 1`.'],
     },
   ],
@@ -515,6 +544,12 @@ int main() {
       check: (r, c) => (c.comparisons === 28 && r.swaps === 7) || `got ${c.comparisons} comparisons and ${r.swaps} swaps` },
     { name: 'handles duplicates and negatives', input: { custom: [3, -1, 3, 0, -7, 3] },
       check: (r) => r.sorted.join(',') === '-7,-1,0,3,3,3' || `got ${r.sorted.join(',')}` },
+    { name: 'ten sorted values cost 9 comparisons with the early exit and 45 without', input: { size: 10, order: 'sorted', seed: 7, earlyExit: false },
+      check: (r, c) => (c.comparisons === 45 && r.passes === 9 && r.swaps === 0) || `got ${c.comparisons} comparisons in ${r.passes} passes` },
+    { name: 'ten reversed values: all 45 comparisons lead to a swap', input: { size: 10, order: 'reversed', seed: 7, earlyExit: true },
+      check: (r, c) => (c.comparisons === 45 && r.swaps === 45 && r.passes === 9) || `got ${c.comparisons} comparisons and ${r.swaps} swaps` },
+    { name: 'a list of three swapped pairs is sorted after one pass and needs a second to find out', input: { custom: [2, 1, 4, 3, 6, 5], earlyExit: true },
+      check: (r, c) => (c.comparisons === 9 && r.swaps === 3 && r.passes === 2) || `got ${c.comparisons} comparisons and ${r.swaps} swaps` },
     { name: 'a single value needs no comparisons', input: { custom: [42] },
       check: (r, c) => (r.sorted.join(',') === '42' && !c.comparisons) || 'a one-element list should cost nothing' },
   ],

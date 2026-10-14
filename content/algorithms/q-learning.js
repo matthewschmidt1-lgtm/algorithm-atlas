@@ -486,11 +486,16 @@ export default {
       { label: 'Open room', values: { world: 'open', epsilon: 0.2, alpha: 0.5, gamma: 0.9, episodes: 300, seed: 5 } },
     ],
     tryThis: [
-      'Step through the first four episodes of the default run and watch the top row. The value of "right from C1" goes 5, 7.5, 8.75. Only after C1 has a value does B1 get one, and only then A1.',
-      'Load the three "Small room" presets in turn and compare the last step of each. All three give a 5-move route. Without exploring, 12 of the 36 moves were never tried and the average gap from the exact values stays above 6. With constant exploring every value is exact, but look at the tally: the agent itself ended 135 of its 200 episodes in the hazard, because it never used what it had learned.',
-      'Load "Cliff edge, never exploring" and then "Cliff edge, exploring 1 step in 5". Without exploring the agent keeps the first route that worked, 9 moves long. With exploring it finds the 7-move route along the edge of the cliff.',
-      'In the small room, set the learning rate to 1. Each value now jumps straight to its target. In a world with no chance in it that is the fastest setting. Then try 0.1 and watch how many more episodes the chart takes to come down.',
-      'Lower the discount to 0.5 and compare the values near the start with the ones you saw at 0.9. A reward four steps away is now worth very little, so the values far from the goal are small and close together.',
+      { ask: 'Step through the first four episodes of the default run and watch the top row. In episode 1 the step from C1 into the goal sets the value of "right from C1" to 5. What will that value be after episodes 2 and 3? And in which episode does "right from A1", two cells further from the goal, first get a value?',
+        reveal: 'It goes 7.5 and then 8.75: each visit moves it halfway from where it is to 10. "Right from A1" gets its first value, 1.013, in episode 3. B1 had to come first. It got 2.25 in episode 2, once C1 had a value to pass back, and only then did A1 have something to draw on. News of the reward travels one cell further from the goal with each episode.' },
+      { ask: 'Load the three "Small room" presets in turn and compare the last step of each. Which of the three agents finishes with the table closest to the exact values? And which one ends the most episodes in the hazard while it trains?',
+        reveal: 'The same one: the agent that always explores. Its table matches the exact values to three decimal places and no move is left untried, yet it ended 135 of its 200 episodes in the hazard and only 59 at the goal, because it never used what it had learned. The agent that never explores reached the goal 199 times, but 12 of the 36 moves were never tried and its average gap from the exact values is 6.163. Exploring 1 step in 5 sits between them: 198 episodes at the goal, 1 move untried and an average gap of 2.462. All three tables give a 5-move route.' },
+      { ask: 'Load "Cliff edge, never exploring". The shortest route runs along the edge of the cliff and takes 7 moves. How many moves does the route this agent settles on take? Then load "Cliff edge, exploring 1 step in 5". What does exploring gain, and what does it cost during training?',
+        reveal: 'Without exploring the route takes 9 moves: up two rows, across, and down two rows. The agent keeps the first route that worked and never tries the moves that would show it a shorter one. With exploring, the table gives the 7-move route along the edge. The cost is paid while training: 53 of the 200 episodes ended in the hazard, against 5 without exploring.' },
+      { ask: 'In the small room, with the default learning rate of 0.5, the best value at the start reaches its exact figure of 6.56 by episode 26. Set the learning rate to 1, so each value jumps straight to its target. Will it get there sooner or later? Then try 0.1.',
+        reveal: 'Sooner: by episode 12 the best value at the start is already 6.56. In a world with no chance in it, a target is exactly right as soon as the values it is built from are right, so jumping straight to it is the fastest setting. At 0.1 the value creeps up: 0.69 at episode 26, 4.24 at episode 54, and 6.56 only by episode 152. After 200 episodes the average gap from the exact values is 1.95 at a rate of 1, 2.46 at 0.5 and 4.19 at 0.1.' },
+      { ask: 'With the discount at 0.9, the best move at the start, five moves from the goal, is worth 6.561. Lower the discount to 0.5. What will it be worth now? Will the route change?',
+        reveal: 'It is worth 0.625, and the route is the same 5 moves. The last move into the goal is worth the full 10, and each move further back is worth 0.5 times the one after it: 10, 5, 2.5, 1.25, 0.625. At 0.9 the same chain runs 10, 9, 8.1, 7.29, 6.561. A reward four steps further away is now worth very little, so the values far from the goal are small and close together.' },
     ],
     run,
     report: (r) => `After ${r.episodes} episodes and ${r.updates} updates: ${r.goals} reached the goal, ${r.hazards} hit the hazard${r.timeouts ? `, ${r.timeouts} ran out of steps` : ''}.\nRoute from the finished table: ${r.outcome === 'goal' ? `${r.routeMoves.join(', ')} (${r.routeMoves.length} moves; the shortest possible is ${r.shortest})` : r.outcome === 'hazard' ? 'leads into the hazard' : 'does not reach the goal'}.\nGap from the exact values: largest ${r.maxGap.toFixed(3)}, average ${r.meanGap.toFixed(3)}. Moves never tried: ${r.untried}.`,
@@ -575,6 +580,20 @@ export default {
       input: 'The 3 by 4 room from the demonstration: S is the start, G the goal (+10), H the hazard (−10) and # a wall. The agent trains for 2,000 episodes with a learning rate of 0.5, a discount of 0.9 and random moves on 30% of its steps, using a small fixed random number generator. The program prints the best move it has learned for each cell, the value of the best move at the start, and the route that follows.',
       expected: '2000 episodes, 14185 updates\n> > > G\n^ # ^ H\n^ > ^ <\nValue of the best move at the start: 6.561\nRoute: up, up, right, right, right',
     },
+    breakIt: [
+      { change: 'In the line that builds the target, replace the best value in the new cell with the value of a move picked by `choose` for the new cell, which is random 30 times in 100. The route will come out the same. What happens to the value of the best move at the start?',
+        find: { python: 'target = reward if over else reward + GAMMA * max(q[new_cell])', javascript: 'const target = done ? reward : reward + GAMMA * Math.max(...q[newCell]);' },
+        replace: { python: 'target = reward if over else reward + GAMMA * q[new_cell][choose(q[new_cell])]', javascript: 'const target = done ? reward : reward + GAMMA * q[newCell][choose(q[newCell])];' },
+        reveal: 'It drops. The program prints "Value of the best move at the start: 5.242" where the working one printed 6.561, and the bottom row of best moves changes from `^ > ^ <` to `^ < ^ <`. The exact value is 6.561, and the changed program can no longer learn it. Some of its targets are now built from a random move in the next cell, which is worth less than the best one, so the values come out too low. The table has stopped describing the best that could be done and started describing an agent that stumbles 30 times in 100. A target built from the move the agent makes next, random steps included, is the idea behind SARSA.' },
+      { change: 'In the update line, write to the entry of the new cell instead of the cell the move was made from, on both sides of the line. What route does the program print?',
+        find: { python: 'q[cell][move] += ALPHA * (target - q[cell][move])', javascript: 'q[cell][move] += ALPHA * (target - q[cell][move]);' },
+        replace: { python: 'q[new_cell][move] += ALPHA * (target - q[new_cell][move])', javascript: 'q[newCell][move] += ALPHA * (target - q[newCell][move]);' },
+        reveal: 'It prints "Value of the best move at the start: 0.000" and a route of "up" twenty times, which walks into the top edge and stays there until the program gives up. The rewards are now written into the entries of the goal and hazard cells, and nothing ever reads those, because no move is made from a cell that ends the episode. Every entry the agent does read stays at 0, so it wanders at random for all 2,000 episodes. The first line shows it: 65250 updates where the working program made 14185.' },
+      { change: 'Set the share of random moves to 0, so the agent never explores. Will it still find the 5-move route? And will it know what to do in the cells that are not on that route?',
+        find: { python: 'EXPLORE_PERCENT = 30', javascript: 'const EXPLORE_PERCENT = 30;' },
+        replace: { python: 'EXPLORE_PERCENT = 0', javascript: 'const EXPLORE_PERCENT = 0;' },
+        reveal: 'It still prints the 5-move route and 6.561, so at a glance nothing is wrong. Look at the bottom row of best moves: `^ ^ ^ ^` where the working program printed `^ > ^ <`. The agent settled on one route and stopped leaving it, so in B3, C3 and D3 all four values are still 0, and the program prints the first move, up, for a cell where no move stands out. In D3 that arrow points into the hazard. The run made 10113 updates where the working program made 14185, because it wasted no steps, and it knows nothing about the cells it did not need.' },
+    ],
     python: {
       source: `WORLD = ["...G",
          ".#.H",
@@ -930,16 +949,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'In the small room, set the exploration rate to 1. The agent now moves at random on every step of all 200 episodes and never once follows its table. What route does the finished table give?',
-      options: ['None: the table is noise, because the agent never practised a good route', 'A shortest route to the goal, 5 moves', 'A route to the goal, but a long wandering one', 'A route into the hazard'],
+      q: 'On the cliff edge, set the exploration rate to 1 and train for 200 episodes with seed 40. The agent now moves at random on every step and never once follows its table. It starts right beside the cliff, so it falls in almost every episode. What route does the finished table give?',
+      options: ['None that reaches the goal: an agent that hardly ever got there cannot have learned the way', 'The 7-move route along the edge of the cliff', 'The 9-move route that stays a row away from the cliff, because all those falls taught it to keep clear', 'A route into the hazard'],
       answer: 1,
       explain: [
-        'What the agent practises does not matter. Each update asks what the best next move would be worth, not what the agent does next.',
-        'Random movement tries every move in every cell many times, and each update is built from the best next value. So the table ends up exact, and its route is a shortest one, although the agent never walked it on purpose.',
-        'The wandering shows in how the agent behaved while training, not in the table. The table records the best that could be done from each cell.',
-        'Moves into the hazard are learned as −10 the first few times they are tried, so the finished table steers away from it.',
+        'It reached the goal only twice in 200 episodes, and that was enough. The first arrival gave the last move a value, and after that any visit to a neighbouring cell could pass the value one cell further back, whether or not the episode ended at the goal.',
+        'The agent fell in 198 of its 200 episodes, and the table still gives up, right, right, right, right, right, down. Each update asks what the best next move would be worth, not what the agent does next. A fall lowers the value of the one move that stepped off the edge and of nothing else. The values are still rough, 2.34 at the start where the exact figure is 5.31, but they already put the moves in the right order.',
+        'The table does not count falls. A fall teaches that one move, the step off the edge, is worth −10. The moves that run along the edge without stepping off keep the value of the best move that follows them, so the shorter route still comes out ahead.',
+        'Each move into the hazard gets a target of −10 every time it is tried, so its value is the lowest in its cell. The route follows the highest value in each cell and never takes one.',
       ],
-      tryInput: { world: 'room', epsilon: 1, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
+      tryInput: { world: 'cliff', epsilon: 1, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
+      check: (r) => (r.outcome === 'goal' && r.routeMoves.join() === 'up,right,right,right,right,right,down' && r.shortest === 7 && r.goals === 2 && r.hazards === 198 && Math.abs(Math.max(...r.Q.slice(r.start * 4, r.start * 4 + 4)) - 2.34) < 0.005) || `${r.outcome}: ${r.routeMoves.join()}; ${r.goals} goals, ${r.hazards} falls`,
     },
     {
       type: 'debug',
@@ -980,11 +1000,12 @@ while not over:
     {
       type: 'challenge',
       title: 'A slippery floor',
-      prompt: 'Change the world so that the floor is slippery: on 20% of steps the agent moves in a direction chosen at random instead of the one it picked. Train with a learning rate of 1 and look at how the values near the hazard jump about from one episode to the next. Then train with a learning rate that shrinks as each entry is updated more often, and compare the table with exact values from value iteration, which must now average over the possible results of each move.',
+      prompt: 'Take the 3 by 4 room of the code sample, with its discount of 0.9, and make the floor slippery: on 20% of steps the agent moves in a direction chosen at random from the four instead of the one it picked. First work out the exact values by value iteration, which must now average over the possible results of each move. What is the best move at the start worth, and what is "up from C2", the move that runs beside the hazard, worth? Then train with a learning rate of 1 and watch the entry for "up from C2" from one episode to the next. Last, train with a learning rate that shrinks as each entry is updated more often, and compare the table with the exact values.',
+      expect: 'Value iteration gives 5.796 for the best move at the start, which is up. On the dry floor it was 6.561. Going right from the start is now worth 5.233. On the dry floor the two were tied, and slipping breaks the tie in favour of the route that keeps away from the hazard. "Up from C2" is worth 7.518, down from 9. The best move in every cell is the same as on the dry floor. The learned numbers depend on your random choices, so compare the pattern and not the digits. In one run with the sample\'s generator and 30% exploring, a learning rate of 1 left "up from C2" at 9 after 2,000 episodes and at −10 after 20,000: the entry is whatever the last try happened to give. With a learning rate of 1 divided by the number of updates, the same entry was 7.480 after 2,000 episodes and 7.469 after 20,000. Entries far from the goal settle more slowly. The best value at the start was 5.325 after 20,000 episodes and 5.649 after 200,000.',
       hints: [
         'Keep a count of how many times each entry has been updated and use 1 divided by that count as its learning rate. The entry then holds the plain average of its targets.',
         'In value iteration, the value of a move is now 0.8 times the value of its intended result plus 0.2 times the average over the four random directions.',
-        'Expect the best route to keep one cell further from the hazard than before.',
+        'On the dry floor, going right from the start is worth exactly as much as going up. Expect slipping to break that tie in favour of the route that keeps away from the hazard.',
       ],
     },
   ],
@@ -1070,8 +1091,20 @@ while not over:
         const firstGoal = r.log.find((u) => u.reward === 10);
         return (c1 === '5,7.5,8.75' && b1.startsWith('2.25,4.5') && firstGoal.old === 0 && firstGoal.fresh === 5 && 0 + 0.5 * (0.9 * 5 - 0) === 2.25) || `C1: ${c1}; B1: ${b1}`;
       } },
-    { name: 'the predicted run: moving at random throughout still gives a shortest route of 5 moves', input: { world: 'room', epsilon: 1, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
+    { name: 'small room, always exploring, 200 episodes: a shortest route of 5 moves and an exact table', input: { world: 'room', epsilon: 1, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
       check: (r) => (routeIsShortest(r) === true && r.routeMoves.length === 5 && r.maxGap < 0.001) || `${routeIsShortest(r)}; largest gap ${r.maxGap}` },
+    { name: 'the predicted run: on the cliff, moving at random throughout falls 198 times in 200 and still gives the 7-move route along the edge', input: { world: 'cliff', epsilon: 1, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
+      check: (r) => (routeIsShortest(r) === true && r.routeMoves.join() === 'up,right,right,right,right,right,down' && r.goals === 2 && r.hazards === 198 && r.timeouts === 0) || `${routeIsShortest(r)}; ${r.routeMoves.join()}; ${r.goals} goals, ${r.hazards} falls` },
+    { name: 'a discount of 0.5 leaves the route alone and gives 0.625 at the start (quoted in Things to try)', input: { world: 'room', epsilon: 0.2, alpha: 0.5, gamma: 0.5, episodes: 200, seed: 40 },
+      check: (r) => {
+        const best = Math.max(...r.Q.slice(r.start * 4, r.start * 4 + 4));
+        return (Math.abs(best - 10 * 0.5 ** 4) < 1e-6 && r.routeMoves.join() === 'up,up,right,right,right') || `best value at the start ${best}; route ${r.routeMoves.join()}`;
+      } },
+    { name: 'average gap after 200 episodes: 1.95 at a learning rate of 1, 2.46 at 0.5, 4.19 at 0.1 (quoted in Things to try)', input: { world: 'room', epsilon: 0.2, alpha: 1, gamma: 0.9, episodes: 200, seed: 40 },
+      check: (r) => {
+        const half = silentRun({}), slow = silentRun({ alpha: 0.1 });
+        return (Math.abs(r.meanGap - 1.945) < 0.001 && Math.abs(half.meanGap - 2.462) < 0.001 && Math.abs(slow.meanGap - 4.188) < 0.001) || `gaps ${r.meanGap}, ${half.meanGap}, ${slow.meanGap}`;
+      } },
     { name: 'the three small-room presets: all give a 5-move route, with 12 moves untried when never exploring and 135 falls when always exploring', input: { world: 'room', epsilon: 0, alpha: 0.5, gamma: 0.9, episodes: 200, seed: 40 },
       check: (r) => {
         if (routeIsShortest(r) !== true || r.untried !== 12 || r.meanGap <= 6) return `never exploring: ${routeIsShortest(r)}, ${r.untried} untried, average gap ${r.meanGap}`;

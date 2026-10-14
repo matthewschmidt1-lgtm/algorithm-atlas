@@ -235,10 +235,15 @@ export default {
       { label: 'Two separate pieces', values: { edges: 'A-B:3, B-C:1, A-C:2, D-E:4, E-F:1, D-F:5' } },
     ],
     tryThis: [
-      'Watch the "Groups" row. Every accepted edge merges two groups into one, so the number of groups falls by exactly one each time. With V nodes it takes V − 1 accepted edges to reach a single group.',
-      'Each time an edge is rejected, find the route in thick green edges that already connects its two ends. That route plus the rejected edge would form a cycle, and no edge on that cycle is heavier than the rejected one.',
-      'Load "Equal weights: several answers". Four edges tie at weight 1 and any three of them make a minimum spanning tree. The algorithm takes the first three in the list. The total weight is the same whichever three are chosen.',
-      'Load "Two separate pieces". No edge joins the two halves, so the run ends with two groups. The result is the cheapest tree inside each piece.',
+      { ask: 'Run the graph the page opens with. It has 8 nodes and 14 edges, and the "Groups" row starts with 8 groups. How many edges will have been accepted when that row is down to a single group?',
+        reveal: 'Seven. Every accepted edge merges two groups into one, so the number of groups falls by exactly one each time, and it takes 8 − 1 = 7 accepted edges to get from 8 groups to 1. The run examines only 8 of the 14 edges to find them: 7 accepted and 1 rejected. The other 6 are never looked at.',
+        input: { nodes: 8, density: 0.6, seed: 3, edges: '' } },
+      { ask: 'Load "Small graph" and step to the one edge that is rejected. Before you read the note, find the route of thick green edges that already joins its two ends. Is any edge on that route heavier than the rejected edge?',
+        reveal: 'No. The rejected edge is C-E, with weight 5. Its ends are already joined by C-B, B-D, D-F and F-E, with weights 5, 4, 5 and 4. That route plus C-E would form a cycle, and C-E is as heavy as anything on it. This is always so: the edges on the route were all accepted earlier in the sorted order, so none of them can be heavier than the edge being rejected.' },
+      { ask: 'Load "Equal weights: several answers". Four edges tie at weight 1 and form a square. Which three will the algorithm keep, and would a different three give a lighter tree?',
+        reveal: 'It keeps A-B, B-C and C-D, the first three in the list, because the sort leaves edges of equal weight in the order they were given. The tree is complete after three edges, so D-A is never examined. No other choice is lighter: any three sides of the square make a spanning tree of total weight 3. When weights tie there can be several minimum spanning trees, and all of them have the same total weight.' },
+      { ask: 'Load "Two separate pieces". It has 6 nodes, so a spanning tree would need 5 edges. How many edges will the algorithm accept?',
+        reveal: 'Four. No edge joins A, B, C to D, E, F, so the run examines all 6 edges, accepts 4, rejects 2 and ends with two groups. The result, B-C, E-F, A-C and D-E with total weight 8, is the cheapest tree inside each piece. It is called a minimum spanning forest. Fewer than V − 1 accepted edges is the sign that the graph was not connected.' },
     ],
     run,
     report: (r, c) => `${r.spanning ? 'Minimum spanning tree' : `Minimum spanning forest (${r.groups} pieces)`}: ${r.tree.map((e) => `${e.u}-${e.v} (${e.w})`).join(', ')}\nTotal weight: ${r.weight}\n${r.examined} of ${r.graph.edges.length} edges examined: ${r.tree.length} accepted, ${r.rejected} rejected. Sorting took ${c.comparisons || 0} comparisons.`,
@@ -310,9 +315,23 @@ export default {
 
   code: {
     sample: {
-      input: 'An undirected graph with edges A-B:4, A-C:2, B-C:1, B-D:5, C-D:8, C-E:10, D-E:2, D-F:6, E-F:3 (the same graph as in the Dijkstra lesson). Each decision in order, then the total weight of the minimum spanning tree.',
+      input: 'An undirected graph with edges A-B:4, A-C:2, B-C:1, B-D:5, C-D:8, C-E:10, D-E:2, D-F:6, E-F:3. Each decision in order, then the total weight of the minimum spanning tree.',
       expected: 'accept B-C 1\naccept A-C 2\naccept D-E 2\naccept E-F 3\nreject A-B 4\naccept B-D 5\ntotal weight 13',
     },
+    breakIt: [
+      { change: 'Replace the cycle test with a "both ends used" test: reject an edge when the group of `u` and the group of `v` each hold more than one node already, whether or not they are the same group. In Python that is `size[root_u] > 1 and size[root_v] > 1`. Which edge that the tree needs will now be rejected?',
+        find: { python: 'if root_u == root_v:', javascript: 'if (rootU === rootV) {' },
+        replace: { python: 'if size[root_u] > 1 and size[root_v] > 1:', javascript: 'if (size.get(rootU) > 1 && size.get(rootV) > 1) {' },
+        reveal: 'B-D. The first five lines are unchanged, then the program prints "reject B-D 5", "reject D-F 6", "reject C-D 8", "reject C-E 10" and "total weight 8". After four accepted edges there are two partial trees: A, B, C and D, E, F. Every edge that could join them has two used ends, so every one is rejected, and the result is not a spanning tree. The total of 8 is lower than the true 13, so the answer looks better, not worse. What matters is whether the two ends are in the same group, not whether each has been touched before.' },
+      { change: 'Delete the line that merges the two groups, the one that points one representative at the other. The edge is still added to the tree. Which edge will now be accepted that should have been rejected?',
+        find: { python: 'parent[root_v] = root_u', javascript: 'parent.set(rootV, rootU);' },
+        replace: { python: 'pass', javascript: '' },
+        reveal: 'A-B. The program prints "accept B-C 1", "accept A-C 2", "accept D-E 2", "accept E-F 3", "accept A-B 4" and "total weight 12". Without the merge every node stays a group of its own, so the test never finds two ends in the same group and nothing is ever rejected. The loop stops after the five lightest edges. They include the cycle A, B, C, and nothing joins D, E, F to it. That is five edges and a lower total, but it is not a tree.' },
+      { change: 'Add a seventh node, G, to the list of nodes and give it no edges. In C++, change `n` from 6 to 7. Will the program tell you that G cannot be connected?',
+        find: { python: 'nodes = ["A", "B", "C", "D", "E", "F"]', javascript: 'const nodes = ["A", "B", "C", "D", "E", "F"];' },
+        replace: { python: 'nodes = ["A", "B", "C", "D", "E", "F", "G"]', javascript: 'const nodes = ["A", "B", "C", "D", "E", "F", "G"];' },
+        reveal: 'No. It prints the same six decisions as before, then "reject D-F 6", "reject C-D 8", "reject C-E 10" and "total weight 13", and nothing about G. Seven nodes need six edges. Only five can be accepted, so the early stop never happens, the loop runs out of edges, and the function returns a forest as if it were a tree. Count the accepted edges at the end: fewer than V − 1 means the graph is in more than one piece.' },
+    ],
     python: {
       source: `def find(parent, x):
     while parent[x] != x:
@@ -548,6 +567,7 @@ int main() {
         'C-E would be rejected too if it were examined, but the tree is complete after D-E, so the algorithm stops first.',
       ],
       tryInput: { edges: 'A-B:1, B-C:2, A-C:3, C-D:4, B-D:5, D-E:6, C-E:7' },
+      check: (r) => (r.rejected === 2 && r.examined === 6 && r.tree.length === 4 && r.weight === 13) || `${r.rejected} rejected, ${r.examined} examined, weight ${r.weight}`,
     },
     {
       type: 'debug',
@@ -583,7 +603,8 @@ for u, v, w in sorted(edges, key=lambda e: e[2]):
     {
       type: 'challenge',
       title: 'Stop early to find clusters',
-      prompt: 'Scatter 30 points in the plane in three loose clumps. Build the complete graph on them, using the straight-line distance between two points as the edge weight, and run Kruskal\'s algorithm, but stop when exactly three groups remain. Print the groups. Then move one point so that it sits midway between two clumps and see what happens. Explain the result in terms of which edges are accepted first.',
+      prompt: 'Take points in the plane and build the complete graph on them, using the straight-line distance between two points as the edge weight. Run Kruskal\'s algorithm, but stop when exactly three groups remain, and print the groups. Start with these ten points in three clumps: (0,0), (2,0), (0,2) and (2,3) on the left, (12,0), (14,0) and (12,2) on the right, and (6,12), (8,12) and (7,18) at the top. Then move the point (2,3) to (7,1), midway between the left and right clumps, and run it again. Explain the result in terms of which edges are accepted first. After that, scatter 30 points of your own in three loose clumps and try the same thing.',
+      expect: 'With the ten points as given, the three groups are the three clumps: four points on the left, three on the right and three at the top. Seven edges are accepted. The last and longest joins (6,12) to (7,18) and has length 6.08. After the move the groups change. The three points left on the left, the moved point and the three on the right form one group of seven. (6,12) and (8,12) form the second, and (7,18) is on its own. The moved point is 5.10 from (2,0) and 5.10 from (12,0). Both of those edges are shorter than 6.08, so both are accepted first, and they chain the left and right clumps together before the top clump is complete.',
       hints: ['Stop when the number of accepted edges reaches the number of points minus 3.', 'This is single-linkage clustering. A chain of close points can link two clumps that are far apart overall.'],
     },
   ],

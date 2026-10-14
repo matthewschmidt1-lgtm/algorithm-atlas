@@ -252,10 +252,14 @@ export default {
       { label: 'Worked example: four points', values: { custom: EXAMPLE, epochs: 10 } },
     ],
     tryThis: [
-      'Run the default and step through the first pass. Notice that most points change nothing. Only the mistakes move the line, and each one swings it noticeably. Then watch the bar chart: the mistakes per pass shrink to zero, and the run stops.',
-      'Look closely at the final line of the default run. It separates the classes, but it is not centred in the gap between them. The perceptron stops at the first line that works. Change the seed and compare how close the line passes to the nearest point each time.',
-      'Load "XOR: it never converges". Every pass makes about as many mistakes as the one before, the boundary keeps swinging, and the run ends at the pass limit with roughly half the points wrong. Raise the maximum passes to 40. Nothing improves, because no straight line separates these four corners.',
-      'Load "Overlapping groups: it never settles". A good line clearly exists here, one that gets most points right, but the perceptron cannot rest on it: a single point on the wrong side is enough to knock the line away again. Compare with [logistic regression](#/algorithm/logistic-regression) on the same dataset, which settles.',
+      { ask: 'Run the default and step through the first pass, which checks all 30 points one by one. Before you start: how many of the 30 will move the line?',
+        reveal: 'Only 4. The other 26 points are already on the correct side when they are checked, so they change nothing. Each of the 4 mistakes swings the line noticeably. The later passes make 2, 2, 2 and then 0 mistakes, so the bars shrink to nothing and the run stops after pass 5 with 10 updates in total.' },
+      { ask: 'Look closely at the final line of the default run. It separates the two classes. Does it run down the middle of the gap between them? Then change the seed to 2 and ask the same question.',
+        reveal: 'No. With seed 5 the line passes 0.003 units from the nearest class 0 point and 0.50 from the nearest class 1 point, so it almost touches one group. With seed 2 it is the other way round: 0.49 from the nearest class 0 point and 0.02 from the nearest class 1 point. The perceptron stops at the first line that makes a clean pass. Nothing in the rule moves the line toward the centre of the gap.' },
+      { ask: 'Load "XOR: it never converges" and run it to its limit of 12 passes. Then raise the maximum passes to 40. Will the extra 28 passes bring the mistakes per pass down?',
+        reveal: 'No. Over the first 12 passes every pass makes between 18 and 24 mistakes on the 24 points, and passes 13 to 40 stay in the same range. The run stopped at 12 passes has 12 of 24 points right, and the run stopped at 40 has 13 of 24. No straight line separates these four corners, so there is nothing for the extra passes to find and the boundary keeps swinging.' },
+      { ask: 'Load "Overlapping groups: it never settles". A line that gets most of these 30 points right clearly exists. How many of the 30 will the perceptron have right when it is stopped after 20 passes?',
+        reveal: 'Only 21 of 30, which is 70.0%. The passes make 6, 7 and then 6 mistakes every time, because a single point on the wrong side is enough to knock the line away from a good position. Raising the limit to 40 passes gives 21 of 30 again. [Logistic regression](#/algorithm/logistic-regression) on the same 30 points settles on a line that gets 27 right.' },
     ],
     run,
     report: (r, c) => `${r.converged ? `Converged: pass ${r.epochs} made no mistakes` : `Not converged: stopped at the limit of ${r.epochs} pass${r.epochs === 1 ? '' : 'es'}`}. ${r.updates} update${r.updates === 1 ? '' : 's'} in ${c['point visits'] || 0} point visits.\nBoundary: ${f2(r.w[0])}·x ${term(r.w[1])}·y ${term(r.b)} = 0\nTraining accuracy: ${pct(r.accuracy)} (${r.correct} of ${r.n} training points strictly on the correct side with the final weights).\nMistakes per pass: ${r.mistakesPerEpoch.join(', ')}`,
@@ -317,11 +321,25 @@ export default {
       input: 'Train on six points that the line x + y = 3.5 separates, printing the mistakes and the weights after each pass, then whether it converged and the training accuracy.',
       expected: 'pass 1: 4 mistakes, weights (-1, 0), bias -2\npass 2: 3 mistakes, weights (0, 0), bias -3\npass 3: 3 mistakes, weights (1, 0), bias -4\npass 4: 3 mistakes, weights (0, 2), bias -5\npass 5: 3 mistakes, weights (1, 2), bias -6\npass 6: 0 mistakes, weights (1, 2), bias -6\nconverged after 6 passes\ntraining accuracy: 6 of 6',
     },
+    breakIt: [
+      { change: 'Where the target is set, make a class 0 point use 0 in place of −1, so the target is simply the label. The program stops when a pass makes no mistakes. Will it still stop after 6 passes?',
+        find: { python: 'target = 1 if label == 1 else -1', javascript: 'const target = label === 1 ? 1 : -1;' },
+        replace: { python: 'target = 1 if label == 1 else 0', javascript: 'const target = label === 1 ? 1 : 0;' },
+        reveal: 'No. It prints "pass 1: 4 mistakes, weights (2, 3), bias 1", then "3 mistakes, weights (2, 3), bias 1" for every pass from 2 to 20, and ends with "not converged after 20 passes" and "training accuracy: 3 of 6". The first class 1 point sets the weights to (2, 3) and the bias to 1, which gives every point a positive score. Each class 0 point is then counted as a mistake on every pass, but its update is multiplied by 0 and changes nothing. The program can see those three mistakes and has no way to correct them.' },
+      { change: 'Change the stopping test from "no mistakes" to "3 mistakes or fewer", so a pass with few mistakes counts as good enough. What training accuracy will the program report?',
+        find: { python: 'converged = mistakes == 0', javascript: 'converged = mistakes === 0;' },
+        replace: { python: 'converged = mistakes <= 3', javascript: 'converged = mistakes <= 3;' },
+        reveal: 'It prints "pass 2: 3 mistakes, weights (0, 0), bias -3", then "converged after 2 passes" and "training accuracy: 3 of 6". The program claims success with weights of (0, 0), which give every point the score −3 and call all six points class 0. Half of them are class 0, so half are right. A pass with few mistakes proves nothing, because the weights were still moving. Left alone, the run reaches weights (1, 2) and bias −6 in pass 5, confirms them with a clean pass 6, and gets 6 of 6.' },
+      { change: 'Leave out the bias: change the line that updates `b` so that it adds 0. The six points have not changed, and a line still separates them. Will the program find one?',
+        find: { python: 'b += target', javascript: 'b += target;' },
+        replace: { python: 'b += 0', javascript: 'b += 0;' },
+        reveal: 'No. From pass 3 to pass 20 it prints "4 mistakes, weights (1, 3), bias 0" every time, and ends with "not converged after 20 passes" and "training accuracy: 3 of 6". With the bias stuck at 0 the boundary has to pass through the origin. The class 0 point (1, 1) and the class 1 point (3, 3) lie in the same direction from the origin, so every such line puts them on the same side. The four updates in each pass cancel out, and the weights end each pass where they started.' },
+    ],
     python: {
       source: `# (x, y, label)
 points = [(2, 3, 1), (1, 1, 0), (3, 2, 1), (2, 0, 0), (3, 3, 1), (0, 2, 0)]
 w1, w2, b = 0, 0, 0
-max_passes = 100
+max_passes = 20
 
 converged = False
 passes = 0
@@ -361,7 +379,7 @@ print(f"training accuracy: {correct} of {len(points)}")`,
       source: `// [x, y, label]
 const points = [[2, 3, 1], [1, 1, 0], [3, 2, 1], [2, 0, 0], [3, 3, 1], [0, 2, 0]];
 let w1 = 0, w2 = 0, b = 0;
-const maxPasses = 100;
+const maxPasses = 20;
 
 let converged = false;
 let passes = 0;
@@ -399,7 +417,7 @@ struct Point { int x, y, label; };
 int main() {
     const std::vector<Point> points = {{2, 3, 1}, {1, 1, 0}, {3, 2, 1}, {2, 0, 0}, {3, 3, 1}, {0, 2, 0}};
     int w1 = 0, w2 = 0, b = 0;
-    const int maxPasses = 100;
+    const int maxPasses = 20;
 
     bool converged = false;
     int passes = 0;
@@ -541,16 +559,17 @@ int main() {
     },
     {
       type: 'predict',
-      q: 'The XOR dataset has class 0 in the top-right and bottom-left corners and class 1 in the other two. With a limit of 12 passes, how does the perceptron\'s run end?',
-      options: ['It converges in two or three passes', 'It converges, but only in the last few passes', 'It reaches the limit still making mistakes in every pass, and has not converged', 'It stops early because the weights return to zero'],
+      q: 'Three points lie on one horizontal line: (−1, 0) is class 1, (0, 0) is class 0 and (1, 0) is class 1. The class 0 point sits between the two class 1 points. With a limit of 10 passes, how does the perceptron\'s run end?',
+      options: ['It converges in two passes, as in the worked example', 'It converges, but only in the last few passes', 'It reaches the limit still making mistakes in every pass, and has not converged', 'It stops early because the weights return to zero'],
       answer: 2,
       explain: [
-        'That is typical of well-separated data. XOR is not separable.',
-        'Convergence would mean a line separates the corners, and none does.',
-        'Correct. Every pass contains mistakes, because no line has all of class 1 on one side and all of class 0 on the other. The run ends only because of the limit, with the boundary wherever the last update left it.',
-        'The weights never settle anywhere, and there is no rule that stops the run when they pass through zero.',
+        'The four points of the worked example can be split by a vertical line. These three cannot be split by any line, so no pass is ever clean.',
+        'Convergence would mean a straight line has both class 1 points on one side and the class 0 point on the other. Any line that puts (−1, 0) and (1, 0) on the same side puts the point between them on that side too.',
+        'Correct. The first pass makes 3 mistakes and every later pass makes 2, because no line can have the middle point on one side and both outer points on the other. The run ends only because of the limit, after 21 updates, with 1 of the 3 points on its correct side.',
+        'There is no rule that stops the run when the weights pass through zero. The only way to stop early is a full pass with no mistakes, and that never happens here.',
       ],
-      tryInput: { dataset: 'xor', points: 24, seed: 1, epochs: 12, custom: [] },
+      tryInput: { custom: [-1, 0, 1, 0, 0, 0, 1, 0, 1], epochs: 10 },
+      check: (r, c) => (!r.converged && r.epochs === 10 && r.mistakesPerEpoch.join(',') === '3,2,2,2,2,2,2,2,2,2' && c.updates === 21 && r.correct === 1 && r.n === 3) || `converged ${r.converged}, passes ${r.epochs}, mistakes ${r.mistakesPerEpoch}, updates ${c.updates}, correct ${r.correct}`,
     },
     {
       type: 'debug',
@@ -586,7 +605,8 @@ int main() {
     {
       type: 'challenge',
       title: 'Test the mistake bound, then tame a non-separable run',
-      prompt: 'First, for a separable dataset of your own, compute R (the largest length of an input with a 1 appended) and the margin γ of a separating line you know, and check that the number of updates is below (R/γ)². Make the gap between the classes narrower and record how the number of updates and the bound change. Second, implement the pocket algorithm: alongside the usual updates, keep a copy of the weights that have classified the most training points correctly so far. Run both versions on the overlapping dataset and compare the accuracy each returns when stopped after 20 passes.',
+      prompt: 'Work with the six points of the code sample: (2, 3), (3, 2) and (3, 3) are class 1, and (1, 1), (2, 0) and (0, 2) are class 0, visited in the order the sample lists them. The line x + y = 3.5 separates them. First, compute R (the largest length of an input with a 1 appended) and the margin γ of that line, and check that the number of updates is below (R/γ)². Then move the class 0 point (1, 1) to (1.5, 1.5), three times closer to the line, and record how the number of updates and the bound change. Second, go back to the original six points and add a seventh at the end of the list: (4, 4) with class 0, which no line can put on the correct side together with the rest. Implement the pocket algorithm: alongside the usual updates, after every update count the training points that are strictly on the correct side, and keep a copy of the weights whenever that count beats the best so far. Run it for 20 passes and compare the accuracy of the pocket weights with the accuracy of the last weights.',
+      expect: 'First part: R is √19, about 4.36, γ is about 0.397, and the bound (R/γ)² is about 120.3. The perceptron makes 16 updates, well below it. With (1, 1) moved to (1.5, 1.5), γ falls to about 0.132 and the bound rises to 1083, yet the run needs only 12 updates. The bound is a ceiling on the number of mistakes, not a forecast of it. Second part: after 20 passes and 77 updates the last weights are (−2, −2) with bias −7, and they put 4 of the 7 points on the correct side. The pocket holds weights (1, 1) with bias −4, reached at update 18 in pass 5, which put 6 of 7 on the correct side. That is the most any line can manage here. If you check the pocket only at the end of each pass, it never sees those weights and holds 4 of 7.',
       hints: [
         'The margin of a line a·x + b·y = c on a point is its signed distance in the extended space: target × (a·x + b·y − c) divided by the length of (a, b, c). γ is the smallest of these.',
         'For the pocket, counting the correct points after every update costs a full pass each time. Checking only at the end of each pass is a cheaper approximation.',
@@ -652,8 +672,12 @@ int main() {
       check: (r) => { const { bound } = novikoffBound(r.points, SEPARABLE_LINE); return (r.converged && r.accuracy === 1 && r.updates <= bound) || `converged ${r.converged}, updates ${r.updates}, bound ${bound}`; } },
     { name: 'the worked example: two updates, weights (2, 0), bias 0', input: { custom: EXAMPLE, epochs: 10 },
       check: (r) => (r.converged && r.updates === 2 && r.epochs === 2 && r.w[0] === 2 && r.w[1] === 0 && r.b === 0 && r.accuracy === 1) || `w ${r.w}, b ${r.b}, updates ${r.updates}, passes ${r.epochs}` },
-    { name: 'XOR never converges and stops at the pass limit (quiz prediction)', input: { dataset: 'xor', points: 24, seed: 1, epochs: 12, custom: [] },
+    { name: 'XOR never converges and stops at the pass limit', input: { dataset: 'xor', points: 24, seed: 1, epochs: 12, custom: [] },
       check: (r) => (!r.converged && r.epochs === 12 && r.mistakesPerEpoch.every((m) => m > 0) && r.accuracy < 0.8 && !isLinearlySeparable(r.points)) || `converged ${r.converged}, passes ${r.epochs}, mistakes ${r.mistakesPerEpoch}, accuracy ${r.accuracy}` },
+    { name: 'three points on a line with the odd one in the middle: 3 mistakes, then 2 in every pass (quiz prediction)', input: { custom: [-1, 0, 1, 0, 0, 0, 1, 0, 1], epochs: 10 },
+      check: (r, c) => (!r.converged && !isLinearlySeparable(r.points) && r.epochs === 10 && r.mistakesPerEpoch.join(',') === '3,2,2,2,2,2,2,2,2,2' && c.updates === 21 && r.correct === 1) || `converged ${r.converged}, mistakes ${r.mistakesPerEpoch}, updates ${c.updates}, correct ${r.correct}` },
+    { name: 'the default run: 4, 2, 2, 2, 0 mistakes and 10 updates (quoted in Things to try)', input: {},
+      check: (r, c) => (r.converged && r.mistakesPerEpoch.join(',') === '4,2,2,2,0' && c.updates === 10) || `mistakes ${r.mistakesPerEpoch}, updates ${c.updates}` },
     { name: 'exact XOR corners: every pass has mistakes', input: { custom: [1, 1, 0, -1, 1, 1, -1, -1, 0, 1, -1, 1], epochs: 40 },
       check: (r) => (!r.converged && r.mistakesPerEpoch.length === 40 && r.mistakesPerEpoch.every((m) => m > 0)) || `converged ${r.converged}, mistakes ${r.mistakesPerEpoch}` },
     { name: 'reported accuracy equals a recount from the returned weights', input: { dataset: 'overlap', points: 30, seed: 5, epochs: 20, custom: [] },
