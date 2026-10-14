@@ -2,7 +2,7 @@
 // It does not reproduce the other pages. The map here is a signpost to Explore, the
 // demonstrations are a taste of the lab, and each feature gets one line and a link.
 
-import { h, clear, richBlock, fmt } from '../core/dom.js';
+import { h, clear, richBlock } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
@@ -10,7 +10,7 @@ import { navigate } from '../core/router.js';
 import { createSearchBox } from '../ui/searchbox.js';
 import { createUniverse } from '../art/universe.js';
 import { createPreview } from '../ui/preview.js';
-import { sectionHead, plural, fact } from '../ui/parts.js';
+import { sectionHead, plural } from '../ui/parts.js';
 import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
@@ -21,7 +21,6 @@ const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
 
 export default async function render() {
   const cleanups = [];
-  const info = C.buildInfo;
 
   /* ---- hero ---- */
   // The main button leads to a first success: the gentlest lesson of the beginners' path,
@@ -73,14 +72,6 @@ export default async function render() {
     h('ul.home-want-list', wants.map((p) => h('li', h('a', { href: `#/algorithm/${p.lessons[0].id}` }, h('span.home-want-phrase', p.label), h('span.home-want-lesson', p.lessons[0].name))))),
     h('p.home-want-more', h('a.text-link', { href: '#/problems' }, `Browse all ${problemIndex().total} by what you want to do`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
 
-  /* ---- what was checked ---- */
-  const trust = h('section.ledger', { 'aria-label': 'How the lessons were checked' }, h('div.wrap',
-    h('div.ledger-row',
-      fact(info.lessons, 'lessons, each one checked before it was published'),
-      fact(fmt(info.tests), 'tests passed against independent answers'),
-      fact(info.programs, 'programs run in Python, JavaScript and C++'),
-      fact(info.formulas, 'cost formulas measured against the real code')),
-    h('p.ledger-link', h('a.text-link', { href: '#/verification' }, 'How every lesson is checked', h('span', { html: icon('arrow', { size: 15 }) })))));
 
   /* ---- the map, as a signpost ---- */
   const mapHost = h('div.universe-map.home-map');
@@ -158,6 +149,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, tracksSec, want, trust, levels, featured, universe, ways);
+  const el = h('div.home', hero, tracksSec, want, levels, featured, universe, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

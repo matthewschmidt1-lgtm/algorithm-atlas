@@ -1315,6 +1315,8 @@ if (on('tracks')) {
       const sections = [...p.$('.home').children];
       assert(sections.indexOf(p.$('.home-tracks')) === 1, 'the tracks are not the first thing after the hero');
       assert(p.$('#universe'), 'the map is gone from the home page');
+      assert(!p.$('.ledger') && !/tests passed against independent answers/.test(p.$('.home').textContent), 'the verification numbers are back on the home page');
+      assert(p.$('.site-foot a[href="#/verification"]'), 'the Verification page can no longer be reached from the footer');
       const nav = p.$$('nav.primary a').map((a) => a.textContent.trim());
       assert(nav.join(' | ') === 'Business | AI and ML | Library | Lab | Paths | About | Atlas', `the navigation reads ${nav.join(' | ')}`);
       assert(p.$$('nav.primary a').map((a) => a.getAttribute('href')).join() === '#/track/business,#/track/ai,#/library,#/lab,#/paths,#/about,#/explore', 'a navigation link goes to the wrong page');
