@@ -2,7 +2,7 @@
 // One lightweight record per validated lesson; full lessons load on demand.
 // Each record carries `checks`: what the pipeline verified for that lesson.
 export const buildInfo = {
- "date": "2026-10-13",
+ "date": "2026-10-14",
  "python": "Python 3.9.6",
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
  "browser": "Google Chrome 155.0.8059.40",
