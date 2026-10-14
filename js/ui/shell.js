@@ -102,10 +102,8 @@ export function mountShell(headHost, footHost) {
     h('div.wrap.foot-grid',
       h('div.foot-about',
         h('p.foot-mark', { html: `${MARK}<span>Algorithm Atlas</span>` }),
-        h('p.foot-tag', 'The algorithms behind AI and business decisions, explained and run in front of you.'),
-        h('p.foot-note', store.persistent
-          ? 'There are no accounts. Your progress and favourites are kept in this browser only.'
-          : 'This browser is blocking storage, so progress will not be remembered after you close the tab.')),
+        store.persistent ? null : h('p.foot-note', 'This browser is blocking storage, so progress will not be remembered after you close the tab.'),
+        h('p.foot-made', h('a', { href: 'https://matthew-schmidt-production.up.railway.app/', target: '_blank', rel: 'noopener' }, 'Made by Matty'))),
       h('nav.foot-nav', { 'aria-label': 'Footer' },
         h('div', h('p.panel-cap', 'Explore'), h('a', { href: '#/explore' }, 'The Algorithm Universe'), h('a', { href: '#/disciplines' }, 'Disciplines'), h('a', { href: '#/problems' }, 'I want to…'), h('a', { href: '#/library' }, 'Algorithm Library'), h('a', { href: '#/connections' }, 'Connections')),
         h('div', h('p.panel-cap', 'Learn'), h('a', { href: '#/paths' }, 'Learning Paths'), h('a', { href: '#/lab' }, 'Interactive Lab'), h('a', { href: '#/compare' }, 'Compare algorithms'), h('a', { href: '#/profile' }, 'Your atlas')),

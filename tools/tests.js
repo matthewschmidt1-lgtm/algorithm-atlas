@@ -1321,6 +1321,9 @@ if (on('tracks')) {
       assert(nav.join(' | ') === 'Business | AI and ML | Library | Lab | Paths | About | Atlas', `the navigation reads ${nav.join(' | ')}`);
       assert(p.$$('nav.primary a').map((a) => a.getAttribute('href')).join() === '#/track/business,#/track/ai,#/library,#/lab,#/paths,#/about,#/explore', 'a navigation link goes to the wrong page');
       assert(p.$('.site-foot a[href="#/connections"]'), 'Connections can no longer be reached from the footer');
+      const made = p.$('.site-foot .foot-made a');
+      assert(made && made.textContent === 'Made by Matty' && made.getAttribute('href') === 'https://matthew-schmidt-production.up.railway.app/', 'the footer credit is missing or links somewhere else');
+      assert(!/explained and run in front of you|There are no accounts/.test(p.$('.site-foot').textContent), 'the old footer lines are back');
       assert(p.doc.documentElement.scrollWidth <= 1201, 'the navigation overflows the page');
     } finally { p.close(); }
     // on a wide screen and on a narrow one, the links must stop short of the search button

@@ -93,7 +93,9 @@ label.setting-row { cursor: pointer; }
 .foot-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr); gap: var(--s-7); }
 .foot-mark { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; }
 .foot-mark .mark { color: var(--forest-ink); }
-.foot-tag { margin-top: var(--s-3); font-family: var(--font-serif); font-style: italic; color: var(--text-2); font-size: 1.05rem; }
+.foot-made { margin-top: var(--s-3); font-size: 0.92rem; }
+.foot-made a { color: var(--text-2); }
+.foot-made a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .foot-note { margin-top: var(--s-3); font-size: 0.86rem; color: var(--text-3); max-width: 44ch; }
 .foot-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); }
 .foot-nav div { display: grid; gap: 8px; align-content: start; }
