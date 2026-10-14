@@ -261,7 +261,7 @@ export default {
   },
 
   example: {
-    setup: "A share costs 60 today. In each of two steps its price either doubles or halves. A call option is the right to buy the share for 60 at the end of the second step, and not before. To keep the sums easy, money in the bank earns no interest here. What is the option worth today?",
+    setup: "A share costs 60 today. In each of two steps its price either doubles or halves. The ticket in the explanation above was a right to sell. This example uses the other kind, a right to buy, which is called a call option: the right to buy the share for 60 at the end of the second step, and not before. To keep the sums easy, money in the bank earns no interest here. What is the option worth today?",
     steps: [
       "Build the prices. After one step the share is at 120 or 30. After two steps it is at 240, 60 or 15. The middle price, 60, is reached in two ways: up then down, or down then up. So the tree has three end points and not four.",
       "Value the option at the end. At 240 the owner buys for 60 something worth 240 and gains 180. At 60, buying for 60 gains nothing. At 15 nobody would pay 60. So the option is worth 180, 0 and 0.",
