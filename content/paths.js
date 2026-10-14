@@ -209,7 +209,7 @@ export const paths = [
     title: 'Data Structures and Algorithms',
     level: 'intermediate',
     group: 'foundations',
-    blurb: "The classical toolkit in depth: sorting, core structures, graph algorithms, greedy methods and dynamic programming, with reasons for each.",
+    blurb: "Master sorting, data structures, graph algorithms, greedy methods, and dynamic programming.",
     audience: "Programmers preparing for technical interviews or a university algorithms course, and anyone who wants the classical toolkit with its reasoning and not only its recipes.",
     prerequisites: [
       { text: "Big-O notation, recursion, linear and binary search, and the elementary sorts", path: 'cs-foundations' },
@@ -317,7 +317,7 @@ export const paths = [
     title: 'Mathematics for Algorithms',
     level: 'intermediate',
     group: 'mathematics',
-    blurb: "The mathematics other paths lean on, taught through algorithms: remainders and primes, growth, slopes and roots, chance, vectors and transforms.",
+    blurb: "Learn the mathematics behind algorithms: number theory, growth rates, calculus, probability, and vectors.",
     audience: "Learners who want the mathematics behind the rest of the atlas, met through algorithms that use it. School algebra is assumed, and everything else is introduced where it is needed.",
     prerequisites: [
       { text: "School algebra: rearranging equations, powers and logarithms" },
@@ -429,7 +429,7 @@ export const paths = [
     title: 'Artificial Intelligence Foundations',
     level: 'intermediate',
     group: 'intelligence',
-    blurb: "Classical AI: searching a space of possibilities, guiding the search with estimates, improving by trial, and reasoning when the facts are uncertain.",
+    blurb: "Explore search, heuristic planning, trial-and-error optimization, and reasoning under uncertainty.",
     audience: "Learners who want to understand how a program can plan, search and reason. This path is about deciding what to do, and learning from data has its own path.",
     prerequisites: [
       { text: "Graphs, queues, stacks and Big-O notation", path: 'cs-foundations' },
@@ -628,7 +628,7 @@ export const paths = [
     title: 'Deep Learning and Neural Networks',
     level: 'advanced',
     group: 'intelligence',
-    blurb: "From a single unit to layered networks: how gradients flow backwards, what makes training succeed or fail, and how a diffusion model is trained.",
+    blurb: "Build from a single artificial neuron to deep networks, backpropagation, training, and diffusion models.",
     audience: "Learners who know what a loss function and gradient descent are and want to understand how layered networks are trained. The later stages go on to optimizers and to networks shaped for images, sequences and graphs.",
     prerequisites: [
       { text: "Gradient descent, linear regression and loss functions", path: 'machine-learning-first-principles' },
@@ -881,7 +881,7 @@ export const paths = [
     title: 'Quantitative Finance',
     level: 'intermediate',
     group: 'applied',
-    blurb: "The numerical methods behind pricing and risk: simulation, root finding, fitting and filtering, built from general lessons, with one lesson on pricing an option.",
+    blurb: "Explore simulation, numerical methods, fitting, and filtering for financial pricing and risk.",
     audience: "Learners with some programming and probability who want to see the algorithms that quantitative finance borrows, taught as algorithms and not as investment advice. The atlas has no published finance lesson yet, so this path is built from the general methods and is still growing.",
     prerequisites: [
       { text: "Probability, expected value and the Gaussian distribution", path: 'mathematics-for-algorithms' },
@@ -1052,7 +1052,7 @@ export const paths = [
     title: 'Robotics and Autonomous Systems',
     level: 'intermediate',
     group: 'applied',
-    blurb: "How a machine decides where to go and works out where it is: search on maps, planning by random sampling, filtering noisy sensors, simulating motion.",
+    blurb: "Learn how robots plan routes, navigate uncertain environments, estimate their position, and simulate motion.",
     audience: "Programmers, engineering students and hobbyists who want to understand the planning and estimation algorithms inside a mobile robot.",
     prerequisites: [
       { text: "Graphs, breadth-first search and merge sort", path: 'cs-foundations' },
@@ -1094,7 +1094,7 @@ export const paths = [
       {
         id: 'knowing-where-you-are',
         title: "Knowing where you are",
-        goal: "Estimate position from sensors that are never exactly right, with the lesson on the particle filter still planned.",
+        goal: "Estimate position from sensors that are never exactly right, with a single best guess or with a cloud of them.",
         modules: [
           { algo: 'bayesian-updating', why: "The rule for revising a belief after a measurement." },
           { algo: 'kalman-filter', why: "Predicts with a motion model, corrects with a measurement, and tracks how uncertain it is." },
@@ -1140,8 +1140,8 @@ export const paths = [
     title: 'Computer Vision',
     level: 'advanced',
     group: 'intelligence',
-    blurb: "Images as grids of numbers: grouping pixels, reading frequencies, recognizing patterns and generating pictures, with the lesson on convolution still planned.",
-    audience: "Learners who want to know how programs find structure in images. The atlas has few vision lessons so far, so this path builds on published lessons that treat an image as a grid of numbers, and it is still growing while its central lesson on convolution is planned.",
+    blurb: "Learn how algorithms process images, analyze visual patterns, and recognize objects.",
+    audience: "Learners who want to know how programs find structure in images. The path treats an image as a grid of numbers. It is built around the lesson on convolution and draws on lessons from other fields for the rest.",
     prerequisites: [
       { text: "Merge sort and Big-O notation", path: 'cs-foundations' },
       { text: "Gradient descent, linear regression, classification and clustering, for the third stage", path: 'machine-learning-first-principles' },
@@ -1170,7 +1170,7 @@ export const paths = [
       {
         id: 'edges-and-frequencies',
         title: "Edges and frequencies",
-        goal: "Describe an image by how quickly its brightness changes from place to place, with the lesson on convolution and edge detection still planned.",
+        goal: "Describe an image by how quickly its brightness changes from place to place, and find its edges by sliding a small grid of weights across it.",
         modules: [
           { algo: 'fft', why: "Splits a row of brightness values into slow and fast variations. Sharp edges show up as high frequencies." },
           { algo: 'convolution', why: "Slides a small pattern over the image to respond to edges, blur, or any local feature." },
@@ -1227,8 +1227,8 @@ export const paths = [
     title: 'Natural Language Processing',
     level: 'intermediate',
     group: 'intelligence',
-    blurb: "The sequence algorithms beneath language technology: comparing strings, aligning sequences, the statistics of text, and a first step toward learned models.",
-    audience: "Programmers and students who want the algorithms that sit beneath language technology. The lessons on tokenization, tagging and attention are planned, so the later stages are still growing.",
+    blurb: "Explore string matching, sequence alignment, text statistics, and the foundations of language models.",
+    audience: "Programmers and students who want the algorithms that sit beneath language technology. The later stages reach tokenization and attention. The lesson on tagging is still planned.",
     prerequisites: [
       { text: "Big-O notation, arrays and hash tables", path: 'cs-foundations' },
       { text: "Basic probability, for the third stage", path: 'mathematics-for-algorithms' },
@@ -1268,7 +1268,7 @@ export const paths = [
       {
         id: 'statistics-of-text',
         title: "The statistics of text",
-        goal: "Use the fact that some symbols and phrases are far more common than others, with the lesson on byte-pair encoding still planned.",
+        goal: "Use the fact that some symbols and phrases are far more common than others, which is also how a text is cut into tokens.",
         modules: [
           { algo: 'run-length-encoding', why: "A baseline that shows what ordinary text lacks: long runs of one character." },
           { algo: 'huffman-coding', why: "Short codes for common characters, the direct use of symbol frequencies." },
@@ -1294,7 +1294,7 @@ export const paths = [
       {
         id: 'toward-neural-language-models',
         title: "Toward neural language models",
-        goal: "See how layered networks are trained, which is as far as this path goes while the lesson on attention is planned.",
+        goal: "See how layered networks are trained, and how attention lets each word draw on the others.",
         modules: [
           { algo: 'backpropagation', why: "Trains the layered networks that language models are made of." },
           { algo: 'attention', why: "Lets a model weigh every earlier word when it predicts the next one." },

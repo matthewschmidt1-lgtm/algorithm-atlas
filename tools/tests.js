@@ -518,6 +518,16 @@ if (on('links')) {
     }
     assert(!bad.length, bad.join(' | '));
   });
+  await test('a learning path says a lesson is planned only where one of its lessons really is', () => {
+    const bad = [];
+    for (const path of C.paths) {
+      const all = path.stages.flatMap((st) => st.modules);
+      const anyPlanned = all.some((m) => !C.algoById[m.algo]);
+      for (const k of ['blurb', 'audience']) if (/\bplanned\b/i.test(path[k] || '') && !anyPlanned) bad.push(`${path.id}: its ${k} mentions a planned lesson, but every lesson on the path is published`);
+      for (const st of path.stages) if (/\bplanned\b/i.test(st.goal || '') && !st.modules.some((m) => !C.algoById[m.algo])) bad.push(`${path.id} / ${st.id}: the goal mentions a planned lesson, but every lesson in the stage is published`);
+    }
+    assert(!bad.length, bad.join(' | '));
+  });
   await test('no chain of prerequisites leads back to where it started', () => {
     const pre = (id) => (C.algoById[id].connections || []).filter((c) => c.type === 'prerequisite' && C.algoById[c.to]).map((c) => c.to);
     const state = {}; const loops = [];
