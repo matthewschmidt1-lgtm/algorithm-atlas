@@ -41,7 +41,7 @@ export default async function render() {
     h('div.wrap.hero-inner',
       h('div.hero-text',
         h('p.eyebrow', 'Algorithms for AI and for business'),
-        h('h1', 'How machines ', h('em', 'learn'), '. How good decisions get made.'),
+        h('h1', 'How machines ', h('em', 'learn'), '. How algorithms make better decisions.'),
         h('p.lede', 'Algorithm Atlas explains the methods behind artificial intelligence and behind everyday business decisions: forecasts, budgets, schedules and routes. Every lesson starts in plain words, runs the real method in front of you, and goes as deep as you like.'),
         h('div.hero-actions',
           first ? h('a.btn.btn-accent.btn-lg', { href: first.href }, first.label) : null,
