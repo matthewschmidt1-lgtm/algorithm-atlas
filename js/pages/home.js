@@ -69,7 +69,7 @@ export default async function render() {
   /* ---- start from a problem ---- */
   const wants = samplePhrases(6);
   const want = wants.length ? h('section.home-want', { 'aria-labelledby': 'home-want-h' }, h('div.wrap.home-want-inner',
-    h('div', h('p.eyebrow', 'No names needed'), h('h2', { id: 'home-want-h' }, 'Start from what you want to do')),
+    h('div', h('p.eyebrow', "What's Your Goal?"), h('h2', { id: 'home-want-h' }, 'Start from what you want to do')),
     h('ul.home-want-list', wants.map((p) => h('li', h('a', { href: `#/algorithm/${p.lessons[0].id}` }, h('span.home-want-phrase', p.label), h('span.home-want-lesson', p.lessons[0].name))))),
     h('p.home-want-more', h('a.text-link', { href: '#/problems' }, `Browse all ${problemIndex().total} by what you want to do`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
 
