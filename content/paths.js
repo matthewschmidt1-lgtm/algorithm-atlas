@@ -1140,7 +1140,7 @@ export const paths = [
     title: 'Computer Vision',
     level: 'advanced',
     group: 'intelligence',
-    blurb: "Learn how algorithms process images, analyze visual patterns, and recognize objects.",
+    blurb: "Learn how algorithms process images, analyze visual features, and recognize patterns.",
     audience: "Learners who want to know how programs find structure in images. The path treats an image as a grid of numbers. It is built around the lesson on convolution and draws on lessons from other fields for the rest.",
     prerequisites: [
       { text: "Merge sort and Big-O notation", path: 'cs-foundations' },
