@@ -1268,6 +1268,18 @@ if (on('tracks')) {
       assert(p.$$('.lesson-row .lesson-cost').every((x) => /Worst case: /.test(x.title)), 'a cost label does not carry the worst case');
     } finally { p.close(); }
   });
+  await test('the Paths page lists each path once, even for a reader who has started some', async () => {
+    localStorage.clear();
+    const { store } = await import('../js/core/store.js');
+    const p0 = await open('/algorithm/linear-search', '.lesson h1'); p0.close();   // open a lesson, so a path counts as started
+    const p = await open('/paths', '.path-row');
+    try {
+      const titles = p.$$('.path-row h3 a').map((a) => a.getAttribute('href'));
+      assert(titles.length === C.paths.length && new Set(titles).size === titles.length, `${titles.length} rows for ${C.paths.length} paths`);
+      assert(!p.$$('.path-group h2').some((x) => /^Continue$/.test(x.textContent)), 'the Continue section is still there');
+      assert(p.$$('.path-row').some((r) => /[1-9]\d* of \d+ opened/.test(r.textContent)), 'a started path no longer shows its progress in the list');
+    } finally { p.close(); localStorage.clear(); }
+  });
   await test('progress is described with one word, "opened", wherever it is shown', async () => {
     localStorage.clear();
     const { store } = await import('../js/core/store.js');

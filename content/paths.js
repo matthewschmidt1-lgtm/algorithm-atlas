@@ -96,7 +96,7 @@ export const paths = [
     title: 'Computer Science Foundations',
     level: 'beginner',
     group: 'foundations',
-    blurb: "The usual first course: measuring cost, searching and sorting, core data structures, graphs, and a first look at dynamic programming.",
+    blurb: "Learn algorithm efficiency, searching, sorting, data structures, graphs, and dynamic programming.",
     audience: "Students starting computer science, and self-taught programmers who want the standard first-course material in a sensible order.",
     prerequisites: [
       { text: "What an algorithm is, and how linear search and one simple sort work", path: 'absolute-beginners' },
@@ -528,7 +528,7 @@ export const paths = [
     title: 'Machine Learning from First Principles',
     level: 'intermediate',
     group: 'intelligence',
-    blurb: "What training a model means, one step at a time: a loss, a gradient and an update, then classification, clustering and a first neural network.",
+    blurb: "Build machine learning from the ground up, from loss and gradients to classification and neural networks.",
     audience: "Programmers and students who have used a machine learning library, or want to, and would like to see what happens inside it with every number visible.",
     prerequisites: [
       { text: "Slopes and derivatives of simple functions, and what it means for an iteration to converge", path: 'mathematics-for-algorithms' },
@@ -791,7 +791,7 @@ export const paths = [
     title: 'Optimization and Operations Research',
     level: 'intermediate',
     group: 'mathematics',
-    blurb: "Finding the best choice among many: exact methods on networks, dynamic programming, following the slope, and randomized search for rugged problems.",
+    blurb: "Learn optimization through graph algorithms, dynamic programming, gradient methods, and randomized search.",
     audience: "Engineers, analysts and students who need to find the best choice under constraints: routes, schedules, allocations and designs.",
     prerequisites: [
       { text: "Graphs, breadth-first search and Big-O notation", path: 'cs-foundations' },
@@ -1327,7 +1327,7 @@ export const paths = [
     title: 'Scientific Computing',
     level: 'intermediate',
     group: 'nature',
-    blurb: "Turning equations into reliable numbers: roots, motion stepped through time, spectra, and simulation by random sampling, each with its error.",
+    blurb: "Explore numerical methods for roots, differential equations, spectral analysis, and simulation.",
     audience: "Science and engineering students who need to compute with equations they cannot solve on paper, and who want to know how far to trust the result.",
     prerequisites: [
       { text: "Calculus: derivatives, what a rate of change is, and gradient descent", path: 'mathematics-for-algorithms' },

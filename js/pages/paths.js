@@ -25,13 +25,11 @@ export function pathCard(p, reason) {
 
 export default async function render() {
   const byLevel = ['beginner', 'intermediate', 'advanced'].map((lv) => ({ lv, list: C.paths.filter((p) => p.level === lv) })).filter((g) => g.list.length);
-  const started = C.paths.filter((p) => { const pr = pathProgress(p); return pr.started && !pr.complete; });
   const recs = store.state.profile ? recommendPaths(3) : [];
   const el = h('div.page.wrap',
     pageHead({ eyebrow: 'Learning Paths', title: 'Choose a route',
       lede: 'A path puts lessons in an order that makes sense for a goal. Each stage says what it is for and what you can skip if you already know it. Nothing is locked: you can open any lesson at any time.' }),
     !C.paths.length ? h('div.empty', h('h3', 'Learning paths are not available.'), h('p', 'The path content could not be loaded.')) : null,
-    started.length ? h('section.path-group', h('h2', 'Continue'), h('div.path-list', started.map((p) => pathCard(p)))) : null,
     recs.length ? h('section.path-group', h('h2', 'Suggested for you'), h('p.muted', 'From the answers you gave. Change them any time in your atlas.'), h('div.path-list', recs.map((r) => pathCard(r.path, r.reason)))) : null,
     byLevel.map((g) => h('section.path-group', h('h2', `${LEVEL_NAMES[g.lv]} paths`), h('div.path-list', g.list.map((p) => pathCard(p))))),
     h('p.note-box', 'Some paths cover fields where only a few lessons exist so far. They list planned lessons by name and mark them as planned, so you can see the shape of the route and what is still to come.'));
