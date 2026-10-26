@@ -56,6 +56,11 @@
   --kitchen-card: #FBF4EA;
   --kitchen-ink: #8A4630;
   --kitchen-text-3: #5E6358;
+  /* the demonstrations on the home page: a cool sage, the counterpart to the kitchen's warm linen */
+  --demos-bg: #E2E9DD;
+  --demos-card: #F7FAF4;
+  --demos-ink: #34483B;
+  --demos-text-3: #5B6157;
   --on-accent: #FAF7F1;
   --focus: #34483B;
 
@@ -81,6 +86,10 @@
   --kitchen-card: #352D27;
   --kitchen-ink: #E8AE93;
   --kitchen-text-3: #A3A397;
+  --demos-bg: #1F2A24;
+  --demos-card: #26322B;
+  --demos-ink: #A9C4AF;
+  --demos-text-3: #A3A99C;
   color-scheme: dark;
   --bg: #1D211C;
   --bg-2: #191C18;

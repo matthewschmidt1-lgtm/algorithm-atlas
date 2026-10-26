@@ -1568,6 +1568,21 @@ if (on('kitchen')) {
     } finally { p.close(); }
   });
 
+  await test('home: "Algorithms at work" reads straight down, has its own colour, and its figures always end up in view', async () => {
+    const p = await open('/', '.home-demos');
+    try {
+      const sec = p.$('.home-demos');
+      const order = [...p.$('.home-demos-text').children].map((e) => e.tagName).join(',');
+      assert(order === 'P,H2,P', `the heading reads ${order}`);
+      const t = p.$('.home-demos-text h2').getBoundingClientRect(), l = p.$('.home-demos-text .lede').getBoundingClientRect();
+      assert(l.top > t.bottom - 1 && Math.abs(l.left - t.left) < 2, 'the introduction is not directly under the title');
+      assert(p.win.getComputedStyle(sec).backgroundColor !== p.win.getComputedStyle(p.doc.body).backgroundColor, 'the section has the same colour as the page');
+      assert(p.win.getComputedStyle(p.$('.ka-bar')).animationName === 'ka-sort', 'the bars do not move');
+      sec.scrollIntoView();
+      await until(() => p.$$('.home-demos .preview').every((c) => p.win.getComputedStyle(c).opacity === '1'), 3000, 'a figure is still invisible after rising');
+    } finally { p.close(); }
+  });
+
   await test('each recipe leads to a published lesson, and the page uses no formulas or symbols', async () => {
     for (const c of K.kitchen) {
       assert(C.algoById[c.lesson], `${c.id} leads to "${c.lesson}", which is not a published lesson`);

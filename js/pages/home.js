@@ -17,7 +17,7 @@ import { recommendLessons } from '../core/recommend.js';
 import { problemIndex, samplePhrases } from '../core/problems.js';
 import { trackLessons } from '../core/tracks.js';
 import { kitchen, kitchenIntro } from '../../content/kitchen.js';
-import { recipeArt, potArt } from '../art/kitchen-art.js';
+import { recipeArt, potArt, sortingArt } from '../art/kitchen-art.js';
 
 const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
 
@@ -147,10 +147,24 @@ export default async function render() {
   const demos = HOME_DEMOS.map((id) => C.featured.find((f) => f.id === id)).filter(Boolean);
   const previews = demos.map((f, i) => createPreview(f, i));
   previews.forEach((p) => cleanups.push(() => p.destroy()));
-  const featured = previews.length ? h('section.section', h('div.wrap',
-    sectionHead({ eyebrow: 'Run them here', title: 'Algorithms at work', lede: 'None of these is a recording. Each figure runs the lesson\'s own code in your browser, one step at a time, when you press the button.' }),
-    h('div.preview-grid', previews.map((p) => p.el)),
+  // Read straight down, as the kitchen section is: label, title, introduction, then the figures.
+  // The sorting bars beside the text are decoration, not part of the reading order.
+  const featured = previews.length ? h('section.section.home-demos', { 'aria-labelledby': 'home-demos-h' }, h('div.wrap',
+    h('div.home-demos-head',
+      h('div.home-demos-text',
+        h('p.eyebrow', 'Run them here'),
+        h('h2', { id: 'home-demos-h' }, 'Algorithms at work'),
+        h('p.lede', 'None of these is a recording. Each figure runs the lesson\'s own code in your browser, one step at a time, when you press the button.')),
+      h('div.home-demos-art', { html: sortingArt() })),
+    h('div.preview-grid.home-demos-grid', previews.map((p, i) => { p.el.style.setProperty('--i', i); return p.el; })),
     h('p.sec-more', h('a.text-link', { href: '#/lab' }, `Run any of the ${plural(C.algos.length, 'demonstration')} in the lab`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
+  // the figures rise into place the first time the section is seen, as the kitchen recipes do
+  if (featured && 'IntersectionObserver' in window) {
+    featured.classList.add('will-rise');
+    const seen = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { featured.classList.add('has-risen'); seen.disconnect(); } }, { threshold: 0.1 });
+    seen.observe(featured);
+    cleanups.push(() => seen.disconnect());
+  }
 
   /* ---- ways in ---- */
   const way = (href, title, text) => h('a.way', { href }, h('span.way-title', title, h('span', { html: icon('arrow', { size: 16 }) })), h('span.way-text', text));

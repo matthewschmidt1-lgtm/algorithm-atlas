@@ -50,3 +50,15 @@ export const pizzaArt = (o) => svg(`
   </g>`, o);
 
 export const recipeArt = { spices: jarArt, dinner: timerArt, dressing: lemonArt, pizza: pizzaArt };
+
+// Seven bars that sort themselves into order and back, on a slow loop: algorithms at work.
+// Each bar moves between its place in a jumbled row and its place in the sorted row.
+export const sortingArt = () => {
+  const heights = [34, 58, 22, 70, 46, 28, 62];
+  const sorted = heights.slice().sort((a, b) => a - b);
+  const bars = heights.map((hgt, i) => {
+    const to = sorted.indexOf(hgt);
+    return `<rect class="ka-bar" x="${8 + i * 20}" y="${86 - hgt}" width="14" height="${hgt}" rx="2" style="--dx:${(to - i) * 20}px;--d:${i * 0.12}s"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 150 96" width="150" height="96" aria-hidden="true" fill="currentColor"><path d="M2 88h146" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>${bars}</svg>`;
+};

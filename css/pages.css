@@ -980,3 +980,34 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 
 .kitchen-checked { margin-top: var(--s-4); max-width: 66ch; font-size: 0.95rem; color: var(--text-2); }
 .kitchen-checked strong { color: var(--text); font-weight: 600; }
+
+/* ---------- the demonstrations on the home page ---------- */
+.home-demos { --text-3: var(--demos-text-3); background: var(--demos-bg); border-block: 1px solid color-mix(in srgb, var(--demos-ink) 18%, transparent); }
+.home-demos .eyebrow, .home-demos .text-link { color: var(--demos-ink); }
+.home-demos-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-7); align-items: center; margin-bottom: clamp(28px, 4vw, 44px); }
+.home-demos-text { max-width: 640px; }
+.home-demos-text h2 { margin-top: var(--s-2); }
+.home-demos-text .lede { margin-top: var(--s-4); font-size: 1.08rem; max-width: 62ch; }
+.home-demos-art { color: var(--demos-ink); padding-right: var(--s-6); }
+.home-demos-art svg { width: 180px; height: auto; }
+@media (max-width: 860px) { .home-demos-head { grid-template-columns: 1fr; } .home-demos-art { display: none; } }
+
+/* each figure sits on its own card */
+.home-demos .home-demos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); }
+@media (max-width: 760px) { .home-demos .home-demos-grid { grid-template-columns: minmax(0, 1fr); } }
+.home-demos .preview { padding: var(--s-4); border: 1px solid color-mix(in srgb, var(--demos-ink) 20%, transparent); border-radius: var(--r-3); background: var(--demos-card);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; }
+.home-demos .preview:hover, .home-demos .preview:focus-within { transform: translateY(-3px); border-color: var(--demos-ink); box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--demos-ink) 55%, transparent); }
+.home-demos .preview-figure { background: var(--surface); }
+.home-demos .preview-actions .btn { background: var(--demos-ink); border-color: var(--demos-ink); color: var(--on-accent); }
+.home-demos .preview-actions .btn:hover { background: color-mix(in srgb, var(--demos-ink) 88%, var(--text)); }
+:root[data-theme='dark'] .home-demos .preview-actions .btn { color: #1D211C; }
+
+/* the bars sort themselves into order, hold, and come apart again */
+.ka-bar { transform-box: fill-box; animation: ka-sort 6s var(--ease) infinite; animation-delay: var(--d, 0s); }
+@keyframes ka-sort { 0%, 18% { transform: translateX(0); opacity: 0.55; } 40%, 70% { transform: translateX(var(--dx)); opacity: 1; } 92%, 100% { transform: translateX(0); opacity: 0.55; } }
+
+/* the figures rise into place the first time the section is seen */
+.home-demos.will-rise .preview { opacity: 0; transform: translateY(16px); }
+.home-demos.will-rise.has-risen .preview { opacity: 1; transform: none; transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; transition-delay: calc(var(--i, 0) * 110ms), calc(var(--i, 0) * 110ms), 0s, 0s; }
+.home-demos.will-rise.has-risen .preview:hover, .home-demos.will-rise.has-risen .preview:focus-within { transform: translateY(-3px); transition-delay: 0s; }
