@@ -461,7 +461,7 @@ function resolves(hrefAttr) {
     if (path === '/explore' && q.d && !C.disciplineById[q.d]) return `no discipline "${q.d}"`;
     if (path === '/explore' && q.a && !C.algoById[q.a]) return `no lesson "${q.a}"`;
     if (path === '/library' && q.discipline && !C.disciplineById[q.discipline]) return `no discipline "${q.discipline}"`;
-    if (path === '/kitchen' && q.at && !KITCHEN_IDS.includes(q.at)) return `no recipe "${q.at}"`;
+    if (path === '/kitchen' && q.at && !KITCHEN_IDS.includes(q.at) && q.at !== 'sources') return `no recipe "${q.at}"`;
     if (path === '/about' && q.at && !['accessibility', 'checks', 'content', 'method', 'privacy', 'how', 'principles', 'schema', 'limits'].includes(q.at)) return null; // sections of About are checked on the page itself
     return null;
   }
@@ -1584,6 +1584,22 @@ if (on('kitchen')) {
     } finally { p.close(); }
   });
 
+  await test('every real time, temperature and ratio names where it comes from, and every source is listed', async () => {
+    for (const c of K.kitchen) if (c.checked) {
+      assert((c.sources || []).length, `${c.id} gives real numbers without a source`);
+      for (const id of c.sources) assert(K.kitchenSources[id] && /^https:\/\//.test(K.kitchenSources[id].url), `${c.id} cites "${id}", which is not in the list`);
+    }
+    for (const id of ['dinner', 'dressing', 'pizza']) assert(card(id).checked, `${id} is not checked against a real kitchen`);
+    const dinner = card('dinner');
+    const chicken = dinner.dishes.find((d) => /chicken/i.test(d.name)), oven = chicken.tasks.find((t) => /oven/.test(t.name)).minutes;
+    assert(oven >= 75 && oven <= 90 && /3-pound chicken roasting at 350°F/.test(dinner.setup), 'the chicken no longer matches the USDA chart (1¼ to 1½ hours at 350°F for 3 to 4 pounds)');
+    const p = await open('/kitchen', '.kitchen-sources');
+    try {
+      assert(p.$$('.kitchen-sources li').length === Object.keys(K.kitchenSources).length, 'the Sources list is incomplete');
+      assert(p.$$('.kitchen-checked').length === K.kitchen.filter((c) => c.checked).length, 'a recipe does not say where its numbers come from');
+    } finally { p.close(); }
+  });
+
   await test('spice rack: the jars are in order, and turning the middle jar finds any spice in at most five looks', () => {
     const jars = card('spices').jars;
     assert(jars.length === 16 && jars.every((j, i) => i === 0 || jars[i - 1].localeCompare(j) < 0), 'the jars are not sixteen, in alphabetical order');
@@ -1613,29 +1629,56 @@ if (on('kitchen')) {
         assert(looks <= 5, 'the algorithm took more than five looks');
       }
       assert(p.$('.jar.is-found').textContent === target, `it found ${p.$('.jar.is-found').textContent}, not ${target}`);
+      // even the longest names fit inside a jar
+      for (const j of p.$$('.jar')) { const l = j.querySelector('.jar-label'); if (l.textContent) assert(l.getBoundingClientRect().bottom <= j.getBoundingClientRect().bottom, `"${l.textContent}" runs out of its jar`); }
       assert(new RegExp(`Found the ${target} in ${looks} look`).test(p.$('.rack-say').textContent), 'the page does not report the number of looks');
+      // sixteen rounds in a row: every spice comes up once, and none twice in a row
+      const seen = [target];
+      for (let round = 1; round < 16; round++) {
+        [...p.$$('.rack-buttons button')].find((b) => /Find another spice/.test(b.textContent)).click();
+        const next = p.$('.rack-ask strong').textContent;
+        assert(next !== seen[seen.length - 1], `${next} came up twice in a row`);
+        seen.push(next);
+        const again = [...p.$$('.rack-buttons button')].find((b) => /Let the algorithm choose/.test(b.textContent));
+        let n = 0; while (!p.$('.jar.is-found') && n++ < 6) again.click();
+      }
+      assert(new Set(seen).size === 16, `sixteen rounds showed only ${new Set(seen).size} different spices: ${seen.join(', ')}`);
     } finally { p.close(); }
   });
 
   await test('pizza oven: every time and temperature in the text follows from the ten-minute steps', async () => {
     const c = card('pizza');
     const [summer, winter] = P.ovenSeries(c.oven);
-    assert(summer.readyAfter === 90 && winter.readyAfter === 150, `the ovens are ready after ${summer.readyAfter} and ${winter.readyAfter} minutes`);
-    assert(Math.round(winter.ceiling) === 835 && winter.temps.every((t) => t < 835), `the winter oven's limit is ${winter.ceiling}`);
+    assert(summer.readyAfter === 100 && winter.readyAfter === 170, `the ovens are ready after ${summer.readyAfter} and ${winter.readyAfter} minutes`);
+    // a real wood oven's dome runs at about 900°F; the summer oven should not run far past that in three hours
+    assert(Math.max(...summer.temps) < 1000, `the summer oven reaches ${Math.round(Math.max(...summer.temps))}°F, hotter than real ovens run`);
+    assert(Math.round(winter.ceiling) === 840 && winter.temps.every((t) => t < 840), `the winter oven's limit is ${winter.ceiling}`);
     const back = (m) => { const t = c.oven.readyAt[0] * 60 + c.oven.readyAt[1] - m; return `${Math.floor(t / 60) - 12}:${String(t % 60).padStart(2, '0')}`; };
-    for (const bit of ['after 90 minutes', `by ${back(90)}`, 'takes 150 minutes', `by ${back(150)}`, 'never pass 835°F']) assert(c.point.includes(bit), `the text does not say "${bit}"`);
-    assert(/about a tenth/.test(c.steps.join(' ')) && c.oven.seasons[0].share === 1 / 10 && /about a seventh/.test(c.steps.join(' ')) && c.oven.seasons[1].share === 1 / 7, 'the shares in the steps do not match the numbers used');
+    for (const bit of ['after 100 minutes', `by ${back(100)}`, 'takes 170 minutes', `by ${back(170)}`, 'never pass 840°F']) assert(c.point.includes(bit), `the text does not say "${bit}"`);
+    assert(/about a seventh on a summer/.test(c.steps.join(' ')) && c.oven.seasons[0].share === 1 / 7 && /about a sixth in snow/.test(c.steps.join(' ')) && c.oven.seasons[1].share === 1 / 6, 'the shares in the steps do not match the numbers used');
     assert(c.steps.join(' ').includes(`${c.oven.fire} degrees`) && c.steps.join(' ').includes(`${c.oven.target}°F`), 'the fire or the target in the steps does not match the numbers used');
     assert(!/°C/.test(JSON.stringify(c)), 'the pizza recipe still uses Celsius');
     const p = await open('/kitchen', '.oven-chart');
     try {
       const step = [...p.$$('.oven-try button')].find((b) => /ten-minute step/.test(b.textContent));
-      for (let i = 0; i < 9; i++) step.click();
-      assert(/After 90 minutes/.test(p.$('.oven-status').textContent) && /summer oven reached 750°F after 90 minutes/.test(p.$('.oven-status').textContent), `after nine steps the page says: ${p.$('.oven-status').textContent}`);
+      for (let i = 0; i < 10; i++) step.click();
+      assert(/After 100 minutes/.test(p.$('.oven-status').textContent) && /summer oven reached 800°F after 100 minutes/.test(p.$('.oven-status').textContent), `after ten steps the page says: ${p.$('.oven-status').textContent}`);
       assert(!/winter oven reached/.test(p.$('.oven-status').textContent), 'the winter oven is ready too early');
       [...p.$$('.oven-try button')].find((b) => /Run to/.test(b.textContent)).click();
-      assert(/winter oven reached 750°F after 150 minutes/.test(p.$('.oven-status').textContent), 'running to the end does not report the winter oven');
+      assert(/winter oven reached 800°F after 170 minutes/.test(p.$('.oven-status').textContent), 'running to the end does not report the winter oven');
       assert(p.$$('.oven-line').every((l) => l.getAttribute('points').split(' ').length === 19) && p.$$('.oven-ghost').length === 2, 'the lines do not show every ten minutes for three hours');
+    } finally { p.close(); }
+  });
+
+  await test('spice rack on a phone: the longest spice names still fit inside their jars', async () => {
+    const p = await open('/kitchen', '.rack', { width: 390, height: 800 });
+    try {
+      const help = [...p.$$('.rack-buttons button')].find((b) => /Let the algorithm choose/.test(b.textContent));
+      let n = 0; while (!p.$('.jar.is-found') && n++ < 6) help.click();
+      // show every name, as the longest ones are what might not fit
+      const jars = p.$$('.jar'), names = card('spices').jars;
+      jars.forEach((j, i) => { j.querySelector('.jar-label').textContent = names[i]; });
+      for (const j of jars) { const l = j.querySelector('.jar-label'); assert(l.getBoundingClientRect().bottom <= j.getBoundingClientRect().bottom && l.getBoundingClientRect().top >= j.getBoundingClientRect().top, `"${l.textContent}" runs out of its jar on a phone`); }
     } finally { p.close(); }
   });
 
