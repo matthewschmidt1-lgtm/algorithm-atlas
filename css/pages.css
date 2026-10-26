@@ -838,11 +838,7 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
   --text-3: var(--kitchen-text-3);
   position: relative; overflow: hidden;
   padding-top: clamp(48px, 7vw, 88px);
-  background-color: var(--kitchen-bg);
-  /* a faint gingham tablecloth */
-  background-image:
-    repeating-linear-gradient(0deg, var(--kitchen-check) 0 18px, transparent 18px 36px),
-    repeating-linear-gradient(90deg, var(--kitchen-check) 0 18px, transparent 18px 36px);
+  background: var(--kitchen-bg);
   border-block: 1px solid color-mix(in srgb, var(--kitchen-ink) 22%, transparent);
 }
 .home-kitchen .wrap { position: relative; }

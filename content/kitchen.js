@@ -11,7 +11,7 @@ export const kitchenIntro = {
   ],
   eyebrow: 'A gentle start',
   title: 'Algorithms for the kitchen',
-  lede: 'An algorithm is a list of steps that solves a problem the same way every time. If you have followed a recipe, you have followed an algorithm. Here are three that cooks use without ever calling them that. There are no formulas on this page, and each one ends at the lesson where a computer does the same thing.',
+  lede: 'An algorithm is simply a set of steps that helps you solve a problem, reliably, one step at a time. If you’ve ever followed a recipe, you’ve already used one. Here are three familiar kitchen tasks that reveal the algorithms hiding in everyday cooking. No formulas, no jargon, just simple ideas, each followed by a look at how a computer uses the same approach.',
 };
 
 export const kitchen = [
