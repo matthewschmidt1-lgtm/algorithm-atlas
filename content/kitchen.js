@@ -83,9 +83,9 @@ export const kitchen = [
       { taste: 'Now a touch flat', change: 'A few drops of lemon' },
       { taste: 'Right', change: 'Stop' },
     ],
-    point: 'Look at the third taste. The small splash of oil went a little too far, so the next change came back the other way, and smaller again. Going slightly past and correcting is a normal part of the method, not a failure of it.',
-    limits: 'A computer measures how wrong it is with an exact number, not a taste, and it may adjust millions of settings at once instead of two. And like a cook, it only feels its way from where it starts. It can settle on a dressing that is good without ever finding a better one that would need a completely different start.',
-    computer: 'This is how a machine learning model learns. It makes a guess, measures how wrong the guess is, nudges its settings in the direction that makes it less wrong, and repeats. The method is called gradient descent.',
+    point: 'Look at the third taste. That little splash of oil went too far, so the next adjustment went back the other way, and was smaller this time. Overshooting, then correcting, is part of the process. It’s how you find your way toward the right balance.',
+    limits: 'A computer measures error with a number, not a taste, and it may adjust millions of settings at once rather than just a couple of ingredients. But there’s another catch: like a cook adjusting a dressing, the model works its way forward from where it starts. It might settle on a good solution without ever finding a better one that lies somewhere else. Sometimes, the starting point makes all the difference.',
+    computer: 'This is how a machine learning model learns, too. It makes a prediction, measures how far off it was, adjusts its settings to reduce the error, and tries again. Each small correction brings it closer to a better result. The technique is called gradient descent.',
   },
 ];
 
