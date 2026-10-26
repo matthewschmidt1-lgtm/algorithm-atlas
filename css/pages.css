@@ -854,7 +854,8 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .home-kitchen-pot svg { width: 150px; height: 150px; }
 @media (max-width: 860px) { .home-kitchen-head { grid-template-columns: 1fr; } .home-kitchen-pot { display: none; } }
 
-.kitchen-teasers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); }
+.kitchen-teasers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); }
+@media (max-width: 1180px) { .kitchen-teasers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .kitchen-teaser { position: relative; display: grid; gap: 8px; align-content: start; padding: var(--s-5); border: 1px solid color-mix(in srgb, var(--kitchen-ink) 26%, transparent); border-radius: var(--r-3); background: var(--kitchen-card);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--kitchen-ink) 10%, transparent);
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; }
@@ -952,3 +953,27 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 @media (max-width: 600px) { .dinner-row { grid-template-columns: 1fr; gap: 6px; } .dinner-axis { margin-left: 0; } .dinner-seg span { font-size: 0.7rem; } }
 
 .taste-log { margin-top: var(--s-5); max-width: 560px; }
+
+/* the pizza oven chart */
+.oven-try { margin-top: var(--s-5); padding: var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); }
+.oven-ask { margin-top: 6px; color: var(--text-2); }
+.oven-chart-wrap { margin-top: var(--s-4); }
+.oven-chart { width: 100%; height: auto; display: block; }
+.oven-grid { stroke: var(--line); stroke-width: 1; }
+.oven-tick { font-size: 12px; fill: var(--text-3); font-family: var(--font-sans); }
+.oven-target { stroke: var(--terracotta-ink); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.oven-target-label { font-size: 12px; fill: var(--terracotta-ink); font-family: var(--font-sans); font-weight: 600; }
+.oven-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.oven-ghost { fill: none; stroke-width: 2; stroke-dasharray: 2 4; opacity: 0.5; }
+.oven-ghost.is-summer { stroke: var(--viz-ochre); }
+.oven-ghost.is-winter { stroke: var(--viz-forest); }
+.oven-line.is-summer { stroke: var(--viz-ochre); }
+.oven-line.is-winter { stroke: var(--viz-forest); }
+.oven-line-label { font-size: 12px; font-family: var(--font-sans); font-weight: 600; }
+.oven-line-label.is-summer { fill: var(--ochre-ink); }
+.oven-line-label.is-winter { fill: var(--viz-forest); }
+.oven-status { margin-top: var(--s-3); min-height: 3em; color: var(--text-2); }
+/* the chart shrinks with the screen, so its words are drawn larger on a phone to stay readable */
+@media (max-width: 600px) { .oven-tick, .oven-target-label, .oven-line-label { font-size: 19px; } .oven-try { padding: var(--s-4); } }
+.kitchen-teaser .ka-slice { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.45s var(--ease); }
+.kitchen-teaser:hover .ka-slice, .kitchen-teaser:focus-visible .ka-slice { transform: translate(0, -5px) rotate(-6deg); }

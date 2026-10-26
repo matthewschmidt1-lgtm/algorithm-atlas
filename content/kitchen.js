@@ -7,11 +7,11 @@ export const kitchenIntro = {
   // on the home page, in two paragraphs
   homeLede: [
     'Think algorithms are all numbers, formulas, and computer code? Think again. You use them every time you cook. A recipe is an algorithm: a set of steps that helps you get from ingredients to something delicious.',
-    'Let’s explore three everyday kitchen puzzles and discover the clever ideas behind them. No formulas, no technical jargon. Just familiar problems, simple steps, and a new way of seeing the everyday.',
+    'Let’s explore four everyday kitchen puzzles and discover the clever ideas behind them. No formulas, no technical jargon. Just familiar problems, simple steps, and a new way of seeing the everyday.',
   ],
   eyebrow: 'A gentle start',
   title: 'Algorithms for the kitchen',
-  lede: 'An algorithm is simply a set of steps that helps you solve a problem, reliably, one step at a time. If you’ve ever followed a recipe, you’ve already used one. Here are three familiar kitchen tasks that reveal the algorithms hiding in everyday cooking. No formulas, no jargon, just simple ideas, each followed by a look at how a computer uses the same approach.',
+  lede: 'An algorithm is simply a set of steps that helps you solve a problem, reliably, one step at a time. If you’ve ever followed a recipe, you’ve already used one. Here are four familiar kitchen tasks that reveal the algorithms hiding in everyday cooking. No formulas, no jargon, just simple ideas, each followed by a look at how a computer uses the same approach.',
 };
 
 export const kitchen = [
@@ -87,10 +87,39 @@ export const kitchen = [
     limits: 'A computer measures error with a number, not a taste, and it may adjust millions of settings at once rather than just a couple of ingredients. But there’s another catch: like a cook adjusting a dressing, the model works its way forward from where it starts. It might settle on a good solution without ever finding a better one that lies somewhere else. Sometimes, the starting point makes all the difference.',
     computer: 'This is how a machine learning model learns, too. It makes a prediction, measures how far off it was, adjusts its settings to reduce the error, and tries again. Each small correction brings it closer to a better result. The technique is called gradient descent.',
   },
+  {
+    id: 'pizza',
+    lesson: 'euler-method',
+    title: 'Heating a wood-fired oven, in summer and in snow',
+    question: 'When should you light the fire?',
+    gist: 'Predict the heat ten minutes at a time. Snow changes the answer.',
+    setup: 'You have made pizza dough by hand, and it will have finished rising at 7:00 this evening. The pizza oven is outside and burns wood, and it needs to reach 750°F before the first pizza goes in. On a summer evening the air is 75°F. On a winter evening there is snow on the ground, a cold wind, and the air is 30°F.',
+    // the oven, ten minutes at a time: the fire adds a fixed amount, and the oven loses a share
+    // of the gap between its own heat and the outside air. The numbers are invented to show the idea.
+    oven: {
+      stepMinutes: 10, fire: 115, target: 750, unit: '°F', readyAt: [19, 0], minutes: 180,
+      seasons: [
+        { id: 'summer', name: 'Summer evening', air: 75, share: 1 / 10 },
+        { id: 'winter', name: 'Winter evening, with snow', air: 30, share: 1 / 7 },
+      ],
+    },
+    steps: [
+      'Start with the oven at the temperature of the air outside.',
+      'For the next ten minutes, the fire adds about 115 degrees.',
+      'In the same ten minutes, the oven loses part of the gap between its own heat and the air outside: about a tenth on a summer evening, and about a seventh in snow and a cold wind. The hotter the oven gets, the bigger the gap, and the more heat it loses.',
+      'Write down the new temperature and repeat until the oven reaches 750°F. Then count back from 7:00.',
+    ],
+    point: 'In summer the oven reaches 750°F after 90 minutes, so you light the fire by 5:30. In winter it takes 150 minutes, so you light it by 4:30. And with this fire, the winter oven can never pass 835°F: at that point it loses heat as fast as the fire adds it. To go hotter in the snow, you need a bigger fire or less heat escaping.',
+    limits: [
+      'The numbers here are invented to show the idea. A real oven is not one temperature: the floor heats more slowly than the dome, and a fire does not add the same heat every ten minutes.',
+      'Each step also uses the temperature at the start of its ten minutes, even though the oven keeps warming during them. That is why the method works best with small steps. A computer might take steps of a second, or less.',
+    ],
+    computer: 'Computers predict how things change over time in the same way: the weather, the path of a spacecraft, how a building warms up. They start from what they know now, take a small step forward in time, and repeat. The simplest version is called Euler’s method, and the smaller the steps, the closer the prediction comes to what really happens.',
+  },
 ];
 
 export const kitchenEnd = {
-  title: 'What the three have in common',
+  title: 'What the four have in common',
   text: [
     'Each one is a clear set of steps that anyone can follow, that comes to an end, and that produces a reliable result. That’s all an algorithm is.',
     'Every lesson in this atlas explores one of these ideas, written precisely enough for a computer to follow. You can run it yourself and watch each step unfold, turning an abstract idea into something you can see and understand.',

@@ -1558,7 +1558,7 @@ if (on('kitchen')) {
     const p = await open('/', '.home-kitchen');
     try {
       const sec = p.$('.home-kitchen');
-      assert(p.$$('.kitchen-teaser-art svg').length === 3 && p.$('.home-kitchen-pot svg'), 'the drawings are missing');
+      assert(p.$$('.kitchen-teaser-art svg').length === K.kitchen.length && p.$('.home-kitchen-pot svg'), 'the drawings are missing');
       sec.scrollIntoView();
       await until(() => sec.classList.contains('has-risen') || !sec.classList.contains('will-rise'), 3000, 'the cards never rose into place');
       await until(() => p.$$('.kitchen-teaser').every((c) => p.win.getComputedStyle(c).opacity === '1'), 3000, 'a card is still invisible after rising');
@@ -1576,7 +1576,7 @@ if (on('kitchen')) {
     }
     const p = await open('/kitchen', '.kitchen-card');
     try {
-      assert(p.$$('.kitchen-card').length === 3, 'the page does not show three recipes');
+      assert(p.$$('.kitchen-card').length === K.kitchen.length, 'the page does not show every recipe');
       const text = p.$('.kitchen-page').textContent;
       const sym = text.match(/[=×÷√∑≤≥]|log₂|O\(|\bn\b|formula[^s]/);
       assert(!sym || sym[0] === 'formula ', `the page uses "${sym && sym[0]}"`);
@@ -1614,6 +1614,28 @@ if (on('kitchen')) {
       }
       assert(p.$('.jar.is-found').textContent === target, `it found ${p.$('.jar.is-found').textContent}, not ${target}`);
       assert(new RegExp(`Found the ${target} in ${looks} look`).test(p.$('.rack-say').textContent), 'the page does not report the number of looks');
+    } finally { p.close(); }
+  });
+
+  await test('pizza oven: every time and temperature in the text follows from the ten-minute steps', async () => {
+    const c = card('pizza');
+    const [summer, winter] = P.ovenSeries(c.oven);
+    assert(summer.readyAfter === 90 && winter.readyAfter === 150, `the ovens are ready after ${summer.readyAfter} and ${winter.readyAfter} minutes`);
+    assert(Math.round(winter.ceiling) === 835 && winter.temps.every((t) => t < 835), `the winter oven's limit is ${winter.ceiling}`);
+    const back = (m) => { const t = c.oven.readyAt[0] * 60 + c.oven.readyAt[1] - m; return `${Math.floor(t / 60) - 12}:${String(t % 60).padStart(2, '0')}`; };
+    for (const bit of ['after 90 minutes', `by ${back(90)}`, 'takes 150 minutes', `by ${back(150)}`, 'never pass 835°F']) assert(c.point.includes(bit), `the text does not say "${bit}"`);
+    assert(/about a tenth/.test(c.steps.join(' ')) && c.oven.seasons[0].share === 1 / 10 && /about a seventh/.test(c.steps.join(' ')) && c.oven.seasons[1].share === 1 / 7, 'the shares in the steps do not match the numbers used');
+    assert(c.steps.join(' ').includes(`${c.oven.fire} degrees`) && c.steps.join(' ').includes(`${c.oven.target}°F`), 'the fire or the target in the steps does not match the numbers used');
+    assert(!/°C/.test(JSON.stringify(c)), 'the pizza recipe still uses Celsius');
+    const p = await open('/kitchen', '.oven-chart');
+    try {
+      const step = [...p.$$('.oven-try button')].find((b) => /ten-minute step/.test(b.textContent));
+      for (let i = 0; i < 9; i++) step.click();
+      assert(/After 90 minutes/.test(p.$('.oven-status').textContent) && /summer oven reached 750°F after 90 minutes/.test(p.$('.oven-status').textContent), `after nine steps the page says: ${p.$('.oven-status').textContent}`);
+      assert(!/winter oven reached/.test(p.$('.oven-status').textContent), 'the winter oven is ready too early');
+      [...p.$$('.oven-try button')].find((b) => /Run to/.test(b.textContent)).click();
+      assert(/winter oven reached 750°F after 150 minutes/.test(p.$('.oven-status').textContent), 'running to the end does not report the winter oven');
+      assert(p.$$('.oven-line').every((l) => l.getAttribute('points').split(' ').length === 19) && p.$$('.oven-ghost').length === 2, 'the lines do not show every ten minutes for three hours');
     } finally { p.close(); }
   });
 

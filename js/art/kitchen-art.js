@@ -40,4 +40,13 @@ export const potArt = (o) => svg(`
   <path d="M26 24h12" stroke-width="2.4"/>
   <path class="ka-flame" d="M26 58c0-2 2-3 2-5 1 2 2 3 2 5M34 58c0-2 2-3 2-5 1 2 2 3 2 5" stroke-width="1.6"/>`, { size: 120, ...o });
 
-export const recipeArt = { spices: jarArt, dinner: timerArt, dressing: lemonArt };
+// A slice of pizza. It lifts away from the pie when the card is pointed at.
+export const pizzaArt = (o) => svg(`
+  <path d="M12 40a22 22 0 0 0 40 0" stroke-width="1.6" opacity="0.55"/>
+  <g class="ka-slice">
+    <path d="M32 50L14 18c11-6 25-6 36 0z"/>
+    <path d="M14 18c11-6 25-6 36 0" stroke-width="4" opacity="0.35"/>
+    <circle cx="27" cy="25" r="2.6" fill="currentColor" fill-opacity="0.3"/><circle cx="37" cy="27" r="2.6" fill="currentColor" fill-opacity="0.3"/><circle cx="31" cy="36" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+  </g>`, o);
+
+export const recipeArt = { spices: jarArt, dinner: timerArt, dressing: lemonArt, pizza: pizzaArt };

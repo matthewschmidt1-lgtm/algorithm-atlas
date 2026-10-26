@@ -103,6 +103,58 @@ function dinnerTimeline(card) {
       `Each dish starting as late as it can and still be ready at ${clock(card.serveAt, 0)}. The shaded part of a row is spare time. The chicken has none, so it sets the start: ${clock(start, 0)}.`));
 }
 
+/* ---------- the pizza oven: Euler's method, ten minutes at a time ---------- */
+export function ovenSeries(oven) {
+  const n = oven.minutes / oven.stepMinutes;
+  return oven.seasons.map((s) => {
+    const temps = [s.air];
+    for (let k = 1; k <= n; k++) { const T = temps[k - 1]; temps.push(T + oven.fire - s.share * (T - s.air)); }
+    const hit = temps.findIndex((t) => t >= oven.target);
+    return { ...s, temps, readyAfter: hit < 0 ? null : hit * oven.stepMinutes, ceiling: s.air + oven.fire / s.share };
+  });
+}
+function ovenChart(card) {
+  const oven = card.oven, series = ovenSeries(oven), steps = oven.minutes / oven.stepMinutes;
+  // the scale is chosen from the data, so no line can run off the top
+  const top = Math.max(...series.flatMap((s) => s.temps));
+  const W = 640, H = 300, L = 68, R = 122, T = 14, B = 34, lo = 0, hi = Math.ceil(top / 200) * 200, u = oven.unit;
+  const x = (k) => L + ((W - L - R) * k) / steps, y = (t) => T + ((H - T - B) * (hi - t)) / (hi - lo);
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text != null) e.textContent = text; return e; };
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'oven-chart', role: 'img', 'aria-label': 'Oven temperature over three hours, summer and winter' });
+  for (let t = 0; t <= hi; t += 200) { svg.append(el('line', { x1: L, x2: W - R, y1: y(t), y2: y(t), class: 'oven-grid' }), el('text', { x: L - 8, y: y(t) + 4, class: 'oven-tick', 'text-anchor': 'end' }, `${t}°`)); }
+  for (let m = 0; m <= oven.minutes; m += 30) svg.append(el('text', { x: x(m / oven.stepMinutes), y: H - 10, class: 'oven-tick', 'text-anchor': 'middle' }, m === oven.minutes ? `${m} min` : String(m)));
+  svg.append(el('line', { x1: L, x2: W - R, y1: y(oven.target), y2: y(oven.target), class: 'oven-target' }), el('text', { x: W - R + 6, y: y(oven.target) + 4, class: 'oven-target-label' }, `ready, ${oven.target}°`));
+  // the whole three hours, faint, so the picture is never empty; the bold line grows a step at a time
+  for (const s of series) svg.append(el('polyline', { class: `oven-ghost is-${s.id}`, points: s.temps.map((t, i) => `${x(i)},${y(t)}`).join(' ') }));
+  const lines = series.map((s, i) => { const p = el('polyline', { class: `oven-line is-${s.id}`, points: '' }); const lab = el('text', { class: `oven-line-label is-${s.id}` }, s.id === 'summer' ? 'summer' : 'winter'); svg.append(p, lab); return { s, p, lab }; });
+  const status = h('p.oven-status', { 'aria-live': 'polite' });
+  let k = 0;
+  const say = () => {
+    const parts = series.map((s) => `${s.id} ${Math.round(s.temps[k])}${u}`);
+    const ready = series.filter((s) => s.readyAfter !== null && s.readyAfter <= k * oven.stepMinutes).map((s) => `${s.id === 'summer' ? 'The summer oven' : 'The winter oven'} reached ${oven.target}${u} after ${s.readyAfter} minutes.`);
+    status.textContent = k === 0 ? 'The fire is lit and both ovens start at the temperature of the air outside. Take a step to see the next ten minutes.' : `After ${k * oven.stepMinutes} minutes: ${parts.join(', ')}. ${ready.join(' ')}`.trim();
+  };
+  const draw = () => {
+    for (const { s, p, lab } of lines) {
+      p.setAttribute('points', s.temps.slice(0, k + 1).map((t, i) => `${x(i)},${y(t)}`).join(' '));
+      lab.setAttribute('x', x(k) + 6); lab.setAttribute('y', y(s.temps[k]) + (s.id === 'summer' ? -6 : 14));
+    }
+    stepBtn.disabled = k >= steps; endBtn.disabled = k >= steps;
+    say();
+  };
+  const stepBtn = h('button.btn.btn-sm', { type: 'button', onclick: () => { if (k < steps) { k++; draw(); } } }, 'Take a ten-minute step');
+  const endBtn = h('button.btn.btn-sm', { type: 'button', onclick: () => { k = steps; draw(); } }, 'Run to three hours');
+  const againBtn = h('button.btn.btn-sm.btn-ghost', { type: 'button', onclick: () => { k = 0; draw(); } }, 'Start again');
+  draw();
+  return h('div.oven-try',
+    h('p.panel-cap', 'Try it'),
+    h('p.oven-ask', 'Both evenings, side by side. Each press works out the next ten minutes from the last, exactly as the steps say.'),
+    h('div.oven-chart-wrap', svg),
+    status,
+    h('p.rack-buttons', stepBtn, endBtn, againBtn));
+}
+
 /* ---------- the dressing: a taste log ---------- */
 function tasteLog(card) {
   return h('div.data-table-wrap', h('table.data-table.taste-log',
@@ -111,7 +163,7 @@ function tasteLog(card) {
 }
 
 export default async function render({ query }) {
-  const extras = { spices: spiceRack, dinner: dinnerTimeline, dressing: tasteLog };
+  const extras = { spices: spiceRack, dinner: dinnerTimeline, dressing: tasteLog, pizza: ovenChart };
   const cards = kitchen.map((card, n) => {
     const L = C.algoById[card.lesson], also = card.alsoLesson && C.algoById[card.alsoLesson];
     return h('section.kitchen-card', { id: card.id, 'aria-labelledby': `${card.id}-h` },
@@ -133,7 +185,7 @@ export default async function render({ query }) {
   const beginners = C.pathById['absolute-beginners'];
   const el = h('div.page.wrap.kitchen-page',
     pageHead({ eyebrow: kitchenIntro.eyebrow, title: kitchenIntro.title, lede: kitchenIntro.lede }),
-    h('nav.kitchen-toc', { 'aria-label': 'The three recipes' }, kitchen.map((c, n) => h('a', { href: `#/kitchen?at=${c.id}` }, h('span', `${n + 1}`), c.title))),
+    h('nav.kitchen-toc', { 'aria-label': 'The recipes' }, kitchen.map((c, n) => h('a', { href: `#/kitchen?at=${c.id}` }, h('span', `${n + 1}`), c.title))),
     cards,
     h('section.kitchen-end', h('h2', kitchenEnd.title), [].concat(kitchenEnd.text).map((t) => h('p', t)),
       h('p.kitchen-end-links',
