@@ -135,7 +135,7 @@ export default async function render({ query }) {
     pageHead({ eyebrow: kitchenIntro.eyebrow, title: kitchenIntro.title, lede: kitchenIntro.lede }),
     h('nav.kitchen-toc', { 'aria-label': 'The three recipes' }, kitchen.map((c, n) => h('a', { href: `#/kitchen?at=${c.id}` }, h('span', `${n + 1}`), c.title))),
     cards,
-    h('section.kitchen-end', h('h2', kitchenEnd.title), h('p', kitchenEnd.text),
+    h('section.kitchen-end', h('h2', kitchenEnd.title), [].concat(kitchenEnd.text).map((t) => h('p', t)),
       h('p.kitchen-end-links',
         beginners ? h('a.btn.btn-accent', { href: `#/path/${beginners.id}` }, `Next: ${beginners.title}`) : null,
         h('a.btn', { href: '#/' }, 'Back to the start'))));

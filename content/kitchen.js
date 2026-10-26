@@ -91,5 +91,8 @@ export const kitchen = [
 
 export const kitchenEnd = {
   title: 'What the three have in common',
-  text: 'Each one is a short list of steps that anyone can follow, that always comes to an end, and that gives a dependable result. That is all an algorithm is. Every lesson in this atlas is the same kind of thing, written down carefully enough for a computer to follow, and run in front of you so you can watch it work.',
+  text: [
+    'Each one is a clear set of steps that anyone can follow, that comes to an end, and that produces a reliable result. That’s all an algorithm is.',
+    'Every lesson in this atlas explores one of these ideas, written precisely enough for a computer to follow. You can run it yourself and watch each step unfold, turning an abstract idea into something you can see and understand.',
+  ],
 };
