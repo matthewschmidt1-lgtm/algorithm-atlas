@@ -446,7 +446,8 @@ if (on('index')) {
 
 /* ------------------------------------------------------------------ links and relationships */
 const SECTIONS = ['simple', 'example', 'see', 'decide', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
-const STATIC = ['/', '/track/ai', '/track/business', '/case/budget', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
+const KITCHEN_IDS = (await import('../content/kitchen.js')).kitchen.map((c) => c.id);
+const STATIC = ['/', '/kitchen', '/track/ai', '/track/business', '/case/budget', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
 // Does an internal address lead to something that exists? Written from the content, not from the router.
 function resolves(hrefAttr) {
   const raw = hrefAttr.replace(/^#/, '');
@@ -460,6 +461,7 @@ function resolves(hrefAttr) {
     if (path === '/explore' && q.d && !C.disciplineById[q.d]) return `no discipline "${q.d}"`;
     if (path === '/explore' && q.a && !C.algoById[q.a]) return `no lesson "${q.a}"`;
     if (path === '/library' && q.discipline && !C.disciplineById[q.discipline]) return `no discipline "${q.discipline}"`;
+    if (path === '/kitchen' && q.at && !KITCHEN_IDS.includes(q.at)) return `no recipe "${q.at}"`;
     if (path === '/about' && q.at && !['accessibility', 'checks', 'content', 'method', 'privacy', 'how', 'principles', 'schema', 'limits'].includes(q.at)) return null; // sections of About are checked on the page itself
     return null;
   }
@@ -1313,7 +1315,7 @@ if (on('tracks')) {
       const cards = p.$$('.track-card').map((a) => a.getAttribute('href'));
       assert(cards.join() === '#/track/ai,#/track/business', `the home page offers ${cards.join()}`);
       const sections = [...p.$('.home').children];
-      assert(sections.indexOf(p.$('.home-tracks')) === 1, 'the tracks are not the first thing after the hero');
+      assert(sections.indexOf(p.$('.home-kitchen')) === 1 && sections.indexOf(p.$('.home-tracks')) === 2, 'the kitchen recipes and then the two guides no longer follow the hero');
       assert(p.$('#universe'), 'the map is gone from the home page');
       assert(!p.$('.ledger') && !/tests passed against independent answers/.test(p.$('.home').textContent), 'the verification numbers are back on the home page');
       assert(p.$('.site-foot a[href="#/verification"]'), 'the Verification page can no longer be reached from the footer');
@@ -1527,6 +1529,91 @@ if (on('practice')) {
       assert(p.$('.code-more h3') && p.$('.code-more .code-panel pre.code-pre').textContent.length > 200, 'the second program is not shown');
     } finally { p.close(); }
     return `${n} further programs`;
+  });
+}
+
+/* ------------------------------------------------------------------ kitchen */
+// The gentlest way in. Every figure on the page must follow from the rule it illustrates.
+if (on('kitchen')) {
+  suite('Algorithms for the kitchen');
+  const K = await import('../content/kitchen.js');
+  const P = await import('../js/pages/kitchen.js');
+  const card = (id) => K.kitchen.find((c) => c.id === id);
+
+  await test('the home page opens with the three recipes, right after the introduction, and each opens its own recipe', async () => {
+    const p = await open('/', '.home-kitchen');
+    try {
+      assert([...p.$('.home').children].indexOf(p.$('.home-kitchen')) === 1, 'the recipes are not the first thing after the introduction');
+      const links = p.$$('.kitchen-teaser').map((a) => a.getAttribute('href'));
+      assert(links.join() === K.kitchen.map((c) => `#/kitchen?at=${c.id}`).join(), `the recipes link to ${links.join()}`);
+      assert(p.$('.site-foot a[href="#/kitchen"]'), 'the footer does not link to the kitchen page');
+    } finally { p.close(); }
+  });
+
+  await test('each recipe leads to a published lesson, and the page uses no formulas or symbols', async () => {
+    for (const c of K.kitchen) {
+      assert(C.algoById[c.lesson], `${c.id} leads to "${c.lesson}", which is not a published lesson`);
+      if (c.alsoLesson) assert(C.algoById[c.alsoLesson], `${c.id} also names "${c.alsoLesson}", which is not published`);
+      assert(c.steps.length >= 3 && c.steps.length <= 5, `${c.id} has ${c.steps.length} steps; a recipe should be short`);
+    }
+    const p = await open('/kitchen', '.kitchen-card');
+    try {
+      assert(p.$$('.kitchen-card').length === 3, 'the page does not show three recipes');
+      const text = p.$('.kitchen-page').textContent;
+      const sym = text.match(/[=×÷√∑≤≥]|log₂|O\(|\bn\b|formula[^s]/);
+      assert(!sym || sym[0] === 'formula ', `the page uses "${sym && sym[0]}"`);
+      for (const c of K.kitchen) assert(p.$(`#${c.id} .kitchen-next a[href="#/algorithm/${c.lesson}"]`), `${c.id} does not link to its lesson`);
+    } finally { p.close(); }
+  });
+
+  await test('spice rack: the jars are in order, and turning the middle jar finds any spice in at most five looks', () => {
+    const jars = card('spices').jars;
+    assert(jars.length === 16 && jars.every((j, i) => i === 0 || jars[i - 1].localeCompare(j) < 0), 'the jars are not sixteen, in alphabetical order');
+    let worst = 0;
+    for (const target of jars) {
+      let lo = 0, hi = jars.length - 1, looks = 0;
+      for (;;) { const m = P.middle(lo, hi); looks++; if (jars[m] === target) break; if (target.localeCompare(jars[m]) > 0) lo = m + 1; else hi = m - 1; }
+      worst = Math.max(worst, looks);
+    }
+    assert(worst === 5, `the worst case is ${worst} looks, and the page says five`);
+    // the page also says a million entries never need more than 20 looks
+    let n = 1e6, a = 0; while (n >= 1) { n = Math.floor(n / 2); a++; }
+    assert(a === 20, `a million entries can need ${a} looks`);
+    assert(/never take more than five looks/.test(card('spices').point) && /never need more than 20 looks/.test(card('spices').limits), 'the numbers in the text have changed; check them here');
+  });
+
+  await test('spice rack, as a reader would: "Let the algorithm choose" rules out half each time and finds the spice', async () => {
+    const p = await open('/kitchen', '.rack');
+    try {
+      const target = p.$('.rack-ask strong').textContent;
+      const help = [...p.$$('.rack-buttons button')].find((b) => /Let the algorithm choose/.test(b.textContent));
+      let left = 16, looks = 0;
+      while (!p.$('.jar.is-found')) {
+        help.click(); looks++;
+        const open = p.$$('.jar').filter((b) => !b.disabled).length;
+        if (!p.$('.jar.is-found')) { assert(open <= Math.floor(left / 2), `after look ${looks}, ${open} jars are still open out of ${left}`); left = open; }
+        assert(looks <= 5, 'the algorithm took more than five looks');
+      }
+      assert(p.$('.jar.is-found').textContent === target, `it found ${p.$('.jar.is-found').textContent}, not ${target}`);
+      assert(new RegExp(`Found the ${target} in ${looks} look`).test(p.$('.rack-say').textContent), 'the page does not report the number of looks');
+    } finally { p.close(); }
+  });
+
+  await test('dinner: every time on the page follows from the dishes', async () => {
+    const c = card('dinner');
+    const plan = P.dinnerPlan(c);
+    const clock = (m) => { const t = c.serveAt[0] * 60 + c.serveAt[1] - plan.longest + m; return `${Math.floor(t / 60) - 12}:${String(t % 60).padStart(2, '0')}`; };
+    const chicken = plan.rows.find((r) => /chicken/i.test(r.name)), potatoes = plan.rows.find((r) => /potato/i.test(r.name)), beans = plan.rows.find((r) => /bean/i.test(r.name));
+    assert(plan.longest === 90 && chicken.spare === 0, 'the chicken is no longer the longest chain at 90 minutes');
+    const text = c.steps.join(' ');
+    for (const [what, t] of [['the chicken goes in', clock(0)], ['the potatoes can start up to', clock(potatoes.spare)], ['the beans can wait until', clock(beans.spare)]]) assert(text.includes(t), `the steps do not say ${what} ${t}`);
+    assert(text.includes(`${potatoes.total} minutes`) && text.includes(`${chicken.total} minutes`), 'the chain lengths in the steps do not match the dishes');
+    const p = await open('/kitchen', '.dinner');
+    try {
+      const rows = p.$$('.dinner-row .dinner-name span').map((x) => x.textContent);
+      assert(rows.join(' | ') === `No spare time | ${potatoes.spare} minutes to spare | ${beans.spare} minutes to spare`, `the timeline says ${rows.join(' | ')}`);
+      assert(p.$$('.dinner-axis span').map((x) => x.textContent).join(' ') === '5:30 6:00 6:30 7:00', 'the clock under the timeline is wrong');
+    } finally { p.close(); }
   });
 }
 

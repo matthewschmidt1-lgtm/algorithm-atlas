@@ -16,6 +16,7 @@ import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
 import { problemIndex, samplePhrases } from '../core/problems.js';
 import { trackLessons } from '../core/tracks.js';
+import { kitchen, kitchenIntro } from '../../content/kitchen.js';
 
 const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
 
@@ -51,6 +52,17 @@ export default async function render() {
           h('p.hero-try.hero-suggest', 'Not sure where to begin? ',
             h('button.hero-suggest-btn', { type: 'button', onclick: () => openOnboarding({ onDone: (answered) => { if (answered) navigate('#/profile'); } }) }, 'Answer four questions and get a suggestion'), '.')))));
   queueMicrotask(() => requestAnimationFrame(() => cleanups.push(mountHeroNetwork(netHost))));
+
+  /* ---- algorithms for the kitchen ---- */
+  // The gentlest way in, for a reader who is wary of numbers: three things they already do.
+  const kitchenSec = h('section.section.home-kitchen', { 'aria-labelledby': 'home-kitchen-h' }, h('div.wrap',
+    sectionHead({ eyebrow: kitchenIntro.eyebrow, title: kitchenIntro.title, lede: kitchenIntro.homeLede, id: 'home-kitchen-h' }),
+    h('div.kitchen-teasers', kitchen.map((c, n) => h('a.kitchen-teaser', { href: `#/kitchen?at=${c.id}` },
+      h('span.kitchen-teaser-n', `Recipe ${n + 1}`),
+      h('span.kitchen-teaser-title', c.title),
+      h('span.kitchen-teaser-q', c.question),
+      h('span.kitchen-teaser-gist', c.gist)))),
+    h('p.sec-more', h('a.text-link', { href: '#/kitchen' }, 'Start with the first recipe', h('span', { html: icon('arrow', { size: 15 }) })))));
 
   /* ---- the two tracks ---- */
   const trackCard = (t) => {
@@ -149,6 +161,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, tracksSec, want, levels, featured, universe, ways);
+  const el = h('div.home', hero, kitchenSec, tracksSec, want, levels, featured, universe, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

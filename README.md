@@ -63,7 +63,7 @@ python3 tools/build.py --only a,b     # validate specific lessons
 
 ```bash
 python3 tools/test.py                 # every suite, about 30 seconds
-python3 tools/test.py --suite search  # one suite: search, defects, index, links, learning, player, followups, tracks, practice
+python3 tools/test.py --suite search  # one suite: search, defects, index, links, learning, player, followups, tracks, practice, kitchen
 python3 tools/test.py --bench         # also print the search benchmark, query by query
 ```
 

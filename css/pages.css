@@ -832,3 +832,74 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .case-read strong { color: var(--text); }
 .case-sec[id] { scroll-margin-top: calc(var(--nav-h) + 20px); }
 .case-n { display: inline-block; min-width: 1.6em; color: var(--text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* ---------- algorithms for the kitchen ---------- */
+.home-kitchen { padding-top: clamp(40px, 6vw, 72px); }
+.kitchen-teasers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); }
+.kitchen-teaser { display: grid; gap: 8px; align-content: start; padding: var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); transition: border-color 0.18s; }
+.kitchen-teaser:hover { border-color: var(--forest-ink); }
+.kitchen-teaser-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--terracotta-ink); }
+.kitchen-teaser-title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; line-height: 1.25; color: var(--text); }
+.kitchen-teaser-q { font-family: var(--font-serif); font-style: italic; color: var(--text-2); }
+.kitchen-teaser-gist { color: var(--text-2); font-size: 0.95rem; }
+@media (max-width: 860px) { .kitchen-teasers { grid-template-columns: 1fr; } }
+
+.kitchen-page { max-width: 860px; }
+.kitchen-toc { display: grid; gap: 6px; margin: var(--s-5) 0 var(--s-7); }
+.kitchen-toc a { display: flex; gap: 12px; align-items: baseline; color: var(--text-2); width: fit-content; }
+.kitchen-toc a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.kitchen-toc a span { font-variant-numeric: tabular-nums; color: var(--terracotta-ink); font-weight: 600; }
+.kitchen-card { padding: var(--s-7) 0; border-top: 1px solid var(--line); scroll-margin-top: 84px; }
+.kitchen-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--terracotta-ink); }
+.kitchen-card h2 { margin-top: 6px; }
+.kitchen-q { margin-top: 6px; font-family: var(--font-serif); font-style: italic; font-size: 1.2rem; color: var(--text-2); }
+.kitchen-setup { margin-top: var(--s-4); font-size: 1.06rem; max-width: 66ch; }
+.kitchen-recipe { margin-top: var(--s-5); padding: var(--s-5); background: var(--bg-2); border-radius: var(--r-3); }
+.kitchen-steps { margin-top: var(--s-3); display: grid; gap: 10px; padding-left: 1.6em; list-style: decimal; }
+.kitchen-steps li { padding-left: 4px; font-size: 1.04rem; }
+.kitchen-steps li::marker { font-family: var(--font-serif); font-weight: 600; color: var(--terracotta-ink); }
+.kitchen-point, .kitchen-computer, .kitchen-limits { margin-top: var(--s-4); max-width: 66ch; }
+.kitchen-point { font-size: 1.06rem; color: var(--text); }
+.kitchen-computer { color: var(--text-2); }
+.kitchen-limits { color: var(--text-2); font-size: 0.95rem; }
+.kitchen-next { margin-top: var(--s-5); display: grid; gap: 6px; }
+.kitchen-end { padding: var(--s-7) 0 0; border-top: 1px solid var(--line); }
+.kitchen-end p { margin-top: var(--s-3); max-width: 66ch; font-size: 1.06rem; }
+.kitchen-end-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--s-5) !important; }
+
+/* the spice rack */
+.rack-try { margin-top: var(--s-5); padding: var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); }
+.rack-ask { margin-top: 6px; font-size: 1.05rem; }
+.rack { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 6px; margin-top: var(--s-4); padding: 10px 8px 0; border-bottom: 6px solid var(--surface-3); }
+.jar { position: relative; height: 112px; padding: 14px 0 6px; border: 1px solid var(--line-2); border-bottom: 0; border-radius: 6px 6px 2px 2px; background: var(--surface-2); color: var(--text); cursor: pointer; display: flex; justify-content: center; align-items: flex-start; transition: background 0.15s, opacity 0.15s; }
+.jar:hover:not(:disabled) { background: var(--surface-3); }
+.jar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.jar-lid { position: absolute; top: 0; left: 18%; right: 18%; height: 8px; border-radius: 2px 2px 0 0; background: var(--viz-ochre); }
+.jar-label { writing-mode: vertical-rl; font-size: 0.82rem; font-weight: 550; letter-spacing: 0.02em; }
+.jar.is-out { opacity: 0.38; cursor: default; }
+.jar.is-found { background: var(--viz-forest); color: var(--viz-on-fill); border-color: var(--viz-forest); opacity: 1; }
+.jar.is-found .jar-lid { background: var(--viz-on-fill); }
+.rack-ends { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.8rem; color: var(--text-3); }
+.rack-say { margin-top: var(--s-3); min-height: 3em; color: var(--text-2); }
+.rack-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--s-2); }
+@media (max-width: 700px) { .rack { grid-template-columns: repeat(8, minmax(0, 1fr)); row-gap: 14px; } .jar { height: 100px; } }
+
+/* dinner timeline */
+.dinner { margin-top: var(--s-5); padding: var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); }
+.dinner-rows { display: grid; gap: 14px; }
+.dinner-row { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: var(--s-4); align-items: center; }
+.dinner-name { display: grid; gap: 2px; font-size: 0.95rem; }
+.dinner-name span { font-size: 0.82rem; color: var(--text-3); }
+.dinner-track { position: relative; height: 38px; background: var(--surface-2); border-radius: 4px; }
+.dinner-seg { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; overflow: hidden; padding: 0 8px; background: var(--viz-forest); color: var(--viz-on-fill); border-right: 2px solid var(--surface); font-size: 0.78rem; white-space: nowrap; }
+.dinner-seg + .dinner-seg { background: var(--viz-moss); }
+.dinner-seg.is-spare { background: repeating-linear-gradient(135deg, var(--surface-3) 0 6px, transparent 6px 12px); color: var(--text-3); border-right: 0; }
+.dinner-seg.is-spare + .dinner-seg { background: var(--viz-forest); }
+.dinner-axis { position: relative; height: 22px; margin: 8px 0 0 calc(11rem + var(--s-4)); font-size: 0.78rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.dinner-axis span { position: absolute; transform: translateX(-50%); }
+.dinner-axis span:first-child { transform: none; }
+.dinner-axis span:last-child { transform: translateX(-100%); }
+.dinner .fig-cap { margin-top: var(--s-3); }
+@media (max-width: 600px) { .dinner-row { grid-template-columns: 1fr; gap: 6px; } .dinner-axis { margin-left: 0; } .dinner-seg span { font-size: 0.7rem; } }
+
+.taste-log { margin-top: var(--s-5); max-width: 560px; }
