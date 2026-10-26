@@ -10,13 +10,12 @@ import { createSearchBox } from './searchbox.js';
 // One short label each, at every width, so the row never runs into the search button.
 // Connections is reached from the Atlas page and the footer.
 const NAV = [
+  { path: '/kitchen', label: 'Kitchen', match: ['/kitchen'] },
   { path: '/track/business', label: 'Business', match: ['/track/business', '/case'] },
   { path: '/track/ai', label: 'AI and ML', match: ['/track/ai'] },
   { path: '/library', label: 'Library', match: ['/library', '/algorithm', '/concept', '/problems'] },
   { path: '/lab', label: 'Lab', match: ['/lab', '/compare'] },
   { path: '/paths', label: 'Paths', match: ['/paths', '/path'] },
-  { path: '/about', label: 'About', match: ['/about', '/verification'] },
-  { path: '/explore', label: 'Atlas', match: ['/explore', '/disciplines', '/discipline', '/connections'] },
 ];
 
 const MARK = `<svg class="mark" viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M16 3.5c6.6 0 12.5 5 12.5 12.300S22.800 28.500 16 28.500 3.500 22.900 3.500 16 9.400 3.500 16 3.500z" opacity=".45"/><path d="M16.300 9c3.900 0 7.100 3 7.100 6.900s-3.100 7.100-7.300 7.100-7.100-3.200-7.100-7 3.400-7 7.300-7z" opacity=".75"/></g><circle cx="16" cy="16" r="2.600" fill="var(--terracotta)"/></svg>`;

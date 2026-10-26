@@ -1320,8 +1320,10 @@ if (on('tracks')) {
       assert(!p.$('.ledger') && !/tests passed against independent answers/.test(p.$('.home').textContent), 'the verification numbers are back on the home page');
       assert(p.$('.site-foot a[href="#/verification"]'), 'the Verification page can no longer be reached from the footer');
       const nav = p.$$('nav.primary a').map((a) => a.textContent.trim());
-      assert(nav.join(' | ') === 'Business | AI and ML | Library | Lab | Paths | About | Atlas', `the navigation reads ${nav.join(' | ')}`);
-      assert(p.$$('nav.primary a').map((a) => a.getAttribute('href')).join() === '#/track/business,#/track/ai,#/library,#/lab,#/paths,#/about,#/explore', 'a navigation link goes to the wrong page');
+      assert(nav.join(' | ') === 'Kitchen | Business | AI and ML | Library | Lab | Paths', `the navigation reads ${nav.join(' | ')}`);
+      assert(p.$$('nav.primary a').map((a) => a.getAttribute('href')).join() === '#/kitchen,#/track/business,#/track/ai,#/library,#/lab,#/paths', 'a navigation link goes to the wrong page');
+      // About and the map left the header; the footer still reaches both
+      assert(p.$('.site-foot a[href="#/about"]') && p.$('.site-foot a[href="#/explore"]'), 'About or the map can no longer be reached');
       assert(p.$('.site-foot a[href="#/connections"]'), 'Connections can no longer be reached from the footer');
       const made = p.$('.site-foot .foot-made a');
       assert(made && made.textContent === 'Made by Matty' && made.getAttribute('href') === 'https://matthew-schmidt-production.up.railway.app/', 'the footer credit is missing or links somewhere else');
