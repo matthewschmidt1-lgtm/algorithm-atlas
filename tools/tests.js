@@ -461,7 +461,7 @@ function resolves(hrefAttr) {
     if (path === '/explore' && q.d && !C.disciplineById[q.d]) return `no discipline "${q.d}"`;
     if (path === '/explore' && q.a && !C.algoById[q.a]) return `no lesson "${q.a}"`;
     if (path === '/library' && q.discipline && !C.disciplineById[q.discipline]) return `no discipline "${q.discipline}"`;
-    if (path === '/kitchen' && q.at && !KITCHEN_IDS.includes(q.at) && q.at !== 'sources') return `no recipe "${q.at}"`;
+    if (path === '/kitchen' && q.at && !KITCHEN_IDS.includes(q.at)) return `no recipe "${q.at}"`;
     if (path === '/about' && q.at && !['accessibility', 'checks', 'content', 'method', 'privacy', 'how', 'principles', 'schema', 'limits'].includes(q.at)) return null; // sections of About are checked on the page itself
     return null;
   }
@@ -1584,7 +1584,7 @@ if (on('kitchen')) {
     } finally { p.close(); }
   });
 
-  await test('every real time, temperature and ratio names where it comes from, and every source is listed', async () => {
+  await test('every real time, temperature and ratio names where it comes from, in the text', async () => {
     for (const c of K.kitchen) if (c.checked) {
       assert((c.sources || []).length, `${c.id} gives real numbers without a source`);
       for (const id of c.sources) assert(K.kitchenSources[id] && /^https:\/\//.test(K.kitchenSources[id].url), `${c.id} cites "${id}", which is not in the list`);
@@ -1593,9 +1593,9 @@ if (on('kitchen')) {
     const dinner = card('dinner');
     const chicken = dinner.dishes.find((d) => /chicken/i.test(d.name)), oven = chicken.tasks.find((t) => /oven/.test(t.name)).minutes;
     assert(oven >= 75 && oven <= 90 && /3-pound chicken roasting at 350°F/.test(dinner.setup), 'the chicken no longer matches the USDA chart (1¼ to 1½ hours at 350°F for 3 to 4 pounds)');
-    const p = await open('/kitchen', '.kitchen-sources');
+    const p = await open('/kitchen', '.kitchen-checked');
     try {
-      assert(p.$$('.kitchen-sources li').length === Object.keys(K.kitchenSources).length, 'the Sources list is incomplete');
+      assert(!p.$('.kitchen-sources'), 'the list of sources is back at the end of the page');
       assert(p.$$('.kitchen-checked').length === K.kitchen.filter((c) => c.checked).length, 'a recipe does not say where its numbers come from');
     } finally { p.close(); }
   });

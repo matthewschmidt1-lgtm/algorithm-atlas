@@ -125,7 +125,8 @@ export const kitchen = [
   },
 ];
 
-// Where the real numbers come from. Each recipe lists the ones it draws on.
+// Where the real numbers come from. Each recipe lists the ones it draws on. Kept here as the
+// record behind the "Checked against real kitchens" lines; the page names them in the prose only.
 export const kitchenSources = {
   'usda-roasting': { title: 'Meat and Poultry Roasting Charts', by: 'FoodSafety.gov (US Department of Agriculture)', url: 'https://www.foodsafety.gov/food-safety-charts/meat-poultry-charts' },
   'atk-chicken': { title: 'Seven Steps to Perfect Roast Chicken', by: 'America’s Test Kitchen', url: 'https://www.americastestkitchen.com/how_tos/6026-seven-steps-to-perfect-roast-chicken' },

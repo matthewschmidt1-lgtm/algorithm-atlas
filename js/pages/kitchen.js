@@ -6,7 +6,7 @@ import { h, holdInView } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { pageHead } from '../ui/parts.js';
-import { kitchen, kitchenIntro, kitchenEnd, kitchenSources } from '../../content/kitchen.js';
+import { kitchen, kitchenIntro, kitchenEnd } from '../../content/kitchen.js';
 
 const arrowLink = (href, text) => h('a.text-link', { href }, text, h('span', { html: icon('arrow', { size: 15 }) }));
 
@@ -180,7 +180,7 @@ export default async function render({ query }) {
       extras[card.id] ? extras[card.id](card) : null,
       h('p.kitchen-point', card.point),
       h('p.kitchen-computer', card.computer),
-      card.checked ? h('p.kitchen-checked', h('strong', 'Checked against real kitchens. '), card.checked, ' ', h('span.kitchen-cites', (card.sources || []).map((id, i) => [i ? ', ' : '', h('a.link', { href: `#/kitchen?at=sources` , onclick: (e) => { e.preventDefault(); document.getElementById(`src-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, `[${Object.keys(kitchenSources).indexOf(id) + 1}]`)]))) : null,
+      card.checked ? h('p.kitchen-checked', h('strong', 'Checked against real kitchens. '), card.checked) : null,
       h('div.kitchen-limits', h('h3', 'Where the kitchen stops'), [].concat(card.limits).map((t) => h('p', t))),
       L ? h('p.kitchen-next', arrowLink(`#/algorithm/${L.id}`, `See a computer do it: ${L.name}`),
         also ? h('span.small.muted', ' Or the one-jar-at-a-time version: ', h('a.link', { href: `#/algorithm/${also.id}` }, also.name), '.') : null) : null);
@@ -194,13 +194,10 @@ export default async function render({ query }) {
     h('section.kitchen-end', h('h2', kitchenEnd.title), [].concat(kitchenEnd.text).map((t) => h('p', t)),
       h('p.kitchen-end-links',
         beginners ? h('a.btn.btn-accent', { href: `#/path/${beginners.id}` }, `Next: ${beginners.title}`) : null,
-        h('a.btn', { href: '#/' }, 'Back to the start'))),
-    h('section.kitchen-sources', { id: 'sources' }, h('h2', 'Sources'),
-      h('p.muted', 'Where the real times, temperatures and ratios on this page come from. The oven numbers in the pizza recipe are chosen to show the idea, and checked against these.'),
-      h('ol', Object.entries(kitchenSources).map(([id, s]) => h('li', { id: `src-${id}` }, h('a.link', { href: s.url, target: '_blank', rel: 'noopener' }, s.title), `${/[?!.]$/.test(s.title) ? '' : '.'} ${s.by}.`)))));
+        h('a.btn', { href: '#/' }, 'Back to the start'))));
 
   // a link to one recipe opens the page at it
-  if (query.at && (kitchen.some((c) => c.id === query.at) || query.at === 'sources')) {
+  if (query.at && kitchen.some((c) => c.id === query.at)) {
     queueMicrotask(() => requestAnimationFrame(() => { const t = el.querySelector(`#${query.at}`); if (t) holdInView(t); }));
   }
   return { el, title: kitchenIntro.title };
