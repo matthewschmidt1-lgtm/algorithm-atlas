@@ -57,9 +57,12 @@ export const kitchen = [
       'Count back from dinner time. The chicken has to go in at 5:30. No dish can make dinner earlier than its longest chain allows.',
       'Every other dish can start later. The potatoes need 60 minutes, so they can start any time up to 6:00. The beans can wait until 6:50.',
     ],
-    point: 'The chain with no spare time is called the critical path. A delay on it makes dinner late. A delay anywhere else is soaked up by the spare time, until the spare time runs out.',
-    limits: 'The method assumes you have as many hands and ovens as you need. A real cook cannot peel and baste at the same moment, and two dishes may want the oven at different temperatures. Project planners meet the same limit with people and machines, and deal with it as a separate problem.',
-    computer: 'Project managers use the same steps to plan buildings, product launches and events, often with hundreds of tasks. The method is called the critical path method.',
+    point: 'The chain of tasks with no time to spare is called the critical path. Delay any task on it, and dinner is late. Delay a task elsewhere, and you can use up some of its spare time without affecting the finish, at least until that spare time runs out.',
+    limits: [
+      'The method, on its own, assumes you have all the people and equipment you need, whenever you need them. But a real cook can’t peel potatoes and baste a roast at the same time. And two dishes might need the oven at different temperatures.',
+      'Projects face the same problem: people, machines and other resources are limited. Working out the critical path is one challenge; figuring out how to share those resources is another.',
+    ],
+    computer: 'Project managers use the same idea to plan everything from building projects to product launches and live events. The technique is called the critical path method, and it helps them see which tasks must stay on schedule to keep the whole project on track.',
   },
   {
     id: 'dressing',
