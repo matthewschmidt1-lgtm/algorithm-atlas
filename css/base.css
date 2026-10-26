@@ -51,6 +51,12 @@
   --viz-on-fill: #FAF7F1;
 
   --accent: var(--forest-ink);
+  /* the kitchen section on the home page: a warm, terracotta-washed linen with a faint gingham check */
+  --kitchen-bg: #F2E1CC;
+  --kitchen-card: #FBF4EA;
+  --kitchen-ink: #8A4630;
+  --kitchen-check: rgba(184, 111, 82, 0.04);
+  --kitchen-text-3: #5E6358;
   --on-accent: #FAF7F1;
   --focus: #34483B;
 
@@ -72,6 +78,11 @@
 
 /* Night reading: the same materials after dark. */
 :root[data-theme='dark'] {
+  --kitchen-bg: #2C2520;
+  --kitchen-card: #352D27;
+  --kitchen-ink: #E8AE93;
+  --kitchen-check: rgba(223, 160, 134, 0.035);
+  --kitchen-text-3: #A3A397;
   color-scheme: dark;
   --bg: #1D211C;
   --bg-2: #191C18;

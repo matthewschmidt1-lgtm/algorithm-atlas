@@ -1550,6 +1550,22 @@ if (on('kitchen')) {
     } finally { p.close(); }
   });
 
+  await test('the home section is drawn and moves a little, but the cards always end up in view, and no text has an em dash', async () => {
+    const all = JSON.stringify(K);
+    assert(!/\u2014|\s\u2013\s/.test(all), 'the kitchen text contains an em dash');
+    const p = await open('/', '.home-kitchen');
+    try {
+      const sec = p.$('.home-kitchen');
+      assert(p.$$('.kitchen-teaser-art svg').length === 3 && p.$('.home-kitchen-pot svg'), 'the drawings are missing');
+      sec.scrollIntoView();
+      await until(() => sec.classList.contains('has-risen') || !sec.classList.contains('will-rise'), 3000, 'the cards never rose into place');
+      await until(() => p.$$('.kitchen-teaser').every((c) => p.win.getComputedStyle(c).opacity === '1'), 3000, 'a card is still invisible after rising');
+      assert(p.win.getComputedStyle(p.$('.ka-steam')).animationName === 'ka-steam', 'the steam does not move');
+      const bg = p.win.getComputedStyle(sec).backgroundColor;
+      assert(bg !== p.win.getComputedStyle(p.doc.body).backgroundColor, 'the section has the same colour as the page');
+    } finally { p.close(); }
+  });
+
   await test('each recipe leads to a published lesson, and the page uses no formulas or symbols', async () => {
     for (const c of K.kitchen) {
       assert(C.algoById[c.lesson], `${c.id} leads to "${c.lesson}", which is not a published lesson`);

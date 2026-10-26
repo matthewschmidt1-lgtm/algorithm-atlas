@@ -7,7 +7,7 @@ export const kitchenIntro = {
   // on the home page, in two paragraphs
   homeLede: [
     'Think algorithms are all numbers, formulas, and computer code? Think again. You use them every time you cook. A recipe is an algorithm: a set of steps that helps you get from ingredients to something delicious.',
-    'Let’s explore three everyday kitchen puzzles and discover the clever ideas behind them. No formulas, no technical jargon—just familiar problems, simple steps, and a new way of seeing the everyday.',
+    'Let’s explore three everyday kitchen puzzles and discover the clever ideas behind them. No formulas, no technical jargon. Just familiar problems, simple steps, and a new way of seeing the everyday.',
   ],
   eyebrow: 'A gentle start',
   title: 'Algorithms for the kitchen',

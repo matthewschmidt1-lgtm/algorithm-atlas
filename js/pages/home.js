@@ -17,6 +17,7 @@ import { recommendLessons } from '../core/recommend.js';
 import { problemIndex, samplePhrases } from '../core/problems.js';
 import { trackLessons } from '../core/tracks.js';
 import { kitchen, kitchenIntro } from '../../content/kitchen.js';
+import { recipeArt, potArt } from '../art/kitchen-art.js';
 
 const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
 
@@ -56,13 +57,22 @@ export default async function render() {
   /* ---- algorithms for the kitchen ---- */
   // The gentlest way in, for a reader who is wary of numbers: three things they already do.
   const kitchenSec = h('section.section.home-kitchen', { 'aria-labelledby': 'home-kitchen-h' }, h('div.wrap',
+    h('div.home-kitchen-pot', { html: potArt() }),
     sectionHead({ eyebrow: kitchenIntro.eyebrow, title: kitchenIntro.title, lede: kitchenIntro.homeLede, id: 'home-kitchen-h' }),
-    h('div.kitchen-teasers', kitchen.map((c, n) => h('a.kitchen-teaser', { href: `#/kitchen?at=${c.id}` },
+    h('div.kitchen-teasers', kitchen.map((c, n) => h('a.kitchen-teaser', { href: `#/kitchen?at=${c.id}`, style: { '--i': n } },
+      recipeArt[c.id] ? h('span.kitchen-teaser-art', { html: recipeArt[c.id]({ size: 52 }) }) : null,
       h('span.kitchen-teaser-n', `Recipe ${n + 1}`),
       h('span.kitchen-teaser-title', c.title),
       h('span.kitchen-teaser-q', c.question),
       h('span.kitchen-teaser-gist', c.gist)))),
     h('p.sec-more', h('a.text-link', { href: '#/kitchen' }, 'Start with the first recipe', h('span', { html: icon('arrow', { size: 15 }) })))));
+  // the cards rise into place the first time the section scrolls into view
+  if ('IntersectionObserver' in window) {
+    kitchenSec.classList.add('will-rise');
+    const seen = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { kitchenSec.classList.add('has-risen'); seen.disconnect(); } }, { threshold: 0.15 });
+    seen.observe(kitchenSec);
+    cleanups.push(() => seen.disconnect());
+  }
 
   /* ---- the two tracks ---- */
   const trackCard = (t) => {

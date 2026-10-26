@@ -834,15 +834,58 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .case-n { display: inline-block; min-width: 1.6em; color: var(--text-3); font-weight: 400; font-variant-numeric: tabular-nums; }
 
 /* ---------- algorithms for the kitchen ---------- */
-.home-kitchen { padding-top: clamp(40px, 6vw, 72px); }
+.home-kitchen {
+  --text-3: var(--kitchen-text-3);
+  position: relative; overflow: hidden;
+  padding-top: clamp(48px, 7vw, 88px);
+  background-color: var(--kitchen-bg);
+  /* a faint gingham tablecloth */
+  background-image:
+    repeating-linear-gradient(0deg, var(--kitchen-check) 0 18px, transparent 18px 36px),
+    repeating-linear-gradient(90deg, var(--kitchen-check) 0 18px, transparent 18px 36px);
+  border-block: 1px solid color-mix(in srgb, var(--kitchen-ink) 22%, transparent);
+}
+.home-kitchen .wrap { position: relative; }
+.home-kitchen .eyebrow { color: var(--kitchen-ink); }
+.home-kitchen .text-link { color: var(--kitchen-ink); }
+/* the pot sits in the open space above the heading, beside the introduction */
+.home-kitchen-pot { position: absolute; left: calc(var(--gutter) - 20px); top: 34px; color: var(--kitchen-ink); pointer-events: none; }
+@media (max-width: 860px) { .home-kitchen-pot { display: none; } }
+
 .kitchen-teasers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); }
-.kitchen-teaser { display: grid; gap: 8px; align-content: start; padding: var(--s-5); border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); transition: border-color 0.18s; }
-.kitchen-teaser:hover { border-color: var(--forest-ink); }
-.kitchen-teaser-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--terracotta-ink); }
+.kitchen-teaser { position: relative; display: grid; gap: 8px; align-content: start; padding: var(--s-5); border: 1px solid color-mix(in srgb, var(--kitchen-ink) 26%, transparent); border-radius: var(--r-3); background: var(--kitchen-card);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--kitchen-ink) 10%, transparent);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; }
+.kitchen-teaser:hover, .kitchen-teaser:focus-visible { transform: translateY(-3px); border-color: var(--kitchen-ink); box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--kitchen-ink) 55%, transparent); }
+.kitchen-teaser-art { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 6px; border-radius: 50%; color: var(--kitchen-ink); background: color-mix(in srgb, var(--kitchen-ink) 10%, transparent); }
+.kitchen-teaser-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--kitchen-ink); }
 .kitchen-teaser-title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; line-height: 1.25; color: var(--text); }
 .kitchen-teaser-q { font-family: var(--font-serif); font-style: italic; color: var(--text-2); }
 .kitchen-teaser-gist { color: var(--text-2); font-size: 0.95rem; }
-@media (max-width: 860px) { .kitchen-teasers { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .kitchen-teasers { grid-template-columns: 1fr; } .kitchen-teaser { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-4); } .kitchen-teaser-art { grid-row: span 4; width: 60px; height: 60px; } .kitchen-teaser-art svg { width: 44px; height: 44px; } }
+
+/* the drawings move a little: the jar lid lifts, the timer hand sweeps, the lemon rocks */
+.kitchen-teaser .ka-lid, .kitchen-teaser .ka-hand, .kitchen-teaser .ka-rock { transform-box: fill-box; transition: transform 0.45s var(--ease); }
+.kitchen-teaser .ka-lid { transform-origin: 0% 100%; }
+.kitchen-teaser:hover .ka-lid, .kitchen-teaser:focus-visible .ka-lid { transform: translate(-1px, -5px) rotate(-14deg); }
+.kitchen-teaser .ka-hand { transform-origin: 50% 100%; transition-duration: 1.4s; }
+.kitchen-teaser:hover .ka-hand, .kitchen-teaser:focus-visible .ka-hand { transform: rotate(360deg); }
+.kitchen-teaser .ka-rock { transform-origin: 50% 100%; }
+.kitchen-teaser:hover .ka-rock, .kitchen-teaser:focus-visible .ka-rock { animation: ka-rock 0.9s var(--ease); }
+@keyframes ka-rock { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-9deg); } 60% { transform: rotate(6deg); } 85% { transform: rotate(-2deg); } }
+
+/* the pot steams on a slow loop, and its flame flickers */
+.ka-steam { opacity: 0.55; animation: ka-steam 3.6s ease-in-out infinite; }
+.ka-steam-2 { animation-delay: 1.2s; }
+.ka-steam-3 { animation-delay: 2.4s; }
+@keyframes ka-steam { 0% { opacity: 0; transform: translateY(5px); } 35% { opacity: 0.75; } 100% { opacity: 0; transform: translateY(-7px); } }
+.ka-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: ka-flame 1.6s ease-in-out infinite alternate; }
+@keyframes ka-flame { from { transform: scaleY(0.85); } to { transform: scaleY(1.1); } }
+
+/* the cards rise into place the first time the section is seen */
+.home-kitchen.will-rise .kitchen-teaser { opacity: 0; transform: translateY(16px); }
+.home-kitchen.will-rise.has-risen .kitchen-teaser { opacity: 1; transform: none; transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; transition-delay: calc(var(--i, 0) * 110ms), calc(var(--i, 0) * 110ms), 0s, 0s; }
+.home-kitchen.will-rise.has-risen .kitchen-teaser:hover, .home-kitchen.will-rise.has-risen .kitchen-teaser:focus-visible { transform: translateY(-3px); transition-delay: 0s; }
 
 .kitchen-page { max-width: 860px; }
 .kitchen-toc { display: grid; gap: 6px; margin: var(--s-5) 0 var(--s-7); }
