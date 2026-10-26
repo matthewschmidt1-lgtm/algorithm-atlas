@@ -57,8 +57,14 @@ export default async function render() {
   /* ---- algorithms for the kitchen ---- */
   // The gentlest way in, for a reader who is wary of numbers: three things they already do.
   const kitchenSec = h('section.section.home-kitchen', { 'aria-labelledby': 'home-kitchen-h' }, h('div.wrap',
-    h('div.home-kitchen-pot', { html: potArt() }),
-    sectionHead({ eyebrow: kitchenIntro.eyebrow, title: kitchenIntro.title, lede: kitchenIntro.homeLede, id: 'home-kitchen-h' }),
+    // one column that reads straight down: label, title, introduction, then the recipes.
+    // The pot sits beside the text as decoration and is not part of the reading order.
+    h('div.home-kitchen-head',
+      h('div.home-kitchen-text',
+        h('p.eyebrow', kitchenIntro.eyebrow),
+        h('h2', { id: 'home-kitchen-h' }, kitchenIntro.title),
+        kitchenIntro.homeLede.map((t) => h('p.lede', t))),
+      h('div.home-kitchen-pot', { html: potArt() })),
     h('div.kitchen-teasers', kitchen.map((c, n) => h('a.kitchen-teaser', { href: `#/kitchen?at=${c.id}`, style: { '--i': n } },
       recipeArt[c.id] ? h('span.kitchen-teaser-art', { html: recipeArt[c.id]({ size: 52 }) }) : null,
       h('span.kitchen-teaser-n', `Recipe ${n + 1}`),

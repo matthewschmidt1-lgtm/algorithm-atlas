@@ -119,7 +119,6 @@ label.setting-row { cursor: pointer; }
 .sec-head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--s-4) var(--s-8); align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
 .sec-head .eyebrow { grid-column: 1 / -1; }
 .sec-head .lede { font-size: 1.08rem; }
-.sec-head div.lede p + p { margin-top: 0.75em; }
 .sec-head.single { grid-template-columns: minmax(0, 720px); }
 @media (max-width: 860px) { .sec-head { grid-template-columns: 1fr; } }
 .sec-more { margin-top: var(--s-6); }
