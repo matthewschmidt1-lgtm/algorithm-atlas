@@ -415,12 +415,11 @@ if (on('index')) {
     } finally { p.close(); }
   });
   await test('a newcomer can go from the home page to a running lesson without typing a name', async () => {
-    const p = await open('/', '.home-want-list a');
+    const p = await open('/', '.hero-try a[href="#/problems"]');
     try {
-      const sample = p.$$('.home-want-list a');
-      assert(sample.length >= 4, `the home page offers ${sample.length} phrases`);
-      for (const a of sample) assert(C.algoById[a.getAttribute('href').split('/').pop()], `${a.getAttribute('href')} is not a lesson`);
-      p.$('.home-want-more a').click();
+      // the goal list left the home page; the way in is now the line under the search box
+      assert(!p.$('.home-want') && !p.$('.levels-demo'), 'a section that was taken off the home page is back');
+      p.$('.hero-try a[href="#/problems"]').click();
       await until(() => p.$('.want-row'), 5000, 'the index did not open from the home page');
       const row = p.$$('.want-row').find((r) => /Fastest way between two places/i.test(r.textContent));
       assert(row, 'the phrase "Fastest way between two places" is not among those shown first');
@@ -428,7 +427,7 @@ if (on('index')) {
       await until(() => p.$('.lesson h1'), 8000, 'the lesson did not open');
       assert(/Dijkstra/.test(p.$('.lesson h1').textContent), `opened "${p.$('.lesson h1').textContent}"`);
       await until(() => p.$('.player-note .note-text'), 5000, 'the demonstration is not on the page');
-      return 'home, then "Browse all", then "Fastest way between two places", then the Dijkstra lesson: two clicks';
+      return 'home, then "browse by what you want to do", then "Fastest way between two places", then the Dijkstra lesson: two clicks';
     } finally { p.close(); }
   });
   await test('at phone width the page fits and each phrase is a comfortable target', async () => {

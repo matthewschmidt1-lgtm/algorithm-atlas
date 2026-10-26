@@ -2,7 +2,7 @@
 // It does not reproduce the other pages. The map here is a signpost to Explore, the
 // demonstrations are a taste of the lab, and each feature gets one line and a link.
 
-import { h, clear, richBlock } from '../core/dom.js';
+import { h, clear } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
@@ -14,7 +14,6 @@ import { sectionHead, plural } from '../ui/parts.js';
 import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
-import { problemIndex, samplePhrases } from '../core/problems.js';
 import { trackLessons } from '../core/tracks.js';
 import { kitchen, kitchenIntro } from '../../content/kitchen.js';
 import { recipeArt, potArt, sortingArt } from '../art/kitchen-art.js';
@@ -93,14 +92,6 @@ export default async function render() {
     sectionHead({ eyebrow: 'Two guides', title: 'Where the atlas goes deepest', id: 'home-tracks-h', single: true }),
     h('div.track-cards', C.tracks.map(trackCard)))) : null;
 
-  /* ---- start from a problem ---- */
-  const wants = samplePhrases(6);
-  const want = wants.length ? h('section.home-want', { 'aria-labelledby': 'home-want-h' }, h('div.wrap.home-want-inner',
-    h('div', h('p.eyebrow', "What's Your Goal?"), h('h2', { id: 'home-want-h' }, 'Start from what you want to do')),
-    h('ul.home-want-list', wants.map((p) => h('li', h('a', { href: `#/algorithm/${p.lessons[0].id}` }, h('span.home-want-phrase', p.label), h('span.home-want-lesson', p.lessons[0].name))))),
-    h('p.home-want-more', h('a.text-link', { href: '#/problems' }, `Browse all ${problemIndex().total} by what you want to do`, h('span', { html: icon('arrow', { size: 15 }) }))))) : null;
-
-
   /* ---- the map, as a signpost ---- */
   const mapHost = h('div.universe-map.home-map');
   queueMicrotask(() => requestAnimationFrame(() => {
@@ -113,35 +104,6 @@ export default async function render() {
       h('figcaption.fig-cap', h('b', 'Choose a hill'), 'to open it on the full map, with its subfields, lessons and neighbours.')),
     h('p.sec-more', h('a.text-link', { href: '#/explore' }, 'Open the full map', h('span', { html: icon('arrow', { size: 15 }) })),
       h('a.text-link', { href: '#/disciplines' }, 'Or see all disciplines as a list', h('span', { html: icon('arrow', { size: 15 }) })))));
-
-  /* ---- three levels ---- */
-  const levelsBody = h('div.levels-demo-body');
-  const sampleId = C.algoById.dijkstra ? 'dijkstra' : (C.algos[0] || {}).id;
-  const levelTabs = [
-    { n: 1, name: 'Explain it simply', about: 'everyday language and a small example. No background needed.' },
-    { n: 2, name: 'Help me understand', about: 'the steps, the code and the terms you need.' },
-    { n: 3, name: 'Go deeper', about: 'cost, proofs, history and sources.' },
-  ];
-  let levelBtns = [];
-  const showLevel = async (n) => {
-    levelBtns.forEach((b, i) => b.setAttribute('aria-selected', i + 1 === n ? 'true' : 'false'));
-    try {
-      const lesson = await C.loadLesson(sampleId);
-      const text = n === 1 ? lesson.bigIdea.simple : n === 2 ? lesson.logic.intuition : lesson.logic.correctness;
-      clear(levelsBody).append(
-        h('p.levels-demo-cap', `${lesson.meta.name} at level ${n}: ${levelTabs[n - 1].about}`),
-        h('div.prose.levels-demo-text', { html: richBlock(text) }),
-        h('p', h('a.text-link', { href: `#/algorithm/${sampleId}?level=${n}` }, 'Read this lesson', h('span', { html: icon('arrow', { size: 15 }) }))));
-    } catch { clear(levelsBody).append(h('p.muted', 'The sample lesson could not be loaded.')); }
-  };
-  levelBtns = levelTabs.map((t) => h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', onclick: () => showLevel(t.n) }, t.name));
-  const levels = sampleId ? h('section.section.tinted', h('div.wrap.levels-demo',
-    h('div',
-      h('p.eyebrow', 'One idea, three depths'),
-      h('h2', 'Start simple. Go as deep as you like.'),
-      h('p.lede', 'Every lesson opens in plain language. The same lesson then unfolds into the working details, and finally into the mathematics. Deeper material stays out of the way until you ask for it.')),
-    h('div.levels-demo-card', h('div.tabs', { role: 'tablist', 'aria-label': 'Reading level' }, levelBtns), levelsBody))) : null;
-  if (sampleId) showLevel(1);
 
   /* ---- a taste of the demonstrations ---- */
   const demos = HOME_DEMOS.map((id) => C.featured.find((f) => f.id === id)).filter(Boolean);
@@ -191,6 +153,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, kitchenSec, tracksSec, want, levels, featured, universe, ways);
+  const el = h('div.home', hero, kitchenSec, tracksSec, featured, universe, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

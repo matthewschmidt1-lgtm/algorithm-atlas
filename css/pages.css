@@ -98,13 +98,6 @@
 @media (max-width: 860px) { .preview-grid { grid-template-columns: 1fr; } }
 
 /* ================= three levels (home) ================= */
-.levels-demo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--s-8); align-items: start; }
-.levels-demo > div:first-child { display: grid; gap: var(--s-4); }
-.levels-demo-card { border: 1px solid var(--line-2); border-radius: var(--r-3); background: var(--surface); padding: var(--s-4) var(--s-5) var(--s-5); }
-.levels-demo-body { padding-top: var(--s-4); display: grid; gap: var(--s-4); min-height: 300px; align-content: start; }
-.levels-demo-cap { font-size: 0.84rem; color: var(--text-3); }
-.levels-demo-text { font-size: 1rem; }
-@media (max-width: 900px) { .levels-demo { grid-template-columns: 1fr; gap: var(--s-6); } }
 
 /* ================= threads ================= */
 .thread-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line-2); }
@@ -642,8 +635,7 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 @media (max-width: 900px) { .cmp-cards { grid-template-columns: 1fr; } }
 
 /* Grid children must be allowed to shrink, or wide tables and tab rows push the page sideways on phones. */
-.levels-demo > *, .cmp-sec > *, .profile-sec > *, .detail > *, .path-main > *, .disc-main > *, .lesson-head > *, .invite > *, .you-grid > *, .thread > *, .preview > *, .stage-body > *, .cmp-controls > * { min-width: 0; }
-@media (max-width: 900px) { .levels-demo { grid-template-columns: minmax(0, 1fr); } }
+.cmp-sec > *, .profile-sec > *, .detail > *, .path-main > *, .disc-main > *, .lesson-head > *, .invite > *, .you-grid > *, .thread > *, .preview > *, .stage-body > *, .cmp-controls > * { min-width: 0; }
 
 /* ================= depth on demand ================= */
 /* At level 1 the visualization shows the picture and the explanation only. Pseudocode,
@@ -701,17 +693,6 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .profile-records > h2 { margin-bottom: var(--s-4); }
 
 /* ---------- "I want to": the problem-first index ---------- */
-.home-want { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); }
-.home-want-inner { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--s-6) var(--s-8); padding-top: var(--s-7); padding-bottom: var(--s-7); align-items: start; }
-.home-want h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); margin-top: 6px; }
-.home-want-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-6); border-top: 1px solid var(--line-2); }
-.home-want-list a { display: grid; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.home-want-phrase { font-family: var(--font-serif); font-size: 1.12rem; font-weight: 600; }
-.home-want-list a:hover .home-want-phrase { color: var(--forest-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
-.home-want-lesson { font-size: 0.84rem; color: var(--text-3); }
-.home-want-more { grid-column: 2; margin: 0; }
-@media (max-width: 860px) { .home-want-inner { grid-template-columns: minmax(0, 1fr); } .home-want-more { grid-column: 1; } }
-@media (max-width: 520px) { .home-want-list { grid-template-columns: minmax(0, 1fr); } }
 
 .want-tools { display: grid; gap: var(--s-3); max-width: 760px; margin-bottom: var(--s-6); }
 .want-count-line { color: var(--text-2); font-size: 0.95rem; }
