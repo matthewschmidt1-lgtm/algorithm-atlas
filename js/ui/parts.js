@@ -24,7 +24,8 @@ export function sectionHead({ eyebrow, title, lede, id, level = 'h2', single = f
   return h(`div.sec-head${single || !lede ? '.single' : ''}`,
     eyebrow ? h('p.eyebrow', eyebrow) : null,
     h(level, id ? { id } : {}, title),
-    lede ? h('p.lede', lede) : null);
+    // a lede of several paragraphs is given as a list
+    Array.isArray(lede) ? h('div.lede', lede.map((t) => h('p', t))) : lede ? h('p.lede', lede) : null);
 }
 
 export function pageHead({ crumbsList, eyebrow, title, lede, extra }) {

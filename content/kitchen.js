@@ -4,8 +4,11 @@
 // tools/tests.js (suite "kitchen") against the rule it illustrates.
 
 export const kitchenIntro = {
-  // on the home page
-  homeLede: 'Not sure you are a numbers person? You already follow algorithms: a recipe is one. Start with three from the kitchen, with no formulas, and see how simple an algorithm can be.',
+  // on the home page, in two paragraphs
+  homeLede: [
+    'Think algorithms are all numbers, formulas, and computer code? Think again. You use them every time you cook. A recipe is an algorithm: a set of steps that helps you get from ingredients to something delicious.',
+    'Let’s explore three everyday kitchen puzzles and discover the clever ideas behind them. No formulas, no technical jargon—just familiar problems, simple steps, and a new way of seeing the everyday.',
+  ],
   eyebrow: 'A gentle start',
   title: 'Algorithms for the kitchen',
   lede: 'An algorithm is a list of steps that solves a problem the same way every time. If you have followed a recipe, you have followed an algorithm. Here are three that cooks use without ever calling them that. There are no formulas on this page, and each one ends at the lesson where a computer does the same thing.',
