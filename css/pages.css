@@ -904,6 +904,10 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .kitchen-steps li { padding-left: 4px; font-size: 1.04rem; }
 .kitchen-steps li::marker { font-family: var(--font-serif); font-weight: 600; color: var(--terracotta-ink); }
 .kitchen-point, .kitchen-computer, .kitchen-limits { margin-top: var(--s-4); max-width: 66ch; }
+.kitchen-limits { margin-top: var(--s-5); padding-left: var(--s-4); border-left: 3px solid var(--line-2); }
+.kitchen-limits h3 { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.kitchen-limits p { margin-top: 6px; }
+.kitchen-limits p + p { margin-top: var(--s-3); }
 .kitchen-point { font-size: 1.06rem; color: var(--text); }
 .kitchen-computer { color: var(--text-2); }
 .kitchen-limits { color: var(--text-2); font-size: 0.95rem; }

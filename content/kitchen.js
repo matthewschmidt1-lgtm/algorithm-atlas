@@ -29,10 +29,14 @@ export const kitchen = [
       'If your spice comes earlier in the alphabet, forget this jar and every jar to its right. If it comes later, forget this jar and every jar to its left.',
       'Turn the middle jar of the ones that are left, and repeat.',
     ],
-    point: 'That is the whole algorithm. Every look rules out half of the jars that are left, so sixteen jars never take more than five looks. Turning them one by one from the left could take all sixteen.',
+    point: 'That’s the whole algorithm. Each look cuts the remaining possibilities in half. With 16 jars, you’ll find the cumin in no more than 5 looks. Searching from left to right, one jar at a time, could take all 16.',
     jars: ['Allspice', 'Basil', 'Cardamom', 'Cinnamon', 'Cloves', 'Cumin', 'Dill', 'Fennel', 'Ginger', 'Mint', 'Nutmeg', 'Oregano', 'Paprika', 'Rosemary', 'Saffron', 'Thyme'],
-    limits: 'It only works because the rack is in order. Put one jar back in the wrong place and the search can rule out the half that holds your spice without noticing. A computer follows the same steps through lists with millions of entries: a million entries never need more than 20 looks.',
-    computer: 'A computer does exactly this with a sorted list. The method is called binary search.',
+    // several paragraphs are given as a list
+    limits: [
+      'There’s one catch: the rack must be in order. If even one jar is out of place, you might rule out the half that contains your spice without realizing it.',
+      'Computers face the same rule, even when their lists contain millions of entries. With binary search, a million entries take no more than 20 looks. The trick isn’t checking faster. It’s knowing which half you can safely ignore.',
+    ],
+    computer: 'Computers use exactly the same idea to search a sorted list. It’s called binary search.',
   },
   {
     id: 'dinner',

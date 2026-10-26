@@ -1595,7 +1595,7 @@ if (on('kitchen')) {
     // the page also says a million entries never need more than 20 looks
     let n = 1e6, a = 0; while (n >= 1) { n = Math.floor(n / 2); a++; }
     assert(a === 20, `a million entries can need ${a} looks`);
-    assert(/never take more than five looks/.test(card('spices').point) && /never need more than 20 looks/.test(card('spices').limits), 'the numbers in the text have changed; check them here');
+    assert(/no more than 5 looks/.test(card('spices').point) && /no more than 20 looks/.test([].concat(card('spices').limits).join(' ')), 'the numbers in the text have changed; check them here');
   });
 
   await test('spice rack, as a reader would: "Let the algorithm choose" rules out half each time and finds the spice', async () => {

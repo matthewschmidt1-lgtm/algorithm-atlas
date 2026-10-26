@@ -125,7 +125,7 @@ export default async function render({ query }) {
       extras[card.id] ? extras[card.id](card) : null,
       h('p.kitchen-point', card.point),
       h('p.kitchen-computer', card.computer),
-      h('p.kitchen-limits', h('strong', 'Where the kitchen stops. '), card.limits),
+      h('div.kitchen-limits', h('h3', 'Where the kitchen stops'), [].concat(card.limits).map((t) => h('p', t))),
       L ? h('p.kitchen-next', arrowLink(`#/algorithm/${L.id}`, `See a computer do it: ${L.name}`),
         also ? h('span.small.muted', ' Or the one-jar-at-a-time version: ', h('a.link', { href: `#/algorithm/${also.id}` }, also.name), '.') : null) : null);
   });
