@@ -1728,6 +1728,63 @@ if (on('kitchen')) {
   });
 }
 
+/* ------------------------------------------------------------------ beginners */
+// The beginners' path: short openings, a picture on every lesson, and the halving race.
+if (on('beginners')) {
+  suite('The beginners\' path');
+  const path = C.pathById['absolute-beginners'];
+  const ids = path.stages.flatMap((st) => st.modules.map((m) => m.algo));
+  const { lessonArt } = await import('../js/art/lesson-art.js');
+  const H = await import('../js/ui/halving.js');
+
+  await test('every lesson on the path opens in short paragraphs, and has a picture of its idea', async () => {
+    for (const id of ids) {
+      const L = await C.loadLesson(id);
+      const words = L.bigIdea.simple.split(/\s+/).length, paras = L.bigIdea.simple.split(/\n\s*\n/).length;
+      if (id === 'linear-search') assert(/^Linear search is the simplest way to find something/.test(L.bigIdea.simple), 'the owner\'s wording for Linear Search has changed');
+      else assert(paras >= 2 && words <= 140, `${id} opens with ${paras} paragraph(s) and ${words} words`);
+      assert(typeof lessonArt[id] === 'function' && /aria-label="[^"]{20,}"/.test(lessonArt[id]()), `${id} has no described picture`);
+    }
+    const p = await open('/algorithm/euclidean-algorithm', '.simple-with-art');
+    try {
+      const art = p.$('.simple-with-art .lesson-art svg');
+      assert(art && art.getBoundingClientRect().width > 150, 'the picture is not shown beside the explanation');
+    } finally { p.close(); }
+    return `${ids.length} lessons`;
+  });
+
+  await test('the halving race: every count is what binary search really needs at worst', () => {
+    // binary search on n sorted items, the worst case over every present and absent target
+    const worst = (n) => {
+      let most = 0;
+      const step = Math.max(1, Math.floor(n / 400));
+      for (let t = -1; t <= 2 * n; t += step) {
+        let lo = 0, hi = n - 1, looks = 0;
+        while (lo <= hi) { const mid = lo + Math.floor((hi - lo) / 2); looks++; if (2 * mid === t) break; if (2 * mid < t) lo = mid + 1; else hi = mid - 1; }
+        most = Math.max(most, looks);
+      }
+      return most;
+    };
+    for (const n of H.RACE_SIZES.filter((n) => n <= 100000)) assert(H.halvings(n).length === worst(n), `${n} names: the race says ${H.halvings(n).length}, a real search needs ${worst(n)}`);
+    for (const [n, k] of [[1e6, 20], [1e9, 30]]) assert(H.halvings(n).length === k, `${n} names should take ${k} looks`);
+  });
+
+  await test('the halving race on the page answers the slider', async () => {
+    const p = await open('/path/absolute-beginners', '.race');
+    try {
+      const slider = p.$('.race-slider');
+      slider.value = String(H.RACE_SIZES.indexOf(1000000));
+      slider.dispatchEvent(new p.win.Event('input', { bubbles: true }));
+      assert(p.$('.race-size').textContent === '1,000,000 names', `the slider says ${p.$('.race-size').textContent}`);
+      const counts = p.$$('.race-num').map((x) => x.textContent);
+      assert(counts.join(' | ') === 'up to 1,000,000 | at most 20', `the counts read ${counts.join(' | ')}`);
+      const chips = p.$$('.race-chips li').map((x) => x.textContent);
+      assert(chips.length === 20 && chips[0] === '1,000,000' && chips[19] === '1', `the steps read ${chips.join(', ')}`);
+      assert(p.$('.race-foot a[href="#/algorithm/binary-search"]'), 'the race does not lead to the Binary Search lesson');
+    } finally { p.close(); }
+  });
+}
+
 /* ------------------------------------------------------------------ report */
 const payload = { results, bench };
 document.getElementById('out').textContent = results.map((r) => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.suite}: ${r.name}${r.ok ? '' : '\n      ' + r.detail}`).join('\n');

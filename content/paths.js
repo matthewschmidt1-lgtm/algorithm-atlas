@@ -14,6 +14,8 @@ export const paths = [
     group: 'foundations',
     blurb: "Start from nothing: what an algorithm is, how to search and sort a list, and how to tell a quick method from a slow one.",
     audience: "Anyone curious about how computers solve problems. No programming is needed, and no mathematics beyond arithmetic.",
+    // a small hands-on toy shown above the route
+    toy: 'halving-race',
     prerequisites: [
       { text: "Curiosity. Nothing else is assumed." },
     ],

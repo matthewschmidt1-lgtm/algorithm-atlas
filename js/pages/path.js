@@ -7,6 +7,7 @@ import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
 import { pathProgress } from '../core/recommend.js';
 import { pageHead, levelGlyph, refLink, plural, LEVEL_NAMES } from '../ui/parts.js';
+import { createHalvingRace } from '../ui/halving.js';
 import NotFound from './notfound.js';
 
 export default async function render({ params }) {
@@ -61,6 +62,7 @@ export default async function render({ params }) {
     h('div.path-layout',
       h('div.path-main',
         status,
+        p.toy === 'halving-race' ? createHalvingRace() : null,
         h('h2', 'The route'),
         timeline,
         p.project ? h('section.path-project', h('p.lsec-kicker', 'Practical project'), h('h2', p.project.title), h('p.lede', p.project.brief),

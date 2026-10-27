@@ -26,6 +26,7 @@ import { createRelMap } from '../ui/relmap.js';
 import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
 import { createRunCompare } from '../ui/runcompare.js';
 import { businessView } from '../core/tracks.js';
+import { lessonArt } from '../art/lesson-art.js';
 
 const LEVELS = [
   { n: 1, name: 'Explain it simply', about: 'Plain language and a small example.' },
@@ -107,8 +108,11 @@ export default async function render({ params, query }) {
 
   /* level 1 */
   const B = L.bigIdea;
+  // the beginners' lessons have a small picture of their idea beside the explanation
+  const art = lessonArt[m.id];
+  const simpleText = h('div.simple-text', { html: richBlock(B.simple) });
   const simple = sec('simple', 1, 'The Simple Explanation', 'Level 1',
-    h('div.simple-text', { html: richBlock(B.simple) }),
+    art ? h('div.simple-with-art', simpleText, h(`div.lesson-art.c-${C.colorOf(m.discipline)}`, { html: art() })) : simpleText,
     h('aside.analogy',
       h('p.panel-cap', 'A picture to hold on to'),
       h('h3', B.analogy.title),

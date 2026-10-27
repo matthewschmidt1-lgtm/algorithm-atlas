@@ -1020,3 +1020,63 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .home-demos.will-rise .preview { opacity: 0; transform: translateY(16px); }
 .home-demos.will-rise.has-risen .preview { opacity: 1; transform: none; transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s; transition-delay: calc(var(--i, 0) * 110ms), calc(var(--i, 0) * 110ms), 0s, 0s; }
 .home-demos.will-rise.has-risen .preview:hover, .home-demos.will-rise.has-risen .preview:focus-within { transform: translateY(-3px); transition-delay: 0s; }
+
+/* ---------- pictures on the beginners' lessons ---------- */
+.simple-with-art { display: grid; grid-template-columns: minmax(0, 60ch) 240px; gap: var(--s-6); align-items: start; }
+.lesson-art { color: var(--accent); padding: var(--s-3); border-radius: var(--r-3); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.lesson-art svg { width: 100%; height: auto; display: block; }
+@media (max-width: 1100px) { .simple-with-art { grid-template-columns: minmax(0, 1fr); } .lesson-art { order: -1; max-width: 300px; } }
+
+/* each picture acts out its idea, slowly */
+.la-finger { animation: la-finger 6s steps(1) infinite; }
+@keyframes la-finger { 0% { transform: translateY(-16px); } 16% { transform: translateY(0); } 33% { transform: translateY(16px); } 50%, 100% { transform: translateY(32px); } }
+.la-half-left { animation: la-fade 4s ease-in-out infinite; }
+@keyframes la-fade { 0%, 35% { opacity: 0.55; } 55%, 85% { opacity: 0.12; } 100% { opacity: 0.55; } }
+.la-lens { animation: ks-bob 2.4s ease-in-out infinite; }
+.la-bubble { animation: la-rise var(--t, 2s) ease-in infinite; animation-delay: var(--d, 0s); }
+@keyframes la-rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-84px); opacity: 0; } }
+.la-apple { animation: la-lift 5s var(--ease) infinite; }
+@keyframes la-lift { 0%, 10% { transform: translate(-44px, -44px); opacity: 0; } 25% { opacity: 1; } 55%, 100% { transform: translate(0, 0); opacity: 1; } }
+.la-card { animation: la-slide 4s var(--ease) infinite; }
+@keyframes la-slide { 0%, 10% { transform: translateY(-30px); } 45%, 100% { transform: translateY(0); } }
+.la-move { animation: la-merge 4s var(--ease) infinite; }
+@keyframes la-merge { 0%, 15% { transform: translate(0, 0); } 55%, 100% { transform: translate(78px, 38px); } }
+.la-flag { transform-box: fill-box; transform-origin: 0% 100%; animation: la-wave 2.2s ease-in-out infinite alternate; }
+@keyframes la-wave { from { transform: rotate(-4deg); } to { transform: rotate(5deg); } }
+.la-tile { animation: la-tile 6s ease-out infinite; animation-delay: var(--d, 0s); }
+@keyframes la-tile { 0% { opacity: 0; } 10%, 85% { opacity: 1; } 100% { opacity: 0; } }
+.la-out { animation: la-sieve 7s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes la-sieve { 0%, 8% { opacity: 1; } 18%, 80% { opacity: 0.18; } 92%, 100% { opacity: 1; } }
+.la-ripple { transform-box: fill-box; transform-origin: center; animation: la-ripple 3s ease-out infinite; animation-delay: var(--d, 0s); }
+@keyframes la-ripple { 0% { transform: scale(0.4); opacity: 0.8; } 100% { transform: scale(10); opacity: 0; } }
+.la-point { animation: la-reach 3s ease-out infinite; animation-delay: var(--d, 0s); }
+@keyframes la-reach { 0%, 20% { fill: var(--surface); } 30%, 80% { fill: currentColor; } 100% { fill: var(--surface); } }
+.la-count { animation: la-appear 5s ease-out infinite; animation-delay: var(--d, 0s); }
+@keyframes la-appear { 0%, 10% { opacity: 0; transform: translateY(6px); } 25%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.la-arrow { animation: ks-bob 2s ease-in-out infinite; }
+
+/* ---------- the halving race, on the beginners' path ---------- */
+.race { margin: var(--s-6) 0 var(--s-7); padding: clamp(18px, 3.5vw, 32px); border-radius: var(--r-3); background: var(--demos-bg); border: 1px solid color-mix(in srgb, var(--demos-ink) 18%, transparent); --text-3: var(--demos-text-3); }
+.race .panel-cap { color: var(--demos-ink); }
+.race h2 { margin-top: 4px; }
+.race-lede { margin-top: var(--s-2); color: var(--text-2); max-width: 60ch; }
+.race-control { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s-4); align-items: center; margin-top: var(--s-5); font-weight: 550; }
+.race-slider { width: 100%; accent-color: var(--demos-ink); }
+.race-size { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; min-width: 9.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.race-rows { display: grid; gap: var(--s-4); margin-top: var(--s-5); }
+.race-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px var(--s-4); align-items: baseline; }
+.race-label { color: var(--text-2); }
+.race-count { font-variant-numeric: tabular-nums; color: var(--text-2); }
+.race-num { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--text); }
+.race-bar { grid-column: 1 / -1; display: block; height: 14px; border-radius: 7px; background: color-mix(in srgb, var(--demos-ink) 10%, transparent); overflow: hidden; }
+.race-bar-fill { display: block; height: 100%; border-radius: 7px; background: var(--viz-ochre); transition: width 0.5s var(--ease); }
+.race-row.is-half .race-bar-fill { background: var(--viz-forest); min-width: 8px; }
+.race-cap { margin-top: var(--s-5); font-size: 0.9rem; color: var(--text-3); }
+.race-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--s-2); padding: 0; list-style: none; }
+.race-chips li { padding: 3px 10px; border-radius: 999px; background: var(--demos-card); border: 1px solid color-mix(in srgb, var(--demos-ink) 22%, transparent); font-size: 0.84rem; font-variant-numeric: tabular-nums; animation: race-chip 0.35s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.race-chips li:last-child { background: var(--viz-forest); color: var(--viz-on-fill); border-color: var(--viz-forest); }
+:root[data-theme='dark'] .race-chips li:last-child { color: #1D211C; font-weight: 600; }
+@keyframes race-chip { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.race-said { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.race-foot { margin-top: var(--s-4); font-size: 0.95rem; color: var(--text-2); max-width: 66ch; }
+@media (max-width: 600px) { .race-control { grid-template-columns: minmax(0, 1fr) auto; } .race-control > span:first-child { grid-column: 1 / -1; } }
