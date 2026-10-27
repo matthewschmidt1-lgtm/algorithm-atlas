@@ -10,7 +10,7 @@ import { navigate } from '../core/router.js';
 import { createSearchBox } from '../ui/searchbox.js';
 import { createUniverse } from '../art/universe.js';
 import { createPreview } from '../ui/preview.js';
-import { sectionHead, plural } from '../ui/parts.js';
+import { sectionHead, plural, LEVEL_NAMES } from '../ui/parts.js';
 import { mountHeroNetwork } from '../art/hero-network.js';
 import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
@@ -77,6 +77,30 @@ export default async function render() {
     seen.observe(kitchenSec);
     cleanups.push(() => seen.disconnect());
   }
+
+  /* ---- every journey, as a row of small buttons ---- */
+  // Each button draws its road: one dot per stop, filled where the reader has been. Pressing
+  // it sets off at the first stop not yet visited, so choosing a journey is starting it.
+  const order = { beginner: 0, intermediate: 1, advanced: 2 };
+  const miniRoad = (stops) => {
+    const n = Math.min(stops.length, 14), w = 72, step = (w - 8) / Math.max(n - 1, 1);
+    const pts = Array.from({ length: n }, (_, i) => [4 + i * step, 11 + Math.sin(i * 0.9) * 4]);
+    const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join('');
+    const dots = pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" class="${stops[i] && stops[i].seen ? 'is-seen' : ''}"/>`).join('');
+    return `<svg viewBox="0 0 ${w} 22" width="${w}" height="22" aria-hidden="true"><path d="${d}"/>${dots}</svg>`;
+  };
+  const journeys = C.paths.slice().sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3)).map((p) => {
+    const r = journeyResume(p);
+    if (!r.stops.length) return null;
+    const go = r.done || !r.resume ? `#/path/${p.id}` : r.resume.href;
+    return h('a.journey-chip', { href: go, title: r.started && r.resume ? `Continue at ${r.resume.name}` : `${p.title}: ${p.blurb}` },
+      h('span.journey-chip-road', { html: miniRoad(r.stops) }),
+      h('span.journey-chip-title', p.title),
+      h('span.journey-chip-meta', `${plural(r.stops.length, 'stop')} · ${LEVEL_NAMES[p.level] || p.level}`));
+  }).filter(Boolean);
+  const journeysSec = journeys.length ? h('section.home-journeys', { 'aria-labelledby': 'home-journeys-h' }, h('div.wrap',
+    h('p.eyebrow', { id: 'home-journeys-h' }, 'Pick a journey'),
+    h('div.journey-chips', journeys))) : null;
 
   /* ---- the two tracks ---- */
   const trackCard = (t) => {
@@ -152,6 +176,6 @@ export default async function render() {
       way('#/compare', 'Compare methods', 'Run algorithms that solve the same problem on the same input.')),
     you));
 
-  const el = h('div.home', hero, kitchenSec, tracksSec, featured, universe, ways);
+  const el = h('div.home', hero, kitchenSec, journeysSec, tracksSec, featured, universe, ways);
   return { el, title: '', destroy() { cleanups.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } }); } };
 }

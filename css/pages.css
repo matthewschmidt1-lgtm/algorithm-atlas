@@ -1139,3 +1139,19 @@ body.has-journey-bar { padding-bottom: 76px; }
 
 .track-road { margin: var(--s-6) 0 var(--s-7); }
 .track-road .trail { margin-top: var(--s-3); }
+
+/* ---------- every journey, as small buttons, under the kitchen ---------- */
+.home-journeys { padding: var(--s-5) 0 var(--s-6); border-bottom: 1px solid var(--line); }
+.home-journeys .eyebrow { margin-bottom: var(--s-3); }
+.journey-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }
+.journey-chip { display: grid; gap: 3px; align-content: start; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: var(--r-2); background: var(--surface); transition: border-color 0.15s, transform 0.15s var(--ease); }
+.journey-chip:hover, .journey-chip:focus-visible { border-color: var(--forest-ink); transform: translateY(-1px); }
+.journey-chip-road { color: var(--forest-ink); line-height: 0; }
+.journey-chip-road path { fill: none; stroke: color-mix(in srgb, var(--viz-ochre) 55%, var(--surface)); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.journey-chip-road circle { fill: var(--surface); stroke: var(--text-3); stroke-width: 1.2; }
+.journey-chip-road circle.is-seen { fill: var(--forest-ink); stroke: var(--forest-ink); }
+.journey-chip-road circle:first-of-type { fill: var(--terracotta-ink); stroke: var(--terracotta-ink); }
+.journey-chip-title { font-size: 0.86rem; font-weight: 600; line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.journey-chip-meta { font-size: 0.76rem; color: var(--text-3); }
+.journey-chip:hover .journey-chip-road path { stroke: var(--viz-ochre); }
+@media (max-width: 520px) { .journey-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

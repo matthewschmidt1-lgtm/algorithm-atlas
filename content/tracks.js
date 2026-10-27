@@ -46,8 +46,8 @@ export const tracks = [
     id: 'business',
     title: 'Decisions in business',
     short: 'Business',
-    blurb: 'Each lesson here starts from a decision a business has to make. The question comes first, then what the method does for it and where it stops being reliable.',
-    reader: 'Most of these lessons teach a method on a small, simple example, and each card says so. For people who have to decide whether a method fits a problem, and for people who will then build it.',
+    blurb: 'Each lesson starts with a business decision. The question comes first, followed by what the method can do, when it works, and where it’s limited.',
+    reader: 'Most lessons teach a method through a small, simplified example, clearly identified on each card. The guide is for deciding whether a method fits the problem, and for those who will build it.',
     cases: ['budget'],
     groups: [
       { title: 'What will happen, and how sure are we?', short: 'Forecasting', blurb: 'Turning what you have observed into an estimate, and being honest about how far to trust it.',

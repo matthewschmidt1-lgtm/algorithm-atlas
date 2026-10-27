@@ -1313,7 +1313,7 @@ if (on('tracks')) {
       const cards = p.$$('.track-card').map((a) => a.getAttribute('href'));
       assert(cards.join() === '#/track/ai,#/track/business', `the home page offers ${cards.join()}`);
       const sections = [...p.$('.home').children];
-      assert(sections.indexOf(p.$('.home-kitchen')) === 1 && sections.indexOf(p.$('.home-tracks')) === 2, 'the kitchen recipes and then the two guides no longer follow the hero');
+      assert(sections.indexOf(p.$('.home-kitchen')) === 1 && sections.indexOf(p.$('.home-journeys')) === 2 && sections.indexOf(p.$('.home-tracks')) === 3, 'the kitchen, the journeys and then the two guides no longer follow the hero');
       assert(p.$('#universe'), 'the map is gone from the home page');
       assert(!p.$('.ledger') && !/tests passed against independent answers/.test(p.$('.home').textContent), 'the verification numbers are back on the home page');
       assert(p.$('.site-foot a[href="#/verification"]'), 'the Verification page can no longer be reached from the footer');
@@ -1862,6 +1862,21 @@ if (on('journey')) {
       assert(/Next stop: Simplex Method/.test(textOf(q.$('.journey-next'))), 'the worked case does not lead on to the Simplex Method');
       assert(q.$('.jb-map').getAttribute('href') === '#/track/business', 'the bar\'s map leads somewhere other than the guide');
     } finally { q.close(); }
+  });
+
+  await test('the home page offers every journey as a small button that shows its road and sets off on it', async () => {
+    const p = await open('/', '.journey-chip');
+    try {
+      const chips = p.$$('.journey-chip');
+      assert(chips.length === C.paths.length, `${chips.length} buttons for ${C.paths.length} paths`);
+      assert(/Algorithms for Absolute Beginners/.test(textOf(chips[0])), 'the beginners\' journey is not first');
+      for (const c of chips) {
+        const href = c.getAttribute('href'), stops = c.querySelectorAll('.journey-chip-road circle').length;
+        assert(/\?path=[a-z0-9-]+$/.test(href) || /^#\/path\//.test(href), `${textOf(c)} goes to ${href}, not onto its road`);
+        assert(stops >= 2 && new RegExp(`${Math.min(stops, 99)}`).test(textOf(c.querySelector('.journey-chip-meta'))) || stops === 14, `${textOf(c)} draws ${stops} stops`);
+      }
+      assert(p.$('.home-journeys').getBoundingClientRect().height < 520, 'the journeys section is not small');
+    } finally { p.close(); }
   });
 
   await test('away from the journey, a lesson is as it was: no bar, its own next steps', async () => {
