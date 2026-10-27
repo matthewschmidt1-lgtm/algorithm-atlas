@@ -1136,3 +1136,6 @@ body.has-journey-bar { padding-bottom: 76px; }
 .trail-svg.is-vertical .trail-name { font-size: 16px; }
 .trail-svg.is-vertical .trail-stage { font-size: 12px; }
 .trail-svg.is-vertical .trail-road { stroke-width: 18; }
+
+.track-road { margin: var(--s-6) 0 var(--s-7); }
+.track-road .trail { margin-top: var(--s-3); }

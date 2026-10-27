@@ -4,7 +4,7 @@
 
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { journeyAt, journeyResume } from '../core/journey.js';
+import { journeyAt, journeyResume, roadHome } from '../core/journey.js';
 
 const arrow = () => h('span', { html: icon('arrow', { size: 15 }) });
 
@@ -16,12 +16,12 @@ export function mountJourneyBar(path, id) {
     h('a', { href: s.href, class: `${s.id === id ? 'is-here' : ''} ${s.seen ? 'is-seen' : ''}`.trim(), title: `Stop ${s.n}: ${s.name}`, 'aria-label': `Stop ${s.n}: ${s.name}${s.id === id ? ', you are here' : s.seen ? ', visited' : ''}`, 'aria-current': s.id === id ? 'step' : null }))));
   const bar = h('nav.journey-bar', { 'aria-label': 'Your journey' },
     h('div.wrap.jb-inner',
-      h('a.jb-map', { href: `#/path/${path.id}`, title: `The map of ${path.title}` }, h('span.jb-map-label', 'Map')),
+      h('a.jb-map', { href: roadHome(path), title: `The map of ${path.title}` }, h('span.jb-map-label', 'Map')),
       h('div.jb-where',
         h('p.jb-line', h('span.jb-stop', `Stop ${here.n} of ${total}`), h('span.jb-name', here.name)),
         dots),
       next ? h('a.btn.btn-primary.jb-next', { href: next.href }, h('span.jb-next-label', 'Next stop: '), h('span.jb-next-name', next.name), arrow())
-        : h('a.btn.btn-primary.jb-next', { href: `#/path/${path.id}` }, h('span', 'You made it. See your map'), arrow())));
+        : h('a.btn.btn-primary.jb-next', { href: roadHome(path) }, h('span', 'You made it. See your map'), arrow())));
   document.body.append(bar);
   document.body.classList.add('has-journey-bar');
   return () => { bar.remove(); if (!document.querySelector('.journey-bar')) document.body.classList.remove('has-journey-bar'); };
@@ -41,7 +41,7 @@ export function journeyNextCard(path, id, { deeper = null } = {}) {
     ] : [
       h('h2', { id: 'journey-next-h' }, 'You reached the end of the road'),
       h('p.journey-next-why', `That was the last stop of ${path.title}. Every stop you visited is marked on your map.`),
-      h('p.journey-next-go', h('a.btn.btn-primary.btn-lg', { href: `#/path/${path.id}` }, 'See your map', arrow())),
+      h('p.journey-next-go', h('a.btn.btn-primary.btn-lg', { href: roadHome(path) }, 'See your map', arrow())),
     ]);
 }
 
@@ -74,7 +74,7 @@ export function createTrailMap(path, { perRow = (typeof innerWidth === 'number' 
   svg.append(el('path', { d, class: 'trail-road' }), el('path', { d, class: 'trail-line' }));
   // a flag at the finish
   const fx = last.x + dir * 50, fy = last.y;
-  svg.append(el('g', { class: 'trail-flag' }, el('path', { d: `M${fx} ${fy}v-34` }), el('path', { d: `M${fx} ${fy - 34}l${dir * 22} 7-${dir * 22} 7z`, class: 'trail-flag-cloth' })));
+  svg.append(el('g', { class: 'trail-flag' }, el('path', { d: `M${fx} ${fy}v-34` }), el('path', { d: `M${fx} ${fy - 34}l${dir * 22} 7l${-dir * 22} 7z`, class: 'trail-flag-cloth' })));
   let stageShown = null;
   stops.forEach((s, i) => {
     const { x, y } = pos[i], next = resume && resume.id === s.id;
@@ -82,17 +82,34 @@ export function createTrailMap(path, { perRow = (typeof innerWidth === 'number' 
     if (next) g.append(el('circle', { cx: x, cy: y, r: 30, class: 'trail-pulse' }));
     g.append(el('circle', { cx: x, cy: y, r: 21, class: 'trail-dot' }));
     const num = el('text', { x, y: y + 5, 'text-anchor': 'middle', class: 'trail-num' }); num.textContent = s.seen ? '✓' : String(s.n); g.append(num);
-    const name = el('text', { x, y: y + 44, 'text-anchor': 'middle', class: 'trail-name' }); name.textContent = s.name; g.append(name);
-    if (next) { const tag = el('text', { x, y: y - 36, 'text-anchor': 'middle', class: 'trail-next-tag' }); tag.textContent = s.seen ? 'Here' : resumeLabel(stops, s); g.append(tag); }
+    // labels at the ends of a row line up with the edge, so nothing runs out of the frame
+    const edge = perRow > 1 && x <= padX + 1 ? 'start' : perRow > 1 && x >= W - padX - 1 ? 'end' : 'middle';
+    const lx = edge === 'start' ? x - 24 : edge === 'end' ? x + 24 : x;
+    const name = el('text', { x: lx, y: y + 44, 'text-anchor': edge, class: 'trail-name' });
+    wrap(s.mapName || s.name, 20).forEach((line, k) => { const t = el('tspan', { x: lx, dy: k ? 16 : 0 }); t.textContent = line; name.append(t); });
+    g.append(name);
+    if (next) { const tag = el('text', { x: lx, y: y - 36, 'text-anchor': edge, class: 'trail-next-tag' }); tag.textContent = s.seen ? 'Here' : resumeLabel(stops, s); g.append(tag); }
     svg.append(g);
     if (s.stage.id !== stageShown) {
       stageShown = s.stage.id;
-      if (!next) { const sign = el('text', { x, y: y - 34, 'text-anchor': 'middle', class: 'trail-stage' }); sign.textContent = s.stage.title; svg.append(sign); }
+      // above the stop, or above its "next stop" marker when it has one
+      const sign = el('text', { x: lx, y: y - (next ? 54 : 34), 'text-anchor': edge, class: 'trail-stage' }); sign.textContent = s.stage.short || s.stage.title; svg.append(sign);
     }
   });
   return h('figure.trail', svg, h('figcaption.trail-key', h('span.k-seen', 'Visited'), h('span.k-next', 'Next stop'), h('span.k-ahead', 'Still ahead'), h('span', 'Choose any stop to go there.')));
 }
 const resumeLabel = (stops, s) => (stops.some((x) => x.seen) ? 'Next stop' : 'Start here');
+
+// a stop's name on at most two short lines
+function wrap(text, width) {
+  const words = String(text).split(' '), lines = [''];
+  for (const w of words) {
+    const cur = lines[lines.length - 1];
+    if (!cur || (cur + ' ' + w).length <= width) lines[lines.length - 1] = cur ? `${cur} ${w}` : w;
+    else lines.push(w);
+  }
+  return lines.length > 2 ? [lines[0], `${lines.slice(1).join(' ').slice(0, width - 1)}…`] : lines;
+}
 
 // On a narrow screen the road runs straight down, with each stop's name beside it.
 function verticalTrail(path, stops, resume) {
@@ -107,13 +124,13 @@ function verticalTrail(path, stops, resume) {
   const d = `M${x} ${top - 20}V${rows[rows.length - 1].y + 24}`;
   svg.append(el('path', { d, class: 'trail-road' }), el('path', { d, class: 'trail-line' }));
   for (const { s, y: cy, sign } of rows) {
-    if (sign) svg.append(txt({ x: x + 34, y: cy - 24, class: 'trail-stage' }, s.stage.title));
+    if (sign) svg.append(txt({ x: x + 34, y: cy - 24, class: 'trail-stage' }, s.stage.short || s.stage.title));
     const next = resume && resume.id === s.id;
     const g = el('a', { href: s.href, class: `trail-stop${s.seen ? ' is-seen' : ''}${next ? ' is-next' : ''}`, 'aria-label': `Stop ${s.n}: ${s.name}${s.seen ? ', visited' : next ? ', next stop' : ''}` });
     if (next) g.append(el('circle', { cx: x, cy, r: 26, class: 'trail-pulse' }));
     g.append(el('circle', { cx: x, cy, r: 18, class: 'trail-dot' }));
     g.append(txt({ x, y: cy + 5, 'text-anchor': 'middle', class: 'trail-num' }, s.seen ? '✓' : String(s.n)));
-    g.append(txt({ x: x + 34, y: cy + 5, class: 'trail-name' }, s.name));
+    g.append(txt({ x: x + 34, y: cy + 5, class: 'trail-name' }, s.mapName || s.name));
     if (next) g.append(txt({ x: x + 34, y: cy + 23, class: 'trail-next-tag' }, resumeLabel(stops, s)));
     svg.append(g);
   }

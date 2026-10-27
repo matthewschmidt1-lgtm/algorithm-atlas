@@ -7,6 +7,9 @@ import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { pageHead } from '../ui/parts.js';
 import { createPlayer, assemblePlayer } from '../viz/player.js';
+import { store } from '../core/store.js';
+import { journeyFor } from '../core/journey.js';
+import { mountJourneyBar, journeyNextCard } from '../ui/journey.js';
 
 const money = (units, unit) => `$${fmt(units * unit)}`;
 const thousands = (k) => `$${fmt(k * 1000)}`;
@@ -20,13 +23,16 @@ export function shortcut(c, rank) {
   return { picked: picked.sort((a, b) => a - b), spent, benefit: picked.reduce((s, i) => s + c.items[i].benefit, 0) };
 }
 
-export default async function render({ params }) {
+export default async function render({ params, query }) {
   const c = C.caseById[params.id];
   if (!c || !C.algoById[c.lesson]) {
     return { title: 'Case not found', el: h('div.page.wrap.narrow', h('header.page-head', h('p.eyebrow', 'Worked case'), h('h1', 'There is no worked case at this address.')), h('p', h('a.btn.btn-primary', { href: '#/track/business' }, 'Decisions in business'))) };
   }
   const L = await C.loadLesson(c.lesson);
   const meta = C.algoById[c.lesson];
+  // a worked case is a stop on the business guide's road
+  store.seePage(`case:${c.id}`);
+  const journey = journeyFor(query, `case:${c.id}`);
   // told in the case's own words: proposals, cost and benefit, not items, weight and value
   const input = { weights: c.items.map((x) => x.cost), values: c.items.map((x) => x.benefit), capacity: c.budget, wording: 'budget' };
   const player = createPlayer(L, { input });
@@ -92,6 +98,7 @@ export default async function render({ params }) {
     h('section.case-sec', h('h2', 'What this model leaves out'),
       h('p.case-lead', 'The answer is exactly right for the problem as stated. Whether the problem as stated is your problem is a separate question.'),
       h('ul.case-assume', c.assumptions.map((a) => h('li', h('p', a.text), a.then && C.algoById[a.then.lesson] ? h('p.small', a.then.say, ' ', h('a.link', { href: `#/algorithm/${a.then.lesson}` }, C.algoById[a.then.lesson].name)) : null)))),
-    h('p.track-foot', h('a.link', { href: '#/track/business' }, 'Back to Decisions in business')));
-  return { el, title: c.title, destroy() { player.destroy(); } };
+    journey ? journeyNextCard(journey, `case:${c.id}`) : h('p.track-foot', h('a.link', { href: '#/track/business' }, 'Back to Decisions in business')));
+  const unmount = journey ? mountJourneyBar(journey, `case:${c.id}`) : () => {};
+  return { el, title: c.title, destroy() { player.destroy(); unmount(); } };
 }

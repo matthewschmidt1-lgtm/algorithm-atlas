@@ -446,6 +446,7 @@ if (on('index')) {
 /* ------------------------------------------------------------------ links and relationships */
 const SECTIONS = ['simple', 'example', 'see', 'decide', 'words', 'how', 'code', 'matters', 'wrong', 'check', 'technical', 'correctness', 'history', 'connections', 'takeaway'];
 const KITCHEN_IDS = (await import('../content/kitchen.js')).kitchen.map((c) => c.id);
+const ROADS = await import('../js/core/journey.js');
 const STATIC = ['/', '/kitchen', '/track/ai', '/track/business', '/case/budget', '/explore', '/disciplines', '/library', '/problems', '/lab', '/compare', '/paths', '/connections', '/search', '/profile', '/about', '/verification'];
 // Does an internal address lead to something that exists? Written from the content, not from the router.
 function resolves(hrefAttr) {
@@ -469,7 +470,7 @@ function resolves(hrefAttr) {
   if (kind === 'algorithm') {
     if (!C.algoById[id] && !C.plannedById[id]) return `no lesson "${id}"`;
     if (q.at && !SECTIONS.includes(q.at)) return `no section "${q.at}"`;
-    if (q.path && !(C.pathById[q.path] && C.pathById[q.path].stages.some((st) => st.modules.some((m) => m.algo === id)))) return `path "${q.path}" does not contain "${id}"`;
+    if (q.path && !(ROADS.roadById(q.path) && ROADS.journeyStops(ROADS.roadById(q.path)).some((st) => st.id === id))) return `path "${q.path}" does not contain "${id}"`;
     if (q.level && !['1', '2', '3'].includes(q.level)) return `no level "${q.level}"`;
     return null;
   }
@@ -1165,7 +1166,7 @@ if (on('tracks')) {
         const it = t.groups.flatMap((g) => g.items).find((x) => x.id === id);
         const kids = [...card.children].map((c) => c.className.split(' ')[0] || c.tagName);
         assert(kids[0] === 'biz-role' && kids[1] === 'H3' && kids[2] === 'biz-bridge', `${id}: the card's order is ${kids.join(', ')}`);
-        assert(card.querySelector('h3').textContent === it.question && card.querySelector('h3 a').getAttribute('href') === `#/algorithm/${id}`, `${id}: the heading is not the question, linked to the lesson`);
+        assert(card.querySelector('h3').textContent === it.question && card.querySelector('h3 a').getAttribute('href') === `#/algorithm/${id}?path=guide-business`, `${id}: the heading is not the question, linked to the lesson on the guide's road`);
         assert(card.querySelector('.biz-role').textContent === T.ROLES[it.role].label, `${id}: wrong role label`);
         assert(card.querySelector('.biz-meta').textContent.includes(a.name) && card.querySelector('.biz-meta').textContent.includes(C.disciplineById[a.discipline].short), `${id}: the lesson name or discipline is missing`);
         const tech = card.querySelector('details.biz-tech');
@@ -1188,7 +1189,9 @@ if (on('tracks')) {
       }
       assert(p.$$('.track-paths li').length === t.paths.length && p.$$('.track-paths .track-path-progress').every((x) => /\d+ of \d+ lessons opened/.test(x.textContent)), 'learning paths are not listed with their progress');
       const start = p.$('.track-status .btn');
-      assert(start && C.algoById[start.getAttribute('href').split('/').pop()], 'no working place to start');
+      // the start button puts you on the guide's road at its first unvisited stop
+      const startAt = start && start.getAttribute('href').replace(/\?.*$/, '');
+      assert(start && (C.algoById[startAt.split('/').pop()] || /^#\/case\//.test(startAt)) && /\?path=guide-business$/.test(start.getAttribute('href')), `no working place to start: ${start && start.getAttribute('href')}`);
       assert(p.$('.biz-case') && p.$('.biz-case').getAttribute('href') === '#/case/budget', 'the worked case is not offered');
       const crypto = t.groups.find((g) => g.lessons.includes('rsa')), scale = t.groups.find((g) => g.lessons.includes('consistent-hashing'));
       assert(crypto !== scale, 'cryptography and distributed systems share a group');
@@ -1832,6 +1835,33 @@ if (on('journey')) {
       for (const a of stops) assert(/#\/(algorithm\/[a-z0-9-]+|kitchen)\?path=absolute-beginners$/.test(a.getAttribute('href')), `${a.getAttribute('href')} is not a stop on this road`);
     } finally { p.close(); }
     fresh();
+  });
+
+  await test('the business guide is a road too, with the worked case right after the lesson it uses', async () => {
+    const road = J.roadById('guide-business');
+    const t = C.trackById.business;
+    const stops = J.journeyStops(road);
+    const lessons = t.groups.flatMap((g) => g.lessons).filter((id) => C.algoById[id]);
+    assert(stops.length === lessons.length + 1, `the road has ${stops.length} stops for ${lessons.length} lessons and one case`);
+    const k = stops.findIndex((s) => s.id === 'knapsack');
+    assert(stops[k + 1] && stops[k + 1].id === 'case:budget' && stops[k + 1].href === '#/case/budget?path=guide-business', 'the worked case does not follow the Knapsack lesson');
+    const p = await open('/track/business', '.track-road .trail-svg');
+    try {
+      assert(p.$$('.trail-stop').length === stops.length, 'the guide page map does not show every stop');
+      const sign = p.$$('.trail-stage').map((x) => x.textContent);
+      assert(sign.join(' | ') === t.groups.map((g) => g.short).join(' | '), `the neighbourhoods read ${sign.join(' | ')}`);
+      const card = p.$('.biz-card h3 a');
+      assert(/\?path=guide-business$/.test(card.getAttribute('href')), 'a card does not lead onto the road');
+      const box = p.$('.track-road .trail-svg').getBoundingClientRect();
+      for (const tx of p.$$('.track-road text')) { const r = tx.getBoundingClientRect(); assert(r.left >= box.left - 1 && r.right <= box.right + 1, `"${tx.textContent}" runs out of the map`); }
+    } finally { p.close(); }
+    const q = await open('/case/budget?path=guide-business', '.case-page');
+    try {
+      await until(() => q.$('.journey-bar'), 3000, 'the worked case has no journey bar');
+      assert(new RegExp(`Stop ${k + 2} of ${stops.length}`).test(textOf(q.$('.journey-bar'))), `the bar reads ${textOf(q.$('.journey-bar'))}`);
+      assert(/Next stop: Simplex Method/.test(textOf(q.$('.journey-next'))), 'the worked case does not lead on to the Simplex Method');
+      assert(q.$('.jb-map').getAttribute('href') === '#/track/business', 'the bar\'s map leads somewhere other than the guide');
+    } finally { q.close(); }
   });
 
   await test('away from the journey, a lesson is as it was: no bar, its own next steps', async () => {

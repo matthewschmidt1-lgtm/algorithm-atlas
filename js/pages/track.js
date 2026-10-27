@@ -12,20 +12,22 @@ import * as C from '../core/catalog.js';
 import { store } from '../core/store.js';
 import { PARADIGM_LABELS, TIME_CLASS_LABELS, TIME_CLASS_PLAIN } from '../core/schema.js';
 import { pageHead, lessonRow, plannedRow, plural, levelGlyph } from '../ui/parts.js';
+import { guideRoad, journeyResume } from '../core/journey.js';
+import { createTrailMap } from '../ui/journey.js';
 import { pathProgress } from '../core/recommend.js';
 import { trackLessons, foundationsFor, ROLES } from '../core/tracks.js';
 
 // A lesson on the business guide: the question first, then what the method does for it.
-function businessCard(item, seen) {
+function businessCard(item, seen, onRoad = '') {
   const a = C.algoById[item.id];
   const d = C.disciplineById[a.discipline];
   const role = ROLES[item.role] || ROLES.method;
   return h(`article.biz-card.is-${item.role}`, { id: `lesson-${a.id}` },
     h('p.biz-role', role.label),
-    h('h3', h('a', { href: `#/algorithm/${a.id}` }, item.question)),
+    h('h3', h('a', { href: `#/algorithm/${a.id}${onRoad}` }, item.question)),
     h('p.biz-bridge', item.bridge),
     h('p.biz-meta',
-      h('span', 'Lesson: ', h('a.link', { href: `#/algorithm/${a.id}` }, a.name)),
+      h('span', 'Lesson: ', h('a.link', { href: `#/algorithm/${a.id}${onRoad}` }, a.name)),
       h('span', d.short), levelGlyph(a.difficulty, true),
       seen ? h('span.seen', { html: `${icon('check', { size: 14 })}Opened` }) : null),
     h('details.fold.biz-tech', h('summary', 'Technical details'), h('div.fold-body', h('dl.biz-dl',
@@ -44,6 +46,9 @@ export default async function render({ params }) {
       h('p', C.tracks.map((x) => [h('a.btn', { href: `#/track/${x.id}` }, x.title), ' ']))) };
   }
   const business = t.groups.some((g) => g.items.some((x) => x.question));
+  // the business guide is also a road: a trail map at the top, and every card leads onto it
+  const road = business ? guideRoad(t.id) : null;
+  const trip = road ? journeyResume(road) : null;
   const { published, planned } = trackLessons(t);
   const seen = store.explored();
   const opened = published.filter((a) => seen.has(a.id)).length;
@@ -58,7 +63,7 @@ export default async function render({ params }) {
     return h('section.track-group',
       h('h2', g.title), h('p.track-group-blurb', g.blurb),
       business
-        ? h('div.biz-cards', g.items.map((it) => (C.algoById[it.id] ? businessCard(it, seen.has(it.id)) : C.plannedById[it.id] ? plannedRow(C.plannedById[it.id]) : null)))
+        ? h('div.biz-cards', g.items.map((it) => (C.algoById[it.id] ? businessCard(it, seen.has(it.id), road ? `?path=${road.id}` : '') : C.plannedById[it.id] ? plannedRow(C.plannedById[it.id]) : null)))
         : h('div.lesson-list', g.items.map((it) => (C.algoById[it.id] ? lessonRow(C.algoById[it.id]) : C.plannedById[it.id] ? plannedRow(C.plannedById[it.id]) : null))),
       found.length ? h('div.track-found',
         h('p.biz-role', business ? ROLES.foundation.label + (found.length === 1 ? '' : 's') : 'What these lean on'),
@@ -70,7 +75,9 @@ export default async function render({ params }) {
     h('p.track-reader', t.reader),
     h('div.track-status',
       h('p', h('strong', plural(published.length, 'lesson')), ` written and checked${planned.length ? `, ${planned.length} more planned` : ''}. `, `You have opened ${opened} of ${published.length}.`),
-      next ? h('a.btn.btn-primary', { href: `#/algorithm/${next.id}` }, opened ? `Continue with ${next.name}` : `Start with ${next.name}`, h('span', { html: icon('arrow', { size: 15 }) })) : null),
+      trip && trip.resume ? h('a.btn.btn-primary.btn-lg', { href: trip.resume.href }, trip.started ? `Continue the journey: ${trip.resume.name}` : `Start the journey: ${trip.resume.name}`, h('span', { html: icon('arrow', { size: 15 }) }))
+        : next ? h('a.btn.btn-primary', { href: `#/algorithm/${next.id}` }, opened ? `Continue with ${next.name}` : `Start with ${next.name}`, h('span', { html: icon('arrow', { size: 15 }) })) : null),
+    road ? h('section.track-road', { 'aria-labelledby': 'track-road-h' }, h('h2', { id: 'track-road-h' }, 'The road'), h('p.track-group-blurb', 'Every decision in this guide, in order, with the worked case where it belongs. Follow it stop by stop, or choose any stop.'), createTrailMap(road)) : null,
     business ? h('dl.biz-legend', { 'aria-label': 'How to read the labels on this page' },
       h('div', h('dt', `${ROLES.direct.label} (${count('direct')})`), h('dd', ROLES.direct.about)),
       h('div', h('dt', `${ROLES.method.label} (${count('method')})`), h('dd', ROLES.method.about)),

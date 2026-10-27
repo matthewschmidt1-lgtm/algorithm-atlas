@@ -50,7 +50,7 @@ export const tracks = [
     reader: 'Most of these lessons teach a method on a small, simple example, and each card says so. For people who have to decide whether a method fits a problem, and for people who will then build it.',
     cases: ['budget'],
     groups: [
-      { title: 'What will happen, and how sure are we?', blurb: 'Turning what you have observed into an estimate, and being honest about how far to trust it.',
+      { title: 'What will happen, and how sure are we?', short: 'Forecasting', blurb: 'Turning what you have observed into an estimate, and being honest about how far to trust it.',
         lessons: [
           { id: 'ab-testing', role: 'direct', question: 'Did the change we made actually work, or was it chance?',
             bridge: 'Show two versions to similar groups of customers and compare the results. The test tells you how surprising the difference would be if the two versions were really the same. It can only be trusted if you fix the sample size first and do not stop early because the numbers look good.' },
@@ -67,7 +67,7 @@ export const tracks = [
           { id: 'binomial-option-pricing', role: 'direct', question: 'What is the right to decide later worth today?',
             bridge: 'Value an option, such as the right to buy at a fixed price, by laying out the ways the price could move and working backward from the end. The model assumes prices move in fixed up and down steps of a known size. This is an explanation of a model, not advice.' },
         ] },
-      { title: 'Who are our customers, and what matters in our network?', blurb: 'Finding the groups, the likenesses and the influence that are already in your data.',
+      { title: 'Who are our customers, and what matters in our network?', short: 'Customers and networks', blurb: 'Finding the groups, the likenesses and the influence that are already in your data.',
         lessons: [
           { id: 'k-means', role: 'method', question: 'What natural groups do our customers fall into?',
             bridge: 'Sort customers into a chosen number of groups whose members resemble each other, for example by spend and how often they visit. The lesson groups unlabelled points on a plane. The method always returns the number of groups you ask for, whether or not the groups are real, so check that they mean something.' },
@@ -78,7 +78,7 @@ export const tracks = [
           { id: 'pagerank', role: 'method', question: 'Who or what matters most in a network?',
             bridge: 'Score the pages of a site, the accounts in a network or the suppliers in a chain by who points to them, counting a link from something important for more. The lesson ranks a small web of pages. It sees only the links, so it can be gamed and it knows nothing about quality.' },
         ] },
-      { title: 'How should we use limited money, time and capacity?', blurb: 'Getting the most from a budget, ordering work that depends on other work, and moving things at the least cost.',
+      { title: 'How should we use limited money, time and capacity?', short: 'Money, time and capacity', blurb: 'Getting the most from a budget, ordering work that depends on other work, and moving things at the least cost.',
         lessons: [
           { id: 'knapsack', role: 'method', question: 'Which projects should we fund with a fixed budget?',
             bridge: 'Choose the set of all-or-nothing options that gives the most value without going over one limit. The lesson packs plain items into a bag with a weight limit, and the worked case on this page runs the same method on a budget. It handles a single limit, and it assumes the value of each choice does not depend on the others.' },
@@ -97,14 +97,14 @@ export const tracks = [
           { id: 'genetic-algorithm', role: 'method', question: 'How do we search for a good design when no formula describes it?',
             bridge: 'Keep a population of candidate designs, combine the better ones and vary them at random, generation after generation. The lesson evolves points toward the low ground of a surface. It needs thousands of trials and promises nothing, so it suits problems where a trial is cheap.' },
         ] },
-      { title: 'How do we handle more data than one machine can hold?', blurb: 'What changes when the data never stops arriving, or no longer fits in one place.',
+      { title: 'How do we handle more data than one machine can hold?', short: 'Very large data', blurb: 'What changes when the data never stops arriving, or no longer fits in one place.',
         lessons: [
           { id: 'reservoir-sampling', role: 'method', question: 'How do we take a fair sample of data that never stops arriving?',
             bridge: 'Keep a fixed-size random sample of orders, log lines or sensor readings as they stream past, without storing them all or knowing how many will come. The lesson samples a short stream of numbers. Every item gets the same chance, so it cannot favour recent data.' },
           { id: 'consistent-hashing', role: 'method', question: 'How do we share load across servers that come and go?',
             bridge: 'Decide which server holds which customer\'s data so that adding or removing a server moves only a small share of it. The lesson places servers and keys on a ring. It decides who holds what and nothing else: copies, failures and uneven demand need further machinery.' },
         ] },
-      { title: 'How do we keep information private?', blurb: 'How a message is locked so that only the intended reader can open it.',
+      { title: 'How do we keep information private?', short: 'Privacy', blurb: 'How a message is locked so that only the intended reader can open it.',
         lessons: [
           { id: 'rsa', role: 'method', question: 'How can a customer send us a secret without meeting us first?',
             bridge: 'Publish a key that anyone can use to lock a message and that only you can unlock. The lesson uses tiny primes so that every number can be seen. Real systems use keys hundreds of digits long, add padding, and rely on a tested library. Never build your own.' },
