@@ -313,8 +313,8 @@ export default async function render({ params, query }) {
   /* ---------- table of contents ---------- */
   const nextCard = journey ? journeyNextCard(journey, m.id, { deeper: () => setDepth(2, true, true) }) : null;
   const body = journey
-    ? h('article.lesson-article', simple, example, see, decide, words, how, code, matters, wrong, check, invite3, technical, history, takeaway, nextCard, after)
-    : h('article.lesson-article', simple, example, see, decide, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
+    ? h('article.lesson-article', simple, takeaway, example, see, decide, words, how, code, matters, wrong, check, invite3, technical, history, nextCard, after)
+    : h('article.lesson-article', simple, takeaway, example, see, decide, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, after);
   const sections = [...body.querySelectorAll('.lsec')];
   const toc = h('nav.lesson-toc', { 'aria-label': 'In this lesson' });
   // Each link is a real address (so it can be copied, bookmarked or opened in a new tab).
@@ -328,7 +328,8 @@ export default async function render({ params, query }) {
     s.querySelector('h2').focus({ preventScroll: true });
   } }, s.dataset.title));
   sections.forEach((s) => s.querySelector('h2').setAttribute('tabindex', '-1'));
-  const closing = ['connections', 'takeaway'];
+  // the takeaway now follows the simple explanation, so it is listed with the level 1 sections
+  const closing = ['connections'];
   const tocGroup = (lv, label) => h(`div.toc-group.lv${lv}`, h('p.toc-cap', label), tocLinks.filter((a, i) => Number(sections[i].dataset.level) === lv && !closing.includes(sections[i].id)));
   toc.append(h('p.panel-cap', 'In this lesson'), tocGroup(1, 'Simply'), tocGroup(2, 'In detail'), tocGroup(3, 'In depth'),
     h('div.toc-group', h('p.toc-cap', 'And then'), tocLinks.filter((a, i) => closing.includes(sections[i].id))));
