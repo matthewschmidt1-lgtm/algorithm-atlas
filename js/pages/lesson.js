@@ -27,6 +27,8 @@ import { around, nextStep, stepBefore, pointingTo } from '../core/next.js';
 import { createRunCompare } from '../ui/runcompare.js';
 import { businessView } from '../core/tracks.js';
 import { lessonArt } from '../art/lesson-art.js';
+import { journeyFor } from '../core/journey.js';
+import { mountJourneyBar, journeyNextCard } from '../ui/journey.js';
 
 const LEVELS = [
   { n: 1, name: 'Explain it simply', about: 'Plain language and a small example.' },
@@ -60,6 +62,10 @@ export default async function render({ params, query }) {
   const d = C.disciplineById[m.discipline];
   store.visit(m.id);
   const cleanups = [];
+  // a reader travelling a learning path is carried forward: a bar along the bottom of the
+  // screen, and one next stop at the end of the lesson instead of a list of options
+  const journey = journeyFor(query, m.id);
+  if (journey) cleanups.push(mountJourneyBar(journey, m.id));
 
   /* ---------- the player ---------- */
   const player = createPlayer(L);
@@ -298,14 +304,17 @@ export default async function render({ params, query }) {
       h('a.btn.btn-sm', { href: `#/lab/${m.id}`, html: `${icon('flask', { size: 15 })}<span>Experiment in the lab</span>` }),
       group ? h('a.btn.btn-sm', { href: `#/compare/${group.id}?ids=${m.id}`, html: `${icon('columns', { size: 15 })}<span>Compare with similar algorithms</span>` }) : null),
     collectBox,
-    back || onward ? h('nav.pager', { 'aria-label': 'Where to go from here' },
+    !journey && (back || onward) ? h('nav.pager', { 'aria-label': 'Where to go from here' },
       back ? stepCard(back, '') : h('span'),
       onward ? stepCard(onward, '.is-next') : h('span')) : null,
     viaPath ? h('p.in-paths', 'You are following ', h('a.link', { href: `#/path/${viaPath.id}` }, viaPath.title), '. ', h('a.link', { href: `#/path/${viaPath.id}` }, 'Back to the path'), '.')
       : inPaths.length ? h('p.in-paths', 'This lesson is part of: ', inPaths.map((p, i) => [i ? ', ' : '', h('a.link', { href: `#/path/${p.id}` }, p.title)]), '.') : null);
 
   /* ---------- table of contents ---------- */
-  const body = h('article.lesson-article', simple, example, see, decide, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
+  const nextCard = journey ? journeyNextCard(journey, m.id, { deeper: () => setDepth(2, true, true) }) : null;
+  const body = journey
+    ? h('article.lesson-article', simple, example, see, decide, words, how, code, matters, wrong, check, invite3, technical, history, takeaway, nextCard, after)
+    : h('article.lesson-article', simple, example, see, decide, words, invite2, how, code, matters, wrong, check, invite3, technical, history, connections, takeaway, after);
   const sections = [...body.querySelectorAll('.lsec')];
   const toc = h('nav.lesson-toc', { 'aria-label': 'In this lesson' });
   // Each link is a real address (so it can be copied, bookmarked or opened in a new tab).

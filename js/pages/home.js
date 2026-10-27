@@ -16,6 +16,7 @@ import { openOnboarding } from '../ui/onboarding.js';
 import { recommendLessons } from '../core/recommend.js';
 import { trackLessons } from '../core/tracks.js';
 import { kitchen, kitchenIntro } from '../../content/kitchen.js';
+import { journeyResume } from '../core/journey.js';
 import { recipeArt, potArt, sortingArt } from '../art/kitchen-art.js';
 
 const HOME_DEMOS = ['gradient-descent', 'dijkstra', 'monte-carlo', 'ddpm'];
@@ -24,16 +25,14 @@ export default async function render() {
   const cleanups = [];
 
   /* ---- hero ---- */
-  // The main button leads to a first success: the gentlest lesson of the beginners' path,
-  // which keeps offering the next one. A returning reader is taken to where they left off.
+  // One button for a newcomer: it starts the beginners' journey at its first stop, not at
+  // another menu. Someone already on the road is taken to the next stop they have not visited.
   const beginners = C.pathById['absolute-beginners'] || C.paths.find((p) => p.level === 'beginner');
-  const modules = beginners ? beginners.stages.flatMap((s) => s.modules).filter((m) => C.algoById[m.algo]) : [];
-  const seen = store.explored();
-  const resume = modules.find((m) => !seen.has(m.algo));
-  const first = !modules.length ? null
-    : seen.size && resume ? { href: `#/algorithm/${resume.algo}?path=${beginners.id}`, label: `Continue with ${C.algoById[resume.algo].name}` }
-      : seen.size ? { href: '#/profile', label: 'Pick up where you left off' }
-        : { href: `#/algorithm/${modules[0].algo}?path=${beginners.id}`, label: 'Start with a first lesson' };
+  const road = beginners ? journeyResume(beginners) : null;
+  const first = !road || !road.stops.length ? null
+    : road.done ? { href: `#/path/${beginners.id}`, label: 'See your journey map' }
+      : road.started ? { href: road.resume.href, label: `Continue the journey: ${road.resume.name}` }
+        : { href: road.resume.href, label: 'New to algorithms? Start the journey' };
   const netHost = h('div.hero-net', { 'aria-hidden': 'true' });
   const search = createSearchBox({ large: true });
   const hero = h('section.hero',

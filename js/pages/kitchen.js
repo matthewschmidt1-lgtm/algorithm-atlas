@@ -8,6 +8,9 @@ import * as C from '../core/catalog.js';
 import { pageHead } from '../ui/parts.js';
 import { kitchen, kitchenIntro, kitchenEnd } from '../../content/kitchen.js';
 import { sceneArt } from '../art/kitchen-art.js';
+import { store } from '../core/store.js';
+import { journeyFor, journeyAt } from '../core/journey.js';
+import { mountJourneyBar } from '../ui/journey.js';
 
 const arrowLink = (href, text) => h('a.text-link', { href }, text, h('span', { html: icon('arrow', { size: 15 }) }));
 
@@ -167,6 +170,10 @@ function tasteLog(card) {
 }
 
 export default async function render({ query }) {
+  // the kitchen is the first stop on the beginners' journey
+  store.seePage('kitchen');
+  const journey = journeyFor(query, 'kitchen');
+  const onward = journey ? journeyAt(journey, 'kitchen').next : null;
   const extras = { spices: spiceRack, dinner: dinnerTimeline, dressing: tasteLog, pizza: ovenChart };
   const cards = kitchen.map((card, n) => {
     const L = C.algoById[card.lesson], also = card.alsoLesson && C.algoById[card.alsoLesson];
@@ -198,12 +205,14 @@ export default async function render({ query }) {
     cards,
     h('section.kitchen-end', h('h2', kitchenEnd.title), [].concat(kitchenEnd.text).map((t) => h('p', t)),
       h('p.kitchen-end-links',
-        beginners ? h('a.btn.btn-accent', { href: `#/path/${beginners.id}` }, `Next: ${beginners.title}`) : null,
-        h('a.btn', { href: '#/' }, 'Back to the start'))));
+        onward ? h('a.btn.btn-accent.btn-lg', { href: onward.href }, `Next stop: ${onward.name}`)
+          : beginners ? h('a.btn.btn-accent', { href: `#/path/${beginners.id}` }, `Next: ${beginners.title}`) : null,
+        onward ? null : h('a.btn', { href: '#/' }, 'Back to the start'))));
 
   // a link to one recipe opens the page at it
   if (query.at && kitchen.some((c) => c.id === query.at)) {
     queueMicrotask(() => requestAnimationFrame(() => { const t = el.querySelector(`#${query.at}`); if (t) holdInView(t); }));
   }
-  return { el, title: kitchenIntro.title };
+  const unmount = journey ? mountJourneyBar(journey, 'kitchen') : () => {};
+  return { el, title: kitchenIntro.title, destroy() { unmount(); } };
 }

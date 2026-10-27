@@ -8,6 +8,8 @@ import { store } from '../core/store.js';
 import { pathProgress } from '../core/recommend.js';
 import { pageHead, levelGlyph, refLink, plural, LEVEL_NAMES } from '../ui/parts.js';
 import { createHalvingRace } from '../ui/halving.js';
+import { journeyResume } from '../core/journey.js';
+import { createTrailMap } from '../ui/journey.js';
 import NotFound from './notfound.js';
 
 export default async function render({ params }) {
@@ -16,17 +18,20 @@ export default async function render({ params }) {
   const color = C.GROUPS[p.group] ? C.GROUPS[p.group].color : 'forest';
   const timeline = h('ol.timeline');
   const status = h('div.path-status', { 'aria-live': 'polite' });
+  const trail = h('div.trail-host');
 
   function paint() {
     const explored = store.explored();
     const skipped = new Set(store.state.pathSkips[p.id] || []);
     const pr = pathProgress(p);
+    const jr = journeyResume(p);
     clear(status).append(
       h('div.path-progress.is-large', h('span.bar', h('i', { style: { width: `${pr.total ? Math.round((pr.done / pr.total) * 100) : 0}%` } })),
         h('span', pr.total ? `${pr.done} of ${pr.total} lessons opened` : 'No published lessons in this path yet')),
-      pr.next ? h('a.btn.btn-primary', { href: `#/algorithm/${pr.next.module.algo}?path=${p.id}` }, pr.started ? 'Continue: ' : 'Start: ', C.algoById[pr.next.module.algo].name, h('span', { html: icon('arrow', { size: 15 }) }))
+      jr.resume ? h('a.btn.btn-primary.btn-lg', { href: jr.resume.href }, jr.started ? 'Continue the journey: ' : 'Start the journey: ', jr.resume.name, h('span', { html: icon('arrow', { size: 15 }) }))
         : pr.complete ? h('p.path-complete', { html: `${icon('check', { size: 16 })} You have opened every published lesson on this path.` }) : null,
       h('p.small.faint', store.persistent ? 'Opening a lesson is what counts. Progress is kept in this browser.' : 'Progress is not being saved: this browser is blocking storage.'));
+    clear(trail).append(createTrailMap(p) || '');
     clear(timeline);
     p.stages.forEach((s, i) => {
       const isSkipped = skipped.has(s.id);
@@ -62,8 +67,10 @@ export default async function render({ params }) {
     h('div.path-layout',
       h('div.path-main',
         status,
+        h('h2', 'The road'),
+        trail,
         p.toy === 'halving-race' ? createHalvingRace() : null,
-        h('h2', 'The route'),
+        h('h2', 'Every stop, in detail'),
         timeline,
         p.project ? h('section.path-project', h('p.lsec-kicker', 'Practical project'), h('h2', p.project.title), h('p.lede', p.project.brief),
           h('ol.steps', (p.project.steps || []).map((s) => h('li', { html: rich(s) }))),

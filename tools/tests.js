@@ -645,7 +645,7 @@ if (on('learning')) {
     return `go further ${tally.advanced}, builds on this ${tally['builds-on']}, another method ${tally['same-problem'] + tally.variant}, put to use in ${tally.application}, related ${tally.related}, no suggestion ${tally.none}${without.length ? ` (${without.join(', ')})` : ''}`;
   });
 
-  await test('following a path: each lesson offers the next module of that path, with the path\'s own reason', async () => {
+  await test('following a path: each lesson carries you to the next stop of that path, with the path\'s own reason', async () => {
     const path = C.paths.find((x) => x.id === 'absolute-beginners') || C.paths[0];
     const modules = path.stages.flatMap((st) => st.modules).filter((m) => C.algoById[m.algo]);
     assert(modules.length >= 3, 'the path has too few published modules to test');
@@ -654,19 +654,19 @@ if (on('learning')) {
       const first = p.$$('a.module-name')[0];
       assert(first.getAttribute('href') === `#/algorithm/${modules[0].algo}?path=${path.id}`, `the first module links to ${first.getAttribute('href')}`);
       first.click();
-      await until(() => p.$('.lesson .pager-link.is-next'), 8000, 'the lesson shows no next step');
-      const next = p.$('.pager-link.is-next');
-      assert(next.getAttribute('href') === `#/algorithm/${modules[1].algo}?path=${path.id}`, `next is ${next.getAttribute('href')}, the path's second module is ${modules[1].algo}`);
-      assert(next.querySelector('.pager-dir').textContent === `Next in ${path.title}`, `the label is "${next.querySelector('.pager-dir').textContent}"`);
-      assert(next.querySelector('.pager-why').textContent.trim() === modules[1].why, 'the reason is not the one the path gives');
+      await until(() => p.$('.lesson .journey-next a.btn'), 8000, 'the lesson does not end with the next stop');
+      const want = `#/algorithm/${modules[1].algo}?path=${path.id}`;
+      const next = p.$('.journey-next a.btn');
+      assert(next.getAttribute('href') === want, `next is ${next.getAttribute('href')}, the path's second module is ${modules[1].algo}`);
+      assert(p.$('.jb-next').getAttribute('href') === want, 'the journey bar points somewhere else');
+      assert(p.$('.journey-next-why').textContent.trim() === modules[1].why, 'the reason is not the one the path gives');
       // changing level must not lose the path
       p.$$('.level-btn')[1].click();
       await sleep(60);
       assert(/path=/.test(p.win.location.hash), `after changing level the address is ${p.win.location.hash}`);
-      next.click();
+      p.$('.jb-next').click();
       await until(() => p.$('.lesson h1') && p.$('.lesson h1').textContent === C.algoById[modules[1].algo].name, 8000, 'the second module did not open');
-      const back = p.$('.pager-link:not(.is-next)');
-      assert(back && back.getAttribute('href') === `#/algorithm/${modules[0].algo}?path=${path.id}`, 'the second module does not offer the first as the step before');
+      await until(() => p.$(`.jb-dots a.is-seen[href="#/algorithm/${modules[0].algo}?path=${path.id}"]`), 3000, 'the second module does not show the first as a stop behind it');
       return `${path.title}: ${modules[0].algo} -> ${modules[1].algo}`;
     } finally { p.close(); }
   });
@@ -1008,25 +1008,21 @@ if (on('followups')) {
   const { execute } = await import('../js/core/tracer.js');
   const N2 = await import('../js/core/next.js');
 
-  await test('Home: a new visitor\'s main button opens a first lesson on the beginners\' path', async () => {
+  await test('Home: a new visitor\'s main button starts the beginners\' journey at its first stop', async () => {
     // start as someone who has never been here: nothing saved in this browser
     localStorage.clear();
     const p = await open('/', '.hero-actions .btn-accent');
     try {
       const doc = p.doc;
       const main = doc.querySelector('.hero-actions .btn-accent');
-      const path = C.pathById['absolute-beginners'];
-      const firstModule = path.stages.flatMap((st) => st.modules).find((m) => C.algoById[m.algo]).algo;
-      assert(main.textContent === 'Start with a first lesson', `the main button reads "${main.textContent}"`);
-      assert(main.getAttribute('href') === `#/algorithm/${firstModule}?path=${path.id}`, `it leads to ${main.getAttribute('href')}`);
+      assert(main.textContent === 'New to algorithms? Start the journey', `the main button reads "${main.textContent}"`);
+      assert(main.getAttribute('href') === '#/kitchen?path=absolute-beginners', `it leads to ${main.getAttribute('href')}`);
       assert([...doc.querySelectorAll('.hero-actions .btn')].some((b) => b.textContent === 'Explore the Atlas'), 'the way to the map is gone from the hero');
       assert(doc.querySelector('.hero .hero-suggest-btn'), 'the four questions are not offered beside the search');
       assert(doc.querySelector('nav.primary a[href="#/lab"]'), 'the lab is no longer in the navigation');
       main.click();
-      await until(() => doc.querySelector('.lesson .pager-link.is-next'), 10000, 'the first lesson did not open with a next step');
-      assert(/^Next in /.test(doc.querySelector('.pager-link.is-next .pager-dir').textContent), 'the first lesson does not lead on along the path');
-      assert(doc.querySelector('.lesson').dataset.depth === '1', 'a new visitor\'s first lesson does not open at the simplest level');
-      return `${C.algoById[firstModule].name}, then ${doc.querySelector('.pager-link.is-next .pager-name').textContent}`;
+      await until(() => doc.querySelector('.kitchen-page') && doc.querySelector('.journey-bar'), 10000, 'the first stop did not open on the journey');
+      return doc.querySelector('.journey-bar .jb-line').textContent;
     } finally { p.close(); }
   });
   await test('Home: answering the four questions goes straight to the suggestions', async () => {
@@ -1782,6 +1778,67 @@ if (on('beginners')) {
       const chips = p.$$('.race-chips li').map((x) => x.textContent);
       assert(chips.length === 20 && chips[0] === '1,000,000' && chips[19] === '1', `the steps read ${chips.join(', ')}`);
       assert(p.$('.race-foot a[href="#/algorithm/binary-search"]'), 'the race does not lead to the Binary Search lesson');
+    } finally { p.close(); }
+  });
+}
+
+/* ------------------------------------------------------------------ journey */
+// A newcomer should travel, not dig: one button to start, then one next stop at a time.
+if (on('journey')) {
+  suite('The journey');
+  const J = await import('../js/core/journey.js');
+  const path = C.pathById['absolute-beginners'];
+  const fresh = () => { try { localStorage.removeItem('algorithm-atlas:v1'); } catch { /* storage blocked */ } };
+  const textOf = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+
+  await test('the road: the kitchen first, then every lesson of the path in order', () => {
+    const stops = J.journeyStops(path);
+    const lessons = path.stages.flatMap((st) => st.modules.map((m) => m.algo)).filter((id) => C.algoById[id]);
+    assert(stops[0].id === 'kitchen' && stops.slice(1).map((s) => s.id).join() === lessons.join(), `the road is ${stops.map((s) => s.id).join(', ')}`);
+    assert(stops.every((s, i) => s.n === i + 1 && /\?path=absolute-beginners$/.test(s.href)), 'a stop is numbered wrongly or leaves the path');
+  });
+
+  await test('a newcomer starts with one button and is carried from stop to stop', async () => {
+    fresh();
+    const p = await open('/', '.hero-actions a');
+    try {
+      const btn = p.$('.hero-actions a');
+      assert(textOf(btn) === 'New to algorithms? Start the journey', `the main button reads "${textOf(btn)}"`);
+      assert(btn.getAttribute('href') === '#/kitchen?path=absolute-beginners', `it goes to ${btn.getAttribute('href')}`);
+      btn.click();
+      await until(() => p.$('.journey-bar') && p.$('.kitchen-page'), 6000, 'the first stop did not open with the journey bar');
+      assert(/Stop 1 of 12/.test(textOf(p.$('.journey-bar'))), `the bar says ${textOf(p.$('.journey-bar'))}`);
+      assert(textOf(p.$('.kitchen-end-links a')) === 'Next stop: Linear Search', `the kitchen ends with "${textOf(p.$('.kitchen-end-links a'))}"`);
+      p.$('.jb-next').click();
+      await until(() => p.$('.lesson-article') && /Linear Search/.test(textOf(p.$('.lesson-head h1'))), 8000, 'the next stop did not open');
+      await until(() => /Stop 2 of 12/.test(textOf(p.$('.journey-bar'))), 3000, `the bar did not move on: ${textOf(p.$('.journey-bar'))}`);
+      assert(p.$$('.journey-bar').length === 1, 'two journey bars are on the page');
+      const card = p.$('.journey-next');
+      assert(card && /Next stop: Binary Search/.test(textOf(card)), 'the lesson does not end with its one next stop');
+      assert(!p.$('nav.pager') && !p.$('#connections'), 'the lesson still ends with a menu of other places to go');
+      assert(p.$('.jb-dots a.is-seen') && p.$('.jb-dots a.is-here'), 'the bar does not show the stops behind and the one you are on');
+    } finally { p.close(); }
+  });
+
+  await test('the map shows the whole road, what you have visited, and the next stop', async () => {
+    const p = await open('/path/absolute-beginners', '.trail-svg');
+    try {
+      const stops = p.$$('.trail-stop');
+      assert(stops.length === 12, `the map has ${stops.length} stops`);
+      assert(stops[0].classList.contains('is-seen') && stops[1].classList.contains('is-seen'), 'the stops just visited are not marked');
+      const next = p.$$('.trail-stop.is-next');
+      assert(next.length === 1 && /Binary Search/.test(next[0].getAttribute('aria-label')), 'the map does not mark Binary Search as the next stop');
+      assert(/Continue the journey: Binary Search/.test(textOf(p.$('.path-status'))), `the page offers "${textOf(p.$('.path-status a'))}"`);
+      for (const a of stops) assert(/#\/(algorithm\/[a-z0-9-]+|kitchen)\?path=absolute-beginners$/.test(a.getAttribute('href')), `${a.getAttribute('href')} is not a stop on this road`);
+    } finally { p.close(); }
+    fresh();
+  });
+
+  await test('away from the journey, a lesson is as it was: no bar, its own next steps', async () => {
+    const p = await open('/algorithm/binary-search', '.lesson-article');
+    try {
+      assert(!p.$('.journey-bar') && !p.$('.journey-next'), 'the journey appears on a lesson opened on its own');
+      assert(p.$('#connections'), 'the lesson lost its connections');
     } finally { p.close(); }
   });
 }

@@ -16,6 +16,8 @@ export const paths = [
     audience: "Anyone curious about how computers solve problems. No programming is needed, and no mathematics beyond arithmetic.",
     // a small hands-on toy shown above the route
     toy: 'halving-race',
+    // the journey starts at the kitchen: four everyday puzzles before the first lesson
+    warmup: 'kitchen',
     prerequisites: [
       { text: "Curiosity. Nothing else is assumed." },
     ],

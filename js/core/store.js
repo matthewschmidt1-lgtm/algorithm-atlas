@@ -13,6 +13,7 @@ const fresh = () => ({
   quiz: {},               // { [lessonId]: { [questionIndex]: { correct, t } } }
   collections: {},        // { [name]: [lessonIds] }
   pathSkips: {},          // { [pathId]: [stageIds] }
+  pagesSeen: [],          // pages that count as journey stops, such as the kitchen
   language: 'python',
   settings: { theme: 'light', motion: 'auto', textScale: 1, contrast: 'normal' },
 });
@@ -57,6 +58,8 @@ export const store = {
     save();
   },
   explored() { return new Set(state.recents.map((r) => r.id)); },
+  seePage(id) { if (!state.pagesSeen.includes(id)) { state.pagesSeen = [...state.pagesSeen, id]; save(); } },
+  pageSeen(id) { return state.pagesSeen.includes(id); },
 
   isFavorite(id) { return state.favorites.includes(id); },
   toggleFavorite(id) {

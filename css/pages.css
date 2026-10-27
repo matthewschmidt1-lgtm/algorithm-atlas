@@ -1080,3 +1080,59 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .race-said { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .race-foot { margin-top: var(--s-4); font-size: 0.95rem; color: var(--text-2); max-width: 66ch; }
 @media (max-width: 600px) { .race-control { grid-template-columns: minmax(0, 1fr) auto; } .race-control > span:first-child { grid-column: 1 / -1; } }
+
+/* ---------- the journey: bar, stop card, trail map ---------- */
+body.has-journey-bar { padding-bottom: 76px; }
+.journey-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); border-top: 1px solid var(--line-2); box-shadow: 0 -8px 24px -18px rgba(0, 0, 0, 0.35); animation: jb-in 0.4s var(--ease) both; }
+@keyframes jb-in { from { transform: translateY(100%); } to { transform: none; } }
+.jb-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s-5); align-items: center; padding-block: 10px; }
+.jb-map { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 0.86rem; font-weight: 600; color: var(--text-2); }
+.jb-map::before { content: ''; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; box-sizing: border-box; box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 7px currentColor; }
+.jb-map:hover { color: var(--text); border-color: var(--text-3); }
+.jb-where { min-width: 0; display: grid; gap: 5px; }
+.jb-line { display: flex; gap: 10px; align-items: baseline; min-width: 0; font-size: 0.9rem; }
+.jb-stop { color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jb-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jb-dots { display: flex; gap: 6px; align-items: center; padding: 0; margin: 0; list-style: none; }
+.jb-dots a { display: block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--line-2); background: var(--surface); transition: transform 0.15s; }
+.jb-dots a.is-seen { background: var(--accent); border-color: var(--accent); }
+.jb-dots a.is-here { width: 14px; height: 14px; border-color: var(--terracotta-ink); background: var(--terracotta-ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--terracotta-ink) 22%, transparent); }
+.jb-dots a:hover { transform: scale(1.3); }
+.jb-next { white-space: nowrap; }
+@media (max-width: 720px) { .jb-inner { grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3); } .jb-map { display: none; } .jb-next-label { display: none; } .jb-dots { display: none; } .jb-next-name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; } }
+
+.journey-next { margin: var(--s-8) 0 var(--s-6); padding: clamp(22px, 4vw, 40px); border-radius: var(--r-3); background: var(--demos-bg); border: 1px solid color-mix(in srgb, var(--demos-ink) 20%, transparent); max-width: 760px; --text-3: var(--demos-text-3); }
+.journey-next .panel-cap { color: var(--demos-ink); display: flex; gap: 6px; align-items: center; }
+.journey-next h2 { margin-top: var(--s-2); }
+.journey-next-why { margin-top: var(--s-2); color: var(--text-2); font-size: 1.05rem; max-width: 60ch; }
+.journey-next-go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); margin-top: var(--s-5); }
+.link-btn { background: none; border: 0; padding: 0; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; }
+.link-btn:hover { color: var(--text); }
+
+.trail { margin: var(--s-4) 0 var(--s-6); padding: var(--s-4) var(--s-4) var(--s-3); border-radius: var(--r-3); background: var(--surface); border: 1px solid var(--line-2); }
+.trail-svg { width: 100%; height: auto; display: block; }
+.trail-road { fill: none; stroke: color-mix(in srgb, var(--viz-ochre) 30%, var(--surface)); stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+.trail-line { fill: none; stroke: color-mix(in srgb, var(--viz-ochre) 70%, var(--surface)); stroke-width: 2; stroke-dasharray: 2 9; stroke-linecap: round; }
+.trail-dot { fill: var(--surface); stroke: var(--line-solid); stroke-width: 2.5; transition: transform 0.15s; transform-box: fill-box; transform-origin: center; }
+.trail-num { font: 600 15px var(--font-sans); fill: var(--text-2); pointer-events: none; }
+.trail-name { font: 500 13px var(--font-sans); fill: var(--text-2); }
+.trail-stage { font: 600 11px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--text-3); }
+.trail-stop:hover .trail-dot, .trail-stop:focus-visible .trail-dot { transform: scale(1.12); stroke: var(--accent); }
+.trail-stop:hover .trail-name { fill: var(--text); text-decoration: underline; }
+.trail-stop.is-seen .trail-dot { fill: var(--accent); stroke: var(--accent); }
+.trail-stop.is-seen .trail-num { fill: var(--on-accent); }
+.trail-stop.is-next .trail-dot { fill: var(--terracotta-ink); stroke: var(--terracotta-ink); }
+.trail-stop.is-next .trail-num { fill: var(--on-accent); }
+.trail-stop.is-next .trail-name { fill: var(--text); font-weight: 700; }
+.trail-pulse { fill: none; stroke: var(--terracotta-ink); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: trail-pulse 2s ease-out infinite; }
+@keyframes trail-pulse { 0% { transform: scale(0.75); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+.trail-next-tag { font: 700 12px var(--font-sans); letter-spacing: 0.04em; fill: var(--terracotta-ink); text-transform: uppercase; }
+.trail-flag path { stroke: var(--text-2); stroke-width: 2.5; fill: none; }
+.trail-flag .trail-flag-cloth { fill: var(--terracotta-ink); stroke: none; }
+.trail-key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: var(--s-2); font-size: 0.84rem; color: var(--text-3); }
+.trail-key span[class]::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 2px solid var(--line-solid); background: var(--surface); }
+.trail-key span.k-seen::before { background: var(--accent); border-color: var(--accent); }
+.trail-key span.k-next::before { background: var(--terracotta-ink); border-color: var(--terracotta-ink); }
+.trail-svg.is-vertical .trail-name { font-size: 16px; }
+.trail-svg.is-vertical .trail-stage { font-size: 12px; }
+.trail-svg.is-vertical .trail-road { stroke-width: 18; }
