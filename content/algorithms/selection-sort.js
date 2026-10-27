@@ -82,7 +82,7 @@ export default {
     family: 'Comparison sorts',
     lab: 'sorting-searching',
     compareGroup: 'sorting',
-    summary: 'Sorts by repeatedly finding the smallest remaining value and swapping it into place. Always n(n − 1)/2 comparisons, but never more than n − 1 swaps.',
+    summary: "Sorts a list by finding the smallest item left and swapping it into the next spot. Slow on long lists, even sorted ones, but it makes very few swaps.",
     difficulty: 'beginner',
     order: 110,
     paradigms: ['brute-force', 'incremental'],
@@ -99,7 +99,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Selection sort is a way to put a list in order, such as arranging numbers from smallest to largest. It works the way many people tidy a shelf. Look through the whole list and find the smallest item. Move it to the front by trading places with whatever was there. That first spot is now finished. Next, look through the rest of the list and find the smallest item that is left. Trade it into the second spot. Keep going, one spot at a time, until every spot holds the right item. To find the smallest item, the method checks every remaining item in turn and remembers the smallest it has seen so far. It does all of that checking even when the list was already in order, so it is slow on long lists. Its strength is that it moves items very rarely: at most one trade for each spot.",
+    simple: "Selection sort puts a list in order, such as numbers from smallest to largest. It works the way many people tidy a shelf.\n\nLook through the whole list and find the smallest item. Swap it with whatever is at the front, and that first spot is finished. Then find the smallest of the items that are left and swap it into the second spot. Keep going, one spot at a time, until every spot holds the right item.\n\nTo find the smallest, it checks every remaining item in turn, even when the list is already in order, so it is slow on long lists. Its strength is that it rarely moves anything: at most one swap for each spot.",
     what: 'Selection sort divides the list into a sorted part on the left and an unsorted part on the right. In each round it scans the unsorted part for its smallest value, swaps that value with the first unsorted position, and so grows the sorted part by one. After n − 1 rounds the list is in order.',
     why: 'It is one of the most direct answers to the question "how would you sort by hand?", and it separates two costs that other simple sorts mix together: looking at values and moving them. Selection sort looks a great deal and moves almost nothing, which makes it a clear example of why the right measure of cost depends on what is expensive.',
     when: 'Use it when the list is short and moving an item costs much more than comparing two items, or when you only need the few smallest items in order and can stop after that many rounds. For general sorting of short lists, [insertion sort](#/algorithm/insertion-sort) is usually better, and for long lists use [merge sort](#/algorithm/merge-sort), [quick sort](#/algorithm/quick-sort) or [heap sort](#/algorithm/heap-sort).',
@@ -107,21 +107,21 @@ export default {
     where: 'In teaching, and in small routines where simplicity and a low number of writes matter more than speed. Its idea lives on inside heap sort, which is widely used.',
     analogy: {
       title: 'Lining up books by height',
-      text: "To arrange a shelf of books from shortest to tallest, run your finger along the whole shelf, find the shortest book, and swap it with the book at the left-hand end. From then on the shelf has two parts. On the left are the books already in place, in order and never touched again. On the right are the rest. Each sweep covers only the right-hand part and moves one more book across the line, so the sweeps get shorter as the shelf fills in.",
-      limits: "A person can spot the shortest book on a shelf at a glance. A computer cannot glance: it has to look at every remaining book, one at a time, on every sweep. A person would also remember which books were nearly the shortest. Selection sort forgets everything it learned in a sweep except the one winner, and starts the next sweep from nothing.",
+      text: "To arrange a shelf of books from shortest to tallest, run your finger along the shelf, find the shortest book, and swap it with the book at the left-hand end. Now the shelf has two parts. On the left are books already in place, never touched again. On the right are the rest. Each sweep covers only the right-hand part and moves one more book across the line, so the sweeps get shorter.",
+      limits: "A person can spot the shortest book at a glance. A computer has to look at every remaining book, one at a time, on every sweep. It also forgets everything from a sweep except the one winner, and starts the next sweep from nothing.",
     },
   },
 
   example: {
-    setup: 'Sort the five numbers 5, 3, 8, 1, 4 from smallest to largest. In each round, search the numbers that are not yet in place for the smallest one, by comparing each with the smallest seen so far.',
+    setup: "Sort the five numbers 5, 3, 8, 1, 4 from smallest to largest. Each round searches the numbers not yet in place for the smallest, comparing each with the smallest seen so far.",
     steps: [
-      'Round 1 searches all five numbers. Start with 5 as the smallest so far. 3 is smaller, so remember 3. 8 is not smaller. 1 is smaller, so remember 1. 4 is not smaller. That took 4 comparisons. Swap 1 with the first number: 1, 3, 8, 5, 4.',
-      'Round 2 searches 3, 8, 5, 4. Start with 3. None of 8, 5 or 4 is smaller, so 3 is already in the right place and nothing is swapped. That took 3 comparisons.',
-      'Round 3 searches 8, 5, 4. Start with 8. 5 is smaller, so remember 5. 4 is smaller still, so remember 4. That took 2 comparisons. Swap 4 with 8: 1, 3, 4, 5, 8.',
-      'Round 4 searches 5, 8. Start with 5. 8 is not smaller, so nothing is swapped. That took 1 comparison.',
-      'One number is left, and it must be the largest, so it is already in place.',
+      "Round 1 starts with 5 as the smallest so far. 3 is smaller, and later 1 is smaller still. Swap 1 with the first number: 1, 3, 8, 5, 4. (4 comparisons.)",
+      "Round 2 searches 3, 8, 5, 4. Nothing is smaller than 3, so 3 is already in place and nothing is swapped. (3 comparisons.)",
+      "Round 3 searches 8, 5, 4. 5 is smaller than 8, and 4 is smaller still. Swap 4 with 8: 1, 3, 4, 5, 8. (2 comparisons.)",
+      "Round 4 searches 5, 8. 8 is not smaller than 5, so nothing is swapped. (1 comparison.)",
+      "The one number left must be the largest, so it is already in place.",
     ],
-    result: 'The list is 1, 3, 4, 5, 8 after 4 + 3 + 2 + 1 = 10 comparisons and only 2 swaps. Any list of five numbers costs the same 10 comparisons. Only the number of swaps depends on the starting order.',
+    result: "The list is 1, 3, 4, 5, 8 after 4 + 3 + 2 + 1 = 10 comparisons and only 2 swaps. Any list of five numbers costs the same 10 comparisons. Only the number of swaps depends on the starting order.",
     tryInput: { custom: [5, 3, 8, 1, 4] },
   },
 

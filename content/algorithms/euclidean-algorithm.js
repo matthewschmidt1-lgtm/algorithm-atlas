@@ -172,7 +172,7 @@ export default {
     family: 'Greatest common divisor',
     lab: 'mathematics',
     authors: 'Euclid',
-    summary: 'Finds the greatest common divisor of two whole numbers by repeatedly replacing the larger with its remainder on division by the smaller, until the remainder is zero.',
+    summary: "Finds the largest whole number that divides two others exactly. It divides, keeps the remainder, and repeats until the remainder is zero.",
     difficulty: 'beginner',
     order: 400,
     paradigms: ['number-theoretic'],
@@ -189,7 +189,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "The Euclidean algorithm finds the largest number that divides two whole numbers exactly. That number is called their greatest common divisor. Here is a way to picture it. A floor is 48 units long and 18 units wide. You want to cover it with identical square tiles, as large as possible, without cutting any. What size should the tiles be? Start by laying the biggest squares the floor allows, 18 by 18. Two of them fit, and a strip 12 wide is left over. Now treat the strip the same way. One 12 by 12 square fits, and a smaller strip 6 wide is left. Squares of side 6 fill that last strip exactly, with nothing left. So 6 is the answer: tiles of 6 by 6 cover the whole floor. The method is more than two thousand years old. It is still in daily use, for example when computers create the keys that keep messages private.",
+    simple: "The Euclidean algorithm finds the largest number that divides two whole numbers exactly. That number is called their greatest common divisor. Picture a floor 48 units long and 18 wide. What are the largest square tiles that cover it with none cut?\n\nStart with the biggest squares the floor allows, 18 by 18. Two fit, leaving a strip 12 wide. Treat the strip the same way: one 12 by 12 square fits, leaving a strip 6 wide. Squares of side 6 fill that strip exactly, so 6 by 6 tiles cover the whole floor.\n\nThe method is more than two thousand years old. Computers still use it every day, for example when they create the keys that keep messages private.",
     what: 'The greatest common divisor (gcd) of two whole numbers is the largest whole number that divides both without a remainder. The Euclidean algorithm computes it by division with remainder: divide the larger number by the smaller, keep the smaller number and the remainder, and repeat with that pair. When a remainder of zero appears, the last divisor is the gcd.',
     why: 'The obvious way to find a common divisor is to factor both numbers into primes, but factoring large numbers is extremely slow. Euclid\'s method never factors anything. It shrinks the numbers so quickly that the gcd of two numbers hundreds of digits long takes a few hundred divisions, which is what makes it usable in cryptography.',
     when: 'Use it whenever you need the gcd of two integers: to reduce a fraction, to test whether two numbers share a factor, or to compute a least common multiple. Use the extended version when you also need the whole numbers x and y with a·x + b·y = gcd(a, b), which is how modular inverses are found for systems such as [RSA](#/algorithm/rsa).',
@@ -197,19 +197,19 @@ export default {
     where: 'Every language\'s standard library has it: `math.gcd` in Python, `std::gcd` in C++. Fraction arithmetic uses it to keep results in lowest terms, and cryptographic libraries use the extended form to invert numbers in modular arithmetic.',
     analogy: {
       title: 'Measuring two sticks against each other',
-      text: 'You have a long stick and a short stick and want the longest ruler that measures both exactly. Lay the short stick along the long one as many times as it fits and mark what is left over. Any ruler that measures both sticks must measure that leftover piece too. So forget the long stick: the problem is now the short stick and the leftover. Repeat with those two. When a piece fits with nothing left over, that piece is the ruler.',
-      limits: 'With real sticks the process might never end. The side and the diagonal of a square have no common measure at all, and the leftovers get smaller forever. The algorithm is about whole numbers, where each leftover is a smaller whole number and so the process must stop. The picture also suggests laying the stick down one length at a time, which is repeated subtraction. The algorithm does all of those subtractions at once with a single division.',
+      text: "You have a long stick and a short stick and want the longest ruler that measures both exactly. Lay the short stick along the long one as many times as it fits and mark what is left over. Any ruler that measures both sticks must measure that leftover too. So forget the long stick and repeat with the short stick and the leftover. When a piece fits with nothing left over, that piece is the ruler.",
+      limits: "With real sticks the leftovers can shrink forever, as they do for the side and diagonal of a square, but whole-number leftovers always reach zero. And the picture lays the stick down one length at a time, where the algorithm does all those steps in one division.",
     },
   },
 
   example: {
-    setup: 'Find the greatest common divisor of 48 and 18: the largest whole number that divides both. Dividing one number by another gives a quotient (how many times it fits) and a remainder (what is left over).',
+    setup: "Find the greatest common divisor of 48 and 18: the largest whole number that divides both. A division gives a quotient (how many times it fits) and a remainder (what is left over).",
     steps: [
-      'Divide 48 by 18. It fits 2 times, since 2 × 18 = 36, and the remainder is 48 − 36 = 12. Keep 18 and 12.',
-      'Divide 18 by 12. It fits 1 time, and the remainder is 18 − 12 = 6. Keep 12 and 6.',
-      'Divide 12 by 6. It fits 2 times exactly, and the remainder is 0. Stop.',
+      "Divide 48 by 18. It fits 2 times (2 × 18 = 36), leaving a remainder of 48 − 36 = 12. Keep 18 and 12.",
+      "Divide 18 by 12. It fits 1 time, leaving a remainder of 18 − 12 = 6. Keep 12 and 6.",
+      "Divide 12 by 6. It fits 2 times exactly, so the remainder is 0. Stop.",
     ],
-    result: 'The last number you divided by, 6, is the greatest common divisor. Check: 48 = 8 × 6 and 18 = 3 × 6, and 8 and 3 share no factor, so nothing larger than 6 divides both. It took 3 divisions. Notice how fast the numbers shrank: 48 and 18, then 18 and 12, then 12 and 6.',
+    result: "The last number you divided by, 6, is the greatest common divisor. Check: 48 = 8 × 6 and 18 = 3 × 6, and 8 and 3 share no factor, so nothing larger than 6 divides both. (3 divisions.) The numbers shrank fast: 48 and 18, then 18 and 12, then 12 and 6.",
     tryInput: { a: 48, b: 18, extended: false },
   },
 
@@ -219,7 +219,7 @@ export default {
     { term: 'Quotient', meaning: 'How many whole times one number fits into another. 18 fits into 48 two times, so the quotient is 2.' },
     { term: 'Remainder', meaning: 'What is left over after a division. 48 divided by 18 leaves a remainder of 12.' },
     { term: 'Coprime', meaning: 'Two numbers whose greatest common divisor is 1. They share no factor other than 1.' },
-    { term: 'Modular inverse', meaning: 'For a number a and a modulus m, the number that multiplies a to give a remainder of 1 on division by m. It exists only when a and m are coprime.' },
+    { term: 'Modular inverse', meaning: "For a number a and a modulus m (the number you divide by), the number that multiplies a to give a remainder of 1 on division by m. It exists only when a and m are coprime." },
   ],
 
   takeaway: 'Divide the larger number by the smaller, keep the smaller number and the remainder, and repeat until the remainder is zero.',

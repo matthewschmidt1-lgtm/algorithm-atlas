@@ -65,7 +65,7 @@ export default {
     family: 'Sequential search',
     lab: 'sorting-searching',
     compareGroup: 'searching',
-    summary: 'Finds a value by checking every item in turn. Works on any list in any order, and takes time proportional to the length of the list.',
+    summary: "Finds something by checking each item in turn. It works on any list in any order, but a list twice as long can take twice as many checks.",
     difficulty: 'beginner',
     order: 10,
     paradigms: ['brute-force'],
@@ -103,7 +103,7 @@ export default {
       'Look at position 2. It holds 12. That is not 17, so move on.',
       'Look at position 3. It holds 17. That is the number we want, so stop.',
     ],
-    result: 'The answer is position 3, found after 4 checks. The last two numbers were never looked at. Searching the same list for 20 would take all 6 checks and end with "not found", because the only way to be sure a number is absent is to look at every position. This list happens to be in order, but linear search made no use of that.',
+    result: "The answer is position 3, found after 4 checks. The last two numbers were never looked at. Searching for 20 would take all 6 checks and end with \"not found\", because the only way to be sure a number is absent is to look at every position. This list happens to be in order, but linear search made no use of that.",
     tryInput: { custom: [3, 8, 12, 17, 21, 30], target: 17, shuffle: false },
   },
 
@@ -463,8 +463,8 @@ int main() {
     memory: 'O(1): a single position counter.',
     difficulty: 'low',
     difficultyNote: 'A single loop. The usual errors are loop bounds and the placement of the "not found" return.',
-    limits: 'Each search takes time in proportion to the length of the list. Showing that something is absent always means checking every item.',
-    useWhen: 'The list is short, not in order, arrives as a stream, or is searched too rarely to be worth putting in order.',
+    limits: "A list twice as long can take twice as long to search. Showing that something is absent always means checking every item.",
+    useWhen: "The list is short, not in order, arrives one item at a time, or is searched too rarely to be worth putting in order.",
   },
 
   advanced: {

@@ -105,7 +105,7 @@ export default {
     family: 'Traversal',
     lab: 'graphs',
     compareGroup: 'traversal',
-    summary: 'Explores a graph outward from a start node one layer at a time, which finds the route with the fewest edges to every node it can reach.',
+    summary: "Explores a network outward from a starting point, one layer at a time. This finds the route with the fewest steps to every place it can reach.",
     difficulty: 'beginner',
     order: 200,
     paradigms: ['graph-search'],
@@ -122,7 +122,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Breadth-first search is a way to explore a network of connected things, one layer at a time. Think of a rumour spreading through a school. On day one, a single student knows it. On day two, all of that student's friends know. On day three, the friends of those friends know, and so on. Breadth-first search explores in the same order. It starts at one point. It visits everything one step away, then everything two steps away, then three. To keep that order straight, it uses a waiting line. Each newly found point joins the back of the line, and the next point to explore always comes from the front. Because it works outward in layers, the first time it reaches a point, it has found a route there with the fewest possible steps. That is why it can find the shortest way through a maze, or the smallest number of introductions that connect two people.",
+    simple: "Breadth-first search explores a network of connected things one layer at a time. Think of a rumour at school. On day one, a single student knows it. On day two, that student's friends know, and on day three, the friends of those friends.\n\nThe search works in the same order. From a starting point it visits everything one step away, then two steps away, then three. To keep that order, it uses a waiting line: each newly found point joins the back, and the next point to explore comes from the front.\n\nBecause it works outward in layers, the first route it finds to any point has the fewest possible steps. That is how it finds the shortest way through a maze, or the fewest introductions linking two people.",
     what: 'Breadth-first search (BFS) visits every node that can be reached from a starting node, in order of how many edges away it is. A node is a point in the network and an edge is a link between two points. BFS also records, for each node, the fewest edges needed to reach it and the node it was reached from.',
     why: 'Two questions come up constantly with networks: what can be reached from here, and how few steps does it take? BFS answers both in a single pass that looks at each node and each edge a fixed number of times. Edward F. Moore described it in 1959 as a way to find the shortest path through a maze.',
     when: 'Use it to find routes with the fewest edges, to list everything connected to a starting point, or to process a network level by level. If edges have different costs, the fewest edges is no longer the cheapest route, and you need [Dijkstra\'s algorithm](#/algorithm/dijkstra). If you only need to know whether something is reachable, or want to explore one branch to its end before trying another, [depth-first search](#/algorithm/dfs) uses the same amount of work and often less memory.',
@@ -130,8 +130,8 @@ export default {
     where: 'Web crawlers, the garbage collectors that reclaim unused memory in some programming languages, puzzle solvers, and peer-to-peer networks all use it. It is also the kernel of the Graph500 benchmark, which ranks supercomputers by how fast they traverse very large graphs.',
     analogy: {
       title: 'Ripples from a stone dropped in a pond',
-      text: "Drop a stone into still water and a ring spreads outward. Everything inside the ring has been reached and nothing beyond it has. The ring reaches nearby points first and distant points later, and it never skips ahead. In breadth-first search the waiting line plays the part of the ring. The points in the line are the outer edge of what has been found so far, and exploring from the front of the line pushes that edge outward one step at a time.",
-      limits: "A ripple touches every point on a ring at the same moment. The algorithm visits one point at a time, taking them in the order of the line. A ripple also travels real distance, while the search only counts steps: a long road and a short road each count as one. When the lengths matter, the picture is still right but the algorithm must change to Dijkstra's.",
+      text: "Drop a stone into still water and a ring spreads outward. Everything inside the ring has been reached and nothing beyond it has. The ring reaches nearby points before distant ones, and it never skips ahead. In breadth-first search the waiting line plays the part of the ring: the points in it are the outer edge of what has been found, and exploring from the front pushes that edge outward one step at a time.",
+      limits: "A ripple touches a whole ring at once, but the search visits one point at a time. And a ripple covers real distance, while the search counts each road as one step however long it is, so when lengths matter you need Dijkstra's algorithm.",
     },
   },
 
@@ -140,11 +140,11 @@ export default {
     steps: [
       "Start at A, which is 0 steps away. The waiting line holds only A.",
       "Visit A. Its neighbours B and C are new, so each is 1 step away. The line is now B, C.",
-      "Visit B, the front of the line. Its neighbour A is already known. Its neighbour D is new, so D is 2 steps away. The line is now C, D.",
-      "Visit C. Its neighbours A and D are both already known, so nothing changes. The line is now D.",
+      "Visit B, at the front of the line. A is already known, but D is new, so D is 2 steps away. The line is now C, D.",
+      "Visit C. Its neighbours A and D are both known, so nothing changes. The line is now D.",
       "Visit D. Its neighbour E is new, so E is 3 steps away. Then visit E, which has no new neighbours. The line is empty.",
     ],
-    result: "The places were visited in the order A, B, C, D, E. The step counts are B 1, C 1, D 2 and E 3. Notice that D was found through B, and when C pointed at D a moment later nothing changed: the first time a place is found is always by a shortest route.",
+    result: "The places were visited in the order A, B, C, D, E, and the step counts are B 1, C 1, D 2 and E 3. D was found through B, so when C pointed at D nothing changed: the first time a place is found is always by a shortest route.",
     tryInput: { edges: 'A-B, A-C, B-D, C-D, D-E' },
   },
 

@@ -96,7 +96,7 @@ export default {
     compareGroup: 'sorting',
     year: 1961,
     authors: 'C. A. R. Hoare',
-    summary: 'Sorts by partitioning around a pivot, then sorting each side. Fast in practice, in place, and quadratic only when pivots are chosen badly.',
+    summary: "Sorts a list by picking one item and moving smaller items to its left and bigger ones to its right, then doing the same to each side. Usually very fast.",
     difficulty: 'intermediate',
     order: 140,
     paradigms: ['divide-and-conquer'],
@@ -113,7 +113,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Quick sort is a way to put a list in order, such as arranging numbers from lowest to highest. It works by picking one item from the list and asking the same question of every other item: are you smaller or bigger than this one? Smaller items go to one side. Bigger items go to the other side. The item you picked is now sitting in exactly the right spot, and it never has to move again. Then you do the same thing inside each side. The groups keep getting smaller until each one holds a single item. At that point the whole list is in order. Computers sort lists all day long: names, prices, scores, search results. Quick sort matters because, on most lists, it gets the job done with very little work. It turns slow when the picked item keeps turning out to be among the smallest or biggest in its group.",
+    simple: "Quick sort puts a list in order, such as numbers from lowest to highest. Computers sort lists all day long, from prices to search results, and on most lists quick sort does it with very little work.\n\nPick one item. Ask every other item: are you smaller or bigger than this one? Smaller items go to one side and bigger ones to the other. The picked item is now in exactly the right spot and never moves again.\n\nThen do the same inside each side, until every group holds a single item. The whole list is then in order. It only turns slow when the picked item keeps being among the smallest or biggest in its group.",
     what: 'Quick sort puts a list in order by choosing one value, the **pivot**, and rearranging the list so that everything smaller sits to the pivot\'s left and everything larger to its right. The pivot is now exactly where it belongs. The same procedure is then applied to the left part and the right part, until every part has one value or none.',
     why: 'Tony Hoare devised it around 1960 while working on machine translation, where words had to be sorted before being looked up in a dictionary stored on magnetic tape. He needed a method that sorted in place, without the second copy of the data that merging requires, because memory was scarce.',
     when: 'Reach for quick sort when you need a fast general-purpose sort of data held in memory, order among equal items does not matter, and extra memory is limited. If you need a guaranteed worst case, or equal items must keep their original order, choose [merge sort](#/algorithm/merge-sort) or [heap sort](#/algorithm/heap-sort) instead.',
@@ -121,21 +121,21 @@ export default {
     where: 'Variants of quick sort are the default unstable sort in many standard libraries: C++ `std::sort` is usually introsort (quick sort that falls back to heap sort), and Java sorts arrays of primitives with a dual-pivot quick sort.',
     analogy: {
       title: 'Sorting a class by height with one volunteer',
-      limits: "A class can shuffle around all at once, with everyone checking their height against the volunteer at the same moment. A computer running quick sort checks one item at a time. That is why we measure its work by counting comparisons.",
-      text: "Ask one student to stand still. Everyone shorter moves to their left, everyone taller to their right. That student is now standing in exactly the right place in the final line, even though neither group is sorted yet. Repeat inside each group with a new volunteer, and keep going until every group is a single person. How quickly this ends depends on the volunteers. A volunteer of middling height splits a group into two smaller ones. A volunteer who is the shortest or tallest of the group leaves everyone else in one group, and if that happens every time, each round places only one person.",
+      limits: "A class can shuffle around all at once, everyone checking their height against the volunteer at the same moment. A computer running quick sort checks one item at a time, which is why we measure its work by counting comparisons.",
+      text: "Ask one student to stand still. Everyone shorter moves left, everyone taller moves right. That student is now in exactly the right place in the final line, though neither group is sorted yet. Repeat inside each group with a new volunteer until every group is one person. A volunteer of middling height splits a group well. One who is the shortest or tallest leaves everyone else in one group, and if that happens every time, each round places only one person.",
     },
   },
 
   example: {
-    setup: "Sort the five numbers 4, 7, 2, 9, 5. In each group, use the last number as the pivot. The pivot is the item that everything else in the group is compared against.",
+    setup: "Sort the five numbers 4, 7, 2, 9, 5. In each group, the last number is the pivot: the item that everything else in the group is compared against.",
     steps: [
-      "The group is 4, 7, 2, 9, 5 and the pivot is 5. Compare each of the others with 5: 4 is smaller, 7 is bigger, 2 is smaller, 9 is bigger.",
-      "Move the smaller numbers to the left and the bigger ones to the right, with the pivot between them: 4, 2, then 5, then 9, 7. The 5 is now in its final place.",
-      "Look at the left group, 4, 2. Its pivot is 2. Since 4 is bigger than 2, it goes to the right of it. The group becomes 2, 4.",
-      "Look at the right group, 9, 7. Its pivot is 7. Since 9 is bigger than 7, it goes to the right of it. The group becomes 7, 9.",
+      "The group is 4, 7, 2, 9, 5, so the pivot is 5. Compared with 5, 4 is smaller, 7 is bigger, 2 is smaller and 9 is bigger.",
+      "Move the smaller numbers left and the bigger ones right, with the pivot between them: 4, 2, then 5, then 9, 7. The 5 is now in its final place.",
+      "The left group is 4, 2, with pivot 2. 4 is bigger, so it goes to the right of 2. The group becomes 2, 4.",
+      "The right group is 9, 7, with pivot 7. 9 is bigger, so it goes to the right of 7. The group becomes 7, 9.",
       "Every remaining group holds a single number, so there is nothing left to do.",
     ],
-    result: "The list is now 2, 4, 5, 7, 9. It took 6 comparisons: 4 in the first round and 1 in each of the two small groups.",
+    result: "The list is now 2, 4, 5, 7, 9 after 6 comparisons: 4 in the first round and 1 in each of the two small groups.",
     tryInput: { custom: [4, 7, 2, 9, 5], pivot: 'last' },
   },
 

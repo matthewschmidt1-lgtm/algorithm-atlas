@@ -135,7 +135,7 @@ export default {
     compareGroup: 'sorting',
     year: 1945,
     authors: 'John von Neumann',
-    summary: 'Sorts by splitting the list in half, sorting each half, and merging the two sorted halves. Stable, guaranteed O(n log n), at the cost of O(n) extra memory.',
+    summary: "Sorts a list by splitting it in half, sorting each half, and merging the halves. Reliably fast on any list, but it needs spare memory as big as the list.",
     difficulty: 'intermediate',
     order: 130,
     paradigms: ['divide-and-conquer'],
@@ -152,7 +152,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Merge sort is a way to put a list in order by splitting one big job into smaller jobs. It rests on one easy trick. Suppose you have two piles of cards, and each pile is already in order. You can combine them into a single ordered pile quickly. Look at the top card of each pile, take the smaller one, and repeat until both piles are gone. That is called merging. Merge sort uses this trick again and again. Cut the list in half. Cut each half in half, and keep cutting until every piece is a single item. A single item is already in order. Now merge the pieces in pairs to make ordered pieces of two. Merge those to make ordered pieces of four, and carry on until one ordered list remains. Merge sort does about the same amount of work whatever order the list starts in, so no input can catch it out.",
+    simple: "Merge sort puts a list in order by splitting one big job into small ones. It rests on one easy trick. If you have two piles of cards, each already in order, you can combine them quickly: look at the top card of each, take the smaller, and repeat until both are gone. That is called merging.\n\nCut the list in half, then cut each half in half, until every piece is a single item. A single item is already in order. Now merge the pieces in pairs to make ordered pieces of two, then of four, and so on until one ordered list remains.\n\nMerge sort does about the same work whatever order the list starts in, so no input can catch it out.",
     what: 'Merge sort splits the list into two halves, sorts each half by the same method, and then merges the two sorted halves into one. Merging walks along both halves at once, repeatedly copying the smaller of the two front values into a spare buffer. Halves of one value need no sorting, which is where the splitting stops.',
     why: 'Merging two sorted lists is cheap: one pass, at most one comparison per value. Merge sort turns that into a full sorting method with a running time that is the same, to within a factor of two, for every input. It reads and writes data strictly in sequence, which made it the natural method for the tape drives of early computers and keeps it the natural method for data on disk today.',
     when: 'Choose merge sort when you need a guaranteed running time, when equal items must keep their original order, when the data is a linked list, or when it is too large to fit in memory. If extra memory is tight and stability does not matter, [quick sort](#/algorithm/quick-sort) or [heap sort](#/algorithm/heap-sort) sort in place. For very short lists, [insertion sort](#/algorithm/insertion-sort) is faster.',
@@ -160,20 +160,20 @@ export default {
     where: 'Python\'s built-in sort and Java\'s sort for arrays of objects are Timsort, a merge sort that takes advantage of stretches already in order. Database systems and command-line sorting tools use merging to sort files larger than memory.',
     analogy: {
       title: "A stack of exam papers and two helpers",
-      text: "A teacher has a tall stack of exam papers to sort by student name. The teacher splits the stack in two and hands each half to a helper with one request: bring it back sorted. When the two sorted stacks come back, combining them is easy. Look at the top paper of each stack, move whichever name comes first onto a new stack, and repeat. Nobody ever looks below the top of a stack. Each helper does the same with their own half: split it, hand the halves on, and merge what comes back. The handing-on stops when someone is given a single paper, which is already sorted.",
-      limits: "The desk in this picture has room for a third stack. A computer has to set that room aside: merge sort needs spare memory as large as the list it is sorting. The helpers in the picture also work at the same time, while the algorithm on this page finishes one half completely before it starts the other.",
+      text: "A teacher has a tall stack of exam papers to sort by name. The teacher splits it in two and hands each half to a helper: bring it back sorted. Combining the two sorted stacks is then easy. Move whichever top paper comes first onto a new stack, and repeat. Nobody looks below the top. Each helper does the same with their half, until someone is handed a single paper, which is already sorted.",
+      limits: "The desk has room for a third stack, but a computer has to set that room aside: merge sort needs spare memory as large as the list. And the helpers work at the same time, while the version on this page finishes one half before starting the other.",
     },
   },
 
   example: {
-    setup: 'Sort the four numbers 5, 2, 4, 1 from smallest to largest. To merge two ordered groups, compare their front numbers and take the smaller, until both groups are used up.',
+    setup: "Sort the four numbers 5, 2, 4, 1 from smallest to largest. To merge two ordered groups, compare their front numbers and take the smaller, until both groups are used up.",
     steps: [
-      'Split the list into a left half, 5, 2, and a right half, 4, 1. Work on the left half first.',
-      'Split 5, 2 into 5 and 2. A single number is already in order. Merge them: compare 5 with 2, take the 2, then take the 5 that is left. The left half is now 2, 5. That took 1 comparison.',
-      'Do the same to the right half: split 4, 1 into 4 and 1, compare them, take the 1 and then the 4. The right half is now 1, 4. That took 1 comparison.',
-      'Merge 2, 5 with 1, 4. Compare the fronts 2 and 1: take 1. Compare 2 and 4: take 2. Compare 5 and 4: take 4. The right half is used up, so take the 5 without comparing. That took 3 comparisons.',
+      "Split the list into a left half, 5, 2, and a right half, 4, 1. Start with the left half.",
+      "Split 5, 2 into 5 and 2. A single number is already in order. Merge them: compare 5 with 2, take the 2, then the 5. The left half is 2, 5. (1 comparison.)",
+      "Do the same to the right half: compare 4 with 1, take the 1, then the 4. The right half is 1, 4. (1 comparison.)",
+      "Merge 2, 5 with 1, 4. Compare 2 and 1: take 1. Compare 2 and 4: take 2. Compare 5 and 4: take 4. The right half is used up, so take the 5 without comparing. (3 comparisons.)",
     ],
-    result: 'The list is 1, 2, 4, 5 after 5 comparisons. Each number was copied into a merged group twice, once for each level of merging. Doubling the length of the list adds one more level.',
+    result: "The list is 1, 2, 4, 5 after 5 comparisons. Each number was copied into a merged group twice, once for each level of merging. Doubling the length of the list adds one more level.",
     tryInput: { custom: [5, 2, 4, 1] },
   },
 

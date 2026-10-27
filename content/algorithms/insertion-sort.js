@@ -100,7 +100,7 @@ export default {
     family: 'Comparison sorts',
     lab: 'sorting-searching',
     compareGroup: 'sorting',
-    summary: 'Sorts by inserting each value into place among those already in order. Quadratic in general, close to linear on nearly sorted input, and the finisher inside hybrid sorts.',
+    summary: "Sorts a list by slotting each item into place among the items already in order. Quick on short or nearly sorted lists, slow on long jumbled ones.",
     difficulty: 'beginner',
     order: 120,
     paradigms: ['incremental'],
@@ -117,7 +117,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Insertion sort is a way to put a list in order, and it is how most people sort a hand of playing cards. Pick up the cards one at a time. The first card is in order by itself. Take the second card and put it before or after the first, whichever is right. Take the third card and slide it into the right place among the first two. Carry on like this. Each new card goes into its correct place among the cards you already hold, so the cards in your hand are always in order. When there are no cards left to pick up, the whole hand is sorted. This method is quick when the list is short. It is very quick when the list is almost in order already, because each item is then close to where it belongs. On a long, jumbled list it is slow, because items have to travel a long way.",
+    simple: "Insertion sort puts a list in order the way most people sort a hand of playing cards.\n\nPick up the cards one at a time. The first card is in order by itself. Slide each new card into its right place among the cards you already hold, so your hand is always in order. When no cards are left to pick up, the whole hand is sorted.\n\nThis is quick on a short list, and very quick on a list that is almost in order, because each item is already close to where it belongs. On a long, jumbled list it is slow, because items have to travel a long way.",
     what: 'Insertion sort keeps an ordered group at the left of the list and grows it by one value at a time. It takes the next value, called the key, and compares it with the values in the ordered group from right to left. Every value larger than the key is shifted one place to the right, and the key is written into the gap that opens up.',
     why: 'It does an amount of work that matches how disordered the input is. A list that is already sorted costs one comparison per value. A list with a few values out of place costs a little more. That property, together with very low overhead, is why fast library sorts hand their small pieces to insertion sort.',
     when: 'Use it for short lists (a few dozen items at most), for lists that are already nearly sorted, and when items arrive one at a time and the list must stay sorted throughout. For long lists in no particular order use [merge sort](#/algorithm/merge-sort), [quick sort](#/algorithm/quick-sort) or [heap sort](#/algorithm/heap-sort). In practice those sorts usually call insertion sort themselves once their pieces become small.',
@@ -125,20 +125,20 @@ export default {
     where: 'Inside the standard library sorts of many languages. Python\'s built-in sort, Timsort, uses a form of insertion sort to build its short runs, and typical implementations of C++ `std::sort` finish small ranges with it.',
     analogy: {
       title: "One card going into a sorted hand",
-      text: "Look closely at a single card going in. You hold a few cards in your left hand, already in order, and pick up one more. You look along the held cards from the right, largest first, and stop at the first one that is not larger than the new card. The new card slides in just after it. If the new card is larger than everything you hold, one look settles it. If it is the smallest, you look at every card in your hand.",
-      limits: "With real cards, opening a gap is a single motion of the fingers. In a list stored in a computer, there is no free space between items: every larger value has to be copied one place to the right, one at a time, and that copying is where most of the time goes. A real card player also finds the place at a glance. The algorithm has no glance and compares one card after another.",
+      text: "Look closely at one card going in. You hold a few cards, already in order, and pick up one more. Look along the held cards from the right, largest first, and stop at the first one that is not larger than the new card. The new card slides in just after it. If it is larger than everything you hold, one look settles it. If it is the smallest, you look at every card.",
+      limits: "With real cards, opening a gap takes one motion. In a computer, every larger value must be copied one place to the right, one at a time, and that copying takes most of the time. It also has no glance, so it compares one card after another.",
     },
   },
 
   example: {
-    setup: 'Sort the five numbers 5, 2, 4, 6, 1 from smallest to largest. The first number, 5, starts as an ordered group of one. Each step takes the next number, called the key, and inserts it into the group.',
+    setup: "Sort the five numbers 5, 2, 4, 6, 1 from smallest to largest. The 5 starts as an ordered group of one. Each step takes the next number, called the key, and inserts it into the group.",
     steps: [
-      'The key is 2. Compare it with 5: 5 is larger, so shift 5 one place to the right. The front of the list has been reached, so write 2 there. The list is 2, 5, 4, 6, 1.',
-      'The key is 4. 5 is larger, so shift it right. 2 is not larger, so stop and write 4 after the 2. The list is 2, 4, 5, 6, 1.',
-      'The key is 6. Compare it with 5: 5 is not larger, so 6 stays where it is. That took one comparison and no shifts.',
-      'The key is 1. Each of 6, 5, 4 and 2 is larger, so each is shifted one place to the right. Write 1 at the front. The list is 1, 2, 4, 5, 6.',
+      "The key is 2. 5 is larger, so shift it one place right. That reaches the front, so write 2 there: 2, 5, 4, 6, 1.",
+      "The key is 4. 5 is larger, so shift it right. 2 is not larger, so write 4 after it: 2, 4, 5, 6, 1.",
+      "The key is 6. 5 is not larger, so 6 stays where it is. (1 comparison, no shifts.)",
+      "The key is 1. 6, 5, 4 and 2 are all larger, so each shifts one place right. Write 1 at the front: 1, 2, 4, 5, 6.",
     ],
-    result: 'The list is 1, 2, 4, 5, 6 after 8 comparisons and 6 shifts. The 6 was already in a good place and cost a single comparison. The 1 was as far from its place as it could be and cost four comparisons and four shifts.',
+    result: "The list is 1, 2, 4, 5, 6 after 8 comparisons and 6 shifts. The 6 was already in a good place and cost one comparison. The 1 was as far from its place as it could be and cost four comparisons and four shifts.",
     tryInput: { custom: [5, 2, 4, 6, 1] },
   },
 

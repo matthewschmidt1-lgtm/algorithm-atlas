@@ -172,7 +172,7 @@ export default {
     family: 'Lossless compression',
     lab: 'compression',
     compareGroup: 'lossless-compression',
-    summary: 'Replaces each run of a repeated symbol with a count and the symbol. Shrinks data with long runs and makes data without runs larger.',
+    summary: "Writes each run of repeats as a count and the thing repeated, like \"six white\". Data with long runs shrinks, but data without runs grows.",
     difficulty: 'beginner',
     order: 800,
     paradigms: ['incremental'],
@@ -189,7 +189,7 @@ export default {
   },
 
   bigIdea: {
-    simple: 'Run-length encoding is a way to write repeated things in less space. Suppose you are reading a row of floor tiles aloud to a friend: white, white, white, white, white, white, black, black. You would soon stop naming each tile. You would say "six white, then two black" instead. That is the whole idea. A run is a stretch of the same thing repeated, with nothing else in between. Run-length encoding replaces every run with two pieces of information: how many, and of what. Your friend can rebuild the row exactly, tile for tile, so nothing is lost. This saves a lot of space when the data has long runs, like a drawing with large areas of one colour. It does not help with ordinary writing, where a letter is rarely followed by the same letter. There it makes things longer, because every single letter now needs its own count.',
+    simple: "Run-length encoding writes repeated things in less space. Suppose you are reading a row of floor tiles aloud to a friend: white, white, white, white, white, white, black, black. You would soon say \"six white, then two black\" instead.\n\nThat is the whole idea. A run is a stretch of the same thing repeated, with nothing else in between. The method replaces each run with how many, and of what. Your friend can rebuild the row exactly, so nothing is lost.\n\nIt saves a lot of space when the data has long runs, like a drawing with large areas of one colour. In ordinary writing a letter is rarely followed by the same letter, so there it makes things longer: every single letter needs its own count.",
     what: 'Run-length encoding (RLE) rewrites data as a list of pairs. Each pair says "this symbol, repeated this many times", so `WWWWWWBB` becomes (6, W), (2, B). Decoding writes each symbol out the stated number of times and gets the original back exactly. A method with that property is called **lossless**.',
     why: 'It is the simplest idea in compression and it costs almost nothing to run: one pass over the data, no tables, a single counter in memory. That made it practical on very limited hardware, and it is still used as one stage inside larger methods. A fax machine, for example, sends each scanned line of a page as the lengths of its alternating white and black runs.',
     when: 'Use it when you know the data has long runs: scanned black-and-white pages, icons and drawings with flat colour, tables that are mostly zeros. Do not use it as a general-purpose compressor. In text and in photographs the runs are short, and the output is larger than the input. [LZ77](#/algorithm/lz77) handles repeated phrases that are not next to each other, and [Huffman coding](#/algorithm/huffman-coding) handles symbols that are common but scattered.',
@@ -198,20 +198,20 @@ export default {
     analogy: {
       title: 'A knitting pattern',
       text: 'A knitting pattern does not list every stitch. It says "knit 6, purl 2, knit 6". The knitter reads a count and a kind of stitch, and produces exactly the row the designer meant. Run-length encoding writes data the same way: a count, then the thing to repeat.',
-      limits: "A designer chooses rows with long repeats. Data does not cooperate like that. The picture also hides a cost. A person reads \"6\" without thinking about the room it takes, but in a file the count occupies space of its own: 8 bits for every run in this lesson.",
+      limits: "A designer chooses rows with long repeats, and real data rarely cooperates like that. A person also reads \"6\" without thinking about the room it takes, but in a file each count takes space of its own: 8 bits for every run in this lesson.",
     },
   },
 
   example: {
-    setup: 'Encode the ten letters AAAABBBCCD. A bit is a single 0 or 1, the smallest unit of computer storage. In this lesson every letter of the input takes 8 bits, so the input is 80 bits. Every pair in the output takes 16 bits: 8 for the count and 8 for the letter.',
+    setup: "Encode the ten letters AAAABBBCCD. A bit is a single 0 or 1, the smallest unit of computer storage. Here every letter takes 8 bits, so the input is 80 bits. Every output pair takes 16 bits: 8 for the count and 8 for the letter.",
     steps: [
-      'Read A. The next three letters are also A, and then comes a B. The run is 4 long, so write the pair (4, A).',
-      'Read B. Two more B follow, and then comes a C. Write (3, B).',
-      'Read C. One more C follows, and then comes a D. Write (2, C).',
-      'Read D. The text ends, so this run is only 1 long. Write (1, D).',
-      'To decode, read the pairs in order and write each letter the stated number of times: AAAA, then BBB, then CC, then D.',
+      "Read A. Three more A follow, then a B. The run is 4 long, so write the pair (4, A).",
+      "Read B. Two more B follow, then a C. Write (3, B).",
+      "Read C. One more C follows, then a D. Write (2, C).",
+      "Read D. The text ends, so this run is only 1 long. Write (1, D).",
+      "To decode, read the pairs in order and write each letter that many times: AAAA, then BBB, then CC, then D.",
     ],
-    result: 'The output is (4, A), (3, B), (2, C), (1, D). That is 4 pairs, or 64 bits instead of 80. Look at the last pair: it spends 16 bits on one letter that took 8 bits before. A run of one always costs more than it saves.',
+    result: "The output is (4, A), (3, B), (2, C), (1, D): 4 pairs, or 64 bits instead of 80. Look at the last pair. It spends 16 bits on one letter that took 8 bits before. A run of one always costs more than it saves.",
     tryInput: { text: 'AAAABBBCCD' },
   },
 

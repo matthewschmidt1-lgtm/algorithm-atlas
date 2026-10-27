@@ -2,10 +2,10 @@
 // One lightweight record per validated lesson; full lessons load on demand.
 // Each record carries `checks`: what the pipeline verified for that lesson.
 export const buildInfo = {
- "date": "2026-10-25",
+ "date": "2026-10-26",
  "python": "Python 3.9.6",
  "cxx": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
- "browser": "Google Chrome 155.0.8059.86",
+ "browser": "Google Chrome 156.0.8078.48",
  "lessons": 73,
  "tests": 1025,
  "runs": 655,
@@ -39,7 +39,7 @@ export const catalog = [
   "family": "Sequential search",
   "lab": "sorting-searching",
   "compareGroup": "searching",
-  "summary": "Finds a value by checking every item in turn. Works on any list in any order, and takes time proportional to the length of the list.",
+  "summary": "Finds something by checking each item in turn. It works on any list in any order, but a list twice as long can take twice as many checks.",
   "difficulty": "beginner",
   "order": 10,
   "paradigms": [
@@ -155,9 +155,9 @@ export const catalog = [
   "analogy": "A name on an unsorted sign-up sheet",
   "takeaway": "Check every item in turn until you find the one you want or run out of items.",
   "decide": {
-   "useWhen": "The list is short, not in order, arrives as a stream, or is searched too rarely to be worth putting in order.",
+   "useWhen": "The list is short, not in order, arrives one item at a time, or is searched too rarely to be worth putting in order.",
    "requires": "Nothing. The list can be in any order and only has to be readable from start to end.",
-   "limits": "Each search takes time in proportion to the length of the list. Showing that something is absent always means checking every item."
+   "limits": "A list twice as long can take twice as long to search. Showing that something is absent always means checking every item."
   },
   "describe": "A row of bars, one per value in the list, with a marker under the position being checked. The bar being checked is ochre, bars not yet checked are grey, bars already checked and rejected are faded, and a match turns forest green. Below the bars, one strip shows the target value and another lists the values checked so far.",
   "views": [
@@ -315,7 +315,7 @@ export const catalog = [
   "family": "Interval-halving search",
   "lab": "sorting-searching",
   "compareGroup": "searching",
-  "summary": "Finds a value in a sorted list by checking the middle item and discarding the half that cannot contain it, repeating until the value is found or nothing is left.",
+  "summary": "Finds a value in a sorted list by checking the middle item and dropping the half that cannot hold it. Repeat until the value is found or nothing is left.",
   "difficulty": "beginner",
   "order": 20,
   "paradigms": [
@@ -558,7 +558,7 @@ export const catalog = [
   "family": "Comparison sorts",
   "lab": "sorting-searching",
   "compareGroup": "sorting",
-  "summary": "Sorts by repeatedly swapping neighbours that are out of order. Simple to follow and quadratic in general, but it finishes in one pass on a list that is already sorted.",
+  "summary": "Sorts a list by swapping neighbours that are out of order, pass after pass. Easy to follow and slow on long lists, but quick on a list that is already sorted.",
   "difficulty": "beginner",
   "order": 100,
   "paradigms": [
@@ -822,7 +822,7 @@ export const catalog = [
   "family": "Comparison sorts",
   "lab": "sorting-searching",
   "compareGroup": "sorting",
-  "summary": "Sorts by repeatedly finding the smallest remaining value and swapping it into place. Always n(n − 1)/2 comparisons, but never more than n − 1 swaps.",
+  "summary": "Sorts a list by finding the smallest item left and swapping it into the next spot. Slow on long lists, even sorted ones, but it makes very few swaps.",
   "difficulty": "beginner",
   "order": 110,
   "paradigms": [
@@ -1043,7 +1043,7 @@ export const catalog = [
   "family": "Comparison sorts",
   "lab": "sorting-searching",
   "compareGroup": "sorting",
-  "summary": "Sorts by inserting each value into place among those already in order. Quadratic in general, close to linear on nearly sorted input, and the finisher inside hybrid sorts.",
+  "summary": "Sorts a list by slotting each item into place among the items already in order. Quick on short or nearly sorted lists, slow on long jumbled ones.",
   "difficulty": "beginner",
   "order": 120,
   "paradigms": [
@@ -1313,7 +1313,7 @@ export const catalog = [
   "compareGroup": "sorting",
   "year": 1945,
   "authors": "John von Neumann",
-  "summary": "Sorts by splitting the list in half, sorting each half, and merging the two sorted halves. Stable, guaranteed O(n log n), at the cost of O(n) extra memory.",
+  "summary": "Sorts a list by splitting it in half, sorting each half, and merging the halves. Reliably fast on any list, but it needs spare memory as big as the list.",
   "difficulty": "intermediate",
   "order": 130,
   "paradigms": [
@@ -1582,7 +1582,7 @@ export const catalog = [
   "compareGroup": "sorting",
   "year": 1961,
   "authors": "C. A. R. Hoare",
-  "summary": "Sorts by partitioning around a pivot, then sorting each side. Fast in practice, in place, and quadratic only when pivots are chosen badly.",
+  "summary": "Sorts a list by picking one item and moving smaller items to its left and bigger ones to its right, then doing the same to each side. Usually very fast.",
   "difficulty": "intermediate",
   "order": 140,
   "paradigms": [
@@ -2980,7 +2980,7 @@ export const catalog = [
   "family": "Traversal",
   "lab": "graphs",
   "compareGroup": "traversal",
-  "summary": "Explores a graph outward from a start node one layer at a time, which finds the route with the fewest edges to every node it can reach.",
+  "summary": "Explores a network outward from a starting point, one layer at a time. This finds the route with the fewest steps to every place it can reach.",
   "difficulty": "beginner",
   "order": 200,
   "paradigms": [
@@ -7648,7 +7648,7 @@ export const catalog = [
   "family": "Greatest common divisor",
   "lab": "mathematics",
   "authors": "Euclid",
-  "summary": "Finds the greatest common divisor of two whole numbers by repeatedly replacing the larger with its remainder on division by the smaller, until the remainder is zero.",
+  "summary": "Finds the largest whole number that divides two others exactly. It divides, keeps the remainder, and repeats until the remainder is zero.",
   "difficulty": "beginner",
   "order": 400,
   "paradigms": [
@@ -7962,7 +7962,7 @@ export const catalog = [
   "family": "Prime sieves",
   "lab": "mathematics",
   "authors": "Eratosthenes of Cyrene",
-  "summary": "Finds every prime up to a limit by writing out the numbers and crossing out the multiples of each prime in turn. Whatever is never crossed out is prime.",
+  "summary": "Finds every prime number up to a limit by crossing out the multiples of each prime in turn. The numbers never crossed out are the primes.",
   "difficulty": "beginner",
   "order": 410,
   "paradigms": [
@@ -16952,7 +16952,7 @@ export const catalog = [
   "family": "Lossless compression",
   "lab": "compression",
   "compareGroup": "lossless-compression",
-  "summary": "Replaces each run of a repeated symbol with a count and the symbol. Shrinks data with long runs and makes data without runs larger.",
+  "summary": "Writes each run of repeats as a count and the thing repeated, like \"six white\". Data with long runs shrinks, but data without runs grows.",
   "difficulty": "beginner",
   "order": 800,
   "paradigms": [

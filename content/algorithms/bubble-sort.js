@@ -77,7 +77,7 @@ export default {
     family: 'Comparison sorts',
     lab: 'sorting-searching',
     compareGroup: 'sorting',
-    summary: 'Sorts by repeatedly swapping neighbours that are out of order. Simple to follow and quadratic in general, but it finishes in one pass on a list that is already sorted.',
+    summary: "Sorts a list by swapping neighbours that are out of order, pass after pass. Easy to follow and slow on long lists, but quick on a list that is already sorted.",
     difficulty: 'beginner',
     order: 100,
     paradigms: ['brute-force', 'incremental'],
@@ -94,7 +94,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Bubble sort is a way to put a list in order, such as arranging numbers from smallest to largest. It may be the simplest method there is. Look at the first two items. If they are in the wrong order, swap them. Then look at the second and third items and do the same. Keep going until you reach the end of the list. That is one pass. During a pass, the biggest item gets carried all the way to the end, a little like a bubble rising to the top of a glass. Now make another pass, and the next biggest item settles beside it. Repeat until a whole pass goes by without a single swap. That means every item is in order with its neighbour, so the list is sorted. Bubble sort is easy to follow but slow on long lists. People learn it first, and then learn why other methods are faster.",
+    simple: "Bubble sort puts a list in order, such as numbers from smallest to largest. It may be the simplest way there is.\n\nLook at the first two items. If they are the wrong way round, swap them. Then do the same with the second and third, and so on to the end of the list. That is one pass. Each pass carries the biggest item that is still out of place to the end, like a bubble rising in a glass.\n\nKeep making passes until one goes by with no swaps at all. Then the list is sorted. Bubble sort is easy to follow but slow on long lists, which is why people learn it first and faster methods next.",
     what: 'Bubble sort puts a list in order using one move only: compare two neighbouring values and swap them if the larger one is on the left. It sweeps through the list doing this to every neighbouring pair, and repeats the sweep until one full pass makes no swaps. Each pass carries the largest remaining value to the end of the unsorted part.',
     why: 'It is the shortest sorting method to state, and its behaviour can be checked by hand on a few numbers. That makes it a good first place to practise the questions asked of every algorithm: why does it finish, why is the answer right, and how does the work grow as the input grows?',
     when: 'For real work, almost never. On small or nearly sorted lists [insertion sort](#/algorithm/insertion-sort) does the same job with fewer operations, and on long lists [merge sort](#/algorithm/merge-sort) or [quick sort](#/algorithm/quick-sort) are far faster. Use bubble sort to learn, to explain sorting to someone else, or when a single pass that checks for sortedness and fixes one small slip is all you need.',
@@ -102,21 +102,21 @@ export default {
     where: 'Mostly in classrooms and textbooks. Its parallel relative, odd-even transposition sort, is studied in parallel computing because all of its comparisons within one round can happen at the same time.',
     analogy: {
       title: 'A row of people trading places by height',
-      text: "People stand in a row in any order. Starting at the left, each person compares heights with the neighbour on their right, and the two trade places if the taller one is on the left. Now follow two people. The tallest person wins every comparison, so a single walk along the row carries them all the way to the right-hand end. The shortest person, if they start at the right-hand end, is less lucky: each walk gives them one trade, so they move only one place to the left per walk. That slow traveller is why a row can need many walks. When a whole walk happens with nobody trading places, the row is in height order.",
-      limits: "In a real row, many pairs could trade places at the same moment, and anyone can glance along the row and see who is badly out of place. Bubble sort checks one pair at a time and never looks further than the next neighbour.",
+      text: "People stand in a row in any order. Starting at the left, each person compares heights with the neighbour on their right, and the two swap places if the taller one is on the left. The tallest person wins every comparison, so one walk carries them to the far right. The shortest person, if they start at the right-hand end, moves only one place left per walk. That is why a row can need many walks. When a whole walk has no swaps, the row is in height order.",
+      limits: "In a real row, many pairs could swap at once, and anyone can glance along the row and see who is badly out of place. Bubble sort checks one pair at a time and only ever looks at the next neighbour.",
     },
   },
 
   example: {
-    setup: 'Sort the five numbers 5, 1, 4, 2, 8 from smallest to largest. A pass means walking through the list from the left, comparing each number with its right-hand neighbour.',
+    setup: "Sort the five numbers 5, 1, 4, 2, 8 from smallest to largest. A pass means walking through the list from the left, comparing each number with its right-hand neighbour.",
     steps: [
-      'Pass 1, first pair: 5 and 1 are in the wrong order, so swap them. The list is 1, 5, 4, 2, 8.',
-      'Pass 1 continues: 5 and 4 swap, then 5 and 2 swap, giving 1, 4, 2, 5, 8. The last pair, 5 and 8, is in order. That pass made 4 comparisons and 3 swaps, and the 8 at the end is now final.',
-      'Pass 2 looks at the first four numbers only. 1 and 4 are in order. 4 and 2 swap, giving 1, 2, 4, 5, 8. 4 and 5 are in order. That is 3 comparisons and 1 swap.',
-      'Pass 3 looks at the first three numbers. 1 and 2 are in order, and so are 2 and 4. That is 2 comparisons and no swaps.',
-      'A pass with no swaps means every number is in order with its neighbour, so stop.',
+      "Pass 1: 5 and 1 are the wrong way round, so swap them. The list is now 1, 5, 4, 2, 8.",
+      "Still pass 1: 5 swaps with 4, then with 2, giving 1, 4, 2, 5, 8. The last pair, 5 and 8, is fine. The 8 is now in its final place. (4 comparisons, 3 swaps.)",
+      "Pass 2 checks the first four numbers. Only 4 and 2 need swapping, which gives 1, 2, 4, 5, 8. (3 comparisons, 1 swap.)",
+      "Pass 3 checks the first three numbers and finds nothing to swap. (2 comparisons.)",
+      "A pass with no swaps means the list is sorted, so stop.",
     ],
-    result: 'The list is 1, 2, 4, 5, 8 after 9 comparisons and 4 swaps. Notice that the list was already sorted at the end of pass 2. Bubble sort could not know that until pass 3 came back with nothing to swap.',
+    result: "The list is 1, 2, 4, 5, 8 after 9 comparisons and 4 swaps. It was already sorted after pass 2, but bubble sort only knows that once a pass finds nothing to swap.",
     tryInput: { custom: [5, 1, 4, 2, 8], earlyExit: true },
   },
 

@@ -75,7 +75,7 @@ export default {
     family: 'Interval-halving search',
     lab: 'sorting-searching',
     compareGroup: 'searching',
-    summary: 'Finds a value in a sorted list by checking the middle item and discarding the half that cannot contain it, repeating until the value is found or nothing is left.',
+    summary: "Finds a value in a sorted list by checking the middle item and dropping the half that cannot hold it. Repeat until the value is found or nothing is left.",
     difficulty: 'beginner',
     order: 20,
     paradigms: ['divide-and-conquer'],
@@ -92,7 +92,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "Binary search finds an item in a sorted list by cutting the list in half again and again. You already know the idea. To find a word in a paper dictionary, you do not start at page one. You open the book near the middle and look at a word. If your word comes later in the alphabet, you can ignore the whole first half. If it comes earlier, you can ignore the second half. Then you do the same with the half that is left. Each look throws away half of the remaining pages, so the pile shrinks very fast. A list of a thousand items needs about ten looks. A list of a million needs only about twenty. There is one firm condition: the list must already be in order. If it is not, a look at the middle tells you nothing about which half to keep, and the method can give wrong answers.",
+    simple: "Binary search finds an item in a sorted list by cutting the list in half again and again. You already do this with a paper dictionary: you open it near the middle, not at page one.\n\nIf your word comes later in the alphabet than the word you see, ignore the whole first half. If it comes earlier, ignore the second half. Then do the same with the half that is left. Each look throws away half of what remains, so a thousand items need about ten looks and a million only about twenty.\n\nThere is one firm condition: the list must already be in order. If it is not, the middle item says nothing about which half to keep, and the answer can be wrong.",
     what: 'Binary search finds a target value in a sorted list. It keeps a range of positions that could still hold the target, looks at the value in the middle of that range, and uses the sorted order to discard the half where the target cannot be. It stops when the middle value is the target or the range is empty.',
     why: 'Checking items one by one takes time proportional to the length of the list. When the list is sorted, that work is wasteful, because a single comparison with the middle value says something about half of the list at once. Binary search turns that observation into a method whose cost grows with the number of times the list can be halved, not with its length.',
     when: 'Use it when the data is sorted and any position can be read directly, as in an array. If the data is unsorted and searched rarely, a plain [linear search](#/algorithm/linear-search) is simpler than sorting first. If you only ever ask "is this exact key present?", a [hash table](#/algorithm/hash-table) is usually faster still. Binary search keeps one advantage over hashing: it can also answer "what is the nearest value?" and "where would this value go?".',
@@ -100,19 +100,19 @@ export default {
     where: 'It is in the standard library of nearly every language: `bisect` in Python, `std::lower_bound` in C++, `Arrays.binarySearch` in Java. The `git bisect` command uses the same halving to find which commit introduced a bug, and database indexes are built on a many-way version of the idea.',
     analogy: {
       title: 'The higher-or-lower guessing game',
-      text: 'A friend picks a whole number from 1 to 100 and answers each guess with "higher", "lower" or "correct". Guess 50. If the answer is "higher", the number is somewhere from 51 to 100, so guess the middle of that range. Keep guessing the middle of whatever range is left. Each answer removes half of the remaining numbers, and seven guesses are always enough, whatever number was picked.',
-      limits: "In the game the number is always there. A list might not contain the target, so the search must also notice when the range has shrunk to nothing. The game also uses every number from 1 to 100 with no gaps. A real list has gaps, so binary search halves the range of positions, not the range of values, and looks at whatever value sits in the middle position. Last, your friend can answer about any guess at once. A computer can do that only if it is able to jump straight to any position in the list.",
+      text: 'A friend picks a whole number from 1 to 100 and answers each guess with "higher", "lower" or "correct". Guess 50. If the answer is "higher", the number is from 51 to 100, so guess the middle of that range. Keep guessing the middle of whatever is left. Each answer removes half of the remaining numbers, and seven guesses are always enough, whatever number was picked.',
+      limits: "In the game the number is always there. A list might not hold the target, so the search must notice when no positions are left. A list also has gaps, so the search halves positions, not values. It must also be able to jump straight to any position.",
     },
   },
 
   example: {
-    setup: 'Find the number 16 in this sorted list of seven numbers: 2, 5, 8, 12, 16, 23, 38. Positions are counted from 0, so 2 is at position 0 and 38 is at position 6.',
+    setup: "Find 16 in this sorted list of seven numbers: 2, 5, 8, 12, 16, 23, 38. Positions count from 0, so 2 is at position 0 and 38 is at position 6.",
     steps: [
-      'All seven positions, 0 to 6, could hold 16. The middle one is position 3, which holds 12. Since 12 is smaller than 16, the target can only be to the right. Positions 0 to 3 are ruled out.',
-      'Positions 4 to 6 are left. The middle one is position 5, which holds 23. Since 23 is bigger than 16, the target can only be to the left. Positions 5 and 6 are ruled out.',
-      'Only position 4 is left. It holds 16. That is the target.',
+      "Positions 0 to 6 could all hold 16. The middle is position 3, which holds 12. 12 is smaller than 16, so rule out positions 0 to 3.",
+      "Positions 4 to 6 are left. The middle is position 5, which holds 23. 23 is bigger than 16, so rule out positions 5 and 6.",
+      "Only position 4 is left. It holds 16, the target.",
     ],
-    result: 'The answer is position 4, found after looking at just 3 values: 12, then 23, then 16. Checking one by one from the left would have taken 5 looks. The gap grows quickly with the size of the list: for a million sorted values, binary search needs at most 20 looks.',
+    result: "The answer is position 4, after looking at just 3 values: 12, 23, then 16. Checking one by one from the left would take 5 looks. For a million sorted values, binary search needs at most 20.",
     tryInput: { custom: [2, 5, 8, 12, 16, 23, 38], target: 16 },
   },
 

@@ -124,7 +124,7 @@ export default {
     family: 'Prime sieves',
     lab: 'mathematics',
     authors: 'Eratosthenes of Cyrene',
-    summary: 'Finds every prime up to a limit by writing out the numbers and crossing out the multiples of each prime in turn. Whatever is never crossed out is prime.',
+    summary: "Finds every prime number up to a limit by crossing out the multiples of each prime in turn. The numbers never crossed out are the primes.",
     difficulty: 'beginner',
     order: 410,
     paradigms: ['number-theoretic'],
@@ -141,7 +141,7 @@ export default {
   },
 
   bigIdea: {
-    simple: "The sieve of Eratosthenes finds all the prime numbers up to a limit you choose. A prime is a whole number bigger than 1 that cannot be divided evenly by anything except 1 and itself, such as 2, 3, 5 and 7. A kitchen sieve keeps what you want by letting everything else fall away, and this method does the same with numbers. Write down every number from 2 up to your limit. The first number, 2, is prime. Cross out every multiple of 2 after it: 4, 6, 8 and so on. Now move to the next number that is not crossed out. That is 3, so 3 is prime. Cross out its multiples. Keep going. Each time, the next number still standing is prime, and its multiples get crossed out. When you finish, the numbers left are exactly the primes. Nothing ever has to be divided. You only count along the list in equal steps.",
+    simple: "The sieve of Eratosthenes finds all the prime numbers up to a limit you choose. A prime is a whole number above 1 that only 1 and itself divide evenly, such as 2, 3, 5 and 7. Like a kitchen sieve, it keeps what you want by letting everything else fall away.\n\nWrite down every number from 2 up to your limit. The first, 2, is prime, so cross out its multiples: 4, 6, 8 and so on. The next number still standing, 3, is prime too, so cross out its multiples. Keep going: each time, the next number still standing is prime.\n\nThe numbers left at the end are exactly the primes. Nothing ever has to be divided. You only count along the list in equal steps.",
     what: 'The sieve of Eratosthenes produces every prime number up to a chosen limit n. It keeps one mark for each number from 2 to n. Going through the numbers in order, whenever it meets one that is still unmarked it has found a prime, and it marks all of that prime\'s multiples as composite, meaning not prime. The numbers left unmarked at the end are the primes.',
     why: 'Testing each number separately, by trying to divide it by smaller numbers, repeats a great deal of work. The sieve turns the problem around. It never asks "what divides this number?". It starts from each prime and removes, in one sweep, everything that prime divides. Getting all the primes up to a limit this way costs barely more than looking at each number once.',
     when: 'Use it when you want all the primes up to some limit, or need to answer many "is this prime?" questions about numbers below a limit, and you can afford memory proportional to that limit. It is the wrong tool for testing one very large number, such as a 300-digit candidate for a cryptographic key: the table would never fit. For that, use a primality test built on [modular exponentiation](#/algorithm/modular-exponentiation).',
@@ -149,28 +149,28 @@ export default {
     where: 'It is the standard way to build tables of small primes, which are then used everywhere from number theory software to the first, cheap filtering step when cryptographic libraries search for large primes.',
     analogy: {
       title: 'Children sitting down in a line',
-      text: "Children wearing the numbers 2 to 100 stand in a line. The first child, number 2, stays standing and walks down the line asking every second child after them to sit: 4, 6, 8 and so on. Then the next child still standing, number 3, asks every third child after them to sit, and so it goes on. A child who is still standing when their turn comes has been passed over by every walker before them. Their number is not a multiple of any smaller prime, and that is enough to make it prime. When nobody new is left to take a turn, the children still standing are wearing exactly the prime numbers.",
-      limits: "This picture is close to exact, so its weak points are the method's own. Some children are asked to sit more than once: number 12 hears it from 2 and again from 3. The computer wastes effort in the same way, and it is the main inefficiency of the method. There must also be one child for every number up to the limit. That is the real cost of the sieve: memory for the whole range. It is fine for a limit of a hundred or a hundred million, and impossible for numbers with hundreds of digits.",
+      text: "Children wearing the numbers 2 to 100 stand in a line. Number 2 stays standing and asks every second child after them to sit: 4, 6, 8 and so on. Then the next child still standing, number 3, asks every third child after them to sit, and so on. A child still standing at their turn has a number that is not a multiple of any smaller prime, so it is prime. At the end, the children standing wear exactly the primes.",
+      limits: "The picture is close to exact, so its weak points are the method's own: some children are told to sit more than once (12 by 2 and by 3), which wastes effort. And with one child per number, memory runs out long before limits with hundreds of digits.",
     },
   },
 
   example: {
     setup: 'Find every prime up to 30. A prime is a whole number above 1 whose only divisors are 1 and itself. Write the numbers 2 to 30 in a row and cross numbers out as you go.',
     steps: [
-      '2 is not crossed out, so it is prime. Cross out its multiples starting from 2 × 2 = 4: that is 4, 6, 8 and so on up to 30. Fourteen numbers go.',
-      '3 is not crossed out, so it is prime. Start at 3 × 3 = 9 and step by 3: 9, 12, 15, 18, 21, 24, 27, 30. Four of those (12, 18, 24, 30) were already crossed out. The new ones are 9, 15, 21 and 27.',
+      "2 is not crossed out, so it is prime. Cross out its multiples from 2 × 2 = 4 up to 30: 4, 6, 8 and so on. (14 crossings.)",
+      "3 is still standing, so it is prime. Step by 3 from 3 × 3 = 9: 9, 12, 15, 18, 21, 24, 27, 30. Only 9, 15, 21 and 27 are new. (8 crossings.)",
       '4 is crossed out, so skip it.',
-      '5 is not crossed out, so it is prime. Start at 5 × 5 = 25 and step by 5: 25 and 30. Only 25 is new.',
-      'The next number is 6, and 6 × 6 = 36 is beyond 30. Stop.',
+      "5 is not crossed out, so it is prime. Step by 5 from 5 × 5 = 25: 25 and 30. Only 25 is new. (2 crossings.)",
+      "The next number is 6, and 6 × 6 = 36 is beyond 30, so stop.",
     ],
-    result: 'The numbers never crossed out are 2, 3, 5, 7, 11, 13, 17, 19, 23 and 29. Those are the ten primes up to 30. Only three primes, 2, 3 and 5, were needed to do all the crossing out, and it took 14 + 8 + 2 = 24 crossings.',
+    result: "The numbers never crossed out are 2, 3, 5, 7, 11, 13, 17, 19, 23 and 29: the ten primes up to 30. Only three primes, 2, 3 and 5, did all the crossing out, in 14 + 8 + 2 = 24 crossings.",
     tryInput: { n: 30, optimized: true },
   },
 
   terms: [
     { term: 'Divisor', meaning: 'A whole number that divides another with nothing left over. 3 is a divisor of 12.' },
     { term: 'Prime number', meaning: 'A whole number greater than 1 whose only divisors are 1 and itself: 2, 3, 5, 7, 11 and so on.' },
-    { term: 'Composite number', meaning: 'A whole number greater than 1 that is not prime. It can be written as a product of two smaller whole numbers, as 12 = 3 × 4.' },
+    { term: 'Composite number', meaning: "A whole number greater than 1 that is not prime. It can be made by multiplying two smaller whole numbers, as 12 = 3 × 4." },
     { term: 'Multiple', meaning: 'What you get by multiplying a number by a whole number. The multiples of 3 are 3, 6, 9, 12 and so on.' },
     { term: 'Sieve', meaning: 'A method that finds what you want by removing everything else, the way a kitchen sieve holds back lumps.' },
     { term: 'Square root', meaning: 'The number which, multiplied by itself, gives the number you started with. The square root of 100 is 10.' },

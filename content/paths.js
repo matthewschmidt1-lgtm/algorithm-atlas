@@ -33,7 +33,7 @@ export const paths = [
           { algo: 'binary-search', why: "On a sorted list each look rules out half of what is left, so far fewer looks are needed." },
         ],
         concepts: ['array', 'big-o'],
-        exercise: "In the Linear Search lesson, load the preset 'Worst case: target is absent' and note the number of comparisons. Load the preset with the same name in the Binary Search lesson. Then raise the number of items in both and see which count grows faster.",
+        exercise: "In the Linear Search lesson, open 'Change the input' under the demonstration and press 'Worst case: target is absent'. Count the checks. Do the same in the Binary Search lesson. Then make both lists longer. Which count grows faster?",
       },
       {
         id: 'sorting-by-hand',
@@ -45,7 +45,7 @@ export const paths = [
           { algo: 'insertion-sort', why: "Slide each new item into place among the ones already sorted, the way many people sort a hand of cards." },
         ],
         concepts: ['invariant', 'in-place'],
-        exercise: "In the Insertion Sort lesson, load the 'Already sorted' preset and note the comparisons, then load 'Reversed: worst case'. Write one sentence explaining why the same method does so much more work the second time.",
+        exercise: "In the Insertion Sort lesson, open 'Change the input', press 'Already sorted' and note the number of comparisons. Then press 'Reversed: worst case'. In one sentence, say why the same method does so much more work the second time.",
       },
       {
         id: 'a-faster-idea',
@@ -56,20 +56,20 @@ export const paths = [
           { algo: 'quick-sort', why: "Split the list around one chosen value. It shows how a single choice can make the same method fast or slow." },
         ],
         concepts: ['recursion', 'divide-and-conquer'],
-        exercise: "In the laboratory, open the comparison 'Sorting a list' and run Bubble Sort and Merge Sort in 'Random order' on 16 items and then 64 items. For each sort, divide the second comparison count by the first. One ratio should be much larger than the other.",
+        exercise: "In the Lab, open the comparison called 'Sorting a list'. Run Bubble Sort and Merge Sort on 16 items in 'Random order', then on 64 items. The list got four times longer. How many times more comparisons did each sort need? One grows much faster than the other.",
       },
       {
         id: 'beyond-lists',
         title: "Algorithms beyond lists",
         goal: "Meet short algorithms from arithmetic, networks and data compression, and find the same habits of thought in each.",
         modules: [
-          { algo: 'euclidean-algorithm', why: "A few lines of arithmetic, more than two thousand years old and still in everyday use." },
+          { algo: 'euclidean-algorithm', why: "Finds the largest number that divides two numbers exactly, in a few lines of arithmetic. It is more than two thousand years old and still in everyday use." },
           { algo: 'sieve-of-eratosthenes', why: "Finds every prime up to a limit by crossing out multiples: a small piece of work repeated many times." },
           { algo: 'bfs', why: "Explores a network outward from a starting point, one step of distance at a time." },
           { algo: 'run-length-encoding', why: "Shrinks data by describing repeats, and shows that a method can make some inputs bigger." },
         ],
         concepts: ['prime-numbers', 'graph', 'queue'],
-        exercise: "In the Breadth-First Search lesson, load the 'Two routes to E' preset. Before you press play, write down the order in which you expect the nodes to be visited and how many steps E is from A. Then run it and check.",
+        exercise: "In the Breadth-First Search lesson, open 'Change the input' and press 'Two routes to E'. Before you press play, guess the order the points will be visited in, and how many steps E is from A. Then run it and check.",
       },
     ],
     project: {
