@@ -1741,7 +1741,8 @@ if (on('beginners')) {
     for (const id of ids) {
       const L = await C.loadLesson(id);
       const words = L.bigIdea.simple.split(/\s+/).length, paras = L.bigIdea.simple.split(/\n\s*\n/).length;
-      if (id === 'linear-search') assert(/^Linear search is the simplest way to find something/.test(L.bigIdea.simple), 'the owner\'s wording for Linear Search has changed');
+      // Linear Search is the owner's wording: its words stay exactly as given, set out in three paragraphs
+      if (id === 'linear-search') assert(/^Linear search is the simplest way to find something/.test(L.bigIdea.simple) && paras === 3, 'the owner\'s wording for Linear Search has changed, or is no longer in three paragraphs');
       else assert(paras >= 2 && words <= 140, `${id} opens with ${paras} paragraph(s) and ${words} words`);
       assert(typeof lessonArt[id] === 'function' && /aria-label="[^"]{20,}"/.test(lessonArt[id]()), `${id} has no described picture`);
     }
