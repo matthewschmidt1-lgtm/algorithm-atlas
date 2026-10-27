@@ -7,6 +7,7 @@ import { icon } from '../core/icons.js';
 import * as C from '../core/catalog.js';
 import { pageHead } from '../ui/parts.js';
 import { kitchen, kitchenIntro, kitchenEnd } from '../../content/kitchen.js';
+import { sceneArt } from '../art/kitchen-art.js';
 
 const arrowLink = (href, text) => h('a.text-link', { href }, text, h('span', { html: icon('arrow', { size: 15 }) }));
 
@@ -99,7 +100,7 @@ function dinnerTimeline(card) {
         h('div.dinner-track',
           r.spare ? h('span.dinner-seg.is-spare', { style: { left: '0%', width: pct(r.spare) }, title: `${r.spare} minutes to spare` }) : null,
           // a short step has room only for its minutes; the full name is in the tooltip and the text above
-          r.tasks.map((t) => { const seg = h('span.dinner-seg', { style: { left: pct(at), width: pct(t.minutes) }, title: `${t.name}, ${t.minutes} minutes` }, h('span', t.minutes >= 30 ? `${t.name}, ${t.minutes} min` : `${t.minutes} min`)); at += t.minutes; return seg; })));
+          r.tasks.map((t) => { const seg = h(`span.dinner-seg${t.minutes < 15 ? '.is-short' : ''}`, { style: { left: pct(at), width: pct(t.minutes) }, title: `${t.name}, ${t.minutes} minutes` }, h('span', t.minutes >= 30 ? `${t.name}, ${t.minutes} min` : `${t.minutes} min`)); at += t.minutes; return seg; })));
     })),
     h('div.dinner-axis', { 'aria-hidden': 'true' }, ticks.map((m) => h('span', { style: { left: pct(m) } }, clock(start, m)))),
     h('figcaption.fig-cap', h('b', 'What you are looking at'),
@@ -170,9 +171,13 @@ export default async function render({ query }) {
   const cards = kitchen.map((card, n) => {
     const L = C.algoById[card.lesson], also = card.alsoLesson && C.algoById[card.alsoLesson];
     return h('section.kitchen-card', { id: card.id, 'aria-labelledby': `${card.id}-h` },
-      h('p.kitchen-n', `Recipe ${n + 1}`),
-      h('h2', { id: `${card.id}-h` }, card.title),
-      h('p.kitchen-q', card.question),
+      // each recipe has its own colour and a picture beside its title
+      h('div.kitchen-card-head',
+        h('div',
+          h('p.kitchen-n', `Recipe ${n + 1}`),
+          h('h2', { id: `${card.id}-h` }, card.title),
+          h('p.kitchen-q', card.question)),
+        sceneArt[card.id] ? h('div.kitchen-scene', { html: sceneArt[card.id]() }) : null),
       h('p.kitchen-setup', card.setup),
       h('div.kitchen-recipe',
         h('p.panel-cap', 'The steps'),

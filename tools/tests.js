@@ -1582,6 +1582,20 @@ if (on('kitchen')) {
     } finally { p.close(); }
   });
 
+  await test('each recipe has its own soft colour and its own picture', async () => {
+    const p = await open('/kitchen', '.kitchen-scene svg');
+    try {
+      const cards = p.$$('.kitchen-card');
+      const colours = cards.map((c) => p.win.getComputedStyle(c).backgroundColor);
+      assert(new Set(colours).size === cards.length, `the recipes share colours: ${colours.join(' | ')}`);
+      assert(!colours.includes(p.win.getComputedStyle(p.doc.body).backgroundColor), 'a recipe has the same colour as the page');
+      for (const c of cards) {
+        const svg = c.querySelector('.kitchen-scene svg');
+        assert(svg && svg.getAttribute('aria-label'), `${c.id} has no picture, or its picture is not described`);
+      }
+    } finally { p.close(); }
+  });
+
   await test('each recipe leads to a published lesson, and the page uses no formulas or symbols', async () => {
     for (const c of K.kitchen) {
       assert(C.algoById[c.lesson], `${c.id} leads to "${c.lesson}", which is not a published lesson`);

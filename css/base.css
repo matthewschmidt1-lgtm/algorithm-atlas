@@ -61,6 +61,11 @@
   --demos-card: #F7FAF4;
   --demos-ink: #34483B;
   --demos-text-3: #5B6157;
+  /* the four recipe panels on the kitchen page */
+  --kc-spices: #F6EEDC;
+  --kc-dinner: #E9EFE4;
+  --kc-dressing: #F5F3DD;
+  --kc-pizza: #F7E8E0;
   --on-accent: #FAF7F1;
   --focus: #34483B;
 
@@ -90,6 +95,10 @@
   --demos-card: #26322B;
   --demos-ink: #A9C4AF;
   --demos-text-3: #A3A99C;
+  --kc-spices: #2A2620;
+  --kc-dinner: #222B25;
+  --kc-dressing: #272A20;
+  --kc-pizza: #2D2421;
   color-scheme: dark;
   --bg: #1D211C;
   --bg-2: #191C18;

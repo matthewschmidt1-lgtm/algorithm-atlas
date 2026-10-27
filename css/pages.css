@@ -876,8 +876,36 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .kitchen-toc a { display: flex; gap: 12px; align-items: baseline; color: var(--text-2); width: fit-content; }
 .kitchen-toc a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .kitchen-toc a span { font-variant-numeric: tabular-nums; color: var(--terracotta-ink); font-weight: 600; }
-.kitchen-card { padding: var(--s-7) 0; border-top: 1px solid var(--line); scroll-margin-top: 84px; }
-.kitchen-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--terracotta-ink); }
+/* each recipe is a softly tinted panel, with its own accent for the label and the picture */
+.kitchen-card { margin-top: var(--s-6); padding: clamp(20px, 4vw, 40px); border-radius: var(--r-3); background: var(--kc-bg, var(--bg-2)); scroll-margin-top: 84px; }
+:root:not([data-theme='dark']) .kitchen-card { --text-3: #5E6358; }
+#spices.kitchen-card { --kc-bg: var(--kc-spices); --kc-ink: var(--ochre-ink); }
+#dinner.kitchen-card { --kc-bg: var(--kc-dinner); --kc-ink: var(--forest-ink); }
+#dressing.kitchen-card { --kc-bg: var(--kc-dressing); --kc-ink: var(--moss-ink); }
+#pizza.kitchen-card { --kc-bg: var(--kc-pizza); --kc-ink: var(--terracotta-ink); }
+.kitchen-card-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-5); align-items: center; }
+.kitchen-scene { color: var(--kc-ink); }
+.kitchen-scene svg { width: 220px; height: auto; display: block; }
+@media (max-width: 640px) { .kitchen-card-head { grid-template-columns: minmax(0, 1fr); } .kitchen-scene { order: -1; } .kitchen-scene svg { width: 180px; } }
+.kitchen-n { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--kc-ink, var(--terracotta-ink)); }
+/* on a tinted panel the inner boxes sit on the page's lightest colour */
+.kitchen-card .kitchen-recipe { background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.kitchen-card .kitchen-limits { border-left-color: color-mix(in srgb, var(--kc-ink) 45%, transparent); }
+.kitchen-card .taste-log { background: color-mix(in srgb, var(--surface) 72%, transparent); }
+
+/* the pictures move a little */
+.ks-lid { transform-box: fill-box; transform-origin: 0% 100%; animation: ks-lid 4s var(--ease) infinite; }
+@keyframes ks-lid { 0%, 55%, 100% { transform: none; } 70%, 85% { transform: translate(-1px, -6px) rotate(-16deg); } }
+.ks-arrow { animation: ks-bob 2s ease-in-out infinite; }
+@keyframes ks-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+.ks-steam, .ks-smoke { opacity: 0.6; animation: ka-steam 3.6s ease-in-out infinite; }
+.ks-steam-2, .ks-smoke-2 { animation-delay: 1.2s; }
+.ks-steam-3 { animation-delay: 2.4s; }
+.ks-drop { animation: ks-drop 2.6s ease-in infinite; }
+@keyframes ks-drop { 0%, 15% { transform: translate(0, 0); opacity: 0; } 25% { opacity: 1; } 75% { transform: translate(0, 28px); opacity: 1; } 85%, 100% { transform: translate(0, 32px); opacity: 0; } }
+.ks-fire { transform-box: fill-box; transform-origin: 50% 100%; animation: ka-flame 1.4s ease-in-out infinite alternate; }
+.ks-flake { animation: ks-snow 4.5s linear infinite; animation-delay: var(--d, 0s); }
+@keyframes ks-snow { 0% { transform: translateY(-10px); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(26px); opacity: 0; } }
 .kitchen-card h2 { margin-top: 6px; }
 .kitchen-q { margin-top: 6px; font-family: var(--font-serif); font-style: italic; font-size: 1.2rem; color: var(--text-2); }
 .kitchen-setup { margin-top: var(--s-4); font-size: 1.06rem; max-width: 66ch; }
@@ -931,7 +959,7 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .dinner-axis span:first-child { transform: none; }
 .dinner-axis span:last-child { transform: translateX(-100%); }
 .dinner .fig-cap { margin-top: var(--s-3); }
-@media (max-width: 600px) { .dinner-row { grid-template-columns: 1fr; gap: 6px; } .dinner-axis { margin-left: 0; } .dinner-seg span { font-size: 0.7rem; } }
+@media (max-width: 600px) { .dinner-row { grid-template-columns: 1fr; gap: 6px; } .dinner-axis { margin-left: 0; } .dinner-seg span { font-size: 0.7rem; } .dinner-seg.is-short span { display: none; } }
 
 .taste-log { margin-top: var(--s-5); max-width: 560px; }
 
