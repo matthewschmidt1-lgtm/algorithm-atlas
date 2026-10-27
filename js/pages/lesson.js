@@ -114,11 +114,8 @@ export default async function render({ params, query }) {
 
   /* level 1 */
   const B = L.bigIdea;
-  // the beginners' lessons have a small picture of their idea beside the explanation
-  const art = lessonArt[m.id];
-  const simpleText = h('div.simple-text', { html: richBlock(B.simple) });
   const simple = sec('simple', 1, 'The Simple Explanation', 'Level 1',
-    art ? h('div.simple-with-art', simpleText, h(`div.lesson-art.c-${C.colorOf(m.discipline)}`, { html: art() })) : simpleText,
+    h('div.simple-text', { html: richBlock(B.simple) }),
     h('aside.analogy',
       h('p.panel-cap', 'A picture to hold on to'),
       h('h3', B.analogy.title),
@@ -270,7 +267,11 @@ export default async function render({ params, query }) {
 
   const takeaway = h('section.lsec.lv1.takeaway', { id: 'takeaway', 'aria-labelledby': 'takeaway-h', dataset: { level: 1, title: 'The Takeaway' } },
     h('p.lsec-kicker', 'In one sentence'), h('h2', { id: 'takeaway-h' }, 'The Takeaway'),
-    h('blockquote', L.takeaway));
+    // the one-sentence summary sits in a box in the lesson's colour; the beginners' lessons
+    // also have a picture of their idea beside it, so the sentence and the picture say it together
+    h(`div.takeaway-box.c-${C.colorOf(m.discipline)}${lessonArt[m.id] ? '.has-art' : ''}`,
+      h('blockquote', L.takeaway),
+      lessonArt[m.id] ? h('div.lesson-art', { html: lessonArt[m.id]() }) : null));
 
   const invite = (to, text) => h(`div.invite-level.inv${to}`,
     h('p', text),
@@ -331,8 +332,10 @@ export default async function render({ params, query }) {
   // the takeaway now follows the simple explanation, so it is listed with the level 1 sections
   const closing = ['connections'];
   const tocGroup = (lv, label) => h(`div.toc-group.lv${lv}`, h('p.toc-cap', label), tocLinks.filter((a, i) => Number(sections[i].dataset.level) === lv && !closing.includes(sections[i].id)));
-  toc.append(h('p.panel-cap', 'In this lesson'), tocGroup(1, 'Simply'), tocGroup(2, 'In detail'), tocGroup(3, 'In depth'),
-    h('div.toc-group', h('p.toc-cap', 'And then'), tocLinks.filter((a, i) => closing.includes(sections[i].id))));
+  const closingLinks = tocLinks.filter((a, i) => closing.includes(sections[i].id));
+  toc.append(h('p.panel-cap', 'In this lesson'), tocGroup(1, 'Simply'), tocGroup(2, 'In detail'), tocGroup(3, 'In depth'));
+  // on a journey there is no Connections section, so no empty heading either
+  if (closingLinks.length) toc.append(h('div.toc-group', h('p.toc-cap', 'And then'), closingLinks));
 
   const root = h('div.lesson.page.wrap', { dataset: { depth } }, head, levelBar, h('div.lesson-grid', toc, body));
 

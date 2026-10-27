@@ -1026,10 +1026,12 @@ a.module-name:hover { color: var(--accent); text-decoration: underline; text-und
 .home-demos.will-rise.has-risen .preview:hover, .home-demos.will-rise.has-risen .preview:focus-within { transform: translateY(-3px); transition-delay: 0s; }
 
 /* ---------- pictures on the beginners' lessons ---------- */
-.simple-with-art { display: grid; grid-template-columns: minmax(0, 60ch) 240px; gap: var(--s-6); align-items: start; }
-.lesson-art { color: var(--accent); padding: var(--s-3); border-radius: var(--r-3); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+/* the takeaway box: the sentence, and on the beginners' lessons a picture beside it */
+.takeaway-box { display: grid; gap: var(--s-5); align-items: center; max-width: 760px; padding: var(--s-5) var(--s-5); border-radius: var(--r-3); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent); }
+.takeaway-box.has-art { grid-template-columns: minmax(0, 1fr) 220px; }
+.takeaway-box .lesson-art { color: var(--accent); line-height: 0; }
 .lesson-art svg { width: 100%; height: auto; display: block; }
-@media (max-width: 1100px) { .simple-with-art { grid-template-columns: minmax(0, 1fr); } .lesson-art { order: -1; max-width: 300px; } }
+@media (max-width: 640px) { .takeaway-box.has-art { grid-template-columns: minmax(0, 1fr); } .takeaway-box .lesson-art { order: -1; max-width: 220px; } }
 
 /* each picture acts out its idea, slowly */
 .la-finger { animation: la-finger 6s steps(1) infinite; }

@@ -1745,10 +1745,12 @@ if (on('beginners')) {
       else assert(paras >= 2 && words <= 140, `${id} opens with ${paras} paragraph(s) and ${words} words`);
       assert(typeof lessonArt[id] === 'function' && /aria-label="[^"]{20,}"/.test(lessonArt[id]()), `${id} has no described picture`);
     }
-    const p = await open('/algorithm/euclidean-algorithm', '.simple-with-art');
+    const p = await open('/algorithm/euclidean-algorithm', '.takeaway-box.has-art');
     try {
-      const art = p.$('.simple-with-art .lesson-art svg');
-      assert(art && art.getBoundingClientRect().width > 150, 'the picture is not shown beside the explanation');
+      const art = p.$('.takeaway-box .lesson-art svg'), quote = p.$('.takeaway-box blockquote');
+      assert(art && art.getBoundingClientRect().width > 150, 'the picture is not shown in the takeaway box');
+      assert(art.getBoundingClientRect().left > quote.getBoundingClientRect().right - 2, 'the picture does not sit beside the takeaway sentence');
+      assert(!/\bnull\b/.test(p.$('.lesson-toc').textContent), 'the contents list shows the word null');
     } finally { p.close(); }
     return `${ids.length} lessons`;
   });
